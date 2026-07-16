@@ -1,0 +1,16 @@
+{
+  "name": "storytale-image-worker",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "cf:types": "wrangler types",
+    "check": "wrangler types --check && tsc --noEmit",
+    "deploy:dry": "wrangler deploy --dry-run",
+    "deploy": "wrangler deploy --minify"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "typescript": "latest",
+    "wrangler": "latest"
+  }
+}
