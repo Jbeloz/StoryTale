@@ -22,7 +22,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Audio Book'), findsOneWidget);
     expect(
-      find.text('Daily Dose Narrator - real generated chapter audio'),
+      find.text(
+        'Daily Dose Narrator - Pitch +0 - real generated chapter audio',
+      ),
       findsOneWidget,
     );
 
@@ -32,7 +34,7 @@ void main() {
     await tester.tap(find.text('Deep Character'));
     await tester.pumpAndSettle();
     expect(
-      find.text('Deep Character - real generated chapter audio'),
+      find.text('Deep Character - Pitch +0 - real generated chapter audio'),
       findsOneWidget,
     );
 
@@ -139,14 +141,20 @@ void main() {
     expect(controller.currentBook!.progress, closeTo(0.25, 0.001));
   });
 
-  testWidgets('voice manifest loads the replacement heroine model', (
+  testWidgets('voice manifest loads current models and pitch defaults', (
     tester,
   ) async {
     await _usePhoneSize(tester);
     final controller = StoryTaleController();
     await _pumpStoryTale(tester, controller: controller);
 
-    expect(controller.voiceModelFile('heroine'), 'koyuki-Jap.pth');
+    expect(
+      controller.voiceModelFile('heroine'),
+      'Suika Ibuki (The Memories of Phantasm).pth',
+    );
+    expect(controller.voiceModelFile('hero'), 'maki.pth');
+    expect(controller.voicePitch('heroine'), 16);
+    expect(controller.voicePitch('hero'), 16);
     expect(
       controller.audioPath('little-prince-chapter-1', 'heroine'),
       contains('chapter-1-heroine-'),

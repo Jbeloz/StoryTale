@@ -12,6 +12,7 @@ class StoryTaleController extends ChangeNotifier {
     currentBookId = books.first.id;
     currentChapterId = books.first.chapters.first.id;
     voiceModelFiles.addAll(generatedVoiceModels);
+    voicePitches.addAll(generatedVoicePitches);
     voiceAudio.addAll(
       generatedVoiceAudio.map(
         (chapterId, paths) => MapEntry(chapterId, Map.of(paths)),
@@ -67,6 +68,7 @@ class StoryTaleController extends ChangeNotifier {
   final Map<String, ChapterStoryData> stories = {};
   final Map<String, Map<String, String>> voiceAudio = {};
   final Map<String, String> voiceModelFiles = {};
+  final Map<String, int> voicePitches = {};
   final Set<String> preparedAudioChapters = {};
 
   bool onboardingCompleted = false;
@@ -87,6 +89,8 @@ class StoryTaleController extends ChangeNotifier {
   }
 
   String? voiceModelFile(String voiceId) => voiceModelFiles[voiceId];
+
+  int voicePitch(String voiceId) => voicePitches[voiceId] ?? 0;
 
   BookData? bookById(String? id) {
     for (final book in books) {

@@ -8,7 +8,9 @@ if (-not (Test-Path -LiteralPath $python)) {
 Push-Location $root
 try {
     & $python 'tool\sync_voice_audio.py'
-    exit $LASTEXITCODE
+    if ($LASTEXITCODE -ne 0) {
+        throw "Voice sync failed with exit code $LASTEXITCODE"
+    }
 }
 finally {
     Pop-Location

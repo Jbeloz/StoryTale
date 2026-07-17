@@ -12,17 +12,18 @@ import torch
 
 ROOT = Path(__file__).resolve().parents[1]
 MODEL_ROOT = ROOT / "models" / "voices" / "raw"
+SETTINGS_PATH = ROOT / "models" / "voices" / "voice_settings.json"
 SOURCE_AUDIO = ROOT / ".tools" / "voice-work" / "little-prince-chapter-1-source.mp3"
 OUTPUT_DIR = ROOT / "assets" / "audio" / "narration" / "little-prince"
 MANIFEST_PATH = ROOT / "assets" / "audio" / "narration" / "voice_manifest.json"
 DART_MANIFEST_PATH = ROOT / "lib" / "src" / "generated" / "voice_manifest.g.dart"
 
 VOICES = {
-    "narrator": {"name": "Narrator", "pitch": 0, "old": "chapter-1-daily-dose.wav"},
-    "heroine": {"name": "Young Heroine", "pitch": 12, "old": "chapter-1-heroine.wav"},
-    "hero": {"name": "Young Hero", "pitch": 0, "old": "chapter-1-hero.wav"},
-    "deep": {"name": "Deep Character", "pitch": 0, "old": "chapter-1-deep.wav"},
-    "elder": {"name": "Elder / Extra", "pitch": 0, "old": "chapter-1-elder.wav"},
+    "narrator": "chapter-1-daily-dose.wav",
+    "heroine": "chapter-1-heroine.wav",
+    "hero": "chapter-1-hero.wav",
+    "deep": "chapter-1-deep.wav",
+    "elder": "chapter-1-elder.wav",
 }
 
 
@@ -47,6 +48,17 @@ def validate_pair(model: Path, index: Path) -> str:
     version = str(checkpoint.get("version", "v2"))
     faiss.read_index(str(index))
     return version if version in {"v1", "v2"} else "v2"
+
+
+def load_pitches() -> dict[str, int]:
+    data = json.loads(SETTINGS_PATH.read_text(encoding="utf-8"))
+    pitches = {}
+    for voice_id in VOICES:
+        pitch = data.get(voice_id, 0)
+        if not isinstance(pitch, int) or not -24 <= pitch <= 24:
+            raise ValueError(f"{voice_id} pitch must be an integer from -24 to 24")
+        pitches[voice_id] = pitch
+    return pitches
 
 
 def convert(model: Path, index: Path, output: Path, version: str, pitch: int) -> None:
@@ -89,6 +101,10 @@ def write_dart_manifest(manifest: dict) -> None:
     for voice_id, voice in manifest["voices"].items():
         if voice.get("available"):
             lines.append(f'  "{voice_id}": {json.dumps(voice["model"])},')
+    lines.extend(["};", "", "const generatedVoicePitches = <String, int>{"])
+    for voice_id, voice in manifest["voices"].items():
+        if voice.get("available"):
+            lines.append(f'  "{voice_id}": {voice["pitch"]},')
     lines.extend(["};", "", "const generatedVoiceAudio = <String, Map<String, String>>{"])
     for chapter_id, paths in manifest["chapters"].items():
         lines.append(f'  "{chapter_id}": <String, String>{{')
@@ -105,6 +121,12 @@ def main() -> int:
         print(f"Missing source narration: {SOURCE_AUDIO}")
         return 1
 
+    try:
+        pitches = load_pitches()
+    except Exception as error:
+        print(f"Invalid voice settings: {error}")
+        return 1
+
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     source_fingerprint = file_hash(SOURCE_AUDIO)
     manifest = {
@@ -113,8 +135,9 @@ def main() -> int:
     }
     failed = False
 
-    for voice_id, settings in VOICES.items():
+    for voice_id, legacy_name in VOICES.items():
         folder = MODEL_ROOT / voice_id
+        pitch = pitches[voice_id]
         try:
             model, index = find_pair(folder)
             version = validate_pair(model, index)
@@ -122,20 +145,20 @@ def main() -> int:
                 f"{file_hash(model)}:{file_hash(index)}".encode()
             ).hexdigest()
             audio_fingerprint = hashlib.sha256(
-                f"{model_fingerprint}:{source_fingerprint}:{settings['pitch']}".encode()
+                f"{model_fingerprint}:{source_fingerprint}:{pitch}".encode()
             ).hexdigest()[:10]
             output = OUTPUT_DIR / f"chapter-1-{voice_id}-{audio_fingerprint}.wav"
 
             if output.exists():
                 print(f"{voice_id}: unchanged")
             else:
-                print(f"{voice_id}: generating with {model.name}")
-                convert(model, index, output, version, settings["pitch"])
+                print(f"{voice_id}: generating with {model.name} at pitch {pitch:+d}")
+                convert(model, index, output, version, pitch)
 
             for old_output in OUTPUT_DIR.glob(f"chapter-1-{voice_id}-*.wav"):
                 if old_output != output:
                     old_output.unlink()
-            legacy_output = OUTPUT_DIR / settings["old"]
+            legacy_output = OUTPUT_DIR / legacy_name
             if legacy_output != output and legacy_output.exists():
                 legacy_output.unlink()
 
@@ -144,6 +167,7 @@ def main() -> int:
                 "model": model.name,
                 "index": index.name,
                 "fingerprint": model_fingerprint[:12],
+                "pitch": pitch,
             }
             manifest["chapters"]["little-prince-chapter-1"][voice_id] = (
                 f"audio/narration/little-prince/{output.name}"

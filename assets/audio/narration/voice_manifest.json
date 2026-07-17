@@ -4,39 +4,44 @@
       "available": true,
       "model": "DailyDoseOfInternet.pth",
       "index": "added_IVF390_Flat_nprobe_1_DailyDoseOfInternet_v2.index",
-      "fingerprint": "5027c2c16444"
+      "fingerprint": "5027c2c16444",
+      "pitch": 0
     },
     "heroine": {
       "available": true,
-      "model": "koyuki-Jap.pth",
-      "index": "added_IVF243_Flat_nprobe_1_koyuki-Jap_v2.index",
-      "fingerprint": "9a0b3d8e64b9"
+      "model": "Suika Ibuki (The Memories of Phantasm).pth",
+      "index": "Suika Ibuki (The Memories of Phantasm).index",
+      "fingerprint": "f25c812d1ee7",
+      "pitch": 16
     },
     "hero": {
       "available": true,
-      "model": "sparky(SparkysMagicPiano1987)_250e_8500s.pth",
-      "index": "sparky(SparkysMagicPiano1987).index",
-      "fingerprint": "ed302d3a71f5"
+      "model": "maki.pth",
+      "index": "added_IVF199_Flat_nprobe_1_maki_v2.index",
+      "fingerprint": "e96c6a3d1f4f",
+      "pitch": 16
     },
     "deep": {
       "available": true,
-      "model": "titus_hardie_e160_s19360.pth",
-      "index": "added_IVF256_Flat_nprobe_1_titus_hardie_v2.index",
-      "fingerprint": "b8d725afc04f"
+      "model": "TheRock.pth",
+      "index": "added_IVF672_Flat_nprobe_1_TheRock_v2.index",
+      "fingerprint": "e20707cbf718",
+      "pitch": 0
     },
     "elder": {
       "available": true,
       "model": "OldManTyree.pth",
       "index": "added_IVF290_Flat_nprobe_1_OldManTyree_v2.index",
-      "fingerprint": "c80259232700"
+      "fingerprint": "c80259232700",
+      "pitch": 0
     }
   },
   "chapters": {
     "little-prince-chapter-1": {
       "narrator": "audio/narration/little-prince/chapter-1-narrator-ded1a74e48.wav",
-      "heroine": "audio/narration/little-prince/chapter-1-heroine-0f3d32c6f2.wav",
-      "hero": "audio/narration/little-prince/chapter-1-hero-87c1c21234.wav",
-      "deep": "audio/narration/little-prince/chapter-1-deep-1df957138a.wav",
+      "heroine": "audio/narration/little-prince/chapter-1-heroine-c5eca1f77f.wav",
+      "hero": "audio/narration/little-prince/chapter-1-hero-fcfcf99a03.wav",
+      "deep": "audio/narration/little-prince/chapter-1-deep-de7dd3fe45.wav",
       "elder": "audio/narration/little-prince/chapter-1-elder-f3b5eaaa35.wav"
     }
   }

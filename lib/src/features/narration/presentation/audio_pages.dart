@@ -158,7 +158,9 @@ class _AudioHubPageState extends State<AudioHubPage> {
                   ),
                   Text(
                     hasAudio
-                        ? '${selectedVoice.name} - real generated chapter audio'
+                        ? '${selectedVoice.name} - Pitch '
+                              '${_pitch(controller.voicePitch(_voiceId))} - '
+                              'real generated chapter audio'
                         : 'Audio has not been generated for this chapter yet',
                   ),
                   Slider(
@@ -438,7 +440,9 @@ class _AudioHubPageState extends State<AudioHubPage> {
                 title: Text(voice.name),
                 subtitle: Text(
                   ready
-                      ? '${voice.role} - chapter audio ready'
+                      ? '${voice.role} - Pitch '
+                            '${_pitch(controller.voicePitch(voice.id))} - '
+                            'chapter audio ready'
                       : '${voice.role} - chapter audio not generated',
                 ),
                 enabled: ready,
@@ -513,7 +517,8 @@ class VoiceManagerPage extends StatelessWidget {
         children: [
           const Text(
             'Installed RVC voices are converted on the computer. Choose a '
-            'generated voice from the Audio page to hear it.',
+            'generated voice from the Audio page to hear it. Pitch is applied '
+            'during conversion from models/voices/voice_settings.json.',
           ),
           const SizedBox(height: 16),
           ...controller.voices.map(
@@ -523,8 +528,10 @@ class VoiceManagerPage extends StatelessWidget {
                 title: Text(voice.name),
                 subtitle: Text(
                   '${voice.role} - '
-                  '${controller.voiceModelFile(voice.id) ?? _status(voice.status)}',
+                  '${controller.voiceModelFile(voice.id) ?? _status(voice.status)}'
+                  '\nPitch ${_pitch(controller.voicePitch(voice.id))}',
                 ),
+                isThreeLine: true,
                 trailing: Text(
                   voice.status == PreparationStatus.ready
                       ? 'Installed'
@@ -552,6 +559,8 @@ class VoiceManagerPage extends StatelessWidget {
     PreparationStatus.notStarted => 'Not prepared',
   };
 }
+
+String _pitch(int value) => value >= 0 ? '+$value' : '$value';
 
 class ChapterAudioPreparationPage extends StatefulWidget {
   const ChapterAudioPreparationPage({super.key});

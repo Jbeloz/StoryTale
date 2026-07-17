@@ -49,10 +49,10 @@ These raw downloads are ignored by Git and are not bundled into Flutter.
 Converted and tested mobile files later go into the matching folder under
 `assets/models/voices/`.
 
-For the current prototype, run `./tool/sync_voices.ps1` after changing a raw
-model. It validates the pairs, generates only stale chapter audio, and writes
-`assets/audio/narration/voice_manifest.json`. Flutter and Android read this
-small manifest and play the generated WAV files; they do not load `.pth`
-models directly.
+Set conversion pitches in `models/voices/voice_settings.json`. Heroine and Hero
+use `+16` by default. Run `./tool/run_storytale.ps1` after changing a raw model
+or pitch; it validates the pairs, generates only stale chapter audio, updates
+the manifest, and then starts Flutter. Flutter plays the generated WAV files;
+it does not load `.pth` models or change their RVC pitch during playback.
 
 Full UI mockup screenshots remain in `docs/ui-concepts/ui/`. They are design references and must not be bundled into the app.

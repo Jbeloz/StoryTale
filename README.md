@@ -20,13 +20,13 @@ EPUB importing, DeepL translation, TTS, and Story Mode playback are placeholders
 
 ```powershell
 flutter pub get
-flutter run
+.\tool\run_storytale.ps1
 ```
 
 For a browser preview:
 
 ```powershell
-flutter run -d chrome
+.\tool\run_storytale.ps1 -Device chrome
 ```
 
 ## Verify

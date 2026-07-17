@@ -14,5 +14,9 @@ elder/
 Keep the original filenames. These files are conversion inputs and are ignored
 by Git. Do not move them into Flutter assets.
 
-Run `./tool/sync_voices.ps1` after replacing a model. It validates each pair,
-regenerates changed chapter audio, and updates the Flutter voice manifest.
+Set each RVC conversion pitch in `models/voices/voice_settings.json`. Heroine
+and Hero default to `+16`; valid values are `-24` through `+24`.
+
+Use `./tool/run_storytale.ps1` to sync changed models and pitches before the
+web app starts. `flutter run` alone does not run the voice converter, so it can
+keep the previously generated voice files.

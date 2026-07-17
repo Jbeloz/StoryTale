@@ -72,10 +72,12 @@ The UI reads this data, so we do not create a separate Flutter screen for every 
 
 ## On-device voice flow
 
-Current prototype: `tool/sync_voices.ps1` scans the five raw role folders,
-validates each `.pth` plus `.index`/`.model` pair, and creates fingerprinted
-chapter audio plus a voice manifest. Web and mobile play those prepared files,
-so replacing a model cannot reuse an older cached voice.
+Current prototype: `tool/run_storytale.ps1` first scans the five raw role
+folders, validates each `.pth` plus `.index`/`.model` pair, and creates
+fingerprinted chapter audio plus a voice manifest before Flutter starts. RVC
+pitch comes from `models/voices/voice_settings.json`; Heroine and Hero default
+to `+16`. Web and mobile play those prepared files, so a changed model or pitch
+gets a new audio filename instead of reusing browser cache.
 
 ```text
 Story text
