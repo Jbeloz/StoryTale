@@ -35,6 +35,7 @@ migrate_working_dir/
 **/node_modules/
 **/.cache/
 **/.mf/
+.tools/
 
 # Cloudflare Worker local state and secrets
 **/.wrangler/
@@ -43,6 +44,13 @@ migrate_working_dir/
 **/.env*
 !**/.env.example
 cloudflare/image-worker/test-output/
+
+# Raw RVC downloads are large conversion inputs, not app assets
+models/voices/raw/**/*.pth
+models/voices/raw/**/*.index
+models/voices/raw/**/*.model
+models/voices/raw/**/*.zip
+docs/ui-concepts/ui/*.zip
 
 # Symbolication related
 app.*.symbols

@@ -72,6 +72,11 @@ The UI reads this data, so we do not create a separate Flutter screen for every 
 
 ## On-device voice flow
 
+Current prototype: `tool/sync_voices.ps1` scans the five raw role folders,
+validates each `.pth` plus `.index`/`.model` pair, and creates fingerprinted
+chapter audio plus a voice manifest. Web and mobile play those prepared files,
+so replacing a model cannot reuse an older cached voice.
+
 ```text
 Story text
 -> optional cached DeepL Filipino translation

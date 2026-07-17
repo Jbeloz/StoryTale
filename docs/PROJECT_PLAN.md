@@ -5,14 +5,14 @@
 - StoryTale name, folders, docs, theme, navigation, and placeholders
 - Small reusable UI that reads lists of dynamic data
 
-## 1.1 UI component foundation - next
+## 1.1 Functional UI foundation - done
 
-- Follow `docs/ui-concepts/UI_IMPLEMENTATION_PLAN.md`
-- Create one shared app shell and one reusable four-item bottom navigation
-- Build shared buttons, book cards, progress, empty states, and loading/error widgets
-- Store clean UI artwork in `assets/images/ui/`
+- All planned screens now have functional prototype routes or reusable sheets.
+- One shared app shell owns the reusable four-item bottom navigation.
+- Shared book cards, chapter rows, empty states, and image fallbacks use dynamic data.
+- Missing artwork safely falls back to placeholders from `assets/images/ui/`.
 
-## 2. Local EPUB Library - next
+## 2. Local EPUB Library - service integration next
 
 - Upload `.epub` only
 - Parse cover, book details, and chapters

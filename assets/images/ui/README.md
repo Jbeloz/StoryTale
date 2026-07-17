@@ -24,3 +24,5 @@ error_epub.png
 
 Use transparent PNG or WebP for illustrations and optimized WebP/JPEG for full rectangular backgrounds.
 
+`audio_background.png` is the light lavender background used by the placeholder
+audiobook player.
