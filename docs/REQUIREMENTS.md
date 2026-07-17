@@ -25,15 +25,29 @@
 
 ## Story Mode
 
+- A book may contain one or more ordered volumes, and each volume contains
+  ordered chapters.
 - Every chapter may have its own Story Mode.
+- Story preparation identifies recurring characters, aliases, dialogue
+  speakers, locations, plot beats, and exact chapter boundaries.
+- Gemini analyzes one cleaned chapter at a time and returns schema-validated
+  structured story data.
+- The prepared script keeps the complete normalized chapter text in order from
+  its first content block to its last content block.
 - A chapter includes sprites, backgrounds, subtitles, simple movement, voices, and sound effects.
 - A short moral appears at the end of each chapter.
 - Chapter content is saved and reused locally.
+- Accepted characters, sprites, locations, and voices are reused across
+  chapters and volumes through a shared story bible.
+- Approved character appearance is locked. Sprites use transparent body layers,
+  separate expression-head layers, and stored head anchors.
 - Sprites and backgrounds may be generated through the private Cloudflare image Worker, reviewed, and then saved locally.
+- Background music is not required for the first version; sound effects remain optional.
 
 ## Safety and Quality
 
 - Do not commit the DeepL API key.
+- Do not commit the Gemini API key or bundle it into Flutter.
 - Do not commit the Cloudflare Worker token or Cloudflare account credentials.
 - Tell users before chapter text is sent to DeepL.
 - Rate-limit image generation and avoid logging story prompts.

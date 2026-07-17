@@ -23,13 +23,29 @@ the interface does not depend on downloading fonts at runtime.
 Uploaded EPUBs and created sprites are stored on the device while the app is running. They do not go into the project `assets` folder.
 
 ```text
-books/<book-id>/book.epub
+books/<book-id>/book.json
 books/<book-id>/cover.webp
-books/<book-id>/chapters/<chapter-id>.json
-books/<book-id>/story/<chapter-id>.json
-books/<book-id>/sprites/
-books/<book-id>/audio/<chapter-id>/
+books/<book-id>/story-bible/characters/<character-id>/design/master-sheet.jpg
+books/<book-id>/story-bible/characters/<character-id>/sprites/anchors.json
+books/<book-id>/story-bible/characters/<character-id>/sprites/bodies/*.png
+books/<book-id>/story-bible/characters/<character-id>/sprites/heads/*.png
+books/<book-id>/story-bible/characters/<character-id>/sprites/composites/*.png
+books/<book-id>/story-bible/locations/<location-id>/backgrounds/
+books/<book-id>/volumes/<volume-id>/source/original.epub
+books/<book-id>/volumes/<volume-id>/chapters/<chapter-id>/chapter.json
+books/<book-id>/volumes/<volume-id>/chapters/<chapter-id>/story/
+books/<book-id>/jobs/
 ```
+
+Recurring characters and locations belong in the shared story bible. Chapter
+folders contain only the analysis, script, subtitles, audio, and references
+needed by that chapter. The complete layout and lifecycle are defined in
+[Animated Story Mode plan](ANIMATED_STORY_MODE_PLAN.md).
+
+Character layers use transparent PNGs. A body layer stops at the neck, head
+expressions are separate layers, and `anchors.json` stores how the selected head
+is aligned. The neutral composite is kept as a review image and fallback. New
+outfits are body variants under the same locked character ID.
 
 Keep the original `.pth` files outside the Flutter assets. Only converted and tested `.onnx` voice packs belong in the app. Generate chapter audio once and reuse it. Generate or add sprites once, optimize them, record their source/license, and reuse them in chapter movements.
 

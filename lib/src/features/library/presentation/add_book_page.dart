@@ -1,9 +1,11 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/state/storytale_scope.dart';
 import '../../../shared/models/storytale_models.dart';
 import '../../../shared/widgets/storytale_components.dart';
 import '../../../shared/widgets/storytale_image_placeholder.dart';
+import '../data/epub_import_service.dart';
 import 'library_page.dart';
 
 class AddBookPage extends StatefulWidget {
@@ -16,7 +18,11 @@ class AddBookPage extends StatefulWidget {
 class _AddBookPageState extends State<AddBookPage> {
   final _title = TextEditingController();
   final _author = TextEditingController();
-  bool _selected = false;
+  final _parser = const EpubImportService();
+
+  BookData? _book;
+  bool _loading = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -25,145 +31,118 @@ class _AddBookPageState extends State<AddBookPage> {
     super.dispose();
   }
 
+  Future<void> _selectEpub() async {
+    final result = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['epub'],
+      withData: true,
+    );
+    if (result == null || !mounted) return;
+
+    final file = result.files.single;
+    final bytes = file.bytes;
+    if (bytes == null) {
+      setState(() => _error = 'The selected EPUB could not be loaded.');
+      return;
+    }
+
+    setState(() {
+      _loading = true;
+      _error = null;
+      _book = null;
+    });
+    try {
+      final book = await _parser.parse(bytes, fileName: file.name);
+      if (!mounted) return;
+      setState(() {
+        _book = book;
+        _title.text = book.title;
+        _author.text = book.author;
+      });
+    } on EpubImportException catch (error) {
+      if (mounted) setState(() => _error = error.message);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _save() {
+    final book = _book;
+    if (book == null) return;
+    book
+      ..title = _title.text.trim().isEmpty ? book.title : _title.text.trim()
+      ..author = _author.text.trim().isEmpty
+          ? 'Unknown author'
+          : _author.text.trim();
+    StoryTaleScope.of(context).addImportedBook(book);
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const BookDetailsPage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final book = _book;
     return StoryTaleAppShell(
       title: 'Add EPUB',
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const StoryTaleImagePlaceholder(
-            path: 'assets/images/ui/epub_upload.png',
-            label: 'EPUB upload illustration placeholder',
+          StoryTaleImagePlaceholder(
+            path: book == null ? 'assets/images/ui/epub_upload.png' : null,
+            bytes: book?.coverBytes,
+            label: book == null
+                ? 'EPUB upload illustration placeholder'
+                : '${book.title} cover',
             icon: Icons.upload_file,
-            height: 150,
+            height: 170,
           ),
           const SizedBox(height: 16),
           OutlinedButton.icon(
-            onPressed: () {
-              setState(() => _selected = true);
-              _title.text = 'My Imported Story';
-              _author.text = 'Local EPUB Author';
-            },
+            onPressed: _loading ? null : _selectEpub,
             icon: const Icon(Icons.folder_open),
-            label: Text(
-              _selected ? 'prototype-story.epub selected' : 'Select EPUB File',
+            label: Text(book?.sourceFileName ?? 'Select EPUB File'),
+          ),
+          if (_loading) ...[
+            const SizedBox(height: 12),
+            const LinearProgressIndicator(),
+            const Text('Reading EPUB metadata and chapters...'),
+          ],
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              _error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Prototype note: the workflow is functional, but native file picking '
-            'and EPUB parsing are the next service integrations.',
-          ),
+          ],
+          if (book != null) ...[
+            const SizedBox(height: 12),
+            Text('${book.chapters.length} readable chapters found'),
+          ],
           const SizedBox(height: 16),
           TextField(
             controller: _title,
+            enabled: book != null,
             decoration: const InputDecoration(labelText: 'Book title'),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _author,
+            enabled: book != null,
             decoration: const InputDecoration(labelText: 'Author'),
           ),
           const SizedBox(height: 12),
-          const DropdownMenu<String>(
-            initialSelection: 'English',
-            expandedInsets: EdgeInsets.zero,
-            label: Text('Language'),
-            dropdownMenuEntries: [
-              DropdownMenuEntry(value: 'English', label: 'English'),
-              DropdownMenuEntry(value: 'Filipino', label: 'Filipino'),
-            ],
+          InputDecorator(
+            decoration: const InputDecoration(labelText: 'Language'),
+            child: Text(book?.language ?? 'Read from the EPUB'),
           ),
           const SizedBox(height: 20),
           FilledButton.icon(
-            onPressed: _selected
-                ? () => Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (_) => ImportProgressPage(
-                        title: _title.text,
-                        author: _author.text,
-                      ),
-                    ),
-                  )
-                : null,
+            onPressed: book == null || _loading ? null : _save,
             icon: const Icon(Icons.save_outlined),
             label: const Text('Save Book'),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class ImportProgressPage extends StatefulWidget {
-  const ImportProgressPage({
-    required this.title,
-    required this.author,
-    super.key,
-  });
-
-  final String title;
-  final String author;
-
-  @override
-  State<ImportProgressPage> createState() => _ImportProgressPageState();
-}
-
-class _ImportProgressPageState extends State<ImportProgressPage> {
-  double _progress = 0;
-  BookData? _book;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _import());
-  }
-
-  Future<void> _import() async {
-    for (final value in [0.2, 0.45, 0.7, 1.0]) {
-      await Future<void>.delayed(const Duration(milliseconds: 180));
-      if (!mounted) return;
-      setState(() => _progress = value);
-    }
-    final book = StoryTaleScope.of(
-      context,
-    ).addPrototypeBook(title: widget.title, author: widget.author);
-    if (mounted) setState(() => _book = book);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final done = _book != null;
-    return StoryTaleAppShell(
-      title: done ? 'Import Complete' : 'Importing EPUB',
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              done ? Icons.check_circle_outline : Icons.auto_stories_outlined,
-              size: 72,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              done ? '${_book!.title} is ready.' : 'Reading EPUB metadata…',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            LinearProgressIndicator(value: _progress),
-            const SizedBox(height: 24),
-            if (done)
-              FilledButton(
-                onPressed: () => Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const BookDetailsPage()),
-                ),
-                child: const Text('View Book'),
-              ),
-          ],
-        ),
       ),
     );
   }

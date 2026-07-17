@@ -105,6 +105,7 @@ class BookDetailsPage extends StatelessWidget {
             children: [
               StoryTaleImagePlaceholder(
                 path: book.coverPath,
+                bytes: book.coverBytes,
                 label: '${book.title} cover placeholder',
                 icon: Icons.menu_book,
                 width: 120,

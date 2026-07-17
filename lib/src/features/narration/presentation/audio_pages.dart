@@ -107,6 +107,7 @@ class _AudioHubPageState extends State<AudioHubPage> {
                 children: [
                   StoryTaleImagePlaceholder(
                     path: book.coverPath,
+                    bytes: book.coverBytes,
                     label: '${book.title} cover placeholder',
                     icon: Icons.auto_stories,
                     width: 92,

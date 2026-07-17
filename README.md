@@ -13,8 +13,11 @@ StoryTale is a local-first mobile EPUB library with DeepL translation, on-device
 - Offline Tagalog TTS and five ONNX character voice packs are planned for Android
 - Cloudflare Workers AI is the planned sprite/background image provider
 - StoryTale image Worker deployed and verified with a real FLUX.1-schnell result
+- Real local EPUB selection, metadata, cover, and cleaned chapter parsing
 
-EPUB importing, DeepL translation, TTS, and Story Mode playback are placeholders for later phases.
+Imported books currently stay in memory for the app session. Device persistence,
+DeepL translation, Gemini analysis, TTS, and Story Mode playback are the next
+implementation phases.
 
 ## Run locally
 
@@ -22,6 +25,9 @@ EPUB importing, DeepL translation, TTS, and Story Mode playback are placeholders
 flutter pub get
 .\tool\run_storytale.ps1
 ```
+
+Put local DeepL and Gemini keys in the ignored `.env` file. It is prepared for
+the upcoming API service but is not bundled or read by Flutter yet.
 
 For a browser preview:
 
@@ -43,6 +49,8 @@ flutter test
 - [Short plan](docs/PROJECT_PLAN.md)
 - [Requirements](docs/REQUIREMENTS.md)
 - [App flow](docs/APP_FLOW.md)
+- [Animated Story Mode plan](docs/ANIMATED_STORY_MODE_PLAN.md)
+- [Environment setup](docs/ENVIRONMENT_SETUP.md)
 - [Asset guide](docs/ASSET_GUIDE.md)
 - [Cloudflare image generator](docs/CLOUDFLARE_IMAGE_GENERATOR.md)
 - [UI concepts](docs/ui-concepts/README.md)

@@ -278,25 +278,37 @@ lib/src/
 ```text
 Book
 - id, epubPath, title, author, language, coverPath
-- description, tags, chapters, progress, lastOpenedAt
+- description, tags, volumes, progress, lastOpenedAt
+
+Volume
+- id, bookId, title, sortOrder, epubPath, chapters
 
 Chapter
-- id, bookId, title, originalText, translatedText
+- id, bookId, volumeId, title, sortOrder, chapterType
+- originalText, translatedText, sourceStart, sourceEnd
 - translationStatus, readingPosition, bookmarked
+
+BookStoryBible
+- bookId, characters, aliases, lockedDesigns, locations, style, timeline
+- Gemini analysis version and unresolvedItems
 
 VoiceProfile
 - id, name, role, modelPath, status
 
 ChapterStory
-- chapterId, moral, characters, scenes, preparationStatus
+- chapterId, sourceTextHash, moral, characters, scenes, preparationStatus
 
 StoryScene
-- backgroundPath, characters, speakerId, subtitle
+- backgroundPath, bodyAssetId, headAssetId, speakerId, subtitle
 - audioPath, movement, soundEffectPath, duration
 
 ReaderSettings
 - textSize, fontFamily, theme, lineSpacing, languageMode
 ```
+
+The current prototype keeps chapters directly under `BookData`. The planned
+volume migration and complete Story Mode preparation schema are documented in
+[Animated Story Mode plan](../ANIMATED_STORY_MODE_PLAN.md).
 
 ## UI image asset plan
 
@@ -340,4 +352,3 @@ Book covers extracted from EPUBs are stored dynamically. Generated Story Mode ba
 6. Build Audio hub, offline Tagalog TTS, five voice profiles, and chapter preparation.
 7. Build the preferred Story Mode player, contents sheet, and chapter moral.
 8. Add profile, downloads/storage, settings, help, and remaining empty/error states.
-

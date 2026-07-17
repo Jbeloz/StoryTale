@@ -1,12 +1,25 @@
+import 'dart:typed_data';
+
 enum PreparationStatus { notStarted, preparing, ready, failed }
 
 enum ReaderLanguageMode { english, filipino, dual }
+
+enum ChapterType { chapter, sideStory, extra, prologue, epilogue, other }
+
+class ChapterTextBlock {
+  const ChapterTextBlock({required this.id, required this.text});
+
+  final String id;
+  final String text;
+}
 
 class ChapterData {
   ChapterData({
     required this.id,
     required this.title,
     required this.originalText,
+    this.type = ChapterType.chapter,
+    this.sourceBlocks = const [],
     this.translatedText,
     this.progress = 0,
     this.bookmarked = false,
@@ -15,6 +28,8 @@ class ChapterData {
   final String id;
   final String title;
   final String originalText;
+  final ChapterType type;
+  final List<ChapterTextBlock> sourceBlocks;
   String? translatedText;
   double progress;
   bool bookmarked;
@@ -30,6 +45,8 @@ class BookData {
     required this.chapters,
     this.language = 'English',
     this.coverPath,
+    this.coverBytes,
+    this.sourceFileName,
     this.progress = 0,
     DateTime? lastOpenedAt,
   }) : lastOpenedAt = lastOpenedAt ?? DateTime.now();
@@ -42,6 +59,8 @@ class BookData {
   final List<String> tags;
   final List<ChapterData> chapters;
   String? coverPath;
+  final Uint8List? coverBytes;
+  final String? sourceFileName;
   double progress;
   DateTime lastOpenedAt;
 }

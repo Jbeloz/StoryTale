@@ -1,9 +1,12 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 class StoryTaleImagePlaceholder extends StatelessWidget {
   const StoryTaleImagePlaceholder({
     required this.label,
     this.path,
+    this.bytes,
     this.icon = Icons.image_outlined,
     this.height = 160,
     this.width,
@@ -13,6 +16,7 @@ class StoryTaleImagePlaceholder extends StatelessWidget {
 
   final String label;
   final String? path;
+  final Uint8List? bytes;
   final IconData icon;
   final double height;
   final double? width;
@@ -56,6 +60,18 @@ class StoryTaleImagePlaceholder extends StatelessWidget {
       ),
     );
 
+    if (bytes != null && bytes!.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: Image.memory(
+          bytes!,
+          height: height,
+          width: width,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => fallback,
+        ),
+      );
+    }
     if (path == null || path!.isEmpty) return fallback;
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),

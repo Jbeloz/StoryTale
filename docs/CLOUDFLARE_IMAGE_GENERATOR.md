@@ -5,7 +5,8 @@
 1. Use a small Cloudflare Worker as the only public image endpoint.
 2. Call Workers AI through the `AI` binding with `@cf/black-forest-labs/flux-1-schnell`.
 3. Require a private prototype bearer token and apply a short rate limit before inference.
-4. Return a JPEG to StoryTale, let the user review it, then save accepted images locally.
+4. The current route returns JPEG. The planned sprite route applies foreground
+   segmentation and returns a transparent PNG before final review.
 5. Do not store EPUB text, prompts, or generated images in Cloudflare.
 
 ## Free allowance
@@ -27,7 +28,9 @@ flowchart LR
     D --> E["Workers AI - FLUX.1-schnell"]
     E --> F["JPEG response"]
     F --> G["User review"]
-    G --> H["Local sprite/background storage"]
+    G --> H["Cloudflare Images foreground segmentation"]
+    H --> I["Transparent PNG or normal background JPEG"]
+    I --> J["Local reviewed story asset storage"]
 ```
 
 Worker folder: `cloudflare/image-worker/`
@@ -80,4 +83,25 @@ The active token exists only as a Cloudflare secret and was not printed, committ
 
 ## Prototype security note
 
-The bearer token is suitable for a private school prototype, but a value shipped inside a mobile app can be extracted. Before public release, replace the shared token with real user authentication and per-user quotas. Generated JPEGs do not contain transparency, so character sprites may need local background removal or a later transparent-image workflow.
+The bearer token is suitable for a private school prototype, but a value shipped inside a mobile app can be extracted. Before public release, replace the shared token with real user authentication and per-user quotas.
+
+## Planned transparent sprites
+
+The deployed FLUX.1-schnell route currently returns JPEG, so the existing test
+does not have alpha transparency. The next Worker change will add a Cloudflare
+Images binding named `IMAGES`, pass the generated sprite bytes through
+`segment: "foreground"`, and return `image/png`. Background requests remain
+normal JPEG or WebP.
+
+Cloudflare documents foreground segmentation as replacing the background with
+transparent pixels. Images Free currently includes up to 5,000 unique
+transformations per month. This must still be tested on character hair, hands,
+and clothing; manual transparent PNG replacement remains available.
+
+- [Cloudflare Images foreground segmentation](https://developers.cloudflare.com/images/optimization/features/#segment)
+- [Cloudflare Images binding](https://developers.cloudflare.com/images/optimization/binding/)
+- [Cloudflare Images pricing](https://developers.cloudflare.com/images/pricing/)
+
+Story Mode should send only a reviewed character or location description to
+this Worker, never the entire EPUB. Asset reuse, review, and versioning are
+defined in [Animated Story Mode plan](ANIMATED_STORY_MODE_PLAN.md).

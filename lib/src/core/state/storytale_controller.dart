@@ -118,26 +118,9 @@ class StoryTaleController extends ChangeNotifier {
     notifyListeners();
   }
 
-  BookData addPrototypeBook({required String title, required String author}) {
-    final id = 'book-${DateTime.now().microsecondsSinceEpoch}';
-    final book = BookData(
-      id: id,
-      title: title.trim().isEmpty ? 'Imported EPUB' : title.trim(),
-      author: author.trim().isEmpty ? 'Unknown author' : author.trim(),
-      description: 'A locally imported EPUB waiting for parsed metadata.',
-      tags: ['Imported'],
-      chapters: [
-        ChapterData(
-          id: '$id-chapter-1',
-          title: 'Chapter 1',
-          originalText:
-              'This is placeholder chapter text. EPUB parsing will replace it.',
-        ),
-      ],
-    );
+  void addImportedBook(BookData book) {
     books.add(book);
     openBook(book);
-    return book;
   }
 
   void removeBook(BookData book) {

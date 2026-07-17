@@ -161,6 +161,7 @@ class BookCoverCard extends StatelessWidget {
         onTap: onTap,
         leading: StoryTaleImagePlaceholder(
           path: book.coverPath,
+          bytes: book.coverBytes,
           label: book.title,
           icon: Icons.menu_book,
           width: 56,
