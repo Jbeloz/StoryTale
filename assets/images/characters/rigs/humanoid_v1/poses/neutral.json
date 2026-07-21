@@ -1,0 +1,14 @@
+{
+  "id": "neutral",
+  "name": "Idle",
+  "rigId": "humanoid_v1",
+  "faceExpressionId": "neutral",
+  "layerPolicyVersion": 1,
+  "parts": {
+    "head": {
+      "rotation": 0,
+      "x": 0.39667807334714666,
+      "y": 16.26444666838843
+    }
+  }
+}

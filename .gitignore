@@ -52,6 +52,7 @@ models/voices/raw/**/*.model
 models/voices/raw/**/*.zip
 docs/ui-concepts/ui/*.zip
 docs/ui-concepts/ui/*.epub
+docs/ui-concepts/ui/.docx_qa_*/
 
 # Symbolication related
 app.*.symbols

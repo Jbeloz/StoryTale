@@ -33,6 +33,26 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
-  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    async function startStoryTale() {
+      const isLocal = location.hostname === '127.0.0.1' ||
+        location.hostname === 'localhost';
+      if (isLocal && 'serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((item) => item.unregister()));
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map((name) => caches.delete(name)));
+      }
+
+      const script = document.createElement('script');
+      script.src = isLocal
+        ? `flutter_bootstrap.js?v=${Date.now()}`
+        : 'flutter_bootstrap.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+
+    startStoryTale();
+  </script>
 </body>
 </html>

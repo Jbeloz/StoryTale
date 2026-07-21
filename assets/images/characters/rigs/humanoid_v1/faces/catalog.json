@@ -1,0 +1,32 @@
+{
+  "id": "humanoid_v1_faces",
+  "headPartId": "head",
+  "defaultExpressionId": "neutral",
+  "expressions": [
+    {
+      "id": "neutral",
+      "label": "Neutral",
+      "asset": "assets/images/characters/rigs/humanoid_v1/faces/neutral.png"
+    },
+    {
+      "id": "talking",
+      "label": "Talking",
+      "asset": "assets/images/characters/rigs/humanoid_v1/faces/talking.png"
+    },
+    {
+      "id": "happy",
+      "label": "Happy",
+      "asset": "assets/images/characters/rigs/humanoid_v1/faces/happy.png"
+    },
+    {
+      "id": "sad",
+      "label": "Sad",
+      "asset": "assets/images/characters/rigs/humanoid_v1/faces/sad.png"
+    },
+    {
+      "id": "angry",
+      "label": "Angry",
+      "asset": "assets/images/characters/rigs/humanoid_v1/faces/angry.png"
+    }
+  ]
+}

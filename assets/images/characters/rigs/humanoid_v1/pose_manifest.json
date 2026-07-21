@@ -1,0 +1,26 @@
+{
+  "rigId": "humanoid_v1",
+  "layerPolicyVersion": 1,
+  "poses": [
+    {
+      "id": "neutral",
+      "name": "Idle",
+      "builtIn": true
+    },
+    {
+      "id": "talking",
+      "name": "Talking",
+      "builtIn": true
+    },
+    {
+      "id": "pointing",
+      "name": "Pointing",
+      "builtIn": true
+    },
+    {
+      "id": "walking",
+      "name": "Walking",
+      "builtIn": true
+    }
+  ]
+}

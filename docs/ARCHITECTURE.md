@@ -20,11 +20,14 @@ flowchart LR
     G --> H["Story Mode Player"]
     O --> H
     H --> I["Sprites + Movement + Voices + Moral"]
-    J["Cloudflare Image Worker"] --> L["Workers AI - FLUX.1-schnell"]
-    L --> R["JPEG Draft"]
-    R --> S["Foreground Segmentation for Sprites"]
-    R --> K["Saved Local Images"]
-    S --> K
+    Q --> T["One Gemini Full-Body Master"]
+    T --> S["Local Green Removal + Modular Rig Split"]
+    S --> U["Transparent Head + 9 Body Parts + Pose JSON"]
+    U --> G
+    J["Private Image Worker"] --> T
+    J --> L["Workers AI - FLUX.2 klein 4B"]
+    L --> R["Chapter Background JPEG"]
+    R --> K["Saved Local Backgrounds"]
     K --> G
 ```
 
@@ -44,9 +47,12 @@ flowchart LR
 | Book story bible | Locks recurring character identities, appearances, body/head sprite layers, aliases, locations, and voices across all volumes. |
 | ChapterStory data | Stores the sprites, dialogue, movements, sounds, and moral for one chapter. |
 | Story Mode player | Moves sprites over backgrounds while playing voices, subtitles, and sound effects. |
-| Cloudflare Image Worker | Private, rate-limited endpoint that creates a sprite or background without exposing Cloudflare account credentials. |
-| Workers AI | Runs `@cf/black-forest-labs/flux-1-schnell` and returns a JPEG for local storage. |
-| Cloudflare Images | Removes sprite backgrounds with foreground segmentation and returns transparent PNG output. |
+| Gemini image model | Uses `gemini-3.1-flash-image` with the proportion, approved-head, and approved-body references to create one master image. |
+| Cloudflare Image Worker | Private, rate-limited gateway. It routes sprite requests to Gemini and background requests to Workers AI. |
+| Workers AI | Runs `@cf/black-forest-labs/flux-2-klein-4b` and returns a background JPEG. |
+| Local sprite processor | Removes the flat green background and prepares the approved head and nine cropped body parts without redrawing them. |
+| Sprite Studio | Edits compatible rigs and named poses with precise joint transforms, validated layer rules, and local pose storage. |
+| Sprite review | Shows the Gemini source, modular parts, and locally rejoined neutral preview before approval. |
 
 ## Dynamic chapter data
 
@@ -84,9 +90,17 @@ analysis, generation, and validation flow.
 | Character voices | Five selected RVC `.pth` models converted to `.onnx` voice packs |
 | Voice processing | On-device, generated before playback, then cached locally |
 | Story Mode | Sprites and simple movements |
-| Image creation | Cloudflare Workers AI with FLUX.1-schnell |
-| Sprite transparency | Cloudflare Images foreground segmentation, then PNG output |
+| Sprite creation | One Gemini `gemini-3.1-flash-image` master using the locked description and three references |
+| Background creation | Cloudflare Workers AI with FLUX.2 klein 4B |
+| Sprite transparency | Local green removal; transparent cropped parts use saved positions and joint pivots |
 | Image storage | Save accepted sprites and backgrounds on the device |
+
+Gemini API image generation currently requires paid API billing; its free tier
+does not include the image models. The project owner pays for generation when
+all users share the server-side key, so a public release also needs per-user
+quotas and a spending limit. `gemini-3.1-flash-lite-image` is cheaper but is not
+the default because the full Flash Image model handles multiple references and
+character consistency better.
 
 ## On-device voice flow
 
@@ -140,15 +154,20 @@ lib/src/features/    feature UI and logic
 lib/src/shared/      reusable dynamic widgets
 assets/models/tts/   bundled offline Tagalog TTS files
 assets/models/voices/ five converted ONNX voice packs
+assets/images/characters/rigs/ bundled demo rig parts and pose JSON
 assets/              bundled demo sprites, backgrounds, and sound
+app local storage/sprite-studio/ reusable custom pose JSON
 app local storage/   uploaded EPUBs and generated chapter content
 docs/                short project decisions
 ```
 
-DeepL remains the only translation provider, Gemini is the story-analysis
-provider, and Cloudflare is the image provider. Do not commit API keys or image
-Worker tokens. Root `.env` is for a local service only and must not be bundled
-into Flutter; a distributed app needs a protected server-side proxy.
+DeepL remains the only translation provider. Gemini analyzes stories and
+creates sprites; Cloudflare Workers AI creates backgrounds. The private Worker
+keeps the Gemini API key server-side and selects the provider from the request
+kind. Do not commit API keys or image Worker tokens. The run script passes only
+the Worker URL and prototype client token into Flutter. A distributed app needs
+real user authentication and per-user quotas instead of a shared client token.
 
 See [Cloudflare image generator](CLOUDFLARE_IMAGE_GENERATOR.md) for the setup and test flow.
 See [Animated Story Mode plan](ANIMATED_STORY_MODE_PLAN.md) for the volume-aware chapter preparation plan.
+See [Sprite Studio plan](SPRITE_STUDIO_PLAN.md) for the final rig editor, input, layer, pose storage, and Story Mode integration plan.

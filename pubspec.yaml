@@ -13,6 +13,9 @@ dependencies:
   flutter:
     sdk: flutter
   html: ^0.15.6
+  http: ^1.6.0
+  image: ^3.3.0
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:
@@ -38,7 +41,13 @@ flutter:
     - assets/books/
     - assets/images/ui/
     - assets/images/backgrounds/
+    - assets/images/backgrounds/cloudflare_examples/
     - assets/images/characters/
+    - assets/images/characters/references/
+    - assets/images/characters/rigs/humanoid_v1/
+    - assets/images/characters/rigs/humanoid_v1/base/
+    - assets/images/characters/rigs/humanoid_v1/faces/
+    - assets/images/characters/rigs/humanoid_v1/poses/
     - assets/audio/narration/
     - assets/audio/sfx/
     - assets/models/tts/

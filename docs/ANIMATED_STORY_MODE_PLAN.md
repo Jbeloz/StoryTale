@@ -50,17 +50,29 @@ books/<book-id>/
 |   |   `-- <character-id>/
 |   |       |-- profile.json
 |   |       |-- design/
-|   |       |   |-- master-sheet.jpg
+|   |       |   |-- master-source.jpg
 |   |       |   `-- prompt.json
 |   |       `-- sprites/
 |   |           |-- anchors.json
-|   |           |-- bodies/
-|   |           |   |-- default.png
-|   |           |   `-- <outfit-id>.png
+|   |           |-- master-transparent.png
+|   |           |-- rig.json
+|   |           |-- base-parts/
+|   |           |   |-- torso.png
+|   |           |   `-- <limb-part>.png
+|   |           |-- outfits/
+|   |           |   `-- <outfit-id>/parts/*.png
+|   |           |-- poses/
+|   |           |   |-- neutral.json
+|   |           |   |-- talking.json
+|   |           |   `-- <pose-id>.json
 |   |           |-- heads/
-|   |           |   |-- neutral.png
-|   |           |   |-- happy.png
-|   |           |   `-- sad.png
+|   |           |   |-- base.png
+|   |           |   `-- expressions/
+|   |           |       |-- neutral.png
+|   |           |       |-- talking.png
+|   |           |       |-- happy.png
+|   |           |       |-- sad.png
+|   |           |       `-- angry.png
 |   |           `-- composites/
 |   |               `-- full-neutral.png
 |   `-- locations/
@@ -98,10 +110,12 @@ The story bible is shared across all volumes. A character such as the Little
 Prince keeps the same `characterId`, appearance, sprite set, and voice mapping
 instead of being generated again for every chapter.
 
-The composable body layer ends at the neck and the transparent head layer is
-positioned using `anchors.json`. `composites/full-neutral.png` is a reviewed
-body-plus-head preview and fallback. A clothing change creates another body
-variant under the same character; it never creates a different character ID.
+The transparent head and nine body parts are connected using the hierarchy and
+pivots in `rig.json`. The approved full-body proportion uses a large chibi head
+and short body, with the head wider than the shoulders.
+`composites/full-neutral.png` is a reviewed preview and fallback. Clothing is
+split into overlays matching the same body parts and pivots. Pose JSON changes
+joint transforms without generating another picture or character ID.
 
 ## 3. Story bible
 
@@ -174,9 +188,10 @@ analysis format changes or the user requests a rebuild.
 
 Gemini is implemented behind a `StoryAnalysisProvider` adapter so the rest of
 the app depends only on validated `ChapterAnalysis` data. DeepL remains only
-for English-to-Filipino translation, and Cloudflare remains only for sprite
-and background processing. A manually prepared JSON fixture should still
-exist for deterministic offline tests.
+for English-to-Filipino translation. Gemini 3.1 Flash Image creates reviewed
+character sprites, while Cloudflare Workers AI creates backgrounds only. Both
+image routes pass through the private rate-limited Worker. A manually prepared
+JSON fixture should still exist for deterministic offline tests.
 
 ## 5. Chapter boundaries and full text coverage
 
@@ -239,7 +254,8 @@ StoryScene
 - sceneId and sortOrder
 - sourceStartBlock and sourceEndBlock
 - locationId and backgroundAssetId
-- characterLayers: characterId, bodyAssetId, headAssetId, position, movement
+- characterLayers: characterId, rigId, poseId, faceExpressionId, outfitId,
+  position, movement
 - lines: lineId, type, speakerId, English/Filipino text, audioAssetId
 - transition: none, fade, or slide
 - soundEffectIds
@@ -259,33 +275,34 @@ different Flutter page for each chapter.
 
 ## 8. Consistent transparent sprite workflow
 
-1. Gemini identifies a new character and creates a descriptive candidate; it
-   does not generate or replace artwork.
+1. Gemini story analysis identifies a new character and creates a descriptive
+   candidate; it does not silently replace approved artwork.
 2. The user reviews the description, palette, clothing, proportions, and style.
-3. Generate one master character sheet with a full-body reference and the
-   needed head expressions on a plain background.
+3. Use `gemini-3.1-flash-image` once to generate one front-facing full-body
+   master on flat green. Attach the full-proportion, approved-head, and
+   approved-body references through the private Worker.
 4. Keep that approved master sheet for every later volume. Do not generate the
    same character again per chapter.
-5. Run the JPEG through Cloudflare Images foreground segmentation and output a
-   transparent PNG or WebP.
-6. Crop/export a body layer, separate expression head layers, and a neutral
-   composite preview. Save the head anchor and scale in `anchors.json`.
-7. Reuse those layers. A new outfit adds a reviewed body variant under the same
-   character ID; ordinary emotions change only the head asset.
+5. Remove the green background locally and save `master-transparent.png`.
+6. Keep the neutral master as the alignment reference, then split that exact
+   image into the head and nine body parts. Save each cropped part's original
+   position, parent, pivot, size, and layer order in `rig.json`.
+7. Rejoin the parts locally as `composites/full-neutral.png` and reject the rig
+   if it no longer matches the approved master. A new outfit adds overlays for
+   those same parts and pivots; ordinary emotions change only the face layer.
 8. Save the prompt, seed when available, model, hash, version, review state,
    and source/license note.
 
-The current `flux-1-schnell` Worker returns JPEG and cannot create alpha by
-itself. Cloudflare Images now supports `segment: "foreground"`, which replaces
-the background with transparent pixels. The planned Worker update therefore
-adds an `IMAGES` binding, passes the generated JPEG bytes into the Images
-pipeline, and returns `image/png`. Segmentation quality must be tested on hair,
-hands, and clothing edges; manual transparent PNG replacement remains the
-fallback.
+Gemini supplies only the full-body master. StoryTale removes the requested flat
+green background locally, splits that exact result into reusable head/body
+layers, and creates the rejoined preview without another API request. The
+Cloudflare Worker is a
+secure gateway for Gemini sprite calls, while its `flux-2-klein-4b` binding
+creates chapter backgrounds only.
 
-Prompt-only FLUX generation cannot guarantee the same identity across repeated
-requests. Consistency comes from approving one master sheet, locking its design
-fingerprint, splitting it into reusable body/head layers, and never
+Reference-guided generation improves shape and style consistency but does not
+guarantee it. Consistency still comes from approving one master sheet, locking
+its design fingerprint, splitting it into reusable body/head layers, and never
 regenerating that character for a later volume.
 
 ## 9. Audio, subtitles, and moral
@@ -387,9 +404,20 @@ every image and audio file.
 ### Phase 4 - Review and asset reuse
 
 - Build character/alias, speaker, location, and art-style review screens.
-- Generate and approve one master sheet per character.
-- Add Cloudflare Images foreground segmentation and transparent output.
-- Split the approved sheet into reusable body/head layers and anchors.
+- Generate and approve one Gemini full-body master per character.
+- Attach locked shape and approved-design references to each Gemini request.
+- Add local transparent sprite cleanup and validation.
+- Split the approved master into the head and nine transparent body parts.
+- Record the hierarchy, pivots, neutral placement, and layer order in `rig.json`.
+- Complete Sprite Studio with consistent pointer selection, fixed layer rules,
+  a non-scrolling canvas/inspector layout, direct bone controls, a five-face
+  default catalog, and named app-local poses.
+- Derive bone controls from each rig's existing hierarchy and pivots; save only
+  the resulting transforms, never editor bone graphics.
+- Keep Neutral, Talking, Happy, Sad, and Angry as the minimal expression IDs,
+  with Neutral as the required fallback.
+- Save reusable poses as validated transforms in JSON instead of new body
+  pictures. See [Sprite Studio plan](SPRITE_STUDIO_PLAN.md).
 - Connect approved sprites/backgrounds to stable asset IDs.
 
 ### Phase 5 - Audio and package builder

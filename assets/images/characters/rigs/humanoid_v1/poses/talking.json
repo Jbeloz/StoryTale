@@ -1,0 +1,34 @@
+{
+  "id": "talking",
+  "name": "Talking",
+  "rigId": "humanoid_v1",
+  "faceExpressionId": "talking",
+  "layerPolicyVersion": 1,
+  "parts": {
+    "upper_arm_right": {
+      "rotation": 34,
+      "x": 0,
+      "y": 0
+    },
+    "lower_arm_right": {
+      "rotation": -92,
+      "x": 0,
+      "y": 0
+    },
+    "upper_arm_left": {
+      "rotation": -33.50250191848281,
+      "x": 0,
+      "y": 0
+    },
+    "lower_arm_left": {
+      "rotation": -7.0050735471667736,
+      "x": 0,
+      "y": 0
+    },
+    "head": {
+      "rotation": 0,
+      "x": 0,
+      "y": 16
+    }
+  }
+}

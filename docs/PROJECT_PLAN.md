@@ -65,14 +65,30 @@ grouping. The test EPUB currently parses into 15 readable story sections.
 Detailed phases, folder organization, schemas, rebuilding rules, and tests are
 in [Animated Story Mode plan](ANIMATED_STORY_MODE_PLAN.md).
 
-## 6. Sprite and Background Creation - Cloudflare setup done
+## 5.1 Sprite Studio
 
-- Use the private StoryTale Cloudflare Worker with Workers AI
-- Start with `@cf/black-forest-labs/flux-1-schnell`
-- Use Cloudflare Images foreground segmentation for transparent sprite output
-- Generate images once, review them, then store accepted files locally
-- Keep Story Mode working with manually provided sprites
-- Connect the Flutter image-generation screen in a later app phase
+- [x] Rename the current Sprite Positioner to Sprite Studio
+- [x] Keep the sprite canvas visible beside or above its transform inspector
+- [x] Use one consistent alpha-aware selector for mouse, touchpad, and touch
+- [x] Enforce the approved right/left limb and arm/leg layer rules
+- [x] Add a bone overlay that uses the existing parent pivots for easier posing
+- [x] Add a default catalog with Neutral, Talking, Happy, Sad, and Angry faces
+- [x] Create and name custom poses starting from Neutral after bones and faces work
+- [x] Save pose transforms and layers locally for Animated Story Mode
+
+The complete final-editor plan is in
+[Sprite Studio plan](SPRITE_STUDIO_PLAN.md).
+
+## 6. Sprite and Background Creation
+
+- Use Gemini 3.1 Flash Image for one reviewed full-body master per character
+- Keep the Gemini key in the private Worker, never in Flutter
+- Send the locked description and approved references to preserve identity
+- Remove green and split the same master into shared-canvas head/body layers
+- Never regenerate a locked character for every chapter or volume
+- Route sprites to Gemini and backgrounds to Workers AI through the private Worker
+- Store accepted sprites and backgrounds locally
+- Keep Story Mode working with manually provided artwork
 
 ## Decisions still open
 

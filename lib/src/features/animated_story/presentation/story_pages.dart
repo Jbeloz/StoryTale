@@ -1,9 +1,14 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/state/storytale_scope.dart';
 import '../../../shared/models/storytale_models.dart';
 import '../../../shared/widgets/storytale_components.dart';
 import '../../../shared/widgets/storytale_image_placeholder.dart';
+import '../data/sprite_layer_processor.dart';
+import '../data/story_artwork_service.dart';
+import 'sprite_positioner_page.dart';
 
 class StoryPreparationPage extends StatefulWidget {
   const StoryPreparationPage({super.key});
@@ -386,8 +391,73 @@ class ChapterMoralPage extends StatelessWidget {
   }
 }
 
-class SpriteReviewPage extends StatelessWidget {
+class SpriteReviewPage extends StatefulWidget {
   const SpriteReviewPage({super.key});
+
+  @override
+  State<SpriteReviewPage> createState() => _SpriteReviewPageState();
+}
+
+class _SpriteReviewPageState extends State<SpriteReviewPage> {
+  final _service = StoryArtworkService();
+  final _processor = const SpriteLayerProcessor();
+  final _spriteDetails = TextEditingController(
+    text:
+        'a kind young prince with short golden hair, a long blue coat, '
+        'cream trousers, and brown boots',
+  );
+  final _backgroundDetails = TextEditingController(
+    text:
+        'a moonlit rose garden on a tiny asteroid with a gentle purple-blue '
+        'sky and room for two character sprites',
+  );
+  _ArtworkMode _mode = _ArtworkMode.sprite;
+  Uint8List? _generatedImage;
+  SpriteLayers? _spriteLayers;
+  _SpritePreview _spritePreview = _SpritePreview.rejoined;
+  String? _error;
+  bool _generating = false;
+
+  @override
+  void dispose() {
+    _spriteDetails.dispose();
+    _backgroundDetails.dispose();
+    super.dispose();
+  }
+
+  Future<void> _generate() async {
+    setState(() {
+      _generating = true;
+      _generatedImage = null;
+      _spriteLayers = null;
+      _error = null;
+    });
+    try {
+      if (_mode == _ArtworkMode.sprite) {
+        final master = await _service.generateSpriteMaster(_spriteDetails.text);
+        final layers = _processor.process(master);
+        if (mounted) {
+          setState(() {
+            _spriteLayers = layers;
+            _spritePreview = _SpritePreview.rejoined;
+          });
+        }
+      } else {
+        final background = await _service.generateBackground(
+          _backgroundDetails.text,
+        );
+        if (mounted) setState(() => _generatedImage = background);
+      }
+    } on ArtworkGenerationException catch (error) {
+      if (mounted) setState(() => _error = error.message);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = 'The story artwork could not be generated.');
+      }
+    } finally {
+      if (mounted) setState(() => _generating = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -396,51 +466,188 @@ class SpriteReviewPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const StoryTaleImagePlaceholder(
-            label: 'Generated chapter background placeholder',
-            icon: Icons.landscape_outlined,
-            height: 180,
+          SegmentedButton<_ArtworkMode>(
+            segments: const [
+              ButtonSegment(
+                value: _ArtworkMode.sprite,
+                icon: Icon(Icons.face_retouching_natural_outlined),
+                label: Text('Sprite'),
+              ),
+              ButtonSegment(
+                value: _ArtworkMode.background,
+                icon: Icon(Icons.landscape_outlined),
+                label: Text('Background'),
+              ),
+            ],
+            selected: {_mode},
+            onSelectionChanged: (selection) => setState(() {
+              _mode = selection.first;
+              _generatedImage = null;
+              _spriteLayers = null;
+              _error = null;
+            }),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _mode == _ArtworkMode.sprite
+                ? 'Gemini Sprite Test'
+                : 'Cloudflare Background Test',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _service.isConfigured
+                ? _mode == _ArtworkMode.sprite
+                      ? 'Ready. Gemini 3.1 Flash Image creates character sprites.'
+                      : 'Ready. Cloudflare Workers AI creates chapter backgrounds.'
+                : 'Token not loaded. Add it to .env and restart with the run script.',
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'The app calls the private Worker. Your Gemini API key stays on the '
+            'server and is never added to Flutter.',
+          ),
+          if (_mode == _ArtworkMode.sprite) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'Gemini makes one master using all three references. StoryTale '
+              'then removes the green background and splits that same image, '
+              'so the head and body always fit when rejoined.',
+            ),
+          ],
+          const SizedBox(height: 12),
+          TextField(
+            controller: _mode == _ArtworkMode.sprite
+                ? _spriteDetails
+                : _backgroundDetails,
+            maxLines: 3,
+            decoration: InputDecoration(
+              labelText: _mode == _ArtworkMode.sprite
+                  ? 'Character appearance'
+                  : 'Background scene description',
+              border: const OutlineInputBorder(),
+            ),
           ),
           const SizedBox(height: 12),
-          const StoryTaleImagePlaceholder(
-            label: 'Generated character sprite placeholder',
-            icon: Icons.accessibility_new,
-            height: 180,
+          Container(
+            height: 260,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
+            child: _generating
+                ? const Center(child: CircularProgressIndicator())
+                : _previewImage != null
+                ? Image.memory(_previewImage!, fit: BoxFit.contain)
+                : Image.asset(_placeholderAsset, fit: BoxFit.contain),
           ),
+          if (_mode == _ArtworkMode.sprite && _spriteLayers != null) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _SpritePreview.values
+                  .map(
+                    (preview) => ChoiceChip(
+                      label: Text(preview.label),
+                      selected: _spritePreview == preview,
+                      onSelected: (_) {
+                        setState(() => _spritePreview = preview);
+                      },
+                    ),
+                  )
+                  .toList(),
+            ),
+          ],
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ],
           const SizedBox(height: 16),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
               FilledButton.icon(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.check),
-                label: const Text('Accept'),
+                onPressed: _generating ? null : _generate,
+                icon: const Icon(Icons.auto_awesome),
+                label: Text(
+                  !_hasGeneratedArtwork
+                      ? _mode == _ArtworkMode.sprite
+                            ? 'Generate Master Sprite'
+                            : 'Generate Background'
+                      : 'Regenerate',
+                ),
               ),
               OutlinedButton.icon(
-                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Cloudflare image regeneration will connect here.',
+                onPressed: !_hasGeneratedArtwork
+                    ? null
+                    : () => Navigator.pop(context),
+                icon: const Icon(Icons.check),
+                label: Text(
+                  _mode == _ArtworkMode.sprite
+                      ? 'Accept Sprite'
+                      : 'Accept Background',
+                ),
+              ),
+              if (_mode == _ArtworkMode.sprite)
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const SpritePositionerPage(),
                     ),
                   ),
+                  icon: const Icon(Icons.accessibility_new),
+                  label: const Text('Open Sprite Studio'),
                 ),
-                icon: const Icon(Icons.refresh),
-                label: const Text('Regenerate'),
-              ),
-              OutlinedButton.icon(
-                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Local image replacement will connect here.'),
-                  ),
-                ),
-                icon: const Icon(Icons.image_search),
-                label: const Text('Replace'),
-              ),
             ],
           ),
         ],
       ),
     );
   }
+
+  String get _placeholderAsset {
+    if (_mode == _ArtworkMode.background) {
+      return 'assets/images/backgrounds/cloudflare_examples/'
+          'moonlit-rose-garden.jpg';
+    }
+    return 'assets/images/characters/references/full-proportion.png';
+  }
+
+  bool get _hasGeneratedArtwork => _mode == _ArtworkMode.sprite
+      ? _spriteLayers != null
+      : _generatedImage != null;
+
+  Uint8List? get _previewImage {
+    if (_mode == _ArtworkMode.background) return _generatedImage;
+    final layers = _spriteLayers;
+    if (layers == null) return null;
+    return switch (_spritePreview) {
+      _SpritePreview.source => layers.source,
+      _SpritePreview.head => layers.head,
+      _SpritePreview.body => layers.body,
+      _SpritePreview.rejoined => layers.rejoined,
+    };
+  }
+}
+
+enum _ArtworkMode { sprite, background }
+
+enum _SpritePreview {
+  source('Gemini source'),
+  head('Head'),
+  body('Body'),
+  rejoined('Rejoined');
+
+  const _SpritePreview(this.label);
+
+  final String label;
 }

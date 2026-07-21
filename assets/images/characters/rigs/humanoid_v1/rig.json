@@ -1,0 +1,116 @@
+{
+  "id": "humanoid_v1",
+  "canvas": {"width": 1103, "height": 1172},
+  "parts": [
+    {
+      "id": "lower_leg_right",
+      "label": "Right lower leg",
+      "asset": "assets/images/characters/rigs/humanoid_v1/base/lower_leg_right.png",
+      "parent": "upper_leg_right",
+      "position": {"x": 465, "y": 848},
+      "pivot": {"x": 509, "y": 862.71},
+      "size": {"width": 84, "height": 156},
+      "rotationRange": {"min": -120, "max": 120},
+      "z": 7
+    },
+    {
+      "id": "lower_leg_left",
+      "label": "Left lower leg",
+      "asset": "assets/images/characters/rigs/humanoid_v1/base/lower_leg_left.png",
+      "parent": "upper_leg_left",
+      "position": {"x": 560, "y": 857},
+      "pivot": {"x": 599.29, "y": 873},
+      "size": {"width": 88, "height": 140},
+      "rotationRange": {"min": -120, "max": 120},
+      "z": 5
+    },
+    {
+      "id": "upper_leg_right",
+      "label": "Right upper leg",
+      "asset": "assets/images/characters/rigs/humanoid_v1/base/upper_leg_right.png",
+      "parent": "torso",
+      "position": {"x": 469, "y": 740},
+      "pivot": {"x": 513.6, "y": 752.56},
+      "size": {"width": 94, "height": 150},
+      "rotationRange": {"min": -90, "max": 90},
+      "z": 8
+    },
+    {
+      "id": "upper_leg_left",
+      "label": "Left upper leg",
+      "asset": "assets/images/characters/rigs/humanoid_v1/base/upper_leg_left.png",
+      "parent": "torso",
+      "position": {"x": 557, "y": 753},
+      "pivot": {"x": 603.29, "y": 760},
+      "size": {"width": 85, "height": 141},
+      "rotationRange": {"min": -90, "max": 90},
+      "z": 6
+    },
+    {
+      "id": "upper_arm_right",
+      "label": "Right upper arm",
+      "asset": "assets/images/characters/rigs/humanoid_v1/base/upper_arm_right.png",
+      "parent": "torso",
+      "position": {"x": 454, "y": 560},
+      "pivot": {"x": 497, "y": 588.29},
+      "size": {"width": 67, "height": 118},
+      "rotationRange": {"min": -150, "max": 150},
+      "z": 32
+    },
+    {
+      "id": "upper_arm_left",
+      "label": "Left upper arm",
+      "asset": "assets/images/characters/rigs/humanoid_v1/base/upper_arm_left.png",
+      "parent": "torso",
+      "position": {"x": 570, "y": 554},
+      "pivot": {"x": 589.09, "y": 578.78},
+      "size": {"width": 78, "height": 128},
+      "rotationRange": {"min": -150, "max": 150},
+      "z": 11
+    },
+    {
+      "id": "torso",
+      "label": "Torso",
+      "asset": "assets/images/characters/rigs/humanoid_v1/base/torso.png",
+      "parent": null,
+      "position": {"x": 474, "y": 541},
+      "pivot": {"x": 558.45, "y": 756.28},
+      "size": {"width": 165, "height": 234},
+      "rotationRange": {"min": -30, "max": 30},
+      "z": 20
+    },
+    {
+      "id": "lower_arm_right",
+      "label": "Right lower arm",
+      "asset": "assets/images/characters/rigs/humanoid_v1/base/lower_arm_right.png",
+      "parent": "upper_arm_right",
+      "position": {"x": 419, "y": 634},
+      "pivot": {"x": 473.71, "y": 659},
+      "size": {"width": 77, "height": 145},
+      "rotationRange": {"min": -150, "max": 150},
+      "z": 30
+    },
+    {
+      "id": "lower_arm_left",
+      "label": "Left lower arm",
+      "asset": "assets/images/characters/rigs/humanoid_v1/base/lower_arm_left.png",
+      "parent": "upper_arm_left",
+      "position": {"x": 596, "y": 644},
+      "pivot": {"x": 619.6, "y": 662.56},
+      "size": {"width": 86, "height": 129},
+      "rotationRange": {"min": -150, "max": 150},
+      "z": 9
+    },
+    {
+      "id": "head",
+      "label": "Head",
+      "asset": "assets/images/characters/rigs/humanoid_v1/faces/head_base.png",
+      "parent": "torso",
+      "position": {"x": 373, "y": 182},
+      "pivot": {"x": 552.88, "y": 544.54},
+      "size": {"width": 357, "height": 367},
+      "rotationRange": {"min": -45, "max": 45},
+      "z": 40
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "id": "pointing",
+  "name": "Pointing",
+  "rigId": "humanoid_v1",
+  "faceExpressionId": "neutral",
+  "layerPolicyVersion": 1,
+  "parts": {
+    "upper_arm_left": {
+      "rotation": -70,
+      "x": 0,
+      "y": 0
+    },
+    "lower_arm_left": {
+      "rotation": 9.32227773114667,
+      "x": 0,
+      "y": 0
+    },
+    "head": {
+      "rotation": 0,
+      "x": 0,
+      "y": 16
+    }
+  }
+}

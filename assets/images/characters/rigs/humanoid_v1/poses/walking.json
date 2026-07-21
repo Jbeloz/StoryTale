@@ -1,0 +1,54 @@
+{
+  "id": "walking",
+  "name": "Walking",
+  "rigId": "humanoid_v1",
+  "faceExpressionId": "neutral",
+  "layerPolicyVersion": 1,
+  "parts": {
+    "upper_arm_right": {
+      "rotation": 14.08265673424583,
+      "x": 0,
+      "y": 0
+    },
+    "lower_arm_right": {
+      "rotation": -8,
+      "x": 0,
+      "y": 0
+    },
+    "upper_arm_left": {
+      "rotation": -16.066127808626064,
+      "x": 0,
+      "y": 0
+    },
+    "lower_arm_left": {
+      "rotation": 5.355335582386374,
+      "x": 0,
+      "y": 0
+    },
+    "upper_leg_right": {
+      "rotation": -30.347143756456617,
+      "x": 0,
+      "y": 0
+    },
+    "lower_leg_right": {
+      "rotation": 15.66940938145666,
+      "x": 0,
+      "y": 0
+    },
+    "upper_leg_left": {
+      "rotation": 20.42972785382247,
+      "x": 0,
+      "y": 0
+    },
+    "lower_leg_left": {
+      "rotation": 28,
+      "x": 0,
+      "y": 0
+    },
+    "head": {
+      "rotation": 0,
+      "x": 0,
+      "y": 15.735529119318187
+    }
+  }
+}

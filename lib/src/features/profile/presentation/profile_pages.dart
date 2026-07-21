@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/state/storytale_scope.dart';
 import '../../../shared/widgets/storytale_components.dart';
 import '../../../shared/widgets/storytale_image_placeholder.dart';
+import '../../animated_story/presentation/sprite_positioner_page.dart';
 import '../../library/presentation/library_page.dart';
 import '../../narration/presentation/audio_pages.dart';
 
@@ -65,6 +66,11 @@ class ProfilePage extends StatelessWidget {
           icon: Icons.download_outlined,
           title: 'Downloads',
           onTap: () => _open(context, const DownloadsPage()),
+        ),
+        _ProfileLink(
+          icon: Icons.accessibility_new,
+          title: 'Sprite Studio',
+          onTap: () => _open(context, const SpritePositionerPage()),
         ),
         _ProfileLink(
           icon: Icons.settings_outlined,
@@ -242,6 +248,11 @@ class HelpPage extends StatelessWidget {
           'available if an optional service fails.',
       children: [
         ListTile(
+          leading: Icon(Icons.face_retouching_natural_outlined),
+          title: Text('Gemini 3.1 Flash Image'),
+          subtitle: Text('Reviewed character sprite creation'),
+        ),
+        ListTile(
           leading: Icon(Icons.upload_file),
           title: Text('Books must use the .epub format'),
         ),
@@ -273,9 +284,7 @@ class AboutPage extends StatelessWidget {
         ListTile(
           leading: Icon(Icons.cloud_outlined),
           title: Text('Cloudflare Workers AI'),
-          subtitle: Text(
-            'Planned image generation for sprites and backgrounds',
-          ),
+          subtitle: Text('Chapter background generation only'),
         ),
         ListTile(
           leading: Icon(Icons.record_voice_over_outlined),
