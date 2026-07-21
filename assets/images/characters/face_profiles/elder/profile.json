@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "elder",
+  "label": "Elder",
+  "rigId": "humanoid_v1",
+  "headPartId": "head",
+  "headTemplateId": "humanoid_v1_head",
+  "canvas": { "width": 1254, "height": 1254 },
+  "defaultSetId": "neutral",
+  "status": "awaiting_reference",
+  "approvedReference": null,
+  "parts": {
+    "eyes": "assets/images/characters/face_profiles/elder/eyes/",
+    "noses": "assets/images/characters/face_profiles/elder/noses/",
+    "mouths": "assets/images/characters/face_profiles/elder/mouths/",
+    "details": "assets/images/characters/face_profiles/elder/details/"
+  },
+  "sets": "assets/images/characters/face_profiles/elder/sets.json"
+}

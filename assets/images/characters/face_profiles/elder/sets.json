@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "profileId": "elder",
+  "defaultSetId": "neutral",
+  "sets": [
+    { "id": "neutral", "label": "Neutral", "eyes": "neutral", "nose": "default", "mouth": "neutral", "details": ["wrinkles"] },
+    { "id": "talking", "label": "Talking", "eyes": "neutral", "nose": "default", "mouth": "talking", "details": ["wrinkles"] },
+    { "id": "happy", "label": "Happy", "eyes": "happy", "nose": "default", "mouth": "smile", "details": ["wrinkles"] },
+    { "id": "sad", "label": "Sad", "eyes": "sad", "nose": "default", "mouth": "sad", "details": ["wrinkles"] },
+    { "id": "angry", "label": "Angry", "eyes": "angry", "nose": "default", "mouth": "angry_teeth", "details": ["wrinkles"] },
+    { "id": "surprised", "label": "Surprised", "eyes": "surprised", "nose": "default", "mouth": "talking", "details": ["wrinkles"] }
+  ]
+}

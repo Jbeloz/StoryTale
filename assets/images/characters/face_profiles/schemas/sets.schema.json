@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StoryTale Face Sets",
+  "type": "object",
+  "required": ["schemaVersion", "profileId", "defaultSetId", "sets"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "profileId": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+    "defaultSetId": { "type": "string", "minLength": 1 },
+    "sets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "eyes", "nose", "mouth", "details"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+          "label": { "type": "string", "minLength": 1 },
+          "eyes": { "type": "string", "minLength": 1 },
+          "nose": { "type": "string", "minLength": 1 },
+          "mouth": { "type": "string", "minLength": 1 },
+          "details": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

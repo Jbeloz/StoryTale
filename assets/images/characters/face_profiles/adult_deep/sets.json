@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "profileId": "adult_deep",
+  "defaultSetId": "neutral",
+  "sets": [
+    { "id": "neutral", "label": "Neutral", "eyes": "neutral", "nose": "default", "mouth": "neutral", "details": ["adult_lines"] },
+    { "id": "talking", "label": "Talking", "eyes": "neutral", "nose": "default", "mouth": "talking", "details": ["adult_lines"] },
+    { "id": "happy", "label": "Happy", "eyes": "happy", "nose": "default", "mouth": "smile", "details": ["adult_lines"] },
+    { "id": "sad", "label": "Sad", "eyes": "sad", "nose": "default", "mouth": "sad", "details": ["adult_lines"] },
+    { "id": "angry", "label": "Angry", "eyes": "angry", "nose": "default", "mouth": "angry_teeth", "details": ["adult_lines"] },
+    { "id": "surprised", "label": "Surprised", "eyes": "surprised", "nose": "default", "mouth": "talking", "details": ["adult_lines"] }
+  ]
+}

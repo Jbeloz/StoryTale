@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "hero",
+  "label": "Hero",
+  "rigId": "humanoid_v1",
+  "headPartId": "head",
+  "headTemplateId": "humanoid_v1_head",
+  "canvas": { "width": 1254, "height": 1254 },
+  "defaultSetId": "neutral",
+  "status": "awaiting_reference",
+  "approvedReference": null,
+  "parts": {
+    "eyes": "assets/images/characters/face_profiles/hero/eyes/",
+    "noses": "assets/images/characters/face_profiles/hero/noses/",
+    "mouths": "assets/images/characters/face_profiles/hero/mouths/",
+    "details": "assets/images/characters/face_profiles/hero/details/"
+  },
+  "sets": "assets/images/characters/face_profiles/hero/sets.json"
+}

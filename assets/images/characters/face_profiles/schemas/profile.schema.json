@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StoryTale Face Profile",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "label",
+    "rigId",
+    "headPartId",
+    "headTemplateId",
+    "canvas",
+    "defaultSetId",
+    "status",
+    "parts",
+    "sets"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+    "label": { "type": "string", "minLength": 1 },
+    "rigId": { "type": "string", "minLength": 1 },
+    "headPartId": { "type": "string", "minLength": 1 },
+    "headTemplateId": { "type": "string", "minLength": 1 },
+    "canvas": {
+      "type": "object",
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "const": 1254 },
+        "height": { "const": 1254 }
+      },
+      "additionalProperties": false
+    },
+    "defaultSetId": { "type": "string", "minLength": 1 },
+    "status": {
+      "enum": [
+        "legacy_migration_pending",
+        "awaiting_reference",
+        "awaiting_parts",
+        "ready"
+      ]
+    },
+    "approvedReference": { "type": ["string", "null"] },
+    "parts": {
+      "type": "object",
+      "required": ["eyes", "noses", "mouths", "details"],
+      "properties": {
+        "eyes": { "type": "string" },
+        "noses": { "type": "string" },
+        "mouths": { "type": "string" },
+        "details": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "sets": { "type": "string" }
+  },
+  "additionalProperties": false
+}

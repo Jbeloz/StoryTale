@@ -4,6 +4,16 @@ This plan replaces the current one-image-per-expression catalog with reusable
 face parts. It is planning only; the existing Sprite Studio and Story Mode
 behavior stay unchanged until implementation begins.
 
+## Implementation status
+
+- Checkpoint before implementation: `f7333c7`
+- Part 7A folder and JSON contracts: complete
+- Approved Heroine neutral reference: copied without modification
+- Heroine 11-image prompt pack: complete
+- Heroine eyes, nose, and mouth PNGs: awaiting generated results
+- Part 7B catalog, set resolver, composition order, and legacy fallback: complete
+- Sprite Studio face UI: unchanged until Part 7C
+
 ## 1. Goal
 
 Each compatible character head will be assembled from:
@@ -294,6 +304,8 @@ Profile descriptions should change identity without changing alignment:
 - Do not migrate Story Mode yet.
 
 ### Part 7B - Catalog and compatibility loader
+
+**Status: complete.**
 
 - Load profiles, parts, and sets.
 - Compose selected parts in the fixed order: head, eyes, nose, mouth, details.

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "adult_deep",
+  "label": "Deep Voice",
+  "rigId": "humanoid_v1",
+  "headPartId": "head",
+  "headTemplateId": "humanoid_v1_head",
+  "canvas": { "width": 1254, "height": 1254 },
+  "defaultSetId": "neutral",
+  "status": "awaiting_reference",
+  "approvedReference": null,
+  "parts": {
+    "eyes": "assets/images/characters/face_profiles/adult_deep/eyes/",
+    "noses": "assets/images/characters/face_profiles/adult_deep/noses/",
+    "mouths": "assets/images/characters/face_profiles/adult_deep/mouths/",
+    "details": "assets/images/characters/face_profiles/adult_deep/details/"
+  },
+  "sets": "assets/images/characters/face_profiles/adult_deep/sets.json"
+}

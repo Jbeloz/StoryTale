@@ -48,6 +48,13 @@ flutter:
     - assets/images/characters/rigs/humanoid_v1/base/
     - assets/images/characters/rigs/humanoid_v1/faces/
     - assets/images/characters/rigs/humanoid_v1/poses/
+    - assets/images/characters/face_profiles/
+    - assets/images/characters/face_profiles/default/
+    - assets/images/characters/face_profiles/hero/
+    - assets/images/characters/face_profiles/heroine/
+    - assets/images/characters/face_profiles/heroine/reference/
+    - assets/images/characters/face_profiles/elder/
+    - assets/images/characters/face_profiles/adult_deep/
     - assets/audio/narration/
     - assets/audio/sfx/
     - assets/models/tts/

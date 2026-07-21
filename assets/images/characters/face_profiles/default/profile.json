@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "default",
+  "label": "Default",
+  "rigId": "humanoid_v1",
+  "headPartId": "head",
+  "headTemplateId": "humanoid_v1_head",
+  "canvas": { "width": 1254, "height": 1254 },
+  "defaultSetId": "neutral",
+  "status": "legacy_migration_pending",
+  "approvedReference": "assets/images/characters/rigs/humanoid_v1/faces/neutral.png",
+  "parts": {
+    "eyes": "assets/images/characters/face_profiles/default/eyes/",
+    "noses": "assets/images/characters/face_profiles/default/noses/",
+    "mouths": "assets/images/characters/face_profiles/default/mouths/",
+    "details": "assets/images/characters/face_profiles/default/details/"
+  },
+  "sets": "assets/images/characters/face_profiles/default/sets.json"
+}

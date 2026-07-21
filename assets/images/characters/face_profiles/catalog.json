@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "defaultProfileId": "default",
+  "profiles": [
+    {
+      "id": "default",
+      "label": "Default",
+      "manifest": "assets/images/characters/face_profiles/default/profile.json"
+    },
+    {
+      "id": "hero",
+      "label": "Hero",
+      "manifest": "assets/images/characters/face_profiles/hero/profile.json"
+    },
+    {
+      "id": "heroine",
+      "label": "Heroine",
+      "manifest": "assets/images/characters/face_profiles/heroine/profile.json"
+    },
+    {
+      "id": "elder",
+      "label": "Elder",
+      "manifest": "assets/images/characters/face_profiles/elder/profile.json"
+    },
+    {
+      "id": "adult_deep",
+      "label": "Deep Voice",
+      "manifest": "assets/images/characters/face_profiles/adult_deep/profile.json"
+    }
+  ]
+}
