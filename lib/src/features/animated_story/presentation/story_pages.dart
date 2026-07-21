@@ -9,6 +9,7 @@ import '../../../shared/widgets/storytale_image_placeholder.dart';
 import '../data/sprite_layer_processor.dart';
 import '../data/story_artwork_service.dart';
 import 'sprite_positioner_page.dart';
+import 'widgets/story_character_view.dart';
 
 class StoryPreparationPage extends StatefulWidget {
   const StoryPreparationPage({super.key});
@@ -184,22 +185,36 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
                       height: double.infinity,
                       borderRadius: 0,
                     ),
-                    AnimatedAlign(
-                      duration: const Duration(milliseconds: 450),
-                      alignment: _sceneIndex.isEven
-                          ? Alignment.bottomLeft
-                          : Alignment.bottomRight,
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: StoryTaleImagePlaceholder(
-                          path: scene.characterPath,
-                          label: '${scene.speaker} sprite',
-                          icon: Icons.accessibility_new,
-                          width: 130,
-                          height: 190,
+                    if (scene.characterLayers.isEmpty)
+                      AnimatedAlign(
+                        duration: const Duration(milliseconds: 450),
+                        alignment: _sceneIndex.isEven
+                            ? Alignment.bottomLeft
+                            : Alignment.bottomRight,
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: StoryTaleImagePlaceholder(
+                            path: scene.characterPath,
+                            label: '${scene.speaker} sprite',
+                            icon: Icons.accessibility_new,
+                            width: 130,
+                            height: 190,
+                          ),
                         ),
-                      ),
-                    ),
+                      )
+                    else
+                      for (final layer in scene.characterLayers)
+                        AnimatedAlign(
+                          duration: const Duration(milliseconds: 450),
+                          alignment: _stageAlignment(layer.stagePosition),
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 42),
+                            child: StoryCharacterView(
+                              key: ValueKey(layer.characterId),
+                              layer: layer,
+                            ),
+                          ),
+                        ),
                     Align(
                       alignment: Alignment.bottomCenter,
                       child: Container(
@@ -281,6 +296,14 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
     _sceneIndex--;
     _playing = false;
   });
+
+  Alignment _stageAlignment(String position) {
+    return switch (position) {
+      'left' => Alignment.bottomLeft,
+      'right' => Alignment.bottomRight,
+      _ => Alignment.bottomCenter,
+    };
+  }
 
   void _next(ChapterStoryData story) {
     if (_sceneIndex < story.scenes.length - 1) {

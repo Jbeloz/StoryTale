@@ -65,11 +65,18 @@ ChapterStory
 - chapterId
 - title
 - moral
-- characters: name, sprite, voiceId
-- scenes: background, speaker, subtitle, movement, soundEffect, audioClip
+- scenes: background, subtitle, soundEffect, audioClip
+- characterLayers: characterId, rigId, poseId, faceExpressionId, outfitId,
+  stagePosition, movement
 ```
 
 The UI reads this data, so we do not create a separate Flutter screen for every book or chapter.
+
+`humanoid_v1` is only the bundled demo rig. Each approved generated character
+can have its own rig folder and `rigId`, containing its designed body parts,
+hair/clothing overlays, face catalog, and compatible poses. Story Mode resolves
+those IDs dynamically and falls back to Neutral when a pose or face is missing;
+an incompatible rig is hidden while subtitles continue.
 
 Character identities, aliases, appearances, voices, and locations live in one
 book-level story bible so they can be reused across chapters and volumes. See

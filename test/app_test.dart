@@ -100,7 +100,22 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Open Story Mode'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Scene 1 of 3'), findsOneWidget);
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 200)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Scene 1 of 4'), findsOneWidget);
+    expect(find.byKey(const Key('story-character-neutral')), findsOneWidget);
+
+    for (final pose in ['talking', 'pointing', 'walking']) {
+      await tester.tap(find.byIcon(Icons.skip_next));
+      await tester.pumpAndSettle();
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(ValueKey('story-character-$pose')), findsOneWidget);
+    }
   });
 
   testWidgets('startup can move from splash to onboarding and library', (

@@ -87,6 +87,7 @@ class StorySceneData {
     required this.speaker,
     required this.subtitle,
     required this.movement,
+    this.characterLayers = const [],
     this.backgroundPath,
     this.characterPath,
     this.audioPath,
@@ -96,9 +97,56 @@ class StorySceneData {
   final String speaker;
   final String subtitle;
   final String movement;
+  final List<StoryCharacterLayerData> characterLayers;
   final String? backgroundPath;
   final String? characterPath;
   final String? audioPath;
+}
+
+class StoryCharacterLayerData {
+  const StoryCharacterLayerData({
+    required this.characterId,
+    required this.rigId,
+    required this.poseId,
+    this.faceExpressionId = 'neutral',
+    this.outfitId,
+    this.stagePosition = 'center',
+    this.movement = 'idle',
+    this.isSpeaking = false,
+  });
+
+  final String characterId;
+  final String rigId;
+  final String poseId;
+  final String faceExpressionId;
+  final String? outfitId;
+  final String stagePosition;
+  final String movement;
+  final bool isSpeaking;
+
+  factory StoryCharacterLayerData.fromJson(Map<String, dynamic> json) {
+    return StoryCharacterLayerData(
+      characterId: json['characterId'] as String,
+      rigId: json['rigId'] as String? ?? 'humanoid_v1',
+      poseId: json['poseId'] as String? ?? 'neutral',
+      faceExpressionId: json['faceExpressionId'] as String? ?? 'neutral',
+      outfitId: json['outfitId'] as String?,
+      stagePosition: json['stagePosition'] as String? ?? 'center',
+      movement: json['movement'] as String? ?? 'idle',
+      isSpeaking: json['isSpeaking'] as bool? ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'characterId': characterId,
+    'rigId': rigId,
+    'poseId': poseId,
+    'faceExpressionId': faceExpressionId,
+    if (outfitId != null) 'outfitId': outfitId,
+    'stagePosition': stagePosition,
+    'movement': movement,
+    'isSpeaking': isSpeaking,
+  };
 }
 
 class ChapterStoryData {

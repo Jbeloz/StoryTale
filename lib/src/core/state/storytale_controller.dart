@@ -198,33 +198,61 @@ class StoryTaleController extends ChangeNotifier {
   }
 
   ChapterStoryData storyFor(ChapterData chapter) {
-    return stories.putIfAbsent(
-      chapter.id,
-      () => ChapterStoryData(
+    return stories.putIfAbsent(chapter.id, () {
+      final lines = _storySceneLines(chapter);
+      return ChapterStoryData(
         chapterId: chapter.id,
         moral: 'Kindness and friendship make every journey meaningful.',
         scenes: [
-          StorySceneData(
-            id: '${chapter.id}-scene-1',
-            speaker: 'Narrator',
-            subtitle: 'The journey begins on a quiet little planet.',
-            movement: 'fade in',
-          ),
-          StorySceneData(
-            id: '${chapter.id}-scene-2',
-            speaker: 'Prince',
-            subtitle: 'Hello, Fox.',
-            movement: 'slide right',
-          ),
-          StorySceneData(
-            id: '${chapter.id}-scene-3',
-            speaker: 'Fox',
-            subtitle: 'What is essential is invisible to the eye.',
-            movement: 'gentle bounce',
-          ),
+          _testScene(chapter, 1, lines[0], 'neutral', 'left', 'fade in'),
+          _testScene(chapter, 2, lines[1], 'talking', 'center', 'talking'),
+          _testScene(chapter, 3, lines[2], 'pointing', 'right', 'pointing'),
+          _testScene(chapter, 4, lines[3], 'walking', 'center', 'walk right'),
         ],
-      ),
+      );
+    });
+  }
+
+  static StorySceneData _testScene(
+    ChapterData chapter,
+    int number,
+    String subtitle,
+    String poseId,
+    String position,
+    String movement,
+  ) {
+    final speaking = poseId == 'talking';
+    return StorySceneData(
+      id: '${chapter.id}-scene-$number',
+      speaker: speaking ? 'Prince' : 'Narrator',
+      subtitle: subtitle,
+      movement: movement,
+      characterLayers: [
+        StoryCharacterLayerData(
+          characterId: 'little_prince',
+          rigId: 'humanoid_v1',
+          poseId: poseId,
+          stagePosition: position,
+          movement: movement,
+          isSpeaking: speaking,
+        ),
+      ],
     );
+  }
+
+  static List<String> _storySceneLines(ChapterData chapter) {
+    final blocks = chapter.sourceBlocks.isNotEmpty
+        ? chapter.sourceBlocks.map((block) => block.text)
+        : chapter.originalText.split(RegExp(r'\n\s*\n'));
+    final lines = blocks
+        .map((text) => text.trim())
+        .where((text) => text.isNotEmpty)
+        .take(4)
+        .toList();
+    while (lines.length < 4) {
+      lines.add(lines.isEmpty ? chapter.title : lines.last);
+    }
+    return lines;
   }
 
   void markStoryPrepared(ChapterData chapter) {

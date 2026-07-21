@@ -7,7 +7,7 @@ and creating reusable named poses for Animated Story Mode.
 
 ## Implementation status
 
-Parts 1-5 are complete. Sprite Studio now has one canvas-level alpha
+Parts 1-6 are complete. Sprite Studio now has one canvas-level alpha
 resolver, locked base-body layers, a responsive two-pane desktop layout, a
 pinned mobile canvas with a draggable inspector, zoom controls, numeric
 Rotation/X/Y inputs, fixed save actions, Undo/Redo, and direct bone posing with
@@ -15,11 +15,13 @@ optional joint limits. It also has the five-expression default face catalog
 with pose saving, fallback behavior, and the neutral-to-talking speech rule.
 Named custom poses now start from Idle, use safe stable IDs, support rename,
 duplicate, delete, session drafts, app-local saves, project-default saves, and
-an unsaved-change guard. Part 6, connecting poses to Story Mode, is next.
+an unsaved-change guard. Story Mode now resolves scene rig and pose IDs with
+safe fallbacks.
 
 ## Current prototype gap
 
-- Animated Story Mode does not yet load `poseId` and `rigId` from scene data.
+- Generated character rigs still need the later character-approval and local
+  asset-import flow before users can add them from the app UI.
 
 ## 1. Final scope
 
@@ -430,12 +432,18 @@ controls its joints.
 - Implement New Pose, Rename, Duplicate, Delete, Save, and unsaved-change guard.
 - Extend the local project admin to accept safe custom pose IDs.
 
-### Part 6 - Story Mode connection
+### Part 6 - Story Mode connection - complete
 
 - Add `poseId` and `rigId` to character scene layers.
 - Map analyzer pose tags to approved local poses.
 - Add Neutral fallback and compatibility validation.
 - Play one test chapter using at least Neutral, Talking, Pointing, and Walking.
+
+The default `humanoid_v1` rig is only the test character. A generated book
+character gets its own stable `rigId`, body-part assets, `rig.json`, face
+catalog, outfit layers, and compatible pose files. Story scenes keep the same
+`characterId + rigId + poseId + faceExpressionId` contract, so adding new faces
+or a fully designed body after Part 6 does not require changing the player.
 
 ## 12. Final acceptance checklist
 

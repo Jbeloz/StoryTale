@@ -13,6 +13,33 @@ class PoseRepository {
   String get _storageKey => 'sprite_studio.$rigId.custom_poses';
 
   Future<List<SpriteRigPose>> loadProjectPoses() async {
+    return _loadManifestPoses(includeBuiltIn: false);
+  }
+
+  Future<List<SpriteRigPose>> loadBuiltInPoses() async {
+    return _loadManifestPoses(includeBuiltIn: true, builtInOnly: true);
+  }
+
+  Future<List<SpriteRigPose>> loadApprovedPoses() async {
+    final merged = <String, SpriteRigPose>{};
+    for (final pose in await _loadManifestPoses(includeBuiltIn: true)) {
+      merged[pose.id] = pose;
+    }
+    try {
+      for (final pose in await loadAll()) {
+        merged[pose.id] = pose;
+      }
+    } catch (_) {
+      // Project poses remain available when local storage is unavailable.
+    }
+    return merged.values.toList()
+      ..sort((a, b) => a.displayName.compareTo(b.displayName));
+  }
+
+  Future<List<SpriteRigPose>> _loadManifestPoses({
+    required bool includeBuiltIn,
+    bool builtInOnly = false,
+  }) async {
     try {
       final root = 'assets/images/characters/rigs/$rigId';
       final source = await rootBundle.loadString('$root/pose_manifest.json');
@@ -20,7 +47,10 @@ class PoseRepository {
       final entries = manifest['poses'] as List<dynamic>? ?? const [];
       final ids = entries
           .map((value) => value as Map<String, dynamic>)
-          .where((value) => value['builtIn'] != true)
+          .where((value) {
+            final builtIn = value['builtIn'] == true;
+            return builtInOnly ? builtIn : includeBuiltIn || !builtIn;
+          })
           .map((value) => value['id'] as String)
           .where(SpritePoseRules.validId);
       final poses = await Future.wait(
