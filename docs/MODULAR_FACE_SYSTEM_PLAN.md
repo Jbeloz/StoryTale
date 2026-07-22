@@ -12,12 +12,12 @@ complete profile passes the alignment checks.
 - Part 7A folder and JSON contracts: complete
 - Approved Heroine neutral reference: copied without modification
 - Heroine 11-image prompt pack: complete
-- Heroine eyes, nose, and mouth PNGs: awaiting generated results
+- Heroine eyes, nose, and mouth PNGs: complete (11 aligned transparent parts)
 - Part 7B catalog, set resolver, composition order, and legacy fallback: complete
 - Part 7C Sprite Studio profile selector, Sets UI, and session Set Maker: complete
 - Part 7D Parts UI, PNG validation, local import, and persistent custom sets: complete
-- Part 7D.5 separate face-part production: planned; Heroine prompts are ready,
-  but the generated PNG parts still need to be created and approved
+- Part 7D.5 separate face-part production: in progress; the Heroine proof
+  profile is complete, while Hero, Elder, Deep Voice, and Default remain
 
 ## 1. Goal
 
@@ -421,8 +421,7 @@ separated.
 
 ## 11. Recommended immediate next step
 
-Complete Part 7D.5 with the Heroine proof profile. Generate and import Neutral
-Eyes, Default Nose, and Neutral Mouth first, approve their alignment on the
-main character, and then create the remaining eight Heroine parts. Once all six
-Heroine sets display correctly, proceed to Part 7E and save `faceProfileId` plus
-`faceSetId` in poses and Story Mode scenes.
+Use the completed Heroine proof profile to proceed to Part 7E and save
+`faceProfileId` plus `faceSetId` in poses and Story Mode scenes. The remaining
+profiles can continue through Part 7D.5 one at a time without blocking the
+Heroine Story Mode integration.

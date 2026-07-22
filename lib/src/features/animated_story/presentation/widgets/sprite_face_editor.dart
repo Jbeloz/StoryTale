@@ -529,6 +529,10 @@ class _SpriteFaceEditorState extends State<SpriteFaceEditor> {
 
   Widget _partPreview(SpriteFacePartType type, String? id) {
     final part = id == null ? null : _localPart(type, id);
+    final bundledAsset =
+        part == null && id != null && _bundle?.profile.isReady == true
+        ? _bundledAsset(_bundle!.profile, type, id)
+        : null;
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -538,6 +542,12 @@ class _SpriteFaceEditorState extends State<SpriteFaceEditor> {
             part.bytes,
             fit: BoxFit.fill,
             gaplessPlayback: true,
+            filterQuality: FilterQuality.high,
+          )
+        else if (bundledAsset != null)
+          Image.asset(
+            bundledAsset,
+            fit: BoxFit.fill,
             filterQuality: FilterQuality.high,
           )
         else

@@ -7,7 +7,7 @@
   "headTemplateId": "humanoid_v1_head",
   "canvas": { "width": 1254, "height": 1254 },
   "defaultSetId": "neutral",
-  "status": "awaiting_parts",
+  "status": "ready",
   "approvedReference": "assets/images/characters/face_profiles/heroine/reference/approved_neutral.png",
   "parts": {
     "eyes": "assets/images/characters/face_profiles/heroine/eyes/",
