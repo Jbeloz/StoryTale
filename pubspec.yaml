@@ -50,7 +50,14 @@ flutter:
     - assets/images/characters/rigs/humanoid_v1/poses/
     - assets/images/characters/face_profiles/
     - assets/images/characters/face_profiles/default/
+    - assets/images/characters/face_profiles/default/eyes/
+    - assets/images/characters/face_profiles/default/noses/
+    - assets/images/characters/face_profiles/default/mouths/
     - assets/images/characters/face_profiles/hero/
+    - assets/images/characters/face_profiles/hero/reference/
+    - assets/images/characters/face_profiles/hero/eyes/
+    - assets/images/characters/face_profiles/hero/noses/
+    - assets/images/characters/face_profiles/hero/mouths/
     - assets/images/characters/face_profiles/heroine/
     - assets/images/characters/face_profiles/heroine/reference/
     - assets/images/characters/face_profiles/heroine/eyes/

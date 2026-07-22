@@ -129,9 +129,7 @@ class _SpriteFaceEditorState extends State<SpriteFaceEditor> {
                 size: 16,
               ),
               label: Text(
-                _profileId == 'default'
-                    ? 'Legacy ready'
-                    : _selectedSetReady
+                _selectedSetReady
                     ? 'Set ready'
                     : '${_installedCount(profile)}/$_expectedCount parts',
               ),
@@ -182,9 +180,7 @@ class _SpriteFaceEditorState extends State<SpriteFaceEditor> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                _profileId == 'default'
-                    ? 'The original five faces remain available.'
-                    : _selectedSetReady
+                _selectedSetReady
                     ? '${profile.label} is composed from the imported parts.'
                     : 'Import the missing PNG parts to show ${profile.label} on the character.',
                 style: Theme.of(context).textTheme.bodySmall,
@@ -258,6 +254,10 @@ class _SpriteFaceEditorState extends State<SpriteFaceEditor> {
     final selected = selectedId == null
         ? null
         : _localPart(_partType, selectedId);
+    final bundled =
+        selectedId != null &&
+        profile.isReady &&
+        _expectedIds(_partType).contains(selectedId);
     final custom =
         selectedId != null && !_expectedIds(_partType).contains(selectedId);
 
@@ -290,9 +290,11 @@ class _SpriteFaceEditorState extends State<SpriteFaceEditor> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                selected == null
-                    ? 'Select a slot, then import its transparent PNG.'
-                    : '${selected.label} is stored locally and ready to use.',
+                selected != null
+                    ? '${selected.label} is stored locally and ready to use.'
+                    : bundled
+                    ? '${_partLabel(_partType, selectedId!)} is bundled and ready to use.'
+                    : 'Select a slot, then import its transparent PNG.',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
@@ -307,7 +309,9 @@ class _SpriteFaceEditorState extends State<SpriteFaceEditor> {
               ChoiceChip(
                 key: Key('facePart-${_partType.name}-$id'),
                 avatar: Icon(
-                  _localPart(_partType, id) != null
+                  _localPart(_partType, id) != null ||
+                          (profile.isReady &&
+                              _expectedIds(_partType).contains(id))
                       ? Icons.check_circle
                       : Icons.download_outlined,
                   size: 16,
@@ -333,7 +337,9 @@ class _SpriteFaceEditorState extends State<SpriteFaceEditor> {
                       label: _partLabel(_partType, selectedId),
                     ),
               icon: const Icon(Icons.upload_file),
-              label: Text(selected == null ? 'Import PNG' : 'Replace PNG'),
+              label: Text(
+                selected == null && !bundled ? 'Import PNG' : 'Replace PNG',
+              ),
             ),
             OutlinedButton.icon(
               key: const Key('addFacePartButton'),
@@ -441,7 +447,6 @@ class _SpriteFaceEditorState extends State<SpriteFaceEditor> {
   }
 
   bool get _selectedSetReady {
-    if (_profileId == 'default') return true;
     final selected = _selectedSet;
     return selected != null && _overlayFor(selected) != null;
   }
@@ -488,6 +493,7 @@ class _SpriteFaceEditorState extends State<SpriteFaceEditor> {
     if (bundle == null || set == null) return const SizedBox.shrink();
 
     if (_profileId == 'default' &&
+        !bundle.profile.isReady &&
         widget.legacyCatalog.expressionsById.containsKey(set.id)) {
       return Stack(
         fit: StackFit.expand,
@@ -599,7 +605,9 @@ class _SpriteFaceEditorState extends State<SpriteFaceEditor> {
 
   void _notifyPreview() {
     final selected = _selectedSet;
-    final preview = _profileId == 'default'
+    final usesLegacyDefault =
+        _profileId == 'default' && _bundle?.profile.isReady != true;
+    final preview = usesLegacyDefault
         ? null
         : selected == null
         ? SpriteFaceOverlayData(

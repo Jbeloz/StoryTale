@@ -3,8 +3,8 @@
 This plan replaces the current one-image-per-expression catalog with reusable
 face parts. Parts 7A through 7D now provide the asset contract, loader, profile
 selector, reusable Sets view, Set Maker, and local part importer. Separate face
-part production comes next; Story Mode migration remains deferred until one
-complete profile passes the alignment checks.
+part production is in progress; Story Mode migration remains deferred until all
+five starter profiles pass the alignment checks.
 
 ## Implementation status
 
@@ -16,8 +16,8 @@ complete profile passes the alignment checks.
 - Part 7B catalog, set resolver, composition order, and legacy fallback: complete
 - Part 7C Sprite Studio profile selector, Sets UI, and session Set Maker: complete
 - Part 7D Parts UI, PNG validation, local import, and persistent custom sets: complete
-- Part 7D.5 separate face-part production: in progress; the Heroine proof
-  profile is complete, while Hero, Elder, Deep Voice, and Default remain
+- Part 7D.5 separate face-part production: in progress; Heroine, Hero, and
+  Default are complete, while Elder and Deep Voice remain
 
 ## 1. Goal
 
@@ -365,14 +365,14 @@ it must not crop, resize, shift, redraw, or change the character identity.
 
 Production and approval order:
 
-1. **Heroine** - create all 11 parts first using the approved neutral reference
-   and `docs/HEROINE_FACE_PROMPT_PACK.md`.
-2. **Hero** - approve its neutral reference, then create its 11 core parts.
-3. **Elder** - approve its neutral reference, create 11 core parts, then the
+1. **Heroine** - complete; all 11 parts use the approved neutral reference.
+2. **Hero** - complete; the generated neutral reference and 11 normalized parts
+   preserve the same head anchors.
+3. **Elder** - next; approve its neutral reference, create 11 core parts, then the
    optional wrinkles overlay.
 4. **Deep Voice** - approve its neutral reference, create 11 core parts, then
    the optional adult-lines overlay.
-5. **Default** - separate and reuse the current face artwork where possible
+5. **Default** - complete; the current face artwork was separated and reused
    instead of generating a different-looking replacement.
 
 For each profile, import and verify Neutral Eyes, Default Nose, and Neutral
@@ -402,8 +402,7 @@ separated.
 
 ### Part 7F - Remaining profiles and chapter test
 
-- Import Hero, Elder, and Deep Voice after Heroine passes alignment checks.
-- Migrate the current Default catalog.
+- Import Elder and Deep Voice after the Hero profile passes review.
 - Test every set in Sprite Studio and one full chapter in Story Mode.
 
 ## 10. Acceptance checklist
@@ -421,7 +420,7 @@ separated.
 
 ## 11. Recommended immediate next step
 
-Use the completed Heroine proof profile to proceed to Part 7E and save
-`faceProfileId` plus `faceSetId` in poses and Story Mode scenes. The remaining
-profiles can continue through Part 7D.5 one at a time without blocking the
-Heroine Story Mode integration.
+Finish Part 7D.5 inside Sprite Studio before starting Story Mode. Create and
+review Elder next, followed by Deep Voice. After all five profiles pass their
+set and alignment checks, proceed to Part 7E and save `faceProfileId` plus
+`faceSetId` in poses and Story Mode scenes.
