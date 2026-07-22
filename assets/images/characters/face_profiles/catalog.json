@@ -24,7 +24,7 @@
     },
     {
       "id": "adult_deep",
-      "label": "Deep Voice",
+      "label": "Adult",
       "manifest": "assets/images/characters/face_profiles/adult_deep/profile.json"
     }
   ]

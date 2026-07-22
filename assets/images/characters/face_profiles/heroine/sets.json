@@ -9,7 +9,7 @@
       "eyes": "neutral",
       "nose": "default",
       "mouth": "neutral",
-      "details": []
+      "details": ["soft_blush"]
     },
     {
       "id": "talking",
@@ -17,7 +17,7 @@
       "eyes": "neutral",
       "nose": "default",
       "mouth": "talking",
-      "details": []
+      "details": ["soft_blush"]
     },
     {
       "id": "happy",
@@ -25,7 +25,7 @@
       "eyes": "happy",
       "nose": "default",
       "mouth": "smile",
-      "details": []
+      "details": ["soft_blush"]
     },
     {
       "id": "sad",
@@ -33,7 +33,7 @@
       "eyes": "sad",
       "nose": "default",
       "mouth": "sad",
-      "details": []
+      "details": ["soft_blush"]
     },
     {
       "id": "angry",
@@ -41,7 +41,7 @@
       "eyes": "angry",
       "nose": "default",
       "mouth": "angry_teeth",
-      "details": []
+      "details": ["soft_blush"]
     },
     {
       "id": "surprised",
@@ -49,7 +49,7 @@
       "eyes": "surprised",
       "nose": "default",
       "mouth": "talking",
-      "details": []
+      "details": ["soft_blush"]
     }
   ]
 }

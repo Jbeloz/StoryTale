@@ -8,7 +8,7 @@
   "canvas": { "width": 1254, "height": 1254 },
   "defaultSetId": "neutral",
   "status": "ready",
-  "approvedReference": "assets/images/characters/rigs/humanoid_v1/faces/neutral.png",
+  "approvedReference": "assets/images/characters/face_profiles/default/reference/approved_neutral.png",
   "parts": {
     "eyes": "assets/images/characters/face_profiles/default/eyes/",
     "noses": "assets/images/characters/face_profiles/default/noses/",

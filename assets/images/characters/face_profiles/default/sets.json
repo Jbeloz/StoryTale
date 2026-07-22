@@ -3,11 +3,11 @@
   "profileId": "default",
   "defaultSetId": "neutral",
   "sets": [
-    { "id": "neutral", "label": "Neutral", "eyes": "neutral", "nose": "default", "mouth": "neutral", "details": [] },
-    { "id": "talking", "label": "Talking", "eyes": "neutral", "nose": "default", "mouth": "talking", "details": [] },
-    { "id": "happy", "label": "Happy", "eyes": "happy", "nose": "default", "mouth": "smile", "details": [] },
-    { "id": "sad", "label": "Sad", "eyes": "sad", "nose": "default", "mouth": "sad", "details": [] },
-    { "id": "angry", "label": "Angry", "eyes": "angry", "nose": "default", "mouth": "angry_teeth", "details": [] },
-    { "id": "surprised", "label": "Surprised", "eyes": "surprised", "nose": "default", "mouth": "talking", "details": [] }
+    { "id": "neutral", "label": "Neutral", "eyes": "neutral", "nose": "default", "mouth": "neutral", "details": ["soft_cheeks"] },
+    { "id": "talking", "label": "Talking", "eyes": "neutral", "nose": "default", "mouth": "talking", "details": ["soft_cheeks"] },
+    { "id": "happy", "label": "Happy", "eyes": "happy", "nose": "default", "mouth": "smile", "details": ["soft_cheeks"] },
+    { "id": "sad", "label": "Sad", "eyes": "sad", "nose": "default", "mouth": "sad", "details": ["soft_cheeks"] },
+    { "id": "angry", "label": "Angry", "eyes": "angry", "nose": "default", "mouth": "angry_teeth", "details": ["soft_cheeks"] },
+    { "id": "surprised", "label": "Surprised", "eyes": "surprised", "nose": "default", "mouth": "talking", "details": ["soft_cheeks"] }
   ]
 }

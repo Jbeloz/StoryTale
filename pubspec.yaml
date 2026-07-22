@@ -50,19 +50,23 @@ flutter:
     - assets/images/characters/rigs/humanoid_v1/poses/
     - assets/images/characters/face_profiles/
     - assets/images/characters/face_profiles/default/
+    - assets/images/characters/face_profiles/default/reference/
     - assets/images/characters/face_profiles/default/eyes/
     - assets/images/characters/face_profiles/default/noses/
     - assets/images/characters/face_profiles/default/mouths/
+    - assets/images/characters/face_profiles/default/details/
     - assets/images/characters/face_profiles/hero/
     - assets/images/characters/face_profiles/hero/reference/
     - assets/images/characters/face_profiles/hero/eyes/
     - assets/images/characters/face_profiles/hero/noses/
     - assets/images/characters/face_profiles/hero/mouths/
+    - assets/images/characters/face_profiles/hero/details/
     - assets/images/characters/face_profiles/heroine/
     - assets/images/characters/face_profiles/heroine/reference/
     - assets/images/characters/face_profiles/heroine/eyes/
     - assets/images/characters/face_profiles/heroine/noses/
     - assets/images/characters/face_profiles/heroine/mouths/
+    - assets/images/characters/face_profiles/heroine/details/
     - assets/images/characters/face_profiles/elder/
     - assets/images/characters/face_profiles/elder/reference/
     - assets/images/characters/face_profiles/elder/eyes/
@@ -70,6 +74,11 @@ flutter:
     - assets/images/characters/face_profiles/elder/mouths/
     - assets/images/characters/face_profiles/elder/details/
     - assets/images/characters/face_profiles/adult_deep/
+    - assets/images/characters/face_profiles/adult_deep/reference/
+    - assets/images/characters/face_profiles/adult_deep/eyes/
+    - assets/images/characters/face_profiles/adult_deep/noses/
+    - assets/images/characters/face_profiles/adult_deep/mouths/
+    - assets/images/characters/face_profiles/adult_deep/details/
     - assets/audio/narration/
     - assets/audio/sfx/
     - assets/models/tts/

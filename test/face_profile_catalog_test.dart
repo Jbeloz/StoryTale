@@ -12,6 +12,7 @@ void main() {
       final catalog = await SpriteFaceProfileCatalog.load(catalogAsset);
 
       expect(catalog.profiles, hasLength(5));
+      expect(catalog.profiles.last.label, 'Adult');
       expect(catalog.resolveProfileId('heroine'), 'heroine');
       expect(catalog.resolveProfileId('missing'), 'default');
     },
@@ -24,7 +25,7 @@ void main() {
 
     expect(bundle.profile.canvasWidth, 1254);
     expect(bundle.profile.canvasHeight, 1254);
-    expect(bundle.profile.status, 'awaiting_parts');
+    expect(bundle.profile.status, 'ready');
     expect(bundle.sets.sets, hasLength(6));
     expect(composition.profileId, 'heroine');
     expect(composition.setId, 'happy');
@@ -32,6 +33,7 @@ void main() {
       'assets/images/characters/face_profiles/heroine/eyes/happy.png',
       'assets/images/characters/face_profiles/heroine/noses/default.png',
       'assets/images/characters/face_profiles/heroine/mouths/smile.png',
+      'assets/images/characters/face_profiles/heroine/details/soft_blush.png',
     ]);
   });
 
@@ -48,17 +50,17 @@ void main() {
     expect(bundle.sets.resolveSetId('missing'), 'neutral');
   });
 
-  test('elder and deep profiles append their detail overlays last', () async {
+  test('elder and adult profiles append their detail overlays last', () async {
     final catalog = await SpriteFaceProfileCatalog.load(catalogAsset);
     final elder = await catalog.loadProfile('elder');
-    final deep = await catalog.loadProfile('adult_deep');
+    final adult = await catalog.loadProfile('adult_deep');
 
     expect(
       elder.compositionFor('neutral').layerAssets.last,
       'assets/images/characters/face_profiles/elder/details/wrinkles.png',
     );
     expect(
-      deep.compositionFor('neutral').layerAssets.last,
+      adult.compositionFor('neutral').layerAssets.last,
       'assets/images/characters/face_profiles/adult_deep/details/adult_lines.png',
     );
   });

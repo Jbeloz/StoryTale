@@ -31,3 +31,7 @@ beard, glasses, body, text, watermark, shadow, gradient, or texture.
 
 The subtle outer and under-eye age lines are saved once as
 `details/wrinkles.png` and reused by all six Elder sets.
+
+All Elder layers were moved together to the shared actor anchor after the first
+preview showed the entire face too far left. This correction applies to every
+Elder expression, not only Neutral.

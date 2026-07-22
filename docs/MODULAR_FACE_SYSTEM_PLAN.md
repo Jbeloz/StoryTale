@@ -2,9 +2,9 @@
 
 This plan replaces the current one-image-per-expression catalog with reusable
 face parts. Parts 7A through 7D now provide the asset contract, loader, profile
-selector, reusable Sets view, Set Maker, and local part importer. Separate face
-part production is in progress; Story Mode migration remains deferred until all
-five starter profiles pass the alignment checks.
+selector, reusable Sets view, Set Maker, and local part importer. Separate
+face-part production is complete for all five starter actors. Story Mode
+migration remains deferred until the final Sprite Studio review passes.
 
 ## Implementation status
 
@@ -16,8 +16,11 @@ five starter profiles pass the alignment checks.
 - Part 7B catalog, set resolver, composition order, and legacy fallback: complete
 - Part 7C Sprite Studio profile selector, Sets UI, and session Set Maker: complete
 - Part 7D Parts UI, PNG validation, local import, and persistent custom sets: complete
-- Part 7D.5 separate face-part production: in progress; Heroine, Hero, Elder,
-  and Default are complete, while Deep Voice remains
+- Part 7D.5 separate face-part production: complete for Default, Hero, Heroine,
+  Elder, and Adult
+- Hero refresh: bright young protagonist identity with lively eyes and smile
+- Elder alignment correction: all expressions moved to the shared actor anchor
+- Reusable details: complete for all five starter actors
 
 ## 1. Goal
 
@@ -41,7 +44,7 @@ The five starter visual profiles are:
 2. Hero
 3. Heroine
 4. Elder
-5. Deep Voice (stored internally as `adult_deep`)
+5. Adult (stored internally as `adult_deep` for compatibility)
 
 There is no narrator face. These are visual profiles only; a character's face
 and selected voice must remain separate settings.
@@ -82,10 +85,16 @@ The single `talking` mouth is reused for ordinary dialogue and surprised open
 mouth scenes. Extra talking frames or emotion-plus-talking images are not
 required for the first version.
 
-### Optional details
+The refreshed Hero additionally includes `mouths/surprised.png` because its
+round surprised mouth was already produced and aligned with the same identity.
 
+### Reusable details
+
+- Default: `soft_cheeks`
+- Hero: `bright_cheeks`
+- Heroine: `soft_blush`
 - Elder: `wrinkles`
-- Deep Voice: `adult_lines`
+- Adult: `adult_lines`
 
 Details are separate overlays so wrinkles do not have to be regenerated for
 every set. Blush, tears, facial hair, scars, and makeup can be added later only
@@ -99,7 +108,7 @@ when a story character needs them.
 | Nose layers | 1 | 5 |
 | Mouth layers | 5 | 25 |
 | Core PNG total | 11 | 55 |
-| Optional starter details | - | 2 |
+| Starter detail layers | 1 | 5 |
 
 The current Default expression images should be reused and separated where
 possible. The 55 figure is the complete target catalog, not necessarily 55 new
@@ -197,7 +206,7 @@ The Face section becomes a compact editor with two tabs.
 
 ### Sets tab (default)
 
-- Profile selector: Default, Hero, Heroine, Elder, or Deep Voice.
+- Profile selector: Default, Hero, Heroine, Elder, or Adult.
 - Grid of composed set previews.
 - Select a set with one click.
 - Actions: New Set, Duplicate, Rename, and Delete.
@@ -292,11 +301,13 @@ background-removal step before import.
 
 Profile descriptions should change identity without changing alignment:
 
-- Hero: determined but simple, slightly stronger eyebrows, clear focused eyes.
+- Hero: bright young protagonist, lively highlighted eyes, upbeat eyebrows,
+  friendly smile, and simple cheek accents.
 - Heroine: simple and cute, soft lashes and bright highlights, matching the
   approved Heroine reference.
 - Elder: mature eyes, gentle age lines, small age-appropriate nose marks.
-- Deep Voice: mature adult features, firm eyes, slightly stronger nose marks.
+- Adult: mature features, firm eyes, slightly stronger nose marks, and subtle
+  adult under-eye lines.
 - Default: preserve the current neutral style exactly.
 
 ## 9. Implementation parts
@@ -358,20 +369,20 @@ mouths/sad.png
 mouths/angry_teeth.png
 ```
 
-Elder may additionally use `details/wrinkles.png`, and Deep Voice may use
-`details/adult_lines.png`. Each output must stay on the exact 1254 x 1254
-transparent canvas. The generator may change only the requested facial part;
-it must not crop, resize, shift, redraw, or change the character identity.
+Every profile additionally uses one reusable file in `details/`. Each output
+must stay on the exact 1254 x 1254 transparent canvas. The generator may change
+only the requested facial part; it must not crop, resize, shift, redraw, or
+change the character identity.
 
 Production and approval order:
 
 1. **Heroine** - complete; all 11 parts use the approved neutral reference.
-2. **Hero** - complete; the generated neutral reference and 11 normalized parts
-   preserve the same head anchors.
-3. **Elder** - complete; the approved neutral reference, 11 normalized core
-   parts, and reusable wrinkles overlay preserve the same head anchors.
-4. **Deep Voice** - next; approve its neutral reference, create 11 core parts, then
-   the optional adult-lines overlay.
+2. **Hero** - complete; refreshed as a bright young protagonist with six
+   aligned expression sets and a reusable cheek-detail layer.
+3. **Elder** - complete; all expressions and wrinkles were recentered to the
+   same head anchor as the other actors.
+4. **Adult** - complete; the previous serious Hero identity is preserved as the
+   mature Adult profile with a reusable adult-lines overlay.
 5. **Default** - complete; the current face artwork was separated and reused
    instead of generating a different-looking replacement.
 
@@ -400,10 +411,10 @@ separated.
 - Preserve the rule that ordinary neutral dialogue temporarily uses Talking,
   while Happy, Sad, or Angry keeps its stronger set.
 
-### Part 7F - Remaining profiles and chapter test
+### Part 7F - Full actor and chapter test
 
-- Import Deep Voice after the Elder profile passes review.
-- Test every set in Sprite Studio and one full chapter in Story Mode.
+- Review every actor and set in Sprite Studio.
+- Test one full chapter in Story Mode after Part 7E stores profile and set IDs.
 
 ## 10. Acceptance checklist
 
@@ -420,7 +431,6 @@ separated.
 
 ## 11. Recommended immediate next step
 
-Finish Part 7D.5 inside Sprite Studio before starting Story Mode. Create and
-review Deep Voice next. After all five profiles pass their set and alignment
-checks, proceed to Part 7E and save `faceProfileId` plus `faceSetId` in poses
-and Story Mode scenes.
+Review Default, Hero, Heroine, Elder, and Adult in Sprite Studio. After their
+alignment and Details tabs pass, proceed to Part 7E and save `faceProfileId`
+plus `faceSetId` in poses and Story Mode scenes.
