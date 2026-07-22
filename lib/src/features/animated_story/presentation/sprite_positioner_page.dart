@@ -8,6 +8,7 @@ import '../../../shared/widgets/storytale_components.dart';
 import '../data/pose_repository.dart';
 import '../data/sprite_face_catalog.dart';
 import '../data/sprite_rig.dart';
+import 'widgets/sprite_face_editor.dart';
 import 'widgets/sprite_rig_view.dart';
 
 class SpritePositionerPage extends StatefulWidget {
@@ -654,28 +655,11 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
   Widget _faceSelector(SpriteRigDefinition rig, SpriteRigPose pose) {
     final catalog = _faceCatalog!;
     final headAsset = rig.partsById[catalog.headPartId]!.asset;
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final expression in catalog.expressions)
-          ChoiceChip(
-            key: Key('face-${expression.id}'),
-            avatar: SizedBox.square(
-              dimension: 32,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.asset(headAsset, fit: BoxFit.fill),
-                  Image.asset(expression.asset, fit: BoxFit.fill),
-                ],
-              ),
-            ),
-            label: Text(expression.label),
-            selected: pose.faceExpressionId == expression.id,
-            onSelected: (_) => _setFaceExpression(expression.id),
-          ),
-      ],
+    return SpriteFaceEditor(
+      headAsset: headAsset,
+      legacyCatalog: catalog,
+      selectedExpressionId: pose.faceExpressionId,
+      onLegacyExpressionSelected: _setFaceExpression,
     );
   }
 

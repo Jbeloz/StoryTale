@@ -291,6 +291,10 @@ class SpriteFaceProfileBundle {
       legacyExpressionId: legacyExpressionId,
       isSpeaking: isSpeaking,
     );
+    return compositionFromSet(set);
+  }
+
+  SpriteFaceComposition compositionFromSet(SpriteFaceSet set) {
     final parts = profile.parts;
     return SpriteFaceComposition(
       profileId: profile.id,

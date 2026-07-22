@@ -181,7 +181,7 @@ void main() {
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 200)),
     );
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.text('Sprite Studio'), findsOneWidget);
     expect(find.byKey(const Key('mobileStudio')), findsOneWidget);
@@ -195,6 +195,8 @@ void main() {
     expect(find.byKey(const Key('face-happy')), findsOneWidget);
     expect(find.byKey(const Key('face-sad')), findsOneWidget);
     expect(find.byKey(const Key('face-angry')), findsOneWidget);
+    expect(find.byKey(const Key('faceProfileSelector')), findsOneWidget);
+    expect(find.byKey(const Key('newFaceSetButton')), findsOneWidget);
 
     await tester.ensureVisible(find.byKey(const Key('boneModeSwitch')));
     await tester.tap(find.byKey(const Key('boneModeSwitch')));
@@ -211,13 +213,31 @@ void main() {
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 100)),
     );
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('desktopStudio')), findsOneWidget);
     expect(find.byKey(const Key('rotationInput')), findsOneWidget);
     expect(find.byKey(const Key('xInput')), findsOneWidget);
     expect(find.byKey(const Key('yInput')), findsOneWidget);
 
+    await tester.ensureVisible(find.byKey(const Key('newFaceSetButton')));
+    await tester.tap(find.byKey(const Key('newFaceSetButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Set Maker'), findsOneWidget);
+    expect(find.byKey(const Key('faceEyesPicker')), findsOneWidget);
+    expect(find.byKey(const Key('faceNosePicker')), findsOneWidget);
+    expect(find.byKey(const Key('faceMouthPicker')), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('faceSetNameInput')), 'Gentle');
+    await tester.tap(find.byKey(const Key('saveFaceSetButton')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('face-gentle')), findsOneWidget);
+    expect(
+      tester.widget<ChoiceChip>(find.byKey(const Key('face-gentle'))).selected,
+      isTrue,
+    );
+
+    await tester.ensureVisible(find.byKey(const Key('face-happy')));
     await tester.tap(find.byKey(const Key('face-happy')));
     await tester.pump();
     expect(

@@ -1,8 +1,9 @@
 # StoryTale Modular Face System Plan
 
 This plan replaces the current one-image-per-expression catalog with reusable
-face parts. It is planning only; the existing Sprite Studio and Story Mode
-behavior stay unchanged until implementation begins.
+face parts. Parts 7A through 7C now provide the asset contract, loader, profile
+selector, reusable Sets view, and session Set Maker. Story Mode migration is
+still deferred.
 
 ## Implementation status
 
@@ -12,7 +13,8 @@ behavior stay unchanged until implementation begins.
 - Heroine 11-image prompt pack: complete
 - Heroine eyes, nose, and mouth PNGs: awaiting generated results
 - Part 7B catalog, set resolver, composition order, and legacy fallback: complete
-- Sprite Studio face UI: unchanged until Part 7C
+- Part 7C Sprite Studio profile selector, Sets UI, and session Set Maker: complete
+- Part 7D Parts UI, local import, and persistent custom sets: not started
 
 ## 1. Goal
 
@@ -313,8 +315,12 @@ Profile descriptions should change identity without changing alignment:
 
 ### Part 7C - Sets UI and Set Maker
 
+**Status: complete.**
+
 - Replace the current five face chips with the Profile selector and Sets tab.
 - Add New Set, Duplicate, Rename, Delete, and live preview.
+- Keep built-in sets locked and keep custom sets in the current session until
+  the local persistence work in Part 7D.
 
 ### Part 7D - Parts UI and local import
 
@@ -351,7 +357,8 @@ Profile descriptions should change identity without changing alignment:
 
 ## 11. Recommended immediate next step
 
-Build only one Heroine proof pack first: five eye layers, one nose layer, and
-five mouth layers. Once those 11 parts align correctly and the six composed
-sets look consistent, implement the catalog and Sprite Studio UI. This prevents
-building the editor around generated assets that do not align reliably.
+Proceed with Part 7D: add the Parts tab, transparent PNG validation, local
+import, and persistent custom sets. The approved Heroine neutral reference can
+already be previewed, but its five eyes, one nose, and five mouth PNGs still
+need to be generated and imported before its six sets can render as modular
+compositions.
