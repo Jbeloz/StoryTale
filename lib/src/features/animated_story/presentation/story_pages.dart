@@ -8,8 +8,9 @@ import '../../../shared/widgets/storytale_components.dart';
 import '../../../shared/widgets/storytale_image_placeholder.dart';
 import '../data/sprite_layer_processor.dart';
 import '../data/story_artwork_service.dart';
+import '../data/subtitle_beat_splitter.dart';
 import 'sprite_positioner_page.dart';
-import 'widgets/story_character_view.dart';
+import 'widgets/visual_novel_stage.dart';
 
 class StoryPreparationPage extends StatefulWidget {
   const StoryPreparationPage({super.key});
@@ -124,6 +125,7 @@ class AnimatedStoryPage extends StatefulWidget {
 
 class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
   int _sceneIndex = 0;
+  int _beatIndex = 0;
   bool _playing = false;
   bool _filipinoSubtitles = false;
   bool _music = true;
@@ -155,9 +157,9 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
       );
     }
     final scene = story.scenes[_sceneIndex];
-    final subtitle = _filipinoSubtitles
-        ? 'Filipino subtitle placeholder: ${scene.subtitle}'
-        : scene.subtitle;
+    final beats = splitSubtitleBeats(scene.subtitle);
+    final beat = beats[_beatIndex];
+    final subtitle = _filipinoSubtitles ? 'Filipino: $beat' : beat;
 
     return StoryTaleAppShell(
       title: '${book.title} • ${chapter.title}',
@@ -172,83 +174,28 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
         children: [
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    StoryTaleImagePlaceholder(
-                      path: scene.backgroundPath,
-                      label: 'Chapter background placeholder',
-                      icon: Icons.landscape_outlined,
-                      height: double.infinity,
-                      borderRadius: 0,
-                    ),
-                    if (scene.characterLayers.isEmpty)
-                      AnimatedAlign(
-                        duration: const Duration(milliseconds: 450),
-                        alignment: _sceneIndex.isEven
-                            ? Alignment.bottomLeft
-                            : Alignment.bottomRight,
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: StoryTaleImagePlaceholder(
-                            path: scene.characterPath,
-                            label: '${scene.speaker} sprite',
-                            icon: Icons.accessibility_new,
-                            width: 130,
-                            height: 190,
-                          ),
-                        ),
-                      )
-                    else
-                      for (final layer in scene.characterLayers)
-                        AnimatedAlign(
-                          duration: const Duration(milliseconds: 450),
-                          alignment: _stageAlignment(layer.stagePosition),
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 42),
-                            child: StoryCharacterView(
-                              key: ValueKey(layer.characterId),
-                              layer: layer,
-                            ),
-                          ),
-                        ),
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        width: double.infinity,
-                        color: Colors.black87,
-                        padding: const EdgeInsets.all(16),
-                        child: Text(
-                          '${scene.speaker}: $subtitle',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+              child: VisualNovelStage(scene: scene, subtitle: subtitle),
             ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Column(
               children: [
-                LinearProgressIndicator(
-                  value: (_sceneIndex + 1) / story.scenes.length,
-                ),
+                LinearProgressIndicator(value: _storyProgress(story)),
                 Text(
                   'Scene ${_sceneIndex + 1} of ${story.scenes.length} • '
-                  '${scene.movement}',
+                  'Line ${_beatIndex + 1} of ${beats.length}',
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     IconButton(
-                      onPressed: _sceneIndex == 0 ? null : _previous,
+                      key: const Key('story-previous'),
+                      tooltip: 'Previous line',
+                      onPressed: _sceneIndex == 0 && _beatIndex == 0
+                          ? null
+                          : () => _previous(story),
                       icon: const Icon(Icons.skip_previous),
                     ),
                     IconButton.filled(
@@ -256,6 +203,8 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
                       icon: Icon(_playing ? Icons.pause : Icons.play_arrow),
                     ),
                     IconButton(
+                      key: const Key('story-next'),
+                      tooltip: 'Next line',
                       onPressed: () => _next(story),
                       icon: const Icon(Icons.skip_next),
                     ),
@@ -292,23 +241,28 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
     );
   }
 
-  void _previous() => setState(() {
-    _sceneIndex--;
+  void _previous(ChapterStoryData story) => setState(() {
+    if (_beatIndex > 0) {
+      _beatIndex--;
+    } else {
+      _sceneIndex--;
+      _beatIndex =
+          splitSubtitleBeats(story.scenes[_sceneIndex].subtitle).length - 1;
+    }
     _playing = false;
   });
 
-  Alignment _stageAlignment(String position) {
-    return switch (position) {
-      'left' => Alignment.bottomLeft,
-      'right' => Alignment.bottomRight,
-      _ => Alignment.bottomCenter,
-    };
-  }
-
   void _next(ChapterStoryData story) {
-    if (_sceneIndex < story.scenes.length - 1) {
+    final beats = splitSubtitleBeats(story.scenes[_sceneIndex].subtitle);
+    if (_beatIndex < beats.length - 1) {
+      setState(() {
+        _beatIndex++;
+        _playing = false;
+      });
+    } else if (_sceneIndex < story.scenes.length - 1) {
       setState(() {
         _sceneIndex++;
+        _beatIndex = 0;
         _playing = false;
       });
     } else {
@@ -316,6 +270,20 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
         context,
       ).push(MaterialPageRoute(builder: (_) => const ChapterMoralPage()));
     }
+  }
+
+  double _storyProgress(ChapterStoryData story) {
+    final completed = story.scenes.take(_sceneIndex).fold<int>(0, (
+      total,
+      scene,
+    ) {
+      return total + splitSubtitleBeats(scene.subtitle).length;
+    });
+    final total = story.scenes.fold<int>(0, (sum, scene) {
+      return sum + splitSubtitleBeats(scene.subtitle).length;
+    });
+    if (total == 0) return 0;
+    return (completed + _beatIndex + 1) / total;
   }
 
   Future<void> _showContents(BuildContext context) async {

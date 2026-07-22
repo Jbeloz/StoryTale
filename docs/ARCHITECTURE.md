@@ -66,10 +66,10 @@ ChapterStory
 - title
 - moral
 - cutscenes: continuous location/time/event groups
-- shots: approved layoutId, background, camera movement, and transition
+- shots: approved layoutId, background, camera preset/target/trigger, and transition
 - beats: one short subtitle/audio line in exact source order
 - characterLayers: characterId, rigId, poseId, faceProfileId, faceSetId,
-  outfitId, stage slot, scale, and movement
+  outfitId, stage slot, scale, facing, depth, and movement
 ```
 
 The UI reads this data, so we do not create a separate Flutter screen for every book or chapter.

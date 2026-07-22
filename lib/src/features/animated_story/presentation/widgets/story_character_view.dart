@@ -6,10 +6,20 @@ import 'sprite_face_view.dart';
 import 'sprite_rig_view.dart';
 
 class StoryCharacterView extends StatefulWidget {
-  const StoryCharacterView({required this.layer, this.resolver, super.key});
+  const StoryCharacterView({
+    required this.layer,
+    this.resolver,
+    this.width = 180,
+    this.height = 260,
+    this.scale = 1.55,
+    super.key,
+  });
 
   final StoryCharacterLayerData layer;
   final StoryPoseResolver? resolver;
+  final double width;
+  final double height;
+  final double scale;
 
   @override
   State<StoryCharacterView> createState() => _StoryCharacterViewState();
@@ -50,11 +60,11 @@ class _StoryCharacterViewState extends State<StoryCharacterView> {
         if (character == null) return const SizedBox.shrink();
         return SizedBox(
           key: ValueKey('story-character-${character.pose.id}'),
-          width: 180,
-          height: 260,
+          width: widget.width,
+          height: widget.height,
           child: ClipRect(
             child: Transform.scale(
-              scale: 1.55,
+              scale: widget.scale,
               alignment: Alignment.center,
               child: FittedBox(
                 fit: BoxFit.contain,

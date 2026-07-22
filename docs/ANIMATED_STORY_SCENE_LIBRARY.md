@@ -1,6 +1,6 @@
 # StoryTale Visual-Novel Scene Library
 
-**Status: planning only. Do not implement this until the layouts are approved.**
+**Status: approved. Part 1 visual-novel player foundation is implemented.**
 
 This replaces the current small-character technical demo with a visual-novel
 cutscene style. StoryTale still uses transparent full-body sprites, reusable
@@ -76,28 +76,77 @@ images. Gemini selects an ID and StoryTale places the existing sprites.
 | `memory_dream` | Memory, dream, or imagination | Reuse another layout with a soft tint, fade, or blurred edge. |
 | `ending_moral` | Chapter ending | Background-first closing image; characters are optional and subtitles finish before the moral card. |
 
-## 5. Small movement library
+## 5. Direction, character motion, and camera motion
+
+### Character direction and visual variation
+
+- `facing` is `left`, `right`, or `front`. Flutter mirrors the complete assembled
+  rig, not the individual body parts.
+- A character in a left slot faces right by default, and a character in a right
+  slot faces left. Gemini overrides this only for a clear story reason.
+- `scale` is `background`, `full`, `medium`, or `close`; Gemini never sends a
+  raw percentage.
+- `depth` is `back`, `normal`, or `front` and controls overlap, brightness, and
+  which character receives visual focus.
+- A shot may contain zero, one, two, or at most three character layers.
+- Do not repeat the same layout and scale for more than two consecutive shots.
+
+### Character movement presets
 
 | ID | What StoryTale does |
 | --- | --- |
-| `none` | Hold the current composition. |
+| `none` | Hold the current character composition. |
 | `enter_left` / `enter_right` | Slide a character into an approved slot. |
 | `exit_left` / `exit_right` | Slide a character out of the camera. |
 | `walk_left` / `walk_right` | Use Walking pose while moving the complete rig. |
-| `step_forward` | Slightly enlarge and move toward center. |
-| `step_back` | Slightly shrink and move away from center. |
-| `focus_speaker` | Enlarge or brighten the current speaker slightly. |
-| `idle_breathe` | Very small repeating scale movement. |
+| `step_forward` | Move toward center and change to the next larger scale. |
+| `step_back` | Move away from center and change to the next smaller scale. |
+| `focus_speaker` | Brighten and slightly enlarge the current speaker. |
+| `idle_breathe` | Very small repeating scale movement while waiting. |
 | `gentle_bob` | Small vertical movement for friendly dialogue. |
 | `reaction_pop` | One quick scale pulse for surprise. |
-| `shake_short` | Brief camera or sprite shake for impact; do not loop it. |
-| `camera_push_in` | Slowly enlarge the whole stage for an emotional moment. |
-| `camera_pull_out` | Slowly reveal more background at the end of a moment. |
-| `pan_left` / `pan_right` | Move the background slightly while characters stay in their slots. |
-| `fade_in` / `fade_out` | Start or end a cutscene. |
+| `fade_in` / `fade_out` | Reveal or remove a character or complete shot. |
 
-Do not ask Gemini for joint coordinates. It chooses a layout, pose, expression,
-and movement ID; the Flutter player applies the saved values.
+### Camera preset library
+
+The camera transforms one `CameraViewport` containing the background and all
+character layers. Subtitles and playback controls stay fixed outside this
+transform so they remain readable.
+
+| ID | Motion | Normal use |
+| --- | --- | --- |
+| `camera_static` | No movement. | Normal dialogue and rest between moving shots. |
+| `camera_push_in_slow` | Scale `1.00 -> 1.12` over 1.8-2.8 seconds. | Emotion, discovery, important dialogue, or a reaction. |
+| `camera_pull_out_slow` | Scale `1.12 -> 1.00` over 1.8-2.8 seconds. | Establishing context, loneliness, ending, or moral. |
+| `camera_pan_left_slow` | Pan the viewport left by at most 6% of its width. | Reveal something on the right or follow rightward travel. |
+| `camera_pan_right_slow` | Pan the viewport right by at most 6% of its width. | Reveal something on the left or follow leftward travel. |
+| `camera_drift_left` | Very slow 3-5 second leftward movement. | Calm travel, memory, dream, or environmental narration. |
+| `camera_drift_right` | Very slow 3-5 second rightward movement. | Mirrored calm travel or environmental narration. |
+| `camera_snap_in` | Scale `1.00 -> 1.08` in 220-400 ms. | Sudden realization, surprise, or impact. |
+| `camera_shake_short` | Move by at most 8 px for 240-320 ms. | Collision, shout, shock, or strong sound effect; never loop. |
+
+Camera safety rules:
+
+1. A pan uses at least `1.12` viewport scale and crop-safe background space so
+   no empty edge becomes visible.
+2. Normal zoom is clamped to `1.00-1.18`; only an approved close-up layout may
+   crop more through character scale.
+3. Use at most one primary camera preset per shot, plus one optional
+   `camera_shake_short` impact.
+4. Start slow camera motion at a shot boundary. A beat may trigger only a snap
+   or shake for a specific reaction.
+5. Keep roughly 50-70% of shots static so movement remains meaningful and does
+   not become distracting.
+6. Do not use moving camera shots more than twice in a row.
+7. When a character walks, pan gently with the travel or keep the camera static;
+   do not combine full pan and full character travel in opposite directions.
+8. Never loop zoom, snap, or shake. `idle_breathe` is the only normal loop.
+9. Reduced-motion mode replaces pan, zoom, shake, and travel with a short fade.
+10. Flutter owns every distance, duration, easing curve, and safety clamp.
+
+Do not ask Gemini for joint coordinates, pixels, percentages, durations, or
+easing values. It chooses approved layout, facing, scale, depth, pose,
+expression, character movement, and camera preset IDs; Flutter applies them.
 
 ## 6. What the story analyzer decides
 
@@ -111,11 +160,15 @@ ShotPlan
 - layoutId
 - backgroundId
 - transitionId
-- cameraMovementId
+- cameraPresetId
+- cameraTargetId: stage, background, or characterId
+- cameraTriggerBeatId (optional reaction trigger)
 - characters (maximum 3)
   - characterId
   - slot: farLeft, left, center, right, farRight
   - scale: background, full, medium, close
+  - facing: left, right, front
+  - depth: back, normal, front
   - poseId
   - faceProfileId and faceSetId
   - movementId
@@ -139,6 +192,12 @@ Analyzer rules:
    reaction close-up, or background plus SFX instead.
 9. Reuse approved backgrounds and character rigs from the story bible.
 10. Never invent an unapproved layout, pose, character design, or movement ID.
+11. Alternate wide, medium, and close framing when the story focus changes.
+12. Use speaker-focus shots during conversation and face speakers inward.
+13. Choose `camera_static` for most dialogue; use pans and zooms only to reveal,
+    follow, emphasize, react, establish, or close a moment.
+14. Never repeat the same layout, scale, and camera preset for more than two
+    consecutive shots.
 
 ## 7. One-sentence ChatGPT prompts for layout references
 
@@ -169,15 +228,19 @@ Replace bracketed words, but keep each request as one sentence.
 
 ## 8. Implementation order after approval
 
-1. Replace the current large subtitle panel with the visual-novel stage and
-   one-line subtitle bar.
+1. **Completed:** replace the large subtitle panel with the visual-novel stage,
+   75%-height character framing, full-stage background, and one-line beats.
 2. Add `Cutscene`, `ShotPlan`, and `StoryBeat` data models using only the IDs in
    this document.
 3. Add layout presets for zero, one, two, and three characters.
-4. Add character scale, focus, entrance/exit, walking, and camera movement.
-5. Change the Gemini schema so it chooses approved layout and movement IDs.
-6. Use one deterministic chapter fixture before connecting generated assets.
-7. Only after the player looks correct, continue the Character Builder.
+4. Add character facing, scale, depth, speaker focus, and multiple layers.
+5. Add the camera viewport, approved pan/zoom presets, safety clamps, and
+   reduced-motion fallback.
+6. Add character entrance/exit, walking, reactions, and shot transitions.
+7. Change the Gemini schema so it chooses approved layout, character movement,
+   and camera preset IDs.
+8. Use one varied deterministic chapter fixture before generated scene data.
+9. Only after the player looks correct, continue the Character Builder.
 
 ## 9. Acceptance checklist
 
@@ -186,6 +249,8 @@ Replace bracketed words, but keep each request as one sentence.
 - Backgrounds fill the camera and do not look like placeholders.
 - Shots visibly change focus during a conversation.
 - Characters can enter, exit, walk, react, and receive camera focus.
+- Camera pans and zooms never expose a background edge or move the subtitle UI.
+- Reduced-motion mode replaces camera and travel movement with fades.
 - Unsupported actions use a cutaway instead of a broken pose.
 - Gemini can choose only approved layout, pose, expression, and movement IDs.
 - The same player handles no-character, solo, pair, and small-group scenes.
