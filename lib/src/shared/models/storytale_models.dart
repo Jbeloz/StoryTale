@@ -81,26 +81,70 @@ class VoiceProfileData {
   PreparationStatus status;
 }
 
-class StorySceneData {
-  StorySceneData({
+class StoryBeatData {
+  const StoryBeatData({
     required this.id,
-    required this.speaker,
-    required this.subtitle,
-    required this.movement,
-    this.characterLayers = const [],
-    this.backgroundPath,
-    this.characterPath,
-    this.audioPath,
+    required this.speakerId,
+    required this.originalText,
+    this.filipinoText,
+    this.audioAssetId,
+    this.actionId,
   });
 
   final String id;
-  final String speaker;
-  final String subtitle;
-  final String movement;
+  final String speakerId;
+  final String originalText;
+  final String? filipinoText;
+  final String? audioAssetId;
+  final String? actionId;
+}
+
+class StoryCameraPlanData {
+  const StoryCameraPlanData({
+    this.presetId = 'camera_static',
+    this.targetId = 'stage',
+    this.triggerBeatId,
+  });
+
+  final String presetId;
+  final String targetId;
+  final String? triggerBeatId;
+}
+
+class StoryShotPlanData {
+  const StoryShotPlanData({
+    required this.id,
+    required this.layoutId,
+    required this.backgroundId,
+    required this.beats,
+    this.characterLayers = const [],
+    this.camera = const StoryCameraPlanData(),
+    this.transitionId = 'cut',
+    this.backgroundPath,
+  });
+
+  final String id;
+  final String layoutId;
+  final String backgroundId;
+  final List<StoryBeatData> beats;
   final List<StoryCharacterLayerData> characterLayers;
+  final StoryCameraPlanData camera;
+  final String transitionId;
   final String? backgroundPath;
-  final String? characterPath;
-  final String? audioPath;
+}
+
+class StoryCutsceneData {
+  const StoryCutsceneData({
+    required this.id,
+    required this.locationId,
+    required this.shots,
+    this.timeOfDay = 'unspecified',
+  });
+
+  final String id;
+  final String locationId;
+  final List<StoryShotPlanData> shots;
+  final String timeOfDay;
 }
 
 class StoryCharacterLayerData {
@@ -113,6 +157,9 @@ class StoryCharacterLayerData {
     this.faceSetId,
     this.outfitId,
     this.stagePosition = 'center',
+    this.scale = 'full',
+    this.facing = 'front',
+    this.depth = 'normal',
     this.movement = 'idle',
     this.isSpeaking = false,
   });
@@ -125,6 +172,9 @@ class StoryCharacterLayerData {
   final String? faceSetId;
   final String? outfitId;
   final String stagePosition;
+  final String scale;
+  final String facing;
+  final String depth;
   final String movement;
   final bool isSpeaking;
 
@@ -138,6 +188,9 @@ class StoryCharacterLayerData {
       faceSetId: json['faceSetId'] as String?,
       outfitId: json['outfitId'] as String?,
       stagePosition: json['stagePosition'] as String? ?? 'center',
+      scale: json['scale'] as String? ?? 'full',
+      facing: json['facing'] as String? ?? 'front',
+      depth: json['depth'] as String? ?? 'normal',
       movement: json['movement'] as String? ?? 'idle',
       isSpeaking: json['isSpeaking'] as bool? ?? false,
     );
@@ -152,6 +205,9 @@ class StoryCharacterLayerData {
     if (faceSetId != null) 'faceSetId': faceSetId,
     if (outfitId != null) 'outfitId': outfitId,
     'stagePosition': stagePosition,
+    'scale': scale,
+    'facing': facing,
+    'depth': depth,
     'movement': movement,
     'isSpeaking': isSpeaking,
   };
@@ -161,14 +217,27 @@ class ChapterStoryData {
   ChapterStoryData({
     required this.chapterId,
     required this.moral,
-    required this.scenes,
+    required this.cutscenes,
     this.status = PreparationStatus.notStarted,
   });
 
   final String chapterId;
   final String moral;
-  final List<StorySceneData> scenes;
+  final List<StoryCutsceneData> cutscenes;
   PreparationStatus status;
+
+  List<StoryShotPlanData> get shots => [
+    for (final cutscene in cutscenes) ...cutscene.shots,
+  ];
+
+  int cutsceneNumberForShot(int shotIndex) {
+    var firstShot = 0;
+    for (var index = 0; index < cutscenes.length; index++) {
+      firstShot += cutscenes[index].shots.length;
+      if (shotIndex < firstShot) return index + 1;
+    }
+    return cutscenes.length;
+  }
 }
 
 class ReaderSettingsData {

@@ -158,6 +158,19 @@ an existing character or propose a new candidate, but it cannot replace a
 locked appearance, sprite design, or voice. Configuration is documented in
 [Environment setup](ENVIRONMENT_SETUP.md).
 
+The validated result is stored in the same structure used by the player:
+
+```text
+ChapterStoryData
+-> StoryCutsceneData (one location and continuous event)
+   -> StoryShotPlanData (layout, background, camera, and character layers)
+      -> StoryBeatData (one short subtitle/audio line and optional action)
+```
+
+The prototype currently creates this structure deterministically. Gemini will
+later fill the same approved fields, so the player does not need a separate AI
+code path.
+
 ## Local-first rule
 
 ```text

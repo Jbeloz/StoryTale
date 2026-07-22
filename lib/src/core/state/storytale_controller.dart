@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../generated/voice_manifest.g.dart';
+import '../../features/animated_story/data/subtitle_beat_splitter.dart';
 import '../../shared/models/storytale_models.dart';
 
 class StoryTaleController extends ChangeNotifier {
@@ -199,34 +200,53 @@ class StoryTaleController extends ChangeNotifier {
 
   ChapterStoryData storyFor(ChapterData chapter) {
     return stories.putIfAbsent(chapter.id, () {
-      final sceneTexts = _storySceneTexts(chapter);
+      final shotTexts = _storyShotTexts(chapter);
       return ChapterStoryData(
         chapterId: chapter.id,
         moral: 'Kindness and friendship make every journey meaningful.',
-        scenes: List.generate(
-          sceneTexts.length,
-          (index) => _testScene(
-            chapter,
-            index + 1,
-            sceneTexts[index],
-            _reviewCast[index % _reviewCast.length],
+        cutscenes: [
+          StoryCutsceneData(
+            id: '${chapter.id}-cutscene-1',
+            locationId: 'moonlit_rose_garden',
+            timeOfDay: 'night',
+            shots: List.generate(
+              shotTexts.length,
+              (index) => _testShot(
+                chapter,
+                index + 1,
+                shotTexts[index],
+                _reviewCast[index % _reviewCast.length],
+              ),
+            ),
           ),
-        ),
+        ],
       );
     });
   }
 
-  static StorySceneData _testScene(
+  static StoryShotPlanData _testShot(
     ChapterData chapter,
     int number,
     String subtitle,
     _StoryActor actor,
   ) {
-    return StorySceneData(
-      id: '${chapter.id}-scene-$number',
-      speaker: actor.speaker,
-      subtitle: subtitle,
-      movement: actor.movement,
+    final shotId = '${chapter.id}-shot-$number';
+    final lines = splitSubtitleBeats(subtitle);
+    return StoryShotPlanData(
+      id: shotId,
+      layoutId: 'solo_${actor.stagePosition}_full',
+      backgroundId: 'moonlit_rose_garden',
+      transitionId: number == 1 ? 'fade_in' : 'cut',
+      camera: const StoryCameraPlanData(),
+      beats: List.generate(
+        lines.length,
+        (index) => StoryBeatData(
+          id: '$shotId-beat-${index + 1}',
+          speakerId: actor.speaker,
+          originalText: lines[index],
+          actionId: index == 0 ? actor.movement : null,
+        ),
+      ),
       characterLayers: [
         StoryCharacterLayerData(
           characterId: actor.characterId,
@@ -235,6 +255,11 @@ class StoryTaleController extends ChangeNotifier {
           faceProfileId: actor.faceProfileId,
           faceSetId: actor.faceSetId,
           stagePosition: actor.stagePosition,
+          facing: switch (actor.stagePosition) {
+            'left' => 'right',
+            'right' => 'left',
+            _ => 'front',
+          },
           movement: actor.movement,
           isSpeaking: actor.isSpeaking,
         ),
@@ -242,7 +267,7 @@ class StoryTaleController extends ChangeNotifier {
     );
   }
 
-  static List<String> _storySceneTexts(ChapterData chapter) {
+  static List<String> _storyShotTexts(ChapterData chapter) {
     final blocks = chapter.sourceBlocks.isNotEmpty
         ? chapter.sourceBlocks.map((block) => block.text)
         : chapter.originalText.split(RegExp(r'\n\s*\n'));

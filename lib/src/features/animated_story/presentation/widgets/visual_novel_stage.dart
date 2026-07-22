@@ -6,7 +6,8 @@ import 'story_character_view.dart';
 
 class VisualNovelStage extends StatelessWidget {
   const VisualNovelStage({
-    required this.scene,
+    required this.shot,
+    required this.speaker,
     required this.subtitle,
     super.key,
   });
@@ -14,7 +15,8 @@ class VisualNovelStage extends StatelessWidget {
   static const fallbackBackground =
       'assets/images/backgrounds/cloudflare_examples/moonlit-rose-garden.jpg';
 
-  final StorySceneData scene;
+  final StoryShotPlanData shot;
+  final String speaker;
   final String subtitle;
 
   @override
@@ -30,7 +32,7 @@ class VisualNovelStage extends StatelessWidget {
             children: [
               StoryTaleImagePlaceholder(
                 key: const Key('visual-novel-background'),
-                path: scene.backgroundPath ?? fallbackBackground,
+                path: shot.backgroundPath ?? fallbackBackground,
                 label: 'Chapter background',
                 icon: Icons.landscape_outlined,
                 height: double.infinity,
@@ -46,7 +48,7 @@ class VisualNovelStage extends StatelessWidget {
                   ),
                 ),
               ),
-              for (final layer in scene.characterLayers)
+              for (final layer in shot.characterLayers)
                 AnimatedAlign(
                   duration: const Duration(milliseconds: 450),
                   curve: Curves.easeOutCubic,
@@ -64,7 +66,7 @@ class VisualNovelStage extends StatelessWidget {
                 ),
               Align(
                 alignment: Alignment.bottomCenter,
-                child: _SubtitleBar(speaker: scene.speaker, subtitle: subtitle),
+                child: _SubtitleBar(speaker: speaker, subtitle: subtitle),
               ),
             ],
           ),

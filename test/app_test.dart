@@ -104,7 +104,8 @@ void main() {
       () => Future<void>.delayed(const Duration(milliseconds: 200)),
     );
     await tester.pumpAndSettle();
-    expect(find.textContaining('Scene 1 of'), findsOneWidget);
+    expect(find.textContaining('Cutscene 1'), findsOneWidget);
+    expect(find.textContaining('Shot 1 of'), findsOneWidget);
     expect(find.textContaining('Line 1 of'), findsOneWidget);
     expect(find.byKey(const Key('visual-novel-stage')), findsOneWidget);
     expect(find.byKey(const Key('story-subtitle-line')), findsOneWidget);

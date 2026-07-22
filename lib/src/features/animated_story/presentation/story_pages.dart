@@ -8,7 +8,6 @@ import '../../../shared/widgets/storytale_components.dart';
 import '../../../shared/widgets/storytale_image_placeholder.dart';
 import '../data/sprite_layer_processor.dart';
 import '../data/story_artwork_service.dart';
-import '../data/subtitle_beat_splitter.dart';
 import 'sprite_positioner_page.dart';
 import 'widgets/visual_novel_stage.dart';
 
@@ -124,7 +123,7 @@ class AnimatedStoryPage extends StatefulWidget {
 }
 
 class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
-  int _sceneIndex = 0;
+  int _shotIndex = 0;
   int _beatIndex = 0;
   bool _playing = false;
   bool _filipinoSubtitles = false;
@@ -156,10 +155,12 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
         ],
       );
     }
-    final scene = story.scenes[_sceneIndex];
-    final beats = splitSubtitleBeats(scene.subtitle);
-    final beat = beats[_beatIndex];
-    final subtitle = _filipinoSubtitles ? 'Filipino: $beat' : beat;
+    final shots = story.shots;
+    final shot = shots[_shotIndex];
+    final beat = shot.beats[_beatIndex];
+    final subtitle = _filipinoSubtitles
+        ? beat.filipinoText ?? 'Filipino: ${beat.originalText}'
+        : beat.originalText;
 
     return StoryTaleAppShell(
       title: '${book.title} • ${chapter.title}',
@@ -175,7 +176,11 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-              child: VisualNovelStage(scene: scene, subtitle: subtitle),
+              child: VisualNovelStage(
+                shot: shot,
+                speaker: beat.speakerId,
+                subtitle: subtitle,
+              ),
             ),
           ),
           Padding(
@@ -184,8 +189,9 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
               children: [
                 LinearProgressIndicator(value: _storyProgress(story)),
                 Text(
-                  'Scene ${_sceneIndex + 1} of ${story.scenes.length} • '
-                  'Line ${_beatIndex + 1} of ${beats.length}',
+                  'Cutscene ${story.cutsceneNumberForShot(_shotIndex)} • '
+                  'Shot ${_shotIndex + 1} of ${shots.length} • '
+                  'Line ${_beatIndex + 1} of ${shot.beats.length}',
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -193,7 +199,7 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
                     IconButton(
                       key: const Key('story-previous'),
                       tooltip: 'Previous line',
-                      onPressed: _sceneIndex == 0 && _beatIndex == 0
+                      onPressed: _shotIndex == 0 && _beatIndex == 0
                           ? null
                           : () => _previous(story),
                       icon: const Icon(Icons.skip_previous),
@@ -245,23 +251,22 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
     if (_beatIndex > 0) {
       _beatIndex--;
     } else {
-      _sceneIndex--;
-      _beatIndex =
-          splitSubtitleBeats(story.scenes[_sceneIndex].subtitle).length - 1;
+      _shotIndex--;
+      _beatIndex = story.shots[_shotIndex].beats.length - 1;
     }
     _playing = false;
   });
 
   void _next(ChapterStoryData story) {
-    final beats = splitSubtitleBeats(story.scenes[_sceneIndex].subtitle);
-    if (_beatIndex < beats.length - 1) {
+    final shots = story.shots;
+    if (_beatIndex < shots[_shotIndex].beats.length - 1) {
       setState(() {
         _beatIndex++;
         _playing = false;
       });
-    } else if (_sceneIndex < story.scenes.length - 1) {
+    } else if (_shotIndex < shots.length - 1) {
       setState(() {
-        _sceneIndex++;
+        _shotIndex++;
         _beatIndex = 0;
         _playing = false;
       });
@@ -273,15 +278,13 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
   }
 
   double _storyProgress(ChapterStoryData story) {
-    final completed = story.scenes.take(_sceneIndex).fold<int>(0, (
-      total,
-      scene,
-    ) {
-      return total + splitSubtitleBeats(scene.subtitle).length;
-    });
-    final total = story.scenes.fold<int>(0, (sum, scene) {
-      return sum + splitSubtitleBeats(scene.subtitle).length;
-    });
+    final completed = story.shots
+        .take(_shotIndex)
+        .fold<int>(0, (total, shot) => total + shot.beats.length);
+    final total = story.shots.fold<int>(
+      0,
+      (sum, shot) => sum + shot.beats.length,
+    );
     if (total == 0) return 0;
     return (completed + _beatIndex + 1) / total;
   }

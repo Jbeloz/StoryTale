@@ -1,6 +1,6 @@
 # StoryTale Visual-Novel Scene Library
 
-**Status: approved. Part 1 visual-novel player foundation is implemented.**
+**Status: approved. Parts 1-2 are implemented.**
 
 This replaces the current small-character technical demo with a visual-novel
 cutscene style. StoryTale still uses transparent full-body sprites, reusable
@@ -230,8 +230,9 @@ Replace bracketed words, but keep each request as one sentence.
 
 1. **Completed:** replace the large subtitle panel with the visual-novel stage,
    75%-height character framing, full-stage background, and one-line beats.
-2. Add `Cutscene`, `ShotPlan`, and `StoryBeat` data models using only the IDs in
-   this document.
+2. **Completed:** add `Cutscene`, `ShotPlan`, and `StoryBeat` data models using
+   only the IDs in this document. The current deterministic chapter now uses
+   this nested structure, including camera and character staging fields.
 3. Add layout presets for zero, one, two, and three characters.
 4. Add character facing, scale, depth, speaker focus, and multiple layers.
 5. Add the camera viewport, approved pan/zoom presets, safety clamps, and

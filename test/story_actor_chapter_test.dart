@@ -14,32 +14,29 @@ void main() {
     final controller = StoryTaleController();
     final chapter = controller.books.first.chapters.first;
     final story = controller.storyFor(chapter);
-    final sourceBlocks = chapter.originalText
-        .split(RegExp(r'\n\s*\n'))
-        .map((text) => text.trim())
-        .where((text) => text.isNotEmpty)
-        .toList();
-    final sceneBlocks = story.scenes
-        .expand((scene) => scene.subtitle.split(RegExp(r'\n\s*\n')))
-        .map((text) => text.trim())
-        .where((text) => text.isNotEmpty)
-        .toList();
+    final sourceText = chapter.originalText
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final storyText = story.shots
+        .expand((shot) => shot.beats)
+        .map((beat) => beat.originalText)
+        .join(' ');
 
-    expect(sceneBlocks, sourceBlocks);
-    expect(story.scenes.length, inInclusiveRange(4, 10));
+    expect(storyText, sourceText);
+    expect(story.shots.length, inInclusiveRange(4, 10));
 
-    final profiles = story.scenes
-        .expand((scene) => scene.characterLayers)
+    final profiles = story.shots
+        .expand((shot) => shot.characterLayers)
         .map((layer) => layer.faceProfileId)
         .toSet();
     expect(profiles, {'default', 'hero', 'heroine', 'elder', 'adult_deep'});
 
     final resolvedSets = <String, String>{};
     final resolver = StoryPoseResolver();
-    for (final scene in story.scenes) {
-      final layer = scene.characterLayers.single;
+    for (final shot in story.shots) {
+      final layer = shot.characterLayers.single;
       final resolved = await tester.runAsync(() => resolver.resolve(layer));
-      expect(resolved, isNotNull, reason: 'Scene ${scene.id} did not resolve.');
+      expect(resolved, isNotNull, reason: 'Shot ${shot.id} did not resolve.');
       expect(resolved!.faceComposition?.profileId, layer.faceProfileId);
       resolvedSets[layer.characterId] = resolved.faceComposition!.setId;
     }
