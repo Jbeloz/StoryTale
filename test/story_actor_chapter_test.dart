@@ -33,10 +33,13 @@ void main() {
 
     final resolvedSets = <String, String>{};
     final resolver = StoryPoseResolver();
-    for (final shot in story.shots) {
-      final layer = shot.characterLayers.single;
+    for (final layer in story.shots.expand((shot) => shot.characterLayers)) {
       final resolved = await tester.runAsync(() => resolver.resolve(layer));
-      expect(resolved, isNotNull, reason: 'Shot ${shot.id} did not resolve.');
+      expect(
+        resolved,
+        isNotNull,
+        reason: 'Character ${layer.characterId} did not resolve.',
+      );
       expect(resolved!.faceComposition?.profileId, layer.faceProfileId);
       resolvedSets[layer.characterId] = resolved.faceComposition!.setId;
     }

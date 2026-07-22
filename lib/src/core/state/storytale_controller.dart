@@ -215,7 +215,7 @@ class StoryTaleController extends ChangeNotifier {
                 chapter,
                 index + 1,
                 shotTexts[index],
-                _reviewCast[index % _reviewCast.length],
+                _reviewShots[index % _reviewShots.length],
               ),
             ),
           ),
@@ -228,13 +228,17 @@ class StoryTaleController extends ChangeNotifier {
     ChapterData chapter,
     int number,
     String subtitle,
-    _StoryActor actor,
+    _ReviewShotTemplate template,
   ) {
     final shotId = '${chapter.id}-shot-$number';
     final lines = splitSubtitleBeats(subtitle);
+    final speakerIndex = template.speakerActorIndex;
+    final speaker = speakerIndex == null
+        ? 'Narrator'
+        : _reviewCast[speakerIndex].speaker;
     return StoryShotPlanData(
       id: shotId,
-      layoutId: 'solo_${actor.stagePosition}_full',
+      layoutId: template.layoutId,
       backgroundId: 'moonlit_rose_garden',
       transitionId: number == 1 ? 'fade_in' : 'cut',
       camera: const StoryCameraPlanData(),
@@ -242,28 +246,31 @@ class StoryTaleController extends ChangeNotifier {
         lines.length,
         (index) => StoryBeatData(
           id: '$shotId-beat-${index + 1}',
-          speakerId: actor.speaker,
+          speakerId: speaker,
           originalText: lines[index],
-          actionId: index == 0 ? actor.movement : null,
+          actionId: index == 0 && speakerIndex != null
+              ? _reviewCast[speakerIndex].movement
+              : null,
         ),
       ),
-      characterLayers: [
-        StoryCharacterLayerData(
+      characterLayers: template.placements.map((placement) {
+        final actor = _reviewCast[placement.actorIndex];
+        return StoryCharacterLayerData(
           characterId: actor.characterId,
           rigId: 'humanoid_v1',
           poseId: actor.poseId,
           faceProfileId: actor.faceProfileId,
           faceSetId: actor.faceSetId,
-          stagePosition: actor.stagePosition,
-          facing: switch (actor.stagePosition) {
+          stagePosition: placement.stagePosition,
+          facing: switch (placement.stagePosition) {
             'left' => 'right',
             'right' => 'left',
             _ => 'front',
           },
           movement: actor.movement,
           isSpeaking: actor.isSpeaking,
-        ),
-      ],
+        );
+      }).toList(),
     );
   }
 
@@ -288,7 +295,47 @@ class StoryTaleController extends ChangeNotifier {
     return scenes;
   }
 
-  // Deterministic review cast until validated Gemini scene data replaces it.
+  // Generic layout fixture used for demo and imported EPUB chapters until
+  // validated Gemini shot plans replace it.
+  static const _reviewShots = [
+    _ReviewShotTemplate(
+      layoutId: 'two_balanced',
+      speakerActorIndex: 1,
+      placements: [
+        _ReviewPlacement(actorIndex: 1, stagePosition: 'left'),
+        _ReviewPlacement(actorIndex: 2, stagePosition: 'right'),
+      ],
+    ),
+    _ReviewShotTemplate(layoutId: 'background_establishing'),
+    _ReviewShotTemplate(
+      layoutId: 'solo_left_full',
+      speakerActorIndex: 0,
+      placements: [_ReviewPlacement(actorIndex: 0, stagePosition: 'left')],
+    ),
+    _ReviewShotTemplate(
+      layoutId: 'group_three',
+      speakerActorIndex: 3,
+      placements: [
+        _ReviewPlacement(actorIndex: 3, stagePosition: 'left'),
+        _ReviewPlacement(actorIndex: 1, stagePosition: 'center'),
+        _ReviewPlacement(actorIndex: 2, stagePosition: 'right'),
+      ],
+    ),
+    _ReviewShotTemplate(
+      layoutId: 'solo_right_full',
+      speakerActorIndex: 4,
+      placements: [_ReviewPlacement(actorIndex: 4, stagePosition: 'right')],
+    ),
+    _ReviewShotTemplate(
+      layoutId: 'depth_pair',
+      speakerActorIndex: 1,
+      placements: [
+        _ReviewPlacement(actorIndex: 1, stagePosition: 'left'),
+        _ReviewPlacement(actorIndex: 4, stagePosition: 'right'),
+      ],
+    ),
+  ];
+
   static const _reviewCast = [
     _StoryActor(
       characterId: 'default_actor',
@@ -296,7 +343,6 @@ class StoryTaleController extends ChangeNotifier {
       faceProfileId: 'default',
       faceSetId: 'neutral',
       poseId: 'neutral',
-      stagePosition: 'left',
       movement: 'fade in',
     ),
     _StoryActor(
@@ -305,7 +351,6 @@ class StoryTaleController extends ChangeNotifier {
       faceProfileId: 'hero',
       faceSetId: 'neutral',
       poseId: 'talking',
-      stagePosition: 'center',
       movement: 'talking',
       isSpeaking: true,
     ),
@@ -315,7 +360,6 @@ class StoryTaleController extends ChangeNotifier {
       faceProfileId: 'heroine',
       faceSetId: 'happy',
       poseId: 'pointing',
-      stagePosition: 'right',
       movement: 'pointing',
     ),
     _StoryActor(
@@ -324,7 +368,6 @@ class StoryTaleController extends ChangeNotifier {
       faceProfileId: 'elder',
       faceSetId: 'sad',
       poseId: 'neutral',
-      stagePosition: 'left',
       movement: 'idle',
     ),
     _StoryActor(
@@ -333,7 +376,6 @@ class StoryTaleController extends ChangeNotifier {
       faceProfileId: 'adult_deep',
       faceSetId: 'angry',
       poseId: 'talking',
-      stagePosition: 'center',
       movement: 'talking',
       isSpeaking: true,
     ),
@@ -343,7 +385,6 @@ class StoryTaleController extends ChangeNotifier {
       faceProfileId: 'hero',
       faceSetId: 'neutral',
       poseId: 'walking',
-      stagePosition: 'right',
       movement: 'walk right',
     ),
   ];
@@ -424,7 +465,6 @@ class _StoryActor {
     required this.faceProfileId,
     required this.faceSetId,
     required this.poseId,
-    required this.stagePosition,
     required this.movement,
     this.isSpeaking = false,
   });
@@ -434,9 +474,30 @@ class _StoryActor {
   final String faceProfileId;
   final String faceSetId;
   final String poseId;
-  final String stagePosition;
   final String movement;
   final bool isSpeaking;
+}
+
+class _ReviewShotTemplate {
+  const _ReviewShotTemplate({
+    required this.layoutId,
+    this.speakerActorIndex,
+    this.placements = const [],
+  });
+
+  final String layoutId;
+  final int? speakerActorIndex;
+  final List<_ReviewPlacement> placements;
+}
+
+class _ReviewPlacement {
+  const _ReviewPlacement({
+    required this.actorIndex,
+    required this.stagePosition,
+  });
+
+  final int actorIndex;
+  final String stagePosition;
 }
 
 extension _FirstOrNull<T> on List<T> {

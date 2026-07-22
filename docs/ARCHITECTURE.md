@@ -171,6 +171,11 @@ The prototype currently creates this structure deterministically. Gemini will
 later fill the same approved fields, so the player does not need a separate AI
 code path.
 
+Imported EPUB chapters use this same player and layout resolver. Until Gemini
+analysis is requested, StoryTale assigns a varied deterministic set of empty,
+solo, pair, and three-character shots; Gemini later replaces only the
+structured values, not the Flutter screens or layout code.
+
 ## Local-first rule
 
 ```text

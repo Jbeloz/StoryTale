@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../shared/models/storytale_models.dart';
 import '../../../../shared/widgets/storytale_image_placeholder.dart';
 import 'story_character_view.dart';
+import 'visual_novel_layouts.dart';
 
 class VisualNovelStage extends StatelessWidget {
   const VisualNovelStage({
@@ -23,11 +24,16 @@ class VisualNovelStage extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final characterHeight = constraints.maxHeight * 0.76;
+        final characters = shot.characterLayers.take(3).toList();
+        final layout = VisualNovelLayoutPreset.resolve(
+          shot.layoutId,
+          characters.length,
+        );
         return ClipRRect(
           key: const Key('visual-novel-stage'),
           borderRadius: BorderRadius.circular(20),
           child: Stack(
+            key: ValueKey('story-layout-${shot.layoutId}'),
             fit: StackFit.expand,
             children: [
               StoryTaleImagePlaceholder(
@@ -48,18 +54,23 @@ class VisualNovelStage extends StatelessWidget {
                   ),
                 ),
               ),
-              for (final layer in shot.characterLayers)
+              for (var index = 0; index < characters.length; index++)
                 AnimatedAlign(
                   duration: const Duration(milliseconds: 450),
                   curve: Curves.easeOutCubic,
-                  alignment: _stageAlignment(layer.stagePosition),
+                  alignment: layout.slots[index].alignment,
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 48),
                     child: StoryCharacterView(
-                      key: ValueKey(layer.characterId),
-                      layer: layer,
-                      width: characterHeight * 0.94,
-                      height: characterHeight,
+                      key: ValueKey('${characters[index].characterId}-$index'),
+                      layer: characters[index],
+                      width:
+                          constraints.maxHeight *
+                          layout.slots[index].heightFactor *
+                          0.94,
+                      height:
+                          constraints.maxHeight *
+                          layout.slots[index].heightFactor,
                       scale: 1.48,
                     ),
                   ),
@@ -73,14 +84,6 @@ class VisualNovelStage extends StatelessWidget {
         );
       },
     );
-  }
-
-  Alignment _stageAlignment(String position) {
-    return switch (position) {
-      'left' => const Alignment(-0.72, 1),
-      'right' => const Alignment(0.72, 1),
-      _ => Alignment.bottomCenter,
-    };
   }
 }
 

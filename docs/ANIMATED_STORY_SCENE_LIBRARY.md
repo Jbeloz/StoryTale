@@ -1,6 +1,6 @@
 # StoryTale Visual-Novel Scene Library
 
-**Status: approved. Parts 1-2 are implemented.**
+**Status: approved. Parts 1-3 are implemented.**
 
 This replaces the current small-character technical demo with a visual-novel
 cutscene style. StoryTale still uses transparent full-body sprites, reusable
@@ -233,7 +233,9 @@ Replace bracketed words, but keep each request as one sentence.
 2. **Completed:** add `Cutscene`, `ShotPlan`, and `StoryBeat` data models using
    only the IDs in this document. The current deterministic chapter now uses
    this nested structure, including camera and character staging fields.
-3. Add layout presets for zero, one, two, and three characters.
+3. **Completed:** add reusable layout presets for zero, one, two, and three
+   characters. The same resolver accepts deterministic test shots, imported
+   EPUB chapters, and future Gemini shot plans.
 4. Add character facing, scale, depth, speaker focus, and multiple layers.
 5. Add the camera viewport, approved pan/zoom presets, safety clamps, and
    reduced-motion fallback.

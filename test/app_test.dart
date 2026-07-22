@@ -109,7 +109,8 @@ void main() {
     expect(find.textContaining('Line 1 of'), findsOneWidget);
     expect(find.byKey(const Key('visual-novel-stage')), findsOneWidget);
     expect(find.byKey(const Key('story-subtitle-line')), findsOneWidget);
-    expect(find.byKey(const Key('story-character-neutral')), findsOneWidget);
+    expect(find.byKey(const Key('story-character-talking')), findsOneWidget);
+    expect(find.byKey(const Key('story-character-pointing')), findsOneWidget);
 
     final firstLine = tester
         .widget<Text>(find.byKey(const Key('story-subtitle-line')))
