@@ -249,6 +249,12 @@ A scene is a visual grouping of consecutive story lines, not a summary that
 replaces the chapter text. Start with roughly 4-10 visual scenes per chapter,
 but allow more for long chapters.
 
+Playback uses `Chapter -> Cutscene -> Shot -> Beat`. A cutscene keeps one
+location and continuous event, a shot keeps one camera/character layout, and a
+beat shows one short subtitle/audio line. The approved visual-novel layouts,
+movement IDs, analyzer rules, and reference prompts are defined in the
+[Visual-Novel Scene Library](ANIMATED_STORY_SCENE_LIBRARY.md).
+
 ```text
 StoryScene
 - sceneId and sortOrder
@@ -269,6 +275,9 @@ Allowed MVP movements stay small and reusable:
 - gentle bounce
 - small scale pulse
 - idle breathing
+
+Characters normally fill about 75% of the camera height. The player shows one
+short beat at a time instead of placing several paragraphs in one subtitle box.
 
 The player renders these instructions dynamically. It does not create a
 different Flutter page for each chapter.
@@ -432,6 +441,11 @@ every image and audio file.
 - Synchronize line audio, subtitles, sprite layers, and movements.
 - Support previous, pause/play, next, chapter contents, language, and moral.
 - Persist scene position and completed status locally.
+
+Prototype validation is complete for ordered full-chapter source coverage,
+4-10 generated scene groups, all five starter actor profiles, the four approved
+poses, and modular speaking/emotion fallbacks. Generated book-specific
+characters and synchronized audio remain later Phase 4/5 work.
 
 ### Phase 7 - Volume-scale testing
 

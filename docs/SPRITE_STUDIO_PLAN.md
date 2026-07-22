@@ -17,6 +17,8 @@ Named custom poses now start from Idle, use safe stable IDs, support rename,
 duplicate, delete, session drafts, app-local saves, project-default saves, and
 an unsaved-change guard. Story Mode now resolves scene rig and pose IDs with
 safe fallbacks.
+The full Story Mode review chapter now preserves every source block while
+testing all five starter face profiles and all four approved poses.
 
 ## Current prototype gap
 
@@ -449,6 +451,14 @@ controls its joints.
 - Render the selected modular actor face in Story Mode.
 - Keep legacy `faceExpressionId` scenes working through safe fallback mapping.
 
+### Part 7F - Full actor and chapter review - complete
+
+- Group all cleaned source blocks into 4-10 ordered scenes without dropping
+  chapter text.
+- Resolve Default, Hero, Heroine, Elder, and Adult through the real player.
+- Exercise Neutral, Talking, Pointing, and Walking in one review chapter.
+- Validate speaking and strong-emotion fallbacks with project assets.
+
 The default `humanoid_v1` rig is only the test character. A generated book
 character gets its own stable `rigId`, body-part assets, `rig.json`, face
 catalog, outfit layers, and compatible pose files. Story scenes use the
@@ -475,3 +485,5 @@ Sprite Studio is complete when:
 - invalid names and incompatible pose files are rejected safely; and
 - Animated Story Mode can load a saved `poseId`, `faceProfileId`, and
   `faceSetId` with Default/Neutral fallbacks.
+- one complete review chapter preserves all source blocks and resolves every
+  starter actor.

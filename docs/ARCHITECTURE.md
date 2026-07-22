@@ -65,9 +65,11 @@ ChapterStory
 - chapterId
 - title
 - moral
-- scenes: background, subtitle, soundEffect, audioClip
-- characterLayers: characterId, rigId, poseId, faceExpressionId, outfitId,
-  stagePosition, movement
+- cutscenes: continuous location/time/event groups
+- shots: approved layoutId, background, camera movement, and transition
+- beats: one short subtitle/audio line in exact source order
+- characterLayers: characterId, rigId, poseId, faceProfileId, faceSetId,
+  outfitId, stage slot, scale, and movement
 ```
 
 The UI reads this data, so we do not create a separate Flutter screen for every book or chapter.
@@ -81,7 +83,9 @@ an incompatible rig is hidden while subtitles continue.
 Character identities, aliases, appearances, voices, and locations live in one
 book-level story bible so they can be reused across chapters and volumes. See
 [Animated Story Mode plan](ANIMATED_STORY_MODE_PLAN.md) for the complete data,
-analysis, generation, and validation flow.
+analysis, generation, and validation flow. See the
+[Visual-Novel Scene Library](ANIMATED_STORY_SCENE_LIBRARY.md) for the approved
+shot layouts, movements, subtitle rules, and analyzer choices.
 
 ## Chosen setup
 
@@ -177,4 +181,5 @@ real user authentication and per-user quotas instead of a shared client token.
 
 See [Cloudflare image generator](CLOUDFLARE_IMAGE_GENERATOR.md) for the setup and test flow.
 See [Animated Story Mode plan](ANIMATED_STORY_MODE_PLAN.md) for the volume-aware chapter preparation plan.
+See [Visual-Novel Scene Library](ANIMATED_STORY_SCENE_LIBRARY.md) for reusable cutscene layouts and prompts.
 See [Sprite Studio plan](SPRITE_STUDIO_PLAN.md) for the final rig editor, input, layer, pose storage, and Story Mode integration plan.

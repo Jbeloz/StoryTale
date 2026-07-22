@@ -199,16 +199,19 @@ class StoryTaleController extends ChangeNotifier {
 
   ChapterStoryData storyFor(ChapterData chapter) {
     return stories.putIfAbsent(chapter.id, () {
-      final lines = _storySceneLines(chapter);
+      final sceneTexts = _storySceneTexts(chapter);
       return ChapterStoryData(
         chapterId: chapter.id,
         moral: 'Kindness and friendship make every journey meaningful.',
-        scenes: [
-          _testScene(chapter, 1, lines[0], 'neutral', 'left', 'fade in'),
-          _testScene(chapter, 2, lines[1], 'talking', 'center', 'talking'),
-          _testScene(chapter, 3, lines[2], 'pointing', 'right', 'pointing'),
-          _testScene(chapter, 4, lines[3], 'walking', 'center', 'walk right'),
-        ],
+        scenes: List.generate(
+          sceneTexts.length,
+          (index) => _testScene(
+            chapter,
+            index + 1,
+            sceneTexts[index],
+            _reviewCast[index % _reviewCast.length],
+          ),
+        ),
       );
     });
   }
@@ -217,45 +220,108 @@ class StoryTaleController extends ChangeNotifier {
     ChapterData chapter,
     int number,
     String subtitle,
-    String poseId,
-    String position,
-    String movement,
+    _StoryActor actor,
   ) {
-    final speaking = poseId == 'talking';
     return StorySceneData(
       id: '${chapter.id}-scene-$number',
-      speaker: speaking ? 'Prince' : 'Narrator',
+      speaker: actor.speaker,
       subtitle: subtitle,
-      movement: movement,
+      movement: actor.movement,
       characterLayers: [
         StoryCharacterLayerData(
-          characterId: 'little_prince',
+          characterId: actor.characterId,
           rigId: 'humanoid_v1',
-          poseId: poseId,
-          faceProfileId: 'hero',
-          faceSetId: poseId == 'pointing' ? 'happy' : 'neutral',
-          stagePosition: position,
-          movement: movement,
-          isSpeaking: speaking,
+          poseId: actor.poseId,
+          faceProfileId: actor.faceProfileId,
+          faceSetId: actor.faceSetId,
+          stagePosition: actor.stagePosition,
+          movement: actor.movement,
+          isSpeaking: actor.isSpeaking,
         ),
       ],
     );
   }
 
-  static List<String> _storySceneLines(ChapterData chapter) {
+  static List<String> _storySceneTexts(ChapterData chapter) {
     final blocks = chapter.sourceBlocks.isNotEmpty
         ? chapter.sourceBlocks.map((block) => block.text)
         : chapter.originalText.split(RegExp(r'\n\s*\n'));
     final lines = blocks
         .map((text) => text.trim())
         .where((text) => text.isNotEmpty)
-        .take(4)
         .toList();
-    while (lines.length < 4) {
-      lines.add(lines.isEmpty ? chapter.title : lines.last);
+    if (lines.isEmpty) return [chapter.title];
+
+    final targetScenes = lines.length > 8 ? 8 : lines.length;
+    final blocksPerScene = (lines.length / targetScenes).ceil();
+    final scenes = <String>[];
+    for (var start = 0; start < lines.length; start += blocksPerScene) {
+      final proposedEnd = start + blocksPerScene;
+      final end = proposedEnd > lines.length ? lines.length : proposedEnd;
+      scenes.add(lines.sublist(start, end).join('\n\n'));
     }
-    return lines;
+    return scenes;
   }
+
+  // Deterministic review cast until validated Gemini scene data replaces it.
+  static const _reviewCast = [
+    _StoryActor(
+      characterId: 'default_actor',
+      speaker: 'Narrator',
+      faceProfileId: 'default',
+      faceSetId: 'neutral',
+      poseId: 'neutral',
+      stagePosition: 'left',
+      movement: 'fade in',
+    ),
+    _StoryActor(
+      characterId: 'hero_actor',
+      speaker: 'Hero',
+      faceProfileId: 'hero',
+      faceSetId: 'neutral',
+      poseId: 'talking',
+      stagePosition: 'center',
+      movement: 'talking',
+      isSpeaking: true,
+    ),
+    _StoryActor(
+      characterId: 'heroine_actor',
+      speaker: 'Heroine',
+      faceProfileId: 'heroine',
+      faceSetId: 'happy',
+      poseId: 'pointing',
+      stagePosition: 'right',
+      movement: 'pointing',
+    ),
+    _StoryActor(
+      characterId: 'elder_actor',
+      speaker: 'Elder',
+      faceProfileId: 'elder',
+      faceSetId: 'sad',
+      poseId: 'neutral',
+      stagePosition: 'left',
+      movement: 'idle',
+    ),
+    _StoryActor(
+      characterId: 'adult_actor',
+      speaker: 'Adult',
+      faceProfileId: 'adult_deep',
+      faceSetId: 'angry',
+      poseId: 'talking',
+      stagePosition: 'center',
+      movement: 'talking',
+      isSpeaking: true,
+    ),
+    _StoryActor(
+      characterId: 'hero_walking_actor',
+      speaker: 'Hero',
+      faceProfileId: 'hero',
+      faceSetId: 'neutral',
+      poseId: 'walking',
+      stagePosition: 'right',
+      movement: 'walk right',
+    ),
+  ];
 
   void markStoryPrepared(ChapterData chapter) {
     storyFor(chapter).status = PreparationStatus.ready;
@@ -324,6 +390,28 @@ class StoryTaleController extends ChangeNotifier {
       ),
     ];
   }
+}
+
+class _StoryActor {
+  const _StoryActor({
+    required this.characterId,
+    required this.speaker,
+    required this.faceProfileId,
+    required this.faceSetId,
+    required this.poseId,
+    required this.stagePosition,
+    required this.movement,
+    this.isSpeaking = false,
+  });
+
+  final String characterId;
+  final String speaker;
+  final String faceProfileId;
+  final String faceSetId;
+  final String poseId;
+  final String stagePosition;
+  final String movement;
+  final bool isSpeaking;
 }
 
 extension _FirstOrNull<T> on List<T> {

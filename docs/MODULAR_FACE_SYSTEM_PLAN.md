@@ -22,6 +22,7 @@ loads the selected actor profile and face set through the same sprite renderer.
 - Elder alignment correction: all expressions moved to the shared actor anchor
 - Reusable details: complete for all five starter actors
 - Part 7E pose/scene IDs, modular rendering, and legacy fallback: complete
+- Part 7F full actor review and complete chapter coverage test: complete
 
 ## 1. Goal
 
@@ -416,8 +417,14 @@ separated.
 
 ### Part 7F - Full actor and chapter test
 
+**Status: complete.**
+
 - Review every actor and set in Sprite Studio.
 - Test one full chapter in Story Mode after Part 7E stores profile and set IDs.
+- The local review chapter uses all five starter actor profiles and all four
+  approved poses across six scenes.
+- Every cleaned source block is kept in order and grouped into 4-10 scenes.
+- Automated checks cover Neutral-to-Talking and strong-emotion preservation.
 
 ## 10. Acceptance checklist
 
@@ -434,5 +441,7 @@ separated.
 
 ## 11. Recommended immediate next step
 
-Run Part 7F: review all five actors and then play one complete chapter while
-checking profile selection, set changes, speaking fallback, and legacy scenes.
+Begin the generated-character pipeline: approve one analyzed character,
+generate one Gemini full-body master, remove its green background locally,
+split it into the compatible rig parts, and review the rejoined result before
+Story Mode can select it.
