@@ -232,6 +232,8 @@ class StoryTaleController extends ChangeNotifier {
           characterId: 'little_prince',
           rigId: 'humanoid_v1',
           poseId: poseId,
+          faceProfileId: 'hero',
+          faceSetId: poseId == 'pointing' ? 'happy' : 'neutral',
           stagePosition: position,
           movement: movement,
           isSpeaking: speaking,

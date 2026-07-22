@@ -9,12 +9,16 @@ import '../../data/face_profile_catalog.dart';
 import '../../data/sprite_face_catalog.dart';
 import 'sprite_face_view.dart';
 
+typedef FaceSelectionChanged = void Function(String profileId, String setId);
+
 class SpriteFaceEditor extends StatefulWidget {
   const SpriteFaceEditor({
     required this.headAsset,
     required this.legacyCatalog,
     required this.selectedExpressionId,
-    required this.onLegacyExpressionSelected,
+    required this.selectedProfileId,
+    required this.selectedSetId,
+    required this.onSelectionChanged,
     required this.onPreviewChanged,
     super.key,
   });
@@ -22,7 +26,9 @@ class SpriteFaceEditor extends StatefulWidget {
   final String headAsset;
   final SpriteFaceCatalog legacyCatalog;
   final String selectedExpressionId;
-  final ValueChanged<String> onLegacyExpressionSelected;
+  final String? selectedProfileId;
+  final String? selectedSetId;
+  final FaceSelectionChanged onSelectionChanged;
   final ValueChanged<SpriteFaceOverlayData?> onPreviewChanged;
 
   @override
@@ -49,21 +55,28 @@ class _SpriteFaceEditorState extends State<SpriteFaceEditor> {
   @override
   void initState() {
     super.initState();
+    _profileId = widget.selectedProfileId ?? 'default';
+    _setId = widget.selectedSetId ?? widget.selectedExpressionId;
     _load();
   }
 
   @override
   void didUpdateWidget(covariant SpriteFaceEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (_profileId == 'default' &&
-        oldWidget.selectedExpressionId != widget.selectedExpressionId) {
-      _setId = widget.selectedExpressionId;
+    final profileId = widget.selectedProfileId ?? 'default';
+    final setId = widget.selectedSetId ?? widget.selectedExpressionId;
+    if (profileId != _profileId) {
+      _selectProfile(profileId, requestedSetId: setId, notifySelection: false);
+    } else if (setId != _setId) {
+      setState(() => _setId = setId);
+      _notifyPreview(notifySelection: false);
     }
   }
 
   Future<void> _load() async {
     try {
       final catalog = await SpriteFaceProfileCatalog.load(_catalogAsset);
+      _profileId = catalog.resolveProfileId(_profileId);
       final bundle = await catalog.loadProfile(_profileId);
       final local = await _repository.load();
       if (!mounted) return;
@@ -76,11 +89,14 @@ class _SpriteFaceEditorState extends State<SpriteFaceEditor> {
         _customSets
           ..clear()
           ..addAll(local.sets);
-        _setId = widget.selectedExpressionId;
+        _setId = bundle.sets.resolveSetId(
+          _setId,
+          legacyExpressionId: widget.selectedExpressionId,
+        );
         _partId = _partIds(_partType).firstOrNull;
         _loading = false;
       });
-      _notifyPreview();
+      _notifyPreview(notifySelection: false);
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -451,7 +467,11 @@ class _SpriteFaceEditorState extends State<SpriteFaceEditor> {
     return selected != null && _overlayFor(selected) != null;
   }
 
-  Future<void> _selectProfile(String profileId) async {
+  Future<void> _selectProfile(
+    String profileId, {
+    String? requestedSetId,
+    bool notifySelection = true,
+  }) async {
     setState(() {
       _profileId = profileId;
       _loading = true;
@@ -462,14 +482,15 @@ class _SpriteFaceEditorState extends State<SpriteFaceEditor> {
       if (!mounted) return;
       setState(() {
         _bundle = bundle;
-        _setId = profileId == 'default'
-            ? widget.selectedExpressionId
-            : bundle.profile.defaultSetId;
+        _setId = bundle.sets.resolveSetId(
+          requestedSetId,
+          legacyExpressionId: widget.selectedExpressionId,
+        );
         _partType = SpriteFacePartType.eyes;
         _partId = _partIds(_partType).firstOrNull;
         _loading = false;
       });
-      _notifyPreview();
+      _notifyPreview(notifySelection: notifySelection);
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -481,10 +502,6 @@ class _SpriteFaceEditorState extends State<SpriteFaceEditor> {
 
   void _selectSet(SpriteFaceSet set) {
     setState(() => _setId = set.id);
-    if (_profileId == 'default' &&
-        widget.legacyCatalog.expressionsById.containsKey(set.id)) {
-      widget.onLegacyExpressionSelected(set.id);
-    }
     _notifyPreview();
   }
 
@@ -603,8 +620,10 @@ class _SpriteFaceEditorState extends State<SpriteFaceEditor> {
     return profile.parts.asset(directory, id);
   }
 
-  void _notifyPreview() {
+  void _notifyPreview({bool notifySelection = true}) {
     final selected = _selectedSet;
+    final profileId = _profileId;
+    final setId = _setId;
     final usesLegacyDefault =
         _profileId == 'default' && _bundle?.profile.isReady != true;
     final preview = usesLegacyDefault
@@ -622,7 +641,11 @@ class _SpriteFaceEditorState extends State<SpriteFaceEditor> {
                 layers: const [],
               );
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) widget.onPreviewChanged(preview);
+      if (!mounted) return;
+      widget.onPreviewChanged(preview);
+      if (notifySelection) {
+        widget.onSelectionChanged(profileId, setId);
+      }
     });
   }
 

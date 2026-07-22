@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:storytale/src/features/animated_story/data/face_profile_catalog.dart';
 import 'package:storytale/src/features/animated_story/data/sprite_face_catalog.dart';
 import 'package:storytale/src/features/animated_story/data/sprite_rig.dart';
 import 'package:storytale/src/features/animated_story/data/story_pose_resolver.dart';
@@ -23,6 +24,8 @@ void main() {
       'rigId': 'volume_1_heroine_v1',
       'poseId': 'talking',
       'faceExpressionId': 'happy',
+      'faceProfileId': 'heroine',
+      'faceSetId': 'happy',
       'outfitId': 'academy_uniform',
       'stagePosition': 'right',
       'movement': 'enter right',
@@ -30,6 +33,8 @@ void main() {
     });
 
     expect(layer.rigId, 'volume_1_heroine_v1');
+    expect(layer.faceProfileId, 'heroine');
+    expect(layer.toJson()['faceSetId'], 'happy');
     expect(layer.toJson()['outfitId'], 'academy_uniform');
   });
 
@@ -47,6 +52,7 @@ void main() {
     expect(resolved, isNotNull);
     expect(resolved!.pose.id, 'neutral');
     expect(resolved.pose.faceExpressionId, 'neutral');
+    expect(resolved.faceComposition?.setId, 'neutral');
     expect(resolved.usedNeutralFallback, isTrue);
   });
 
@@ -61,6 +67,23 @@ void main() {
     );
 
     expect(resolved!.pose.faceExpressionId, 'talking');
+    expect(resolved.faceComposition?.setId, 'talking');
+  });
+
+  test('strong emotion stays selected while the layer speaks', () async {
+    final resolved = await _resolver('book_hero_v1').resolve(
+      const StoryCharacterLayerData(
+        characterId: 'book_hero',
+        rigId: 'book_hero_v1',
+        poseId: 'talking',
+        faceProfileId: 'hero',
+        faceSetId: 'angry',
+        isSpeaking: true,
+      ),
+    );
+
+    expect(resolved!.faceComposition?.profileId, 'hero');
+    expect(resolved.faceComposition?.setId, 'angry');
   });
 
   test('an incompatible rig is hidden instead of partly rendered', () async {
@@ -140,5 +163,61 @@ StoryPoseResolver _resolver(String rigId) {
     loadRig: (_) async => rig,
     loadFaceCatalog: (_) async => catalog,
     loadPoses: (_) async => poses,
+    loadFaceProfile: (profileId) async =>
+        _faceBundle(rigId, profileId ?? 'default'),
+  );
+}
+
+SpriteFaceProfileBundle _faceBundle(String rigId, String profileId) {
+  final profile = SpriteFaceProfile(
+    id: profileId,
+    label: profileId,
+    rigId: rigId,
+    headPartId: 'head',
+    headTemplateId: 'test_head',
+    canvasWidth: 100,
+    canvasHeight: 100,
+    defaultSetId: 'neutral',
+    status: 'ready',
+    parts: const SpriteFacePartDirectories(
+      eyes: 'eyes',
+      noses: 'noses',
+      mouths: 'mouths',
+      details: 'details',
+    ),
+    setsAsset: 'sets.json',
+  );
+  return SpriteFaceProfileBundle(
+    profile: profile,
+    sets: SpriteFaceSetCatalog(
+      profileId: profileId,
+      defaultSetId: 'neutral',
+      sets: const [
+        SpriteFaceSet(
+          id: 'neutral',
+          label: 'Neutral',
+          eyes: 'neutral',
+          nose: 'default',
+          mouth: 'neutral',
+          details: [],
+        ),
+        SpriteFaceSet(
+          id: 'talking',
+          label: 'Talking',
+          eyes: 'neutral',
+          nose: 'default',
+          mouth: 'talking',
+          details: [],
+        ),
+        SpriteFaceSet(
+          id: 'angry',
+          label: 'Angry',
+          eyes: 'angry',
+          nose: 'default',
+          mouth: 'angry',
+          details: [],
+        ),
+      ],
+    ),
   );
 }

@@ -105,6 +105,8 @@ void main() {
       'name': 'Test Pose',
       'rigId': 'humanoid_v1',
       'faceExpressionId': 'happy',
+      'faceProfileId': 'heroine',
+      'faceSetId': 'happy',
       'layerPolicyVersion': 1,
       'parts': <String, dynamic>{},
     });
@@ -112,7 +114,10 @@ void main() {
     expect(pose.displayName, 'Test Pose');
     expect(pose.rigId, 'humanoid_v1');
     expect(pose.faceExpressionId, 'happy');
+    expect(pose.faceProfileId, 'heroine');
+    expect(pose.faceSetId, 'happy');
     expect(pose.toJson()['faceExpressionId'], 'happy');
+    expect(pose.toJson()['faceProfileId'], 'heroine');
     expect(pose.toJson()['layerPolicyVersion'], 1);
     expect(
       pose.update('head', const SpritePartTransform()).faceExpressionId,
@@ -248,7 +253,7 @@ void main() {
     await tester.tap(find.byKey(const Key('undoButton')));
     await tester.pump();
     expect(
-      tester.widget<ChoiceChip>(find.byKey(const Key('face-neutral'))).selected,
+      tester.widget<ChoiceChip>(find.byKey(const Key('face-gentle'))).selected,
       isTrue,
     );
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../shared/models/storytale_models.dart';
 import '../../data/story_pose_resolver.dart';
+import 'sprite_face_view.dart';
 import 'sprite_rig_view.dart';
 
 class StoryCharacterView extends StatefulWidget {
@@ -29,6 +30,8 @@ class _StoryCharacterViewState extends State<StoryCharacterView> {
     if (oldWidget.layer.rigId != widget.layer.rigId ||
         oldWidget.layer.poseId != widget.layer.poseId ||
         oldWidget.layer.faceExpressionId != widget.layer.faceExpressionId ||
+        oldWidget.layer.faceProfileId != widget.layer.faceProfileId ||
+        oldWidget.layer.faceSetId != widget.layer.faceSetId ||
         oldWidget.layer.isSpeaking != widget.layer.isSpeaking) {
       _load();
     }
@@ -59,12 +62,25 @@ class _StoryCharacterViewState extends State<StoryCharacterView> {
                   rig: character.rig,
                   pose: character.pose,
                   faceCatalog: character.faceCatalog,
+                  faceOverlay: _faceOverlay(character),
                 ),
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  SpriteFaceOverlayData? _faceOverlay(ResolvedStoryCharacter character) {
+    final composition = character.faceComposition;
+    if (composition == null) return null;
+    return SpriteFaceOverlayData(
+      profileId: composition.profileId,
+      setId: composition.setId,
+      layers: composition.layerAssets
+          .map(SpriteFaceLayer.asset)
+          .toList(growable: false),
     );
   }
 }

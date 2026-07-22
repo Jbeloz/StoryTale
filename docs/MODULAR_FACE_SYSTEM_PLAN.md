@@ -3,8 +3,8 @@
 This plan replaces the current one-image-per-expression catalog with reusable
 face parts. Parts 7A through 7D now provide the asset contract, loader, profile
 selector, reusable Sets view, Set Maker, and local part importer. Separate
-face-part production is complete for all five starter actors. Story Mode
-migration remains deferred until the final Sprite Studio review passes.
+face-part production is complete for all five starter actors. Story Mode now
+loads the selected actor profile and face set through the same sprite renderer.
 
 ## Implementation status
 
@@ -21,6 +21,7 @@ migration remains deferred until the final Sprite Studio review passes.
 - Hero refresh: bright young protagonist identity with lively eyes and smile
 - Elder alignment correction: all expressions moved to the shared actor anchor
 - Reusable details: complete for all five starter actors
+- Part 7E pose/scene IDs, modular rendering, and legacy fallback: complete
 
 ## 1. Goal
 
@@ -406,6 +407,8 @@ separated.
 
 ### Part 7E - Story Mode migration
 
+**Status: complete.**
+
 - Save `faceProfileId` and `faceSetId` in poses and character scene layers.
 - Keep old files working through the legacy mapping.
 - Preserve the rule that ordinary neutral dialogue temporarily uses Talking,
@@ -431,6 +434,5 @@ separated.
 
 ## 11. Recommended immediate next step
 
-Review Default, Hero, Heroine, Elder, and Adult in Sprite Studio. After their
-alignment and Details tabs pass, proceed to Part 7E and save `faceProfileId`
-plus `faceSetId` in poses and Story Mode scenes.
+Run Part 7F: review all five actors and then play one complete chapter while
+checking profile selection, set changes, speaking fallback, and legacy scenes.

@@ -662,7 +662,9 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
       headAsset: headAsset,
       legacyCatalog: catalog,
       selectedExpressionId: pose.faceExpressionId,
-      onLegacyExpressionSelected: _setFaceExpression,
+      selectedProfileId: pose.faceProfileId,
+      selectedSetId: pose.faceSetId,
+      onSelectionChanged: _setFaceSelection,
       onPreviewChanged: (value) {
         if (_faceOverlay == value) return;
         setState(() => _faceOverlay = value);
@@ -813,11 +815,15 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     _update(_pose!.transformFor(_selectedPartId!).copyWith(offsetY: value));
   }
 
-  void _setFaceExpression(String expressionId) {
-    final safeId = _faceCatalog!.resolveId(expressionId);
-    if (_pose!.faceExpressionId == safeId) return;
+  void _setFaceSelection(String profileId, String setId) {
+    if (_pose!.faceProfileId == profileId && _pose!.faceSetId == setId) return;
     _rememberPose();
-    setState(() => _pose = _pose!.withFaceExpression(safeId));
+    var pose = _pose!.withFaceSelection(profileId, setId);
+    if (profileId == 'default' &&
+        _faceCatalog!.expressionsById.containsKey(setId)) {
+      pose = pose.withFaceExpression(setId);
+    }
+    setState(() => _pose = pose);
   }
 
   void _selectPart(String partId) {

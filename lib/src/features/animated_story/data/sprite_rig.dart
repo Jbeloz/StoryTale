@@ -101,6 +101,8 @@ class SpriteRigPose {
     this.name = '',
     this.rigId = 'humanoid_v1',
     this.faceExpressionId = 'neutral',
+    this.faceProfileId,
+    this.faceSetId,
     this.layerPolicyVersion = 1,
     this.parts = const {},
   });
@@ -109,6 +111,8 @@ class SpriteRigPose {
   final String name;
   final String rigId;
   final String faceExpressionId;
+  final String? faceProfileId;
+  final String? faceSetId;
   final int layerPolicyVersion;
   final Map<String, SpritePartTransform> parts;
 
@@ -133,6 +137,8 @@ class SpriteRigPose {
       name: json['name'] as String? ?? '',
       rigId: json['rigId'] as String? ?? 'humanoid_v1',
       faceExpressionId: json['faceExpressionId'] as String? ?? 'neutral',
+      faceProfileId: json['faceProfileId'] as String?,
+      faceSetId: json['faceSetId'] as String?,
       layerPolicyVersion: (json['layerPolicyVersion'] as num?)?.toInt() ?? 1,
       parts: values.map(
         (id, value) => MapEntry(
@@ -153,6 +159,8 @@ class SpriteRigPose {
       name: name,
       rigId: rigId,
       faceExpressionId: faceExpressionId,
+      faceProfileId: faceProfileId,
+      faceSetId: faceSetId,
       layerPolicyVersion: layerPolicyVersion,
       parts: {...parts, partId: transform},
     );
@@ -164,6 +172,21 @@ class SpriteRigPose {
       name: name,
       rigId: rigId,
       faceExpressionId: expressionId,
+      faceProfileId: faceProfileId,
+      faceSetId: faceSetId,
+      layerPolicyVersion: layerPolicyVersion,
+      parts: parts,
+    );
+  }
+
+  SpriteRigPose withFaceSelection(String profileId, String setId) {
+    return SpriteRigPose(
+      id: id,
+      name: name,
+      rigId: rigId,
+      faceExpressionId: faceExpressionId,
+      faceProfileId: profileId,
+      faceSetId: setId,
       layerPolicyVersion: layerPolicyVersion,
       parts: parts,
     );
@@ -175,6 +198,8 @@ class SpriteRigPose {
       name: name ?? this.name,
       rigId: rigId,
       faceExpressionId: faceExpressionId,
+      faceProfileId: faceProfileId,
+      faceSetId: faceSetId,
       layerPolicyVersion: layerPolicyVersion,
       parts: parts,
     );
@@ -185,6 +210,8 @@ class SpriteRigPose {
     'name': displayName,
     'rigId': rigId,
     'faceExpressionId': faceExpressionId,
+    if (faceProfileId != null) 'faceProfileId': faceProfileId,
+    if (faceSetId != null) 'faceSetId': faceSetId,
     'layerPolicyVersion': layerPolicyVersion,
     'parts': parts.map((id, transform) => MapEntry(id, transform.toJson())),
   };
@@ -272,6 +299,8 @@ class SpriteLayerPolicy {
       name: pose.name,
       rigId: pose.rigId,
       faceExpressionId: pose.faceExpressionId,
+      faceProfileId: pose.faceProfileId,
+      faceSetId: pose.faceSetId,
       layerPolicyVersion: pose.layerPolicyVersion,
       parts: pose.parts.map(
         (id, transform) =>

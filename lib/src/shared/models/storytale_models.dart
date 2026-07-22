@@ -109,6 +109,8 @@ class StoryCharacterLayerData {
     required this.rigId,
     required this.poseId,
     this.faceExpressionId = 'neutral',
+    this.faceProfileId,
+    this.faceSetId,
     this.outfitId,
     this.stagePosition = 'center',
     this.movement = 'idle',
@@ -119,6 +121,8 @@ class StoryCharacterLayerData {
   final String rigId;
   final String poseId;
   final String faceExpressionId;
+  final String? faceProfileId;
+  final String? faceSetId;
   final String? outfitId;
   final String stagePosition;
   final String movement;
@@ -130,6 +134,8 @@ class StoryCharacterLayerData {
       rigId: json['rigId'] as String? ?? 'humanoid_v1',
       poseId: json['poseId'] as String? ?? 'neutral',
       faceExpressionId: json['faceExpressionId'] as String? ?? 'neutral',
+      faceProfileId: json['faceProfileId'] as String?,
+      faceSetId: json['faceSetId'] as String?,
       outfitId: json['outfitId'] as String?,
       stagePosition: json['stagePosition'] as String? ?? 'center',
       movement: json['movement'] as String? ?? 'idle',
@@ -142,6 +148,8 @@ class StoryCharacterLayerData {
     'rigId': rigId,
     'poseId': poseId,
     'faceExpressionId': faceExpressionId,
+    if (faceProfileId != null) 'faceProfileId': faceProfileId,
+    if (faceSetId != null) 'faceSetId': faceSetId,
     if (outfitId != null) 'outfitId': outfitId,
     'stagePosition': stagePosition,
     'movement': movement,

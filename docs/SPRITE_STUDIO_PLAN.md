@@ -370,7 +370,9 @@ CharacterLayer
 - characterId
 - rigId
 - poseId
-- faceExpressionId
+- faceProfileId
+- faceSetId
+- faceExpressionId (legacy fallback)
 - outfitId
 - stagePosition
 - movement
@@ -385,6 +387,7 @@ Fallbacks:
 - missing requested pose -> Neutral;
 - incompatible rig -> hide the character and show subtitles;
 - missing expression -> neutral face;
+- missing profile or set -> Default profile and Neutral set;
 - invalid layer data -> normalize using the rig's fixed layer policy.
 
 The player loads the pose once and applies simple stage movement separately.
@@ -439,11 +442,19 @@ controls its joints.
 - Add Neutral fallback and compatibility validation.
 - Play one test chapter using at least Neutral, Talking, Pointing, and Walking.
 
+### Part 7E - Modular face connection - complete
+
+- Save `faceProfileId` and `faceSetId` with poses and scene character layers.
+- Let a scene override the pose face selection when required.
+- Render the selected modular actor face in Story Mode.
+- Keep legacy `faceExpressionId` scenes working through safe fallback mapping.
+
 The default `humanoid_v1` rig is only the test character. A generated book
 character gets its own stable `rigId`, body-part assets, `rig.json`, face
-catalog, outfit layers, and compatible pose files. Story scenes keep the same
-`characterId + rigId + poseId + faceExpressionId` contract, so adding new faces
-or a fully designed body after Part 6 does not require changing the player.
+catalog, outfit layers, and compatible pose files. Story scenes use the
+`characterId + rigId + poseId + faceProfileId + faceSetId` contract while still
+reading legacy `faceExpressionId`, so adding new faces or a fully designed body
+does not require changing the player.
 
 ## 12. Final acceptance checklist
 
@@ -462,4 +473,5 @@ Sprite Studio is complete when:
 - a named pose starts from Neutral and survives an app restart;
 - session and project-default saves preserve layer order;
 - invalid names and incompatible pose files are rejected safely; and
-- Animated Story Mode can load a saved `poseId` with a Neutral fallback.
+- Animated Story Mode can load a saved `poseId`, `faceProfileId`, and
+  `faceSetId` with Default/Neutral fallbacks.

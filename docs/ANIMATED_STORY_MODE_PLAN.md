@@ -254,8 +254,8 @@ StoryScene
 - sceneId and sortOrder
 - sourceStartBlock and sourceEndBlock
 - locationId and backgroundAssetId
-- characterLayers: characterId, rigId, poseId, faceExpressionId, outfitId,
-  position, movement
+- characterLayers: characterId, rigId, poseId, faceProfileId, faceSetId,
+  outfitId, position, movement; legacy faceExpressionId remains readable
 - lines: lineId, type, speakerId, English/Filipino text, audioAssetId
 - transition: none, fade, or slide
 - soundEffectIds
