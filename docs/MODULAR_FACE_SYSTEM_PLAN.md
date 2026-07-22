@@ -16,8 +16,8 @@ five starter profiles pass the alignment checks.
 - Part 7B catalog, set resolver, composition order, and legacy fallback: complete
 - Part 7C Sprite Studio profile selector, Sets UI, and session Set Maker: complete
 - Part 7D Parts UI, PNG validation, local import, and persistent custom sets: complete
-- Part 7D.5 separate face-part production: in progress; Heroine, Hero, and
-  Default are complete, while Elder and Deep Voice remain
+- Part 7D.5 separate face-part production: in progress; Heroine, Hero, Elder,
+  and Default are complete, while Deep Voice remains
 
 ## 1. Goal
 
@@ -368,9 +368,9 @@ Production and approval order:
 1. **Heroine** - complete; all 11 parts use the approved neutral reference.
 2. **Hero** - complete; the generated neutral reference and 11 normalized parts
    preserve the same head anchors.
-3. **Elder** - next; approve its neutral reference, create 11 core parts, then the
-   optional wrinkles overlay.
-4. **Deep Voice** - approve its neutral reference, create 11 core parts, then
+3. **Elder** - complete; the approved neutral reference, 11 normalized core
+   parts, and reusable wrinkles overlay preserve the same head anchors.
+4. **Deep Voice** - next; approve its neutral reference, create 11 core parts, then
    the optional adult-lines overlay.
 5. **Default** - complete; the current face artwork was separated and reused
    instead of generating a different-looking replacement.
@@ -402,7 +402,7 @@ separated.
 
 ### Part 7F - Remaining profiles and chapter test
 
-- Import Elder and Deep Voice after the Hero profile passes review.
+- Import Deep Voice after the Elder profile passes review.
 - Test every set in Sprite Studio and one full chapter in Story Mode.
 
 ## 10. Acceptance checklist
@@ -421,6 +421,6 @@ separated.
 ## 11. Recommended immediate next step
 
 Finish Part 7D.5 inside Sprite Studio before starting Story Mode. Create and
-review Elder next, followed by Deep Voice. After all five profiles pass their
-set and alignment checks, proceed to Part 7E and save `faceProfileId` plus
-`faceSetId` in poses and Story Mode scenes.
+review Deep Voice next. After all five profiles pass their set and alignment
+checks, proceed to Part 7E and save `faceProfileId` plus `faceSetId` in poses
+and Story Mode scenes.

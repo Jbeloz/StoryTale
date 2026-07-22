@@ -64,6 +64,11 @@ flutter:
     - assets/images/characters/face_profiles/heroine/noses/
     - assets/images/characters/face_profiles/heroine/mouths/
     - assets/images/characters/face_profiles/elder/
+    - assets/images/characters/face_profiles/elder/reference/
+    - assets/images/characters/face_profiles/elder/eyes/
+    - assets/images/characters/face_profiles/elder/noses/
+    - assets/images/characters/face_profiles/elder/mouths/
+    - assets/images/characters/face_profiles/elder/details/
     - assets/images/characters/face_profiles/adult_deep/
     - assets/audio/narration/
     - assets/audio/sfx/
