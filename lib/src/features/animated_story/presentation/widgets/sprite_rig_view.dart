@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import '../../data/sprite_face_catalog.dart';
 import '../../data/sprite_rig.dart';
+import 'sprite_face_view.dart';
 
 typedef SpritePartTransformChanged =
     void Function(String partId, SpritePartTransform transform);
@@ -15,6 +16,7 @@ class SpriteRigView extends StatelessWidget {
     required this.rig,
     required this.pose,
     this.faceCatalog,
+    this.faceOverlay,
     this.showAnchors = false,
     this.showHitboxes = false,
     this.showBones = false,
@@ -29,6 +31,7 @@ class SpriteRigView extends StatelessWidget {
   final SpriteRigDefinition rig;
   final SpriteRigPose pose;
   final SpriteFaceCatalog? faceCatalog;
+  final SpriteFaceOverlayData? faceOverlay;
   final bool showAnchors;
   final bool showHitboxes;
   final bool showBones;
@@ -149,11 +152,14 @@ class SpriteRigView extends StatelessWidget {
       children: [
         _partImage(context, part, selected),
         if (catalog != null && part.id == catalog.headPartId)
-          Image.asset(
-            catalog.expressionFor(pose.faceExpressionId).asset,
-            fit: BoxFit.fill,
-            filterQuality: FilterQuality.high,
-          ),
+          if (faceOverlay != null)
+            SpriteFaceOverlayView(data: faceOverlay!)
+          else
+            Image.asset(
+              catalog.expressionFor(pose.faceExpressionId).asset,
+              fit: BoxFit.fill,
+              filterQuality: FilterQuality.high,
+            ),
       ],
     );
   }

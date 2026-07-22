@@ -273,6 +273,15 @@ class SpriteFaceSet {
       details: (json['details'] as List<dynamic>).cast<String>(),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'label': label,
+    'eyes': eyes,
+    'nose': nose,
+    'mouth': mouth,
+    'details': details,
+  };
 }
 
 class SpriteFaceProfileBundle {

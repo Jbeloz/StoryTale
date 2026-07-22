@@ -9,6 +9,7 @@ import '../data/pose_repository.dart';
 import '../data/sprite_face_catalog.dart';
 import '../data/sprite_rig.dart';
 import 'widgets/sprite_face_editor.dart';
+import 'widgets/sprite_face_view.dart';
 import 'widgets/sprite_rig_view.dart';
 
 class SpritePositionerPage extends StatefulWidget {
@@ -39,6 +40,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
   final _poseRepository = PoseRepository();
   SpriteRigDefinition? _rig;
   SpriteFaceCatalog? _faceCatalog;
+  SpriteFaceOverlayData? _faceOverlay;
   SpriteRigPose? _pose;
   SpriteRigPose? _initialPose;
   final _sessionDrafts = <String, SpriteRigPose>{};
@@ -337,6 +339,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
                                 rig: rig,
                                 pose: pose,
                                 faceCatalog: _faceCatalog,
+                                faceOverlay: _faceOverlay,
                                 showAnchors: _showAnchors,
                                 showHitboxes: _showHitboxes,
                                 showBones: _showBones,
@@ -660,6 +663,10 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
       legacyCatalog: catalog,
       selectedExpressionId: pose.faceExpressionId,
       onLegacyExpressionSelected: _setFaceExpression,
+      onPreviewChanged: (value) {
+        if (_faceOverlay == value) return;
+        setState(() => _faceOverlay = value);
+      },
     );
   }
 

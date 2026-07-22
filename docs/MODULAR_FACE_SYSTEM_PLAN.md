@@ -1,9 +1,10 @@
 # StoryTale Modular Face System Plan
 
 This plan replaces the current one-image-per-expression catalog with reusable
-face parts. Parts 7A through 7C now provide the asset contract, loader, profile
-selector, reusable Sets view, and session Set Maker. Story Mode migration is
-still deferred.
+face parts. Parts 7A through 7D now provide the asset contract, loader, profile
+selector, reusable Sets view, Set Maker, and local part importer. Separate face
+part production comes next; Story Mode migration remains deferred until one
+complete profile passes the alignment checks.
 
 ## Implementation status
 
@@ -14,7 +15,9 @@ still deferred.
 - Heroine eyes, nose, and mouth PNGs: awaiting generated results
 - Part 7B catalog, set resolver, composition order, and legacy fallback: complete
 - Part 7C Sprite Studio profile selector, Sets UI, and session Set Maker: complete
-- Part 7D Parts UI, local import, and persistent custom sets: not started
+- Part 7D Parts UI, PNG validation, local import, and persistent custom sets: complete
+- Part 7D.5 separate face-part production: planned; Heroine prompts are ready,
+  but the generated PNG parts still need to be created and approved
 
 ## 1. Goal
 
@@ -324,10 +327,71 @@ Profile descriptions should change identity without changing alignment:
 
 ### Part 7D - Parts UI and local import
 
+**Status: complete.**
+
 - Add Eyes, Nose, Mouth, and optional Details categories.
 - Add transparent PNG validation, import, rename, safe delete, and replacement.
 - Keep external prompt generation for the first version; no generation API is
   required inside Sprite Studio yet.
+- Store imported PNGs and custom sets locally, and show a completed selected
+  set on the main Sprite Studio character canvas immediately.
+
+### Part 7D.5 - Separate face-part production and approval
+
+This is an asset-production step, not a Flutter code step. It must be finished
+before Story Mode starts depending on the modular faces.
+
+For every new profile, first approve one complete neutral face reference. Then
+create these 11 separate transparent PNGs from that same reference:
+
+```text
+eyes/neutral.png
+eyes/happy.png
+eyes/sad.png
+eyes/angry.png
+eyes/surprised.png
+noses/default.png
+mouths/neutral.png
+mouths/talking.png
+mouths/smile.png
+mouths/sad.png
+mouths/angry_teeth.png
+```
+
+Elder may additionally use `details/wrinkles.png`, and Deep Voice may use
+`details/adult_lines.png`. Each output must stay on the exact 1254 x 1254
+transparent canvas. The generator may change only the requested facial part;
+it must not crop, resize, shift, redraw, or change the character identity.
+
+Production and approval order:
+
+1. **Heroine** - create all 11 parts first using the approved neutral reference
+   and `docs/HEROINE_FACE_PROMPT_PACK.md`.
+2. **Hero** - approve its neutral reference, then create its 11 core parts.
+3. **Elder** - approve its neutral reference, create 11 core parts, then the
+   optional wrinkles overlay.
+4. **Deep Voice** - approve its neutral reference, create 11 core parts, then
+   the optional adult-lines overlay.
+5. **Default** - separate and reuse the current face artwork where possible
+   instead of generating a different-looking replacement.
+
+For each profile, import and verify Neutral Eyes, Default Nose, and Neutral
+Mouth first. This makes the Neutral set visible immediately and exposes any
+alignment problem before the remaining eight images are produced. After all
+11 parts are imported, check all six built-in sets on the same head base.
+
+A profile is marked ready only when:
+
+- all required files have real transparency and the exact canvas size;
+- the eyes, pupils, eye whites, nose, and mouth stay in their approved places;
+- swapping a part causes no jump, crop, outline, or identity change;
+- Neutral, Talking, Happy, Sad, Angry, and Surprised compose correctly; and
+- the approved files are copied into the matching bundled profile folders.
+
+The four new profiles require 44 core PNGs in total. They should be produced
+and approved one profile at a time, not generated as one large batch. The
+existing Default art supplies the final 11-part target where it can be cleanly
+separated.
 
 ### Part 7E - Story Mode migration
 
@@ -357,8 +421,8 @@ Profile descriptions should change identity without changing alignment:
 
 ## 11. Recommended immediate next step
 
-Proceed with Part 7D: add the Parts tab, transparent PNG validation, local
-import, and persistent custom sets. The approved Heroine neutral reference can
-already be previewed, but its five eyes, one nose, and five mouth PNGs still
-need to be generated and imported before its six sets can render as modular
-compositions.
+Complete Part 7D.5 with the Heroine proof profile. Generate and import Neutral
+Eyes, Default Nose, and Neutral Mouth first, approve their alignment on the
+main character, and then create the remaining eight Heroine parts. Once all six
+Heroine sets display correctly, proceed to Part 7E and save `faceProfileId` plus
+`faceSetId` in poses and Story Mode scenes.
