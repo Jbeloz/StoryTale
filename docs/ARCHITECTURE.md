@@ -181,6 +181,11 @@ approved scale and depth values at the stage level. This leaves Sprite Studio
 bones and saved pose coordinates unchanged. During multi-character dialogue,
 the current speaker stays fully visible while listeners are softly dimmed.
 
+Approved camera preset IDs move one clipped viewport containing the background
+and character layers. Flutter clamps zoom to `1.00-1.18`, horizontal pan to 6%,
+and short shake to 8 pixels. Subtitles and playback controls stay outside that
+viewport; reduced-motion devices receive a short fade instead.
+
 ## Local-first rule
 
 ```text

@@ -10,10 +10,14 @@ void main() {
     expect(story.cutscenes, hasLength(1));
     expect(story.shots, isNotEmpty);
     expect(story.shots.every((shot) => shot.beats.isNotEmpty), isTrue);
-    expect(
-      story.shots.every((shot) => shot.camera.presetId == 'camera_static'),
-      isTrue,
-    );
+    expect(story.shots.map((shot) => shot.camera.presetId), [
+      'camera_static',
+      'camera_pull_out_slow',
+      'camera_push_in_slow',
+      'camera_static',
+      'camera_snap_in',
+      'camera_pan_left_slow',
+    ]);
     expect(story.shots.map((shot) => shot.characterLayers.length), [
       2,
       0,

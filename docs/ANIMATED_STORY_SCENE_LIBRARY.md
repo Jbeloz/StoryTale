@@ -238,8 +238,8 @@ Replace bracketed words, but keep each request as one sentence.
    EPUB chapters, and future Gemini shot plans.
 4. **Completed:** add whole-character facing, controlled scale, depth ordering,
    speaker emphasis, listener dimming, and multiple assembled rig layers.
-5. Add the camera viewport, approved pan/zoom presets, safety clamps, and
-   reduced-motion fallback.
+5. **Completed:** add the camera viewport, approved pan/zoom presets, safety
+   clamps, fixed subtitle UI, and reduced-motion fade fallback.
 6. Add character entrance/exit, walking, reactions, and shot transitions.
 7. Change the Gemini schema so it chooses approved layout, character movement,
    and camera preset IDs.

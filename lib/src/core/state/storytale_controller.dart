@@ -241,7 +241,7 @@ class StoryTaleController extends ChangeNotifier {
       layoutId: template.layoutId,
       backgroundId: 'moonlit_rose_garden',
       transitionId: number == 1 ? 'fade_in' : 'cut',
-      camera: const StoryCameraPlanData(),
+      camera: StoryCameraPlanData(presetId: template.cameraPresetId),
       beats: List.generate(
         lines.length,
         (index) => StoryBeatData(
@@ -308,10 +308,14 @@ class StoryTaleController extends ChangeNotifier {
         _ReviewPlacement(actorIndex: 2, stagePosition: 'right'),
       ],
     ),
-    _ReviewShotTemplate(layoutId: 'background_establishing'),
+    _ReviewShotTemplate(
+      layoutId: 'background_establishing',
+      cameraPresetId: 'camera_pull_out_slow',
+    ),
     _ReviewShotTemplate(
       layoutId: 'solo_left_full',
       speakerActorIndex: 0,
+      cameraPresetId: 'camera_push_in_slow',
       placements: [_ReviewPlacement(actorIndex: 0, stagePosition: 'left')],
     ),
     _ReviewShotTemplate(
@@ -331,11 +335,13 @@ class StoryTaleController extends ChangeNotifier {
     _ReviewShotTemplate(
       layoutId: 'solo_right_full',
       speakerActorIndex: 4,
+      cameraPresetId: 'camera_snap_in',
       placements: [_ReviewPlacement(actorIndex: 4, stagePosition: 'right')],
     ),
     _ReviewShotTemplate(
       layoutId: 'depth_pair',
       speakerActorIndex: 1,
+      cameraPresetId: 'camera_pan_left_slow',
       placements: [
         _ReviewPlacement(
           actorIndex: 1,
@@ -495,11 +501,13 @@ class _ReviewShotTemplate {
   const _ReviewShotTemplate({
     required this.layoutId,
     this.speakerActorIndex,
+    this.cameraPresetId = 'camera_static',
     this.placements = const [],
   });
 
   final String layoutId;
   final int? speakerActorIndex;
+  final String cameraPresetId;
   final List<_ReviewPlacement> placements;
 }
 

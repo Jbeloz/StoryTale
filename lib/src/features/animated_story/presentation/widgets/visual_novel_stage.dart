@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../shared/models/storytale_models.dart';
 import '../../../../shared/widgets/storytale_image_placeholder.dart';
+import 'story_camera_viewport.dart';
 import 'story_character_view.dart';
 import 'visual_novel_layouts.dart';
 
@@ -75,6 +76,10 @@ class VisualNovelStage extends StatelessWidget {
                   : depth;
             });
         final hasSpeaker = characters.any((layer) => layer.isSpeaking);
+        final media = MediaQuery.maybeOf(context);
+        final reducedMotion =
+            media?.disableAnimations == true ||
+            media?.accessibleNavigation == true;
         return ClipRRect(
           key: const Key('visual-novel-stage'),
           borderRadius: BorderRadius.circular(20),
@@ -82,63 +87,73 @@ class VisualNovelStage extends StatelessWidget {
             key: ValueKey('story-layout-${shot.layoutId}'),
             fit: StackFit.expand,
             children: [
-              StoryTaleImagePlaceholder(
-                key: const Key('visual-novel-background'),
-                path: shot.backgroundPath ?? fallbackBackground,
-                label: 'Chapter background',
-                icon: Icons.landscape_outlined,
-                height: double.infinity,
-                borderRadius: 0,
-              ),
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Color(0x33000000)],
-                    stops: [0.58, 1],
-                  ),
-                ),
-              ),
-              for (final entry in entries)
-                AnimatedAlign(
-                  duration: const Duration(milliseconds: 450),
-                  curve: Curves.easeOutCubic,
-                  alignment: entry.slot.alignment,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 48),
-                    child: AnimatedOpacity(
-                      key: ValueKey(
-                        'story-focus-${entry.layer.characterId}-'
-                        '${entry.layer.isSpeaking}',
-                      ),
-                      duration: const Duration(milliseconds: 220),
-                      opacity: storyCharacterOpacity(
-                        isSpeaking: entry.layer.isSpeaking,
-                        hasSpeaker: hasSpeaker,
-                        characterCount: characters.length,
-                        depth: entry.layer.depth,
-                      ),
-                      child: StoryCharacterView(
-                        key: ValueKey(
-                          '${entry.layer.characterId}-'
-                          '${entry.originalIndex}',
+              StoryCameraViewport(
+                animationKey: shot.id,
+                presetId: shot.camera.presetId,
+                reducedMotion: reducedMotion,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    StoryTaleImagePlaceholder(
+                      key: const Key('visual-novel-background'),
+                      path: shot.backgroundPath ?? fallbackBackground,
+                      label: 'Chapter background',
+                      icon: Icons.landscape_outlined,
+                      height: double.infinity,
+                      borderRadius: 0,
+                    ),
+                    const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.transparent, Color(0x33000000)],
+                          stops: [0.58, 1],
                         ),
-                        layer: entry.layer,
-                        width:
-                            constraints.maxHeight *
-                            entry.slot.heightFactor *
-                            storyScaleFactor(entry.layer.scale) *
-                            0.94,
-                        height:
-                            constraints.maxHeight *
-                            entry.slot.heightFactor *
-                            storyScaleFactor(entry.layer.scale),
-                        scale: 1.48,
                       ),
                     ),
-                  ),
+                    for (final entry in entries)
+                      AnimatedAlign(
+                        duration: const Duration(milliseconds: 450),
+                        curve: Curves.easeOutCubic,
+                        alignment: entry.slot.alignment,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 48),
+                          child: AnimatedOpacity(
+                            key: ValueKey(
+                              'story-focus-${entry.layer.characterId}-'
+                              '${entry.layer.isSpeaking}',
+                            ),
+                            duration: const Duration(milliseconds: 220),
+                            opacity: storyCharacterOpacity(
+                              isSpeaking: entry.layer.isSpeaking,
+                              hasSpeaker: hasSpeaker,
+                              characterCount: characters.length,
+                              depth: entry.layer.depth,
+                            ),
+                            child: StoryCharacterView(
+                              key: ValueKey(
+                                '${entry.layer.characterId}-'
+                                '${entry.originalIndex}',
+                              ),
+                              layer: entry.layer,
+                              width:
+                                  constraints.maxHeight *
+                                  entry.slot.heightFactor *
+                                  storyScaleFactor(entry.layer.scale) *
+                                  0.94,
+                              height:
+                                  constraints.maxHeight *
+                                  entry.slot.heightFactor *
+                                  storyScaleFactor(entry.layer.scale),
+                              scale: 1.48,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
+              ),
               Align(
                 alignment: Alignment.bottomCenter,
                 child: _SubtitleBar(speaker: speaker, subtitle: subtitle),
