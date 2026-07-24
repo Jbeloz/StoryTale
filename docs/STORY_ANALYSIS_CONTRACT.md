@@ -62,11 +62,22 @@ asset yet. This proves the scene pipeline, not final story-to-visual accuracy.
 
 Imported EPUB text already uses the same contract. Typed entity extraction and
 persistent per-book story bibles are now connected to chapter preparation.
-Candidates stay unapproved and cannot assign their own assets.
+The next contract revision automatically approves only high-confidence,
+source-backed, conflict-free entities. Uncertain candidates stay pending and
+cannot assign their own assets.
 
 The candidate review UI now supports approval, correction, merging, and
-deletion. The next work is generated human/animal/plant/prop assets,
-focus-asset layers, entity-aware scene catalogs, and generated chapter
-backgrounds. Until matching assets are approved and registered, the visible
-player still uses the prototype catalog. See
+deletion. Location extraction must return a specific background-ready place,
+such as `Little Prince's home on the small planet`, rather than a broad setting
+such as `Small Planet`. Broad settings remain context or a parent setting.
+
+Entity approval only makes a subject eligible for generation. Generated art is
+reviewed separately and cannot enter scene planning until its asset ID is
+accepted and registered.
+
+The next work is automatic entity approval, specific-location normalization,
+then generated human/animal/plant/prop assets, focus-asset layers, entity-aware
+scene catalogs, and generated chapter backgrounds. Until matching assets are
+approved and registered, the visible player still uses the prototype catalog.
+See
 [Story Bible Entity and Asset Plan](STORY_BIBLE_ENTITY_ASSET_PLAN.md).

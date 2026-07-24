@@ -53,8 +53,12 @@ grouping. The test EPUB currently parses into 15 readable story sections.
 - Add `Book -> Volume -> Chapter` organization with stable IDs
 - [x] Build typed, locally persisted per-book story bibles for humans, animals,
   creatures, plants, props, locations, and aliases
-- [x] Extract safe unapproved entity candidates from each cleaned chapter
+- [x] Extract safe entity candidates from each cleaned chapter
 - [x] Review, correct, merge, delete, and approve local entity candidates
+- [ ] Automatically approve high-confidence, source-backed, conflict-free
+  entities while keeping uncertain candidates pending
+- [ ] Normalize locations into specific background-ready places and keep broad
+  settings as parent context
 - [ ] Generate and register only approved matching assets
 - Create one `ChapterStory` package for every chapter
 - Preserve the complete chapter from its first to last source block

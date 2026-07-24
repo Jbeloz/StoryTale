@@ -147,16 +147,21 @@ BookStoryBible
 - plants and props: IDs, aliases, importance, approved states and focus assets
 - sprite design: master sheet, design fingerprint, body variants, head
   expressions, and head anchor
-- locations: IDs, descriptions, time/weather variants
+- locations: IDs, specific place names, parent settings, source-backed
+  background briefs, and time/weather variants
 - timeline: important events ordered by volume and chapter
 - unresolvedItems: names, speakers, or locations that need review
 ```
 
 The story bible prevents character appearance, names, voices, locations,
 animals, plants, and important objects from changing unexpectedly between
-chapters or volumes. User-approved entries are locked; later Gemini analysis may
-add aliases, relationships, an outfit, or a story-required state variant but
-must not overwrite an approved design, sprite, or voice without confirmation.
+chapters or volumes. Reliable entities may be approved automatically after
+deterministic source, confidence, alias, and conflict checks. Uncertain items
+still require review. An approved entity may become eligible for generation,
+but generated designs, sprites, backgrounds, and voices remain separately
+reviewed and locked. Later Gemini analysis may add aliases, relationships, an
+outfit, or a story-required state variant but must not overwrite an approved
+design, sprite, or voice without confirmation.
 The complete entity types, minimal asset rules, and safe fallback are defined in
 [Story Bible Entity and Asset Plan](STORY_BIBLE_ENTITY_ASSET_PLAN.md).
 
@@ -198,9 +203,15 @@ hierarchical two-pass analysis:
 3. Analyze each chapter separately for humans, animals, creatures, plants,
    props, aliases, dialogue speakers, locations, time changes, plot beats, and
    chapter summary.
-4. Merge chapter results into one volume summary.
-5. Merge volume summaries into the shared book story bible.
-6. Flag conflicting aliases, uncertain speakers, and unclear volume boundaries
+4. Normalize locations into specific scene-ready places. Keep broad worlds,
+   planets, kingdoms, forests, and oceans as context unless the source supports
+   a concrete place where a scene occurs.
+5. Automatically approve only high-confidence, source-backed, conflict-free
+   entities.
+6. Merge chapter results into one volume summary.
+7. Merge volume summaries into the shared book story bible.
+8. Flag conflicting aliases, uncertain speakers, broad-only locations, and
+   unclear volume boundaries
    for user review.
 
 When a new volume is imported, analyze only that volume and merge its results
