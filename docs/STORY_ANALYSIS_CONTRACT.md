@@ -24,7 +24,7 @@ One request contains:
 - approved characters and their rig, pose, face-profile, and face-set IDs;
 - approved animals, creatures, plants, and prop assets in the next contract
   revision;
-- approved background IDs; and
+- approved location IDs and their available background-state IDs;
 - the fixed StoryTale layout, camera, transition, staging, and movement IDs.
 
 Gemini never receives permission to invent an asset ID or control raw pixels,
@@ -43,6 +43,11 @@ joint coordinates, timing, easing, zoom, or movement distance.
 - Do not repeat identical framing more than twice in a row.
 - Use an empty background or detail cutaway when the catalog has no safe pose.
 - Never substitute an unrelated human for an animal, creature, plant, or prop.
+- Assign each cutscene a specific source-backed location and background state.
+- Include every explicit place transition in source order.
+- Reuse the same background when consecutive shots stay in the same place and
+  state.
+- Never invent an extra place only to make the chapter look more varied.
 
 DeepL remains the only Filipino translation provider.
 
@@ -69,7 +74,15 @@ cannot assign their own assets.
 The candidate review UI now supports approval, correction, merging, and
 deletion. Location extraction must return a specific background-ready place,
 such as `Little Prince's home on the small planet`, rather than a broad setting
-such as `Small Planet`. Broad settings remain context or a parent setting.
+such as `Small Planet`. This is an example, not a title-specific rule. Every
+imported story uses the same source-evidence checks. Broad settings remain
+context or a parent setting.
+
+The chapter analysis returns an ordered background requirement for every
+cutscene. A real place or meaningful place-state change may select another
+background; unchanged consecutive shots reuse the same approved background.
+The number of backgrounds is therefore driven by the chapter, not fixed to one
+and not padded to a target count.
 
 Entity approval only makes a subject eligible for generation. Generated art is
 reviewed separately and cannot enter scene planning until its asset ID is

@@ -117,14 +117,51 @@ as `planet`, `world`, `kingdom`, `country`, `forest`, or `ocean` become a
 
 The analyzer must not invent detail just to make a name more specific. If the
 text only mentions a distant kingdom and no scene occurs there, keep it as
-context and do not create a location entity. For the current demo, `Small
-Planet` should be normalized to `Little Prince's home on the small planet`
-because that is the chapter's active place.
+context and do not create a location entity.
+
+This rule is story-independent. It uses the chapter's source blocks, not a
+hard-coded title, character, or sample location. For example:
+
+- a scene happening at a character's home on a planet may become `Little
+  Prince's home on the small planet`;
+- a scene happening inside a castle may become `King's throne room`;
+- a journey moving from a house to a road and then a school creates three
+  specific locations; and
+- a mentioned country that is never visited remains parent context only.
 
 Day, sunset, night, rain, damage, or seasonal changes are background states of
 one stable `locationId`, not new locations. Repeated references such as `his
 planet`, `the little planet`, and `home` should resolve to the same location
 record when the source confirms they mean the same place.
+
+### Multiple backgrounds within one chapter
+
+A chapter does not have one fixed background. It has one ordered background
+assignment per cutscene:
+
+```text
+Chapter
+-> Cutscene 1: locationId + backgroundStateId
+-> Cutscene 2: locationId + backgroundStateId
+-> Cutscene 3: locationId + backgroundStateId
+```
+
+Start a new cutscene background when the source clearly changes:
+
+- physical place, such as bedroom to street;
+- interior or exterior area, such as castle gate to throne room;
+- meaningful time, weather, season, or condition of the same place; or
+- story event after which the place is visibly transformed.
+
+Do not change backgrounds only to create artificial variety. Consecutive shots
+in the same place and state reuse the same approved asset while camera framing,
+character positions, focus assets, and movement provide visual variation.
+
+The analyzer returns every distinct required pair of `locationId` and
+`backgroundStateId` in source order. StoryTale generates or reuses one approved
+background for each distinct pair, then caches it for later chapters and
+volumes. A chapter with one real setting may correctly use one background; a
+chapter that visits several places must represent all supported transitions.
 
 ## Runtime layer types
 
@@ -164,7 +201,7 @@ focus.
 | Important silent animal | One transparent full-body neutral sprite |
 | Plant | One transparent normal state plus only plot-required states |
 | Prop | One transparent normal state plus only plot-required states |
-| Location | One approved background plus only required time/weather variants |
+| Location | One approved background for each source-required place state |
 
 All approved assets are cached and reused across chapters and volumes. StoryTale
 does not generate a new image for every scene.
@@ -194,6 +231,10 @@ does not generate a new image for every scene.
 9. Create a location only for a specific source-backed place where a scene can
    occur; store broad settings as context.
 10. Reuse one location ID across time and weather variants.
+11. Assign every cutscene a source-backed `locationId` and
+    `backgroundStateId`.
+12. Represent every explicit place transition, but never invent a transition
+    just to increase the number of backgrounds.
 
 ## Preparation workflow
 
@@ -201,15 +242,17 @@ does not generate a new image for every scene.
 2. Resolve aliases against the existing book story bible.
 3. Normalize a proposed location into a specific source-backed place or keep
    the broad setting as context.
-4. Automatically approve a new candidate only when every deterministic check
+4. Map ordered plot beats to their specific place and background state.
+5. Build the chapter's distinct required-background list from those mappings.
+6. Automatically approve a new candidate only when every deterministic check
    passes.
-5. Let the user review uncertain, conflicting, or incomplete candidates.
-6. Reuse an approved asset when one already exists.
-7. Generate only the missing approved masters and required states.
-8. Review and register the resulting asset IDs in the story bible.
-9. Run Gemini scene planning with the updated approved catalog.
-10. Validate that every visible layer matches its referenced entity.
-11. Cache the validated chapter plan locally.
+7. Let the user review uncertain, conflicting, or incomplete candidates.
+8. Reuse an approved asset when one already exists.
+9. Generate only the missing approved masters and required states.
+10. Review and register the resulting asset IDs in the story bible.
+11. Run Gemini scene planning with the updated approved catalog.
+12. Validate that every visible layer matches its referenced entity.
+13. Cache the validated chapter plan locally.
 
 ## Implementation status
 
@@ -230,6 +273,7 @@ Still pending:
 
 - Automatic approval for high-confidence, conflict-free entities
 - Specific-location normalization and broad-setting context
+- Ordered multi-background chapter requirements and reuse
 - Entity-specific foreground asset generation and registration
 - Generated location background catalog
 - `focusAssetLayers` and entity-aware scene catalogs
@@ -264,3 +308,11 @@ Before connecting real generated assets, add these deterministic cases:
 - A mentioned kingdom with no scene there remains context, not a location.
 - Sunset and night reuse one location ID with different background states.
 - Automatic entity approval never automatically accepts generated artwork.
+- A house-to-road-to-school chapter uses three ordered locations.
+- A castle-gate-to-throne-room chapter uses two specific locations under one
+  castle parent setting.
+- Two consecutive dialogue shots in one unchanged room reuse one background.
+- A forest chapter with a later cave scene cannot use the forest background for
+  the cave.
+- A chapter that genuinely stays in one room is not forced to invent another
+  background.

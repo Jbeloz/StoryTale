@@ -33,6 +33,9 @@ Chapter
 - Start a new shot when the focus, camera size, or visible characters change.
 - Keep the same shot for consecutive dialogue when its layout still works.
 - A long paragraph becomes several one-line beats, not one large subtitle.
+- A chapter may contain one or many backgrounds. The source text decides.
+- Reuse one background across consecutive shots when the place and its visible
+  state have not changed.
 
 ## 3. Fixed camera and subtitle rules
 
@@ -220,6 +223,12 @@ Analyzer rules:
     prop uses an approved focus asset.
 18. When a required entity asset is missing, use `object_detail`,
     `background_establishing`, or subtitles/audio without a visible subject.
+19. Begin a new cutscene background for every supported place transition.
+20. Use a different state of the same location for meaningful time, weather,
+    season, damage, or condition changes.
+21. Reuse the current background when consecutive shots remain in the same
+    place and state.
+22. Never invent another location or background merely to add visual variety.
 
 ## 7. One-sentence ChatGPT prompts for layout references
 
@@ -283,4 +292,8 @@ Replace bracketed words, but keep each request as one sentence.
 - Unsupported actions use a cutaway instead of a broken pose.
 - Gemini can choose only approved layout, pose, expression, and movement IDs.
 - The same player handles no-character, solo, pair, and small-group scenes.
+- Every explicit chapter location transition receives the correct ordered
+  background.
+- Unchanged consecutive shots reuse an approved background.
+- The rules work with imported EPUBs without title-specific location logic.
 - One full chapter plays without missing, duplicating, or summarizing text.

@@ -246,6 +246,12 @@ ChapterSourceRange
 - The MVP keeps the complete normalized chapter text in order. Visual
   backgrounds change only at important story beats, so full narration does not
   require a new image for every paragraph.
+- Background coverage is not fixed to one image per chapter. Each explicit
+  location change starts a new cutscene background, while a meaningful
+  time/weather/condition change selects another state of the same location.
+- Consecutive shots in one unchanged place reuse the same background. Camera,
+  layout, focus assets, and sprite movement create variation without inventing
+  another setting.
 - A coverage validator compares all source block IDs with all scripted line
   ranges. Missing or duplicated blocks keep the chapter in `needsReview`.
 
@@ -259,8 +265,8 @@ ChapterAnalysis
 - appearingCharacterIds
 - newCharacterCandidates
 - dialogue: source range, text, speakerId, confidence
-- plotBeats: source start/end, locationId, time, summary
-- requiredBackgrounds
+- plotBeats: source start/end, locationId, backgroundStateId, time, summary
+- requiredBackgrounds: ordered distinct locationId + backgroundStateId pairs
 - requiredSpriteExpressions
 - moralCandidate
 - unresolvedItems
@@ -286,6 +292,20 @@ location and continuous event, a shot keeps one camera/character layout, and a
 beat shows one short subtitle/audio line. The approved visual-novel layouts,
 movement IDs, analyzer rules, and reference prompts are defined in the
 [Visual-Novel Scene Library](ANIMATED_STORY_SCENE_LIBRARY.md).
+
+Location and background rules apply to every imported EPUB:
+
+1. Resolve the active place from each plot beat's source blocks.
+2. Prefer an existing Story Bible location when aliases and evidence match.
+3. Create a new location candidate only for a specific place where the scene
+   occurs.
+4. Start a new cutscene when the active place changes.
+5. Use a new background state when time, weather, season, damage, or another
+   supported visual condition meaningfully changes the same place.
+6. Reuse the current background for consecutive shots in the same place and
+   state.
+7. Reject a plan that skips an explicit place transition or invents an
+   unsupported location.
 
 ```text
 StoryScene

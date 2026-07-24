@@ -59,6 +59,10 @@ grouping. The test EPUB currently parses into 15 readable story sections.
   entities while keeping uncertain candidates pending
 - [ ] Normalize locations into specific background-ready places and keep broad
   settings as parent context
+- [ ] Derive an ordered set of required backgrounds from every chapter's real
+  place and place-state changes
+- [ ] Reuse backgrounds for unchanged consecutive shots instead of generating
+  one image per paragraph
 - [ ] Generate and register only approved matching assets
 - Create one `ChapterStory` package for every chapter
 - Preserve the complete chapter from its first to last source block
