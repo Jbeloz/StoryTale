@@ -107,6 +107,14 @@ images. Gemini selects an ID and StoryTale places the existing sprites.
 | `reaction_pop` | One quick scale pulse for surprise. |
 | `fade_in` / `fade_out` | Reveal or remove a character or complete shot. |
 
+### Shot transition presets
+
+| ID | What StoryTale does |
+| --- | --- |
+| `cut` | Change shots immediately. |
+| `fade` | Cross-fade between shots. |
+| `slide_left` / `slide_right` | Use one short directional shot change. |
+
 ### Camera preset library
 
 The camera transforms one `CameraViewport` containing the background and all
@@ -240,7 +248,8 @@ Replace bracketed words, but keep each request as one sentence.
    speaker emphasis, listener dimming, and multiple assembled rig layers.
 5. **Completed:** add the camera viewport, approved pan/zoom presets, safety
    clamps, fixed subtitle UI, and reduced-motion fade fallback.
-6. Add character entrance/exit, walking, reactions, and shot transitions.
+6. **Completed:** add whole-rig character entrance/exit, walking, steps,
+   reactions, approved shot transitions, and reduced-motion fallbacks.
 7. Change the Gemini schema so it chooses approved layout, character movement,
    and camera preset IDs.
 8. Use one varied deterministic chapter fixture before generated scene data.

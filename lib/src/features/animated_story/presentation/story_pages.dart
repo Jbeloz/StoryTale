@@ -9,6 +9,7 @@ import '../../../shared/widgets/storytale_image_placeholder.dart';
 import '../data/sprite_layer_processor.dart';
 import '../data/story_artwork_service.dart';
 import 'sprite_positioner_page.dart';
+import 'widgets/story_shot_transition.dart';
 import 'widgets/visual_novel_stage.dart';
 
 class StoryPreparationPage extends StatefulWidget {
@@ -161,6 +162,13 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
     final subtitle = _filipinoSubtitles
         ? beat.filipinoText ?? 'Filipino: ${beat.originalText}'
         : beat.originalText;
+    final media = MediaQuery.maybeOf(context);
+    final reducedMotion =
+        media?.disableAnimations == true || media?.accessibleNavigation == true;
+    final transitionDuration = storyShotTransitionDuration(
+      shot.transitionId,
+      reducedMotion: reducedMotion,
+    );
 
     return StoryTaleAppShell(
       title: '${book.title} • ${chapter.title}',
@@ -176,10 +184,23 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-              child: VisualNovelStage(
-                shot: shot,
-                speaker: beat.speakerId,
-                subtitle: subtitle,
+              child: AnimatedSwitcher(
+                duration: transitionDuration,
+                reverseDuration: transitionDuration,
+                transitionBuilder: (child, animation) {
+                  return buildStoryShotTransition(
+                    transitionId: shot.transitionId,
+                    reducedMotion: reducedMotion,
+                    animation: animation,
+                    child: child,
+                  );
+                },
+                child: VisualNovelStage(
+                  key: ValueKey('story-shot-${shot.id}'),
+                  shot: shot,
+                  speaker: beat.speakerId,
+                  subtitle: subtitle,
+                ),
               ),
             ),
           ),

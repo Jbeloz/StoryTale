@@ -18,6 +18,14 @@ void main() {
       'camera_snap_in',
       'camera_pan_left_slow',
     ]);
+    expect(story.shots.map((shot) => shot.transitionId), [
+      'fade',
+      'slide_left',
+      'cut',
+      'fade',
+      'slide_right',
+      'cut',
+    ]);
     expect(story.shots.map((shot) => shot.characterLayers.length), [
       2,
       0,
@@ -50,6 +58,10 @@ void main() {
       true,
       false,
     ]);
+    expect(story.shots.first.characterLayers.map((layer) => layer.movement), [
+      'enter_left',
+      'enter_right',
+    ]);
     expect(story.shots.last.characterLayers.map((layer) => layer.scale), [
       'medium',
       'background',
@@ -57,6 +69,10 @@ void main() {
     expect(story.shots.last.characterLayers.map((layer) => layer.depth), [
       'front',
       'back',
+    ]);
+    expect(story.shots.last.characterLayers.map((layer) => layer.movement), [
+      'walk_right',
+      'step_back',
     ]);
     expect(story.cutsceneNumberForShot(0), 1);
   });

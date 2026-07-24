@@ -240,7 +240,7 @@ class StoryTaleController extends ChangeNotifier {
       id: shotId,
       layoutId: template.layoutId,
       backgroundId: 'moonlit_rose_garden',
-      transitionId: number == 1 ? 'fade_in' : 'cut',
+      transitionId: template.transitionId,
       camera: StoryCameraPlanData(presetId: template.cameraPresetId),
       beats: List.generate(
         lines.length,
@@ -269,7 +269,7 @@ class StoryTaleController extends ChangeNotifier {
             _ => 'front',
           },
           depth: placement.depth,
-          movement: actor.movement,
+          movement: placement.movementId ?? actor.movement,
           isSpeaking: placement.actorIndex == speakerIndex,
         );
       }).toList(),
@@ -303,14 +303,24 @@ class StoryTaleController extends ChangeNotifier {
     _ReviewShotTemplate(
       layoutId: 'two_balanced',
       speakerActorIndex: 1,
+      transitionId: 'fade',
       placements: [
-        _ReviewPlacement(actorIndex: 1, stagePosition: 'left'),
-        _ReviewPlacement(actorIndex: 2, stagePosition: 'right'),
+        _ReviewPlacement(
+          actorIndex: 1,
+          stagePosition: 'left',
+          movementId: 'enter_left',
+        ),
+        _ReviewPlacement(
+          actorIndex: 2,
+          stagePosition: 'right',
+          movementId: 'enter_right',
+        ),
       ],
     ),
     _ReviewShotTemplate(
       layoutId: 'background_establishing',
       cameraPresetId: 'camera_pull_out_slow',
+      transitionId: 'slide_left',
     ),
     _ReviewShotTemplate(
       layoutId: 'solo_left_full',
@@ -321,6 +331,7 @@ class StoryTaleController extends ChangeNotifier {
     _ReviewShotTemplate(
       layoutId: 'group_three',
       speakerActorIndex: 3,
+      transitionId: 'fade',
       placements: [
         _ReviewPlacement(
           actorIndex: 3,
@@ -336,24 +347,27 @@ class StoryTaleController extends ChangeNotifier {
       layoutId: 'solo_right_full',
       speakerActorIndex: 4,
       cameraPresetId: 'camera_snap_in',
+      transitionId: 'slide_right',
       placements: [_ReviewPlacement(actorIndex: 4, stagePosition: 'right')],
     ),
     _ReviewShotTemplate(
       layoutId: 'depth_pair',
-      speakerActorIndex: 1,
+      speakerActorIndex: 5,
       cameraPresetId: 'camera_pan_left_slow',
       placements: [
         _ReviewPlacement(
-          actorIndex: 1,
+          actorIndex: 5,
           stagePosition: 'left',
           scale: 'medium',
           depth: 'front',
+          movementId: 'walk_right',
         ),
         _ReviewPlacement(
           actorIndex: 4,
           stagePosition: 'right',
           scale: 'background',
           depth: 'back',
+          movementId: 'step_back',
         ),
       ],
     ),
@@ -366,7 +380,7 @@ class StoryTaleController extends ChangeNotifier {
       faceProfileId: 'default',
       faceSetId: 'neutral',
       poseId: 'neutral',
-      movement: 'fade in',
+      movement: 'fade_in',
     ),
     _StoryActor(
       characterId: 'hero_actor',
@@ -374,7 +388,7 @@ class StoryTaleController extends ChangeNotifier {
       faceProfileId: 'hero',
       faceSetId: 'neutral',
       poseId: 'talking',
-      movement: 'talking',
+      movement: 'focus_speaker',
     ),
     _StoryActor(
       characterId: 'heroine_actor',
@@ -382,7 +396,7 @@ class StoryTaleController extends ChangeNotifier {
       faceProfileId: 'heroine',
       faceSetId: 'happy',
       poseId: 'pointing',
-      movement: 'pointing',
+      movement: 'reaction_pop',
     ),
     _StoryActor(
       characterId: 'elder_actor',
@@ -390,7 +404,7 @@ class StoryTaleController extends ChangeNotifier {
       faceProfileId: 'elder',
       faceSetId: 'sad',
       poseId: 'neutral',
-      movement: 'idle',
+      movement: 'idle_breathe',
     ),
     _StoryActor(
       characterId: 'adult_actor',
@@ -398,7 +412,7 @@ class StoryTaleController extends ChangeNotifier {
       faceProfileId: 'adult_deep',
       faceSetId: 'angry',
       poseId: 'talking',
-      movement: 'talking',
+      movement: 'reaction_pop',
     ),
     _StoryActor(
       characterId: 'hero_walking_actor',
@@ -406,7 +420,7 @@ class StoryTaleController extends ChangeNotifier {
       faceProfileId: 'hero',
       faceSetId: 'neutral',
       poseId: 'walking',
-      movement: 'walk right',
+      movement: 'walk_right',
     ),
   ];
 
@@ -502,12 +516,14 @@ class _ReviewShotTemplate {
     required this.layoutId,
     this.speakerActorIndex,
     this.cameraPresetId = 'camera_static',
+    this.transitionId = 'cut',
     this.placements = const [],
   });
 
   final String layoutId;
   final int? speakerActorIndex;
   final String cameraPresetId;
+  final String transitionId;
   final List<_ReviewPlacement> placements;
 }
 
@@ -517,12 +533,14 @@ class _ReviewPlacement {
     required this.stagePosition,
     this.scale = 'full',
     this.depth = 'normal',
+    this.movementId,
   });
 
   final int actorIndex;
   final String stagePosition;
   final String scale;
   final String depth;
+  final String? movementId;
 }
 
 extension _FirstOrNull<T> on List<T> {

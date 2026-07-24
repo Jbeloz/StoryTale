@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../shared/models/storytale_models.dart';
 import '../../../../shared/widgets/storytale_image_placeholder.dart';
 import 'story_camera_viewport.dart';
+import 'story_character_motion.dart';
 import 'story_character_view.dart';
 import 'visual_novel_layouts.dart';
 
@@ -131,22 +132,28 @@ class VisualNovelStage extends StatelessWidget {
                               characterCount: characters.length,
                               depth: entry.layer.depth,
                             ),
-                            child: StoryCharacterView(
-                              key: ValueKey(
-                                '${entry.layer.characterId}-'
-                                '${entry.originalIndex}',
+                            child: StoryCharacterMotion(
+                              animationKey:
+                                  '${shot.id}-${entry.layer.characterId}',
+                              movementId: entry.layer.movement,
+                              reducedMotion: reducedMotion,
+                              child: StoryCharacterView(
+                                key: ValueKey(
+                                  '${entry.layer.characterId}-'
+                                  '${entry.originalIndex}',
+                                ),
+                                layer: entry.layer,
+                                width:
+                                    constraints.maxHeight *
+                                    entry.slot.heightFactor *
+                                    storyScaleFactor(entry.layer.scale) *
+                                    0.94,
+                                height:
+                                    constraints.maxHeight *
+                                    entry.slot.heightFactor *
+                                    storyScaleFactor(entry.layer.scale),
+                                scale: 1.48,
                               ),
-                              layer: entry.layer,
-                              width:
-                                  constraints.maxHeight *
-                                  entry.slot.heightFactor *
-                                  storyScaleFactor(entry.layer.scale) *
-                                  0.94,
-                              height:
-                                  constraints.maxHeight *
-                                  entry.slot.heightFactor *
-                                  storyScaleFactor(entry.layer.scale),
-                              scale: 1.48,
                             ),
                           ),
                         ),

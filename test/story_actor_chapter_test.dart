@@ -44,7 +44,8 @@ void main() {
       resolvedSets[layer.characterId] = resolved.faceComposition!.setId;
     }
 
-    expect(resolvedSets['hero_actor'], 'talking');
+    expect(resolvedSets['hero_actor'], 'neutral');
+    expect(resolvedSets['hero_walking_actor'], 'talking');
     expect(resolvedSets['heroine_actor'], 'happy');
     expect(resolvedSets['elder_actor'], 'sad');
     expect(resolvedSets['adult_actor'], 'angry');

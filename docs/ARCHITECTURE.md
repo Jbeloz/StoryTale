@@ -186,6 +186,11 @@ and character layers. Flutter clamps zoom to `1.00-1.18`, horizontal pan to 6%,
 and short shake to 8 pixels. Subtitles and playback controls stay outside that
 viewport; reduced-motion devices receive a short fade instead.
 
+Character movement presets transform the complete assembled rig, so the saved
+Sprite Studio body-part positions and bones remain unchanged. Shot changes use
+only `cut`, `fade`, and short directional slides. Devices requesting reduced
+motion receive a short fade instead of movement, zoom, or sliding.
+
 ## Local-first rule
 
 ```text
