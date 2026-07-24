@@ -46,6 +46,7 @@ books/<book-id>/
 |-- story-bible/
 |   |-- bible.json
 |   |-- style.json
+|   |-- entity-index.json
 |   |-- characters/
 |   |   `-- <character-id>/
 |   |       |-- profile.json
@@ -75,6 +76,20 @@ books/<book-id>/
 |   |           |       `-- angry.png
 |   |           `-- composites/
 |   |               `-- full-neutral.png
+|   |-- animals/
+|   |   `-- <animal-id>/
+|   |       |-- profile.json
+|   |       `-- sprites/
+|   |           |-- neutral.png
+|   |           `-- talking.png
+|   |-- plants/
+|   |   `-- <plant-id>/
+|   |       |-- profile.json
+|   |       `-- states/*.png
+|   |-- props/
+|   |   `-- <prop-id>/
+|   |       |-- profile.json
+|   |       `-- states/*.png
 |   `-- locations/
 |       `-- <location-id>/
 |           |-- profile.json
@@ -128,6 +143,8 @@ BookStoryBible
 - analysisVersion
 - style: art style, palette, period, clothing rules
 - characters: IDs, names, aliases, locked appearance, relationships, voice IDs
+- animals and creatures: IDs, aliases, speaking role, approved sprites, voices
+- plants and props: IDs, aliases, importance, approved states and focus assets
 - sprite design: master sheet, design fingerprint, body variants, head
   expressions, and head anchor
 - locations: IDs, descriptions, time/weather variants
@@ -135,11 +152,13 @@ BookStoryBible
 - unresolvedItems: names, speakers, or locations that need review
 ```
 
-The story bible prevents character appearance, names, voices, and locations
-from changing unexpectedly between chapters or volumes. User-approved entries
-are locked; later Gemini analysis may add aliases, relationships, or an outfit
-variant but must not overwrite the approved face, body proportions, palette,
-sprites, or voice without confirmation.
+The story bible prevents character appearance, names, voices, locations,
+animals, plants, and important objects from changing unexpectedly between
+chapters or volumes. User-approved entries are locked; later Gemini analysis may
+add aliases, relationships, an outfit, or a story-required state variant but
+must not overwrite an approved design, sprite, or voice without confirmation.
+The complete entity types, minimal asset rules, and safe fallback are defined in
+[Story Bible Entity and Asset Plan](STORY_BIBLE_ENTITY_ASSET_PLAN.md).
 
 ## 4. Gemini story-analysis pipeline
 
@@ -155,9 +174,10 @@ EPUB parser
 
 Gemini does not receive the whole series in one request. For each chapter,
 StoryTale sends the cleaned chapter text plus a compact, approved registry of
-existing character IDs, aliases, locked appearances, locations, and recent
-timeline facts. Gemini must return either an existing ID or a
-`newCharacterCandidate`; it cannot replace a locked design.
+existing entity IDs, aliases, locked appearances, locations, and recent
+timeline facts. Gemini must return either an existing ID or a typed candidate
+such as `newHumanCandidate`, `newAnimalCandidate`, `newPlantCandidate`, or
+`newPropCandidate`; it cannot replace a locked design.
 
 Use the stable model configured by `GEMINI_MODEL` in `.env`, currently
 `gemini-3.5-flash`. The request uses Gemini structured output with a JSON
@@ -175,8 +195,9 @@ hierarchical two-pass analysis:
 
 1. Parse the EPUB table of contents and spine.
 2. Normalize each chapter while preserving paragraph numbers and source order.
-3. Analyze each chapter separately for characters, aliases, dialogue speakers,
-   locations, time changes, plot beats, and chapter summary.
+3. Analyze each chapter separately for humans, animals, creatures, plants,
+   props, aliases, dialogue speakers, locations, time changes, plot beats, and
+   chapter summary.
 4. Merge chapter results into one volume summary.
 5. Merge volume summaries into the shared book story bible.
 6. Flag conflicting aliases, uncertain speakers, and unclear volume boundaries
@@ -379,7 +400,8 @@ every image and audio file.
 
 - Missing analysis: normal EPUB reading still works.
 - Uncertain speaker: pause preparation for review; keep the line visible.
-- Missing sprite: use a labeled placeholder or hide that character layer.
+- Missing sprite or focus asset: hide the layer and use a background/detail
+  shot; never substitute an unrelated prototype actor.
 - Missing background: use the book's default background.
 - Missing voice: play narration with the default narrator or subtitles only.
 - Failed image request: keep manual Replace available.
@@ -409,11 +431,16 @@ every image and audio file.
 - Send one cleaned chapter plus the compact approved story-bible registry.
 - Validate source ranges and prevent changes to locked character designs.
 - Keep one manually authored result for deterministic offline tests.
+- Classify humans, animals, creatures, plants, props, and locations separately.
+- Resolve aliases before adding a typed candidate to the story bible.
+- Reject any plan that uses an asset belonging to a different entity.
 
 ### Phase 4 - Review and asset reuse
 
-- Build character/alias, speaker, location, and art-style review screens.
+- Build entity/alias, speaker, location, and art-style review screens.
 - Generate and approve one Gemini full-body master per character.
+- Generate only narratively important animal, creature, plant, and prop assets;
+  do not generate an image for every noun.
 - Attach locked shape and approved-design references to each Gemini request.
 - Add local transparent sprite cleanup and validation.
 - Split the approved master into the head and nine transparent body parts.
@@ -428,6 +455,8 @@ every image and audio file.
 - Save reusable poses as validated transforms in JSON instead of new body
   pictures. See [Sprite Studio plan](SPRITE_STUDIO_PLAN.md).
 - Connect approved sprites/backgrounds to stable asset IDs.
+- Add whole-sprite animal/creature characters and plant/prop focus assets before
+  enabling final book-specific scene plans.
 
 ### Phase 5 - Audio and package builder
 
@@ -463,10 +492,12 @@ Animated Story Mode is functionally complete for the first version when:
 
 - one EPUB can be imported as a volume with correct chapter boundaries;
 - a second volume can join the same book without losing existing assets;
-- the story bible lists reviewed characters, aliases, locations, and voices;
+- the story bible lists reviewed humans, animals, creatures, plants, props,
+  aliases, locations, assets, and voices;
 - one full chapter is converted into ordered lines and visual scenes;
 - the first and last source blocks are included exactly once;
 - accepted sprites/backgrounds are reused across chapters;
+- a missing non-human asset never causes an unrelated human actor to appear;
 - voice audio, subtitles, simple movement, and the moral play in order;
 - preparation resumes after an app restart; and
 - normal reading still works when any Story Mode stage fails.

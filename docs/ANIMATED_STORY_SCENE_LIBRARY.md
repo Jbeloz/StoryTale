@@ -1,6 +1,7 @@
 # StoryTale Visual-Novel Scene Library
 
-**Status: approved. Parts 1-7 are implemented.**
+**Status: approved. Parts 1-7 are implemented; book-specific entity assets are
+the next planned extension.**
 
 This replaces the current small-character technical demo with a visual-novel
 cutscene style. StoryTale still uses transparent full-body sprites, reusable
@@ -55,7 +56,7 @@ images. Gemini selects an ID and StoryTale places the existing sprites.
 | ID | Scene name | Simple use |
 | --- | --- | --- |
 | `background_establishing` | Empty establishing shot | Introduce a place, time, weather, or mood with no character. |
-| `object_detail` | Object/detail cutaway | Show a letter, door, weapon, flower, food, or important clue with no character. |
+| `object_detail` | Object/detail cutaway | Show an approved animal, plant, prop, letter, door, weapon, flower, food, or clue without inserting an unrelated human. |
 | `solo_center_full` | One character, center | General introduction or important statement; full body at 75%. |
 | `solo_left_full` | One character, left | Speaker on the left with open story space on the right. |
 | `solo_right_full` | One character, right | Speaker on the right with open story space on the left. |
@@ -180,6 +181,11 @@ ShotPlan
   - poseId
   - faceProfileId and faceSetId
   - movementId
+- focusAssets (maximum 2; planned next)
+  - entityId and assetId
+  - stateId
+  - slot, scale, and depth
+  - movementId
 - beats
   - lineId
   - speakerId or narrator
@@ -206,6 +212,14 @@ Analyzer rules:
     follow, emphasize, react, establish, or close a moment.
 14. Never repeat the same layout, scale, and camera preset for more than two
     consecutive shots.
+15. Classify humans, animals, creatures, plants, props, and locations before
+    choosing visible layers.
+16. Never use a human actor as a visual substitute for a flower, animal,
+    creature, or prop.
+17. A speaking animal uses its own approved character ID; a silent plant or
+    prop uses an approved focus asset.
+18. When a required entity asset is missing, use `object_detail`,
+    `background_establishing`, or subtitles/audio without a visible subject.
 
 ## 7. One-sentence ChatGPT prompts for layout references
 

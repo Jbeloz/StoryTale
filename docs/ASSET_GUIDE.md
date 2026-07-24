@@ -35,6 +35,10 @@ books/<book-id>/story-bible/characters/<character-id>/sprites/outfits/<outfit-id
 books/<book-id>/story-bible/characters/<character-id>/sprites/poses/*.json
 books/<book-id>/story-bible/characters/<character-id>/sprites/faces/*.png
 books/<book-id>/story-bible/characters/<character-id>/sprites/composites/*.png
+books/<book-id>/story-bible/animals/<animal-id>/sprites/*.png
+books/<book-id>/story-bible/creatures/<creature-id>/sprites/*.png
+books/<book-id>/story-bible/plants/<plant-id>/states/*.png
+books/<book-id>/story-bible/props/<prop-id>/states/*.png
 books/<book-id>/story-bible/locations/<location-id>/backgrounds/
 books/<book-id>/volumes/<volume-id>/source/original.epub
 books/<book-id>/volumes/<volume-id>/chapters/<chapter-id>/chapter.json
@@ -43,10 +47,11 @@ books/<book-id>/jobs/
 sprite-studio/rigs/<rig-id>/poses/<pose-id>.json
 ```
 
-Recurring characters and locations belong in the shared story bible. Chapter
-folders contain only the analysis, script, subtitles, audio, and references
-needed by that chapter. The complete layout and lifecycle are defined in
-[Animated Story Mode plan](ANIMATED_STORY_MODE_PLAN.md).
+Recurring humans, animals, creatures, plants, props, and locations belong in
+the shared story bible. Chapter folders contain only the analysis, script,
+subtitles, audio, and references needed by that chapter. The complete layout
+and lifecycle are defined in [Animated Story Mode plan](ANIMATED_STORY_MODE_PLAN.md)
+and [Story Bible Entity and Asset Plan](STORY_BIBLE_ENTITY_ASSET_PLAN.md).
 
 Character layers use transparent PNGs. The cropped head, torso, upper/lower
 arms, and upper/lower legs are connected by the joints in `rig.json`. Face
@@ -72,6 +77,11 @@ head/body PNGs, and builds the full-body review preview by rejoining them. It
 does not pay for three separately generated parts. Reuse the approved layers
 across every chapter and volume. Cloudflare Workers AI remains the location and
 chapter-background source.
+
+Speaking animals and creatures start with a transparent neutral sprite plus one
+talking state and use whole-sprite movement. Plants and props use transparent
+focus assets with only plot-required states. Do not generate an asset for every
+noun, and never reuse an unrelated human actor as a placeholder.
 
 The bundled Cloudflare background example is
 `assets/images/backgrounds/cloudflare_examples/moonlit-rose-garden.jpg`.

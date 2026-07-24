@@ -51,7 +51,8 @@ grouping. The test EPUB currently parses into 15 readable story sections.
 ## 5. Chapter Story Mode
 
 - Add `Book -> Volume -> Chapter` organization with stable IDs
-- Build a shared character/location story bible from per-chapter analysis
+- Build a shared typed story bible for humans, animals, creatures, plants,
+  props, locations, and aliases
 - Create one `ChapterStory` package for every chapter
 - Preserve the complete chapter from its first to last source block
 - Add backgrounds, character sprites, voices, subtitles, movement, and sound
@@ -59,11 +60,15 @@ grouping. The test EPUB currently parses into 15 readable story sections.
 - Keep character appearance locked and reusable across every volume
 - Show a short moral after the chapter
 - Save and reuse all chapter content locally
+- Never substitute a prototype human actor for a missing animal, plant, or prop;
+  use a no-character detail/background shot instead
 - Prepare chapters on demand instead of generating an entire long series at once
 - Keep background music on standby; it is not required for the MVP
 
 Detailed phases, folder organization, schemas, rebuilding rules, and tests are
-in [Animated Story Mode plan](ANIMATED_STORY_MODE_PLAN.md).
+in [Animated Story Mode plan](ANIMATED_STORY_MODE_PLAN.md). Non-human subjects
+and important objects follow the
+[Story Bible Entity and Asset Plan](STORY_BIBLE_ENTITY_ASSET_PLAN.md).
 
 ## 5.1 Sprite Studio
 

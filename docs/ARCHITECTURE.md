@@ -44,7 +44,8 @@ flowchart LR
 | Tagalog base model | Uses the Meta MMS Tagalog model, converted to ONNX, to create correctly pronounced source audio. |
 | Voice packs | Stores five selected RVC voices as ONNX models installed with the app. Only the active voice is loaded into memory. |
 | Audio generator | Creates narration in the background and caches completed chapter audio for smooth playback. |
-| Book story bible | Locks recurring character identities, appearances, body/head sprite layers, aliases, locations, and voices across all volumes. |
+| Book story bible | Locks recurring humans, animals, creatures, plants, props, appearances, aliases, locations, assets, and voices across all volumes. |
+| Visual entity catalog | Maps each story subject to its own approved sprite, state, rig, focus asset, or background ID and prevents unrelated substitutions. |
 | ChapterStory data | Stores the sprites, dialogue, movements, sounds, and moral for one chapter. |
 | Story Mode player | Moves sprites over backgrounds while playing voices, subtitles, and sound effects. |
 | Gemini image model | Uses `gemini-3.1-flash-image` with the proportion, approved-head, and approved-body references to create one master image. |
@@ -70,6 +71,8 @@ ChapterStory
 - beats: one short subtitle/audio line in exact source order
 - characterLayers: characterId, rigId, poseId, faceProfileId, faceSetId,
   outfitId, stage slot, scale, facing, depth, and movement
+- focusAssetLayers: entityId, assetId, stateId, stage slot, scale, depth, and
+  movement for animals, plants, creatures, and props (planned next)
 ```
 
 The UI reads this data, so we do not create a separate Flutter screen for every book or chapter.
@@ -85,7 +88,9 @@ book-level story bible so they can be reused across chapters and volumes. See
 [Animated Story Mode plan](ANIMATED_STORY_MODE_PLAN.md) for the complete data,
 analysis, generation, and validation flow. See the
 [Visual-Novel Scene Library](ANIMATED_STORY_SCENE_LIBRARY.md) for the approved
-shot layouts, movements, subtitle rules, and analyzer choices.
+shot layouts, movements, subtitle rules, and analyzer choices. Non-human
+subjects and important objects follow the
+[Story Bible Entity and Asset Plan](STORY_BIBLE_ENTITY_ASSET_PLAN.md).
 
 ## Chosen setup
 
@@ -154,8 +159,9 @@ EPUB parser -> cleaned chapter text -> Gemini story-analysis API
 
 Analysis is per chapter, not one request for the entire book. Each request also
 includes a compact approved registry from the book story bible. Gemini may link
-an existing character or propose a new candidate, but it cannot replace a
-locked appearance, sprite design, or voice. Configuration is documented in
+an existing typed entity or propose a candidate, but it cannot replace a locked
+appearance, sprite design, asset, or voice. Humans, animals, creatures, plants,
+props, and locations remain separate kinds. Configuration is documented in
 [Environment setup](ENVIRONMENT_SETUP.md).
 
 The validated result is stored in the same structure used by the player:

@@ -22,6 +22,8 @@ One request contains:
 - one chapter ID and title;
 - stable, ordered source blocks;
 - approved characters and their rig, pose, face-profile, and face-set IDs;
+- approved animals, creatures, plants, and prop assets in the next contract
+  revision;
 - approved background IDs; and
 - the fixed StoryTale layout, camera, transition, staging, and movement IDs.
 
@@ -40,6 +42,7 @@ joint coordinates, timing, easing, zoom, or movement distance.
 - Do not use moving cameras more than twice in a row.
 - Do not repeat identical framing more than twice in a row.
 - Use an empty background or detail cutaway when the catalog has no safe pose.
+- Never substitute an unrelated human for an animal, creature, plant, or prop.
 
 DeepL remains the only Filipino translation provider.
 
@@ -53,6 +56,11 @@ preview plan and the preparation screen explains that fallback.
 ## Current limitation
 
 The approved catalog is currently the five bundled prototype actors and the
-bundled rose-garden background. Imported EPUB text already uses the same
-contract, but character extraction, persistent per-book story bibles, generated
-character rigs, and generated chapter background catalogs are the next work.
+bundled rose-garden background. That is why the demo may show Heroine or another
+prototype beside text about a flower: the player has no approved plant/focus
+asset yet. This proves the scene pipeline, not final story-to-visual accuracy.
+
+Imported EPUB text already uses the same contract, but typed entity extraction,
+persistent per-book story bibles, generated human/animal/plant/prop assets,
+focus-asset layers, and generated chapter background catalogs are the next
+work. See [Story Bible Entity and Asset Plan](STORY_BIBLE_ENTITY_ASSET_PLAN.md).
