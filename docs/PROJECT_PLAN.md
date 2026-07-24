@@ -54,7 +54,8 @@ grouping. The test EPUB currently parses into 15 readable story sections.
 - [x] Build typed, locally persisted per-book story bibles for humans, animals,
   creatures, plants, props, locations, and aliases
 - [x] Extract safe unapproved entity candidates from each cleaned chapter
-- [ ] Review candidates and generate/register only approved matching assets
+- [x] Review, correct, merge, delete, and approve local entity candidates
+- [ ] Generate and register only approved matching assets
 - Create one `ChapterStory` package for every chapter
 - Preserve the complete chapter from its first to last source block
 - Add backgrounds, character sprites, voices, subtitles, movement, and sound

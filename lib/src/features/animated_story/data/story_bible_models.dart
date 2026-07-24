@@ -89,6 +89,43 @@ class StoryEntityData {
     );
   }
 
+  StoryEntityData copyWith({
+    StoryEntityKind? kind,
+    String? canonicalName,
+    List<String>? aliases,
+    String? description,
+    List<String>? relationships,
+    bool? recurring,
+    StoryEntityImportance? importance,
+    bool? speaker,
+    String? voiceId,
+    bool? approved,
+    bool? lockedAppearance,
+    List<String>? assetIds,
+    List<String>? unresolvedNotes,
+  }) {
+    return StoryEntityData(
+      entityId: entityId,
+      kind: kind ?? this.kind,
+      canonicalName: canonicalName ?? this.canonicalName,
+      aliases: aliases ?? this.aliases,
+      description: description ?? this.description,
+      relationships: relationships ?? this.relationships,
+      firstSeenVolumeId: firstSeenVolumeId,
+      firstSeenChapterId: firstSeenChapterId,
+      sourceBlockIds: sourceBlockIds,
+      recurring: recurring ?? this.recurring,
+      importance: importance ?? this.importance,
+      speaker: speaker ?? this.speaker,
+      voiceId: voiceId ?? this.voiceId,
+      approved: approved ?? this.approved,
+      lockedAppearance: lockedAppearance ?? this.lockedAppearance,
+      assetIds: assetIds ?? this.assetIds,
+      unresolvedNotes: unresolvedNotes ?? this.unresolvedNotes,
+      confidence: confidence,
+    );
+  }
+
   StoryEntityData mergeCandidate(StoryEntityData candidate) {
     return StoryEntityData(
       entityId: entityId,

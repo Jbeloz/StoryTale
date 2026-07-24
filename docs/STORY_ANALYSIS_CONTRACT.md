@@ -64,8 +64,9 @@ Imported EPUB text already uses the same contract. Typed entity extraction and
 persistent per-book story bibles are now connected to chapter preparation.
 Candidates stay unapproved and cannot assign their own assets.
 
-The next work is the candidate review UI, generated
-human/animal/plant/prop assets, focus-asset layers, entity-aware scene catalogs,
-and generated chapter backgrounds. Until those are approved, the visible
+The candidate review UI now supports approval, correction, merging, and
+deletion. The next work is generated human/animal/plant/prop assets,
+focus-asset layers, entity-aware scene catalogs, and generated chapter
+backgrounds. Until matching assets are approved and registered, the visible
 player still uses the prototype catalog. See
 [Story Bible Entity and Asset Plan](STORY_BIBLE_ENTITY_ASSET_PLAN.md).

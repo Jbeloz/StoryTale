@@ -12,6 +12,7 @@ import '../data/story_artwork_service.dart';
 import '../data/story_analysis_contract.dart';
 import '../data/story_analysis_service.dart';
 import '../data/story_entity_service.dart';
+import 'story_bible_review_page.dart';
 import 'sprite_positioner_page.dart';
 import 'widgets/story_shot_transition.dart';
 import 'widgets/visual_novel_stage.dart';
@@ -167,6 +168,13 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
           ),
           const SizedBox(height: 8),
           if (ready) ...[
+            OutlinedButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const StoryBibleReviewPage()),
+              ),
+              icon: const Icon(Icons.fact_check_outlined),
+              label: const Text('Review Story Bible'),
+            ),
             OutlinedButton(
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const SpriteReviewPage()),

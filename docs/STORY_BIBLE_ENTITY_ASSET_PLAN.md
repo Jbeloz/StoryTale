@@ -1,7 +1,8 @@
 # Story Bible Entity and Asset Plan
 
-**Status: Part 8A implemented; review, asset generation, and runtime entity
-layers are next. The current player still uses prototype actors.**
+**Status: Parts 8A-8B implemented; entity extraction, local story bibles, and
+candidate review are ready. Asset generation and runtime entity layers are
+next. The current player still uses prototype actors.**
 
 ## Purpose
 
@@ -149,10 +150,13 @@ Implemented:
 - Private Worker `/entities` endpoint using Gemini structured output
 - Source-block, kind, confidence, candidate-approval, and asset-safety checks
 - Chapter preparation saves extracted candidates before scene planning
+- Story Bible review grouped by people, animals, creatures, plants, props, and
+  locations
+- Local approve/pending, edit, merge, and delete actions
+- Safe type correction before assets exist
 
 Still pending:
 
-- Candidate review and approval UI
 - Entity-specific foreground asset generation and registration
 - Generated location background catalog
 - `focusAssetLayers` and entity-aware scene catalogs
