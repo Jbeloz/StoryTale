@@ -5,6 +5,35 @@ import '../../../../shared/widgets/storytale_image_placeholder.dart';
 import 'story_character_view.dart';
 import 'visual_novel_layouts.dart';
 
+double storyScaleFactor(String scale) {
+  return switch (scale) {
+    'background' => 0.78,
+    'medium' => 1.16,
+    'close' => 1.32,
+    _ => 1,
+  };
+}
+
+int storyDepthOrder(String depth) {
+  return switch (depth) {
+    'back' => 0,
+    'front' => 2,
+    _ => 1,
+  };
+}
+
+double storyCharacterOpacity({
+  required bool isSpeaking,
+  required bool hasSpeaker,
+  required int characterCount,
+  required String depth,
+}) {
+  if (characterCount > 1 && hasSpeaker) {
+    return isSpeaking ? 1 : 0.68;
+  }
+  return depth == 'back' ? 0.84 : 1;
+}
+
 class VisualNovelStage extends StatelessWidget {
   const VisualNovelStage({
     required this.shot,
@@ -29,6 +58,23 @@ class VisualNovelStage extends StatelessWidget {
           shot.layoutId,
           characters.length,
         );
+        final entries =
+            List.generate(
+              characters.length,
+              (index) => _StageCharacter(
+                characters[index],
+                layout.slots[index],
+                index,
+              ),
+            )..sort((a, b) {
+              final depth = storyDepthOrder(
+                a.layer.depth,
+              ).compareTo(storyDepthOrder(b.layer.depth));
+              return depth == 0
+                  ? a.originalIndex.compareTo(b.originalIndex)
+                  : depth;
+            });
+        final hasSpeaker = characters.any((layer) => layer.isSpeaking);
         return ClipRRect(
           key: const Key('visual-novel-stage'),
           borderRadius: BorderRadius.circular(20),
@@ -54,24 +100,42 @@ class VisualNovelStage extends StatelessWidget {
                   ),
                 ),
               ),
-              for (var index = 0; index < characters.length; index++)
+              for (final entry in entries)
                 AnimatedAlign(
                   duration: const Duration(milliseconds: 450),
                   curve: Curves.easeOutCubic,
-                  alignment: layout.slots[index].alignment,
+                  alignment: entry.slot.alignment,
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 48),
-                    child: StoryCharacterView(
-                      key: ValueKey('${characters[index].characterId}-$index'),
-                      layer: characters[index],
-                      width:
-                          constraints.maxHeight *
-                          layout.slots[index].heightFactor *
-                          0.94,
-                      height:
-                          constraints.maxHeight *
-                          layout.slots[index].heightFactor,
-                      scale: 1.48,
+                    child: AnimatedOpacity(
+                      key: ValueKey(
+                        'story-focus-${entry.layer.characterId}-'
+                        '${entry.layer.isSpeaking}',
+                      ),
+                      duration: const Duration(milliseconds: 220),
+                      opacity: storyCharacterOpacity(
+                        isSpeaking: entry.layer.isSpeaking,
+                        hasSpeaker: hasSpeaker,
+                        characterCount: characters.length,
+                        depth: entry.layer.depth,
+                      ),
+                      child: StoryCharacterView(
+                        key: ValueKey(
+                          '${entry.layer.characterId}-'
+                          '${entry.originalIndex}',
+                        ),
+                        layer: entry.layer,
+                        width:
+                            constraints.maxHeight *
+                            entry.slot.heightFactor *
+                            storyScaleFactor(entry.layer.scale) *
+                            0.94,
+                        height:
+                            constraints.maxHeight *
+                            entry.slot.heightFactor *
+                            storyScaleFactor(entry.layer.scale),
+                        scale: 1.48,
+                      ),
                     ),
                   ),
                 ),
@@ -85,6 +149,14 @@ class VisualNovelStage extends StatelessWidget {
       },
     );
   }
+}
+
+class _StageCharacter {
+  const _StageCharacter(this.layer, this.slot, this.originalIndex);
+
+  final StoryCharacterLayerData layer;
+  final VisualNovelSlot slot;
+  final int originalIndex;
 }
 
 class _SubtitleBar extends StatelessWidget {

@@ -236,7 +236,8 @@ Replace bracketed words, but keep each request as one sentence.
 3. **Completed:** add reusable layout presets for zero, one, two, and three
    characters. The same resolver accepts deterministic test shots, imported
    EPUB chapters, and future Gemini shot plans.
-4. Add character facing, scale, depth, speaker focus, and multiple layers.
+4. **Completed:** add whole-character facing, controlled scale, depth ordering,
+   speaker emphasis, listener dimming, and multiple assembled rig layers.
 5. Add the camera viewport, approved pan/zoom presets, safety clamps, and
    reduced-motion fallback.
 6. Add character entrance/exit, walking, reactions, and shot transitions.

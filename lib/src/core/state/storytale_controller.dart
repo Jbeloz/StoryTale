@@ -262,13 +262,15 @@ class StoryTaleController extends ChangeNotifier {
           faceProfileId: actor.faceProfileId,
           faceSetId: actor.faceSetId,
           stagePosition: placement.stagePosition,
+          scale: placement.scale,
           facing: switch (placement.stagePosition) {
             'left' => 'right',
             'right' => 'left',
             _ => 'front',
           },
+          depth: placement.depth,
           movement: actor.movement,
-          isSpeaking: actor.isSpeaking,
+          isSpeaking: placement.actorIndex == speakerIndex,
         );
       }).toList(),
     );
@@ -316,7 +318,12 @@ class StoryTaleController extends ChangeNotifier {
       layoutId: 'group_three',
       speakerActorIndex: 3,
       placements: [
-        _ReviewPlacement(actorIndex: 3, stagePosition: 'left'),
+        _ReviewPlacement(
+          actorIndex: 3,
+          stagePosition: 'left',
+          scale: 'medium',
+          depth: 'front',
+        ),
         _ReviewPlacement(actorIndex: 1, stagePosition: 'center'),
         _ReviewPlacement(actorIndex: 2, stagePosition: 'right'),
       ],
@@ -330,8 +337,18 @@ class StoryTaleController extends ChangeNotifier {
       layoutId: 'depth_pair',
       speakerActorIndex: 1,
       placements: [
-        _ReviewPlacement(actorIndex: 1, stagePosition: 'left'),
-        _ReviewPlacement(actorIndex: 4, stagePosition: 'right'),
+        _ReviewPlacement(
+          actorIndex: 1,
+          stagePosition: 'left',
+          scale: 'medium',
+          depth: 'front',
+        ),
+        _ReviewPlacement(
+          actorIndex: 4,
+          stagePosition: 'right',
+          scale: 'background',
+          depth: 'back',
+        ),
       ],
     ),
   ];
@@ -352,7 +369,6 @@ class StoryTaleController extends ChangeNotifier {
       faceSetId: 'neutral',
       poseId: 'talking',
       movement: 'talking',
-      isSpeaking: true,
     ),
     _StoryActor(
       characterId: 'heroine_actor',
@@ -377,7 +393,6 @@ class StoryTaleController extends ChangeNotifier {
       faceSetId: 'angry',
       poseId: 'talking',
       movement: 'talking',
-      isSpeaking: true,
     ),
     _StoryActor(
       characterId: 'hero_walking_actor',
@@ -466,7 +481,6 @@ class _StoryActor {
     required this.faceSetId,
     required this.poseId,
     required this.movement,
-    this.isSpeaking = false,
   });
 
   final String characterId;
@@ -475,7 +489,6 @@ class _StoryActor {
   final String faceSetId;
   final String poseId;
   final String movement;
-  final bool isSpeaking;
 }
 
 class _ReviewShotTemplate {
@@ -494,10 +507,14 @@ class _ReviewPlacement {
   const _ReviewPlacement({
     required this.actorIndex,
     required this.stagePosition,
+    this.scale = 'full',
+    this.depth = 'normal',
   });
 
   final int actorIndex;
   final String stagePosition;
+  final String scale;
+  final String depth;
 }
 
 extension _FirstOrNull<T> on List<T> {

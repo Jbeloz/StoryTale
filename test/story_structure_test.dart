@@ -27,11 +27,33 @@ void main() {
           .expand((shot) => shot.characterLayers)
           .every(
             (layer) =>
-                layer.scale == 'full' &&
-                {'left', 'right', 'front'}.contains(layer.facing),
+                {
+                  'background',
+                  'full',
+                  'medium',
+                  'close',
+                }.contains(layer.scale) &&
+                {'left', 'right', 'front'}.contains(layer.facing) &&
+                {'back', 'normal', 'front'}.contains(layer.depth),
           ),
       isTrue,
     );
+    expect(story.shots.first.characterLayers.map((layer) => layer.facing), [
+      'right',
+      'left',
+    ]);
+    expect(story.shots.first.characterLayers.map((layer) => layer.isSpeaking), [
+      true,
+      false,
+    ]);
+    expect(story.shots.last.characterLayers.map((layer) => layer.scale), [
+      'medium',
+      'background',
+    ]);
+    expect(story.shots.last.characterLayers.map((layer) => layer.depth), [
+      'front',
+      'back',
+    ]);
     expect(story.cutsceneNumberForShot(0), 1);
   });
 

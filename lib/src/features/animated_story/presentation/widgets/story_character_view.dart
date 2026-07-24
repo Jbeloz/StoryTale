@@ -5,6 +5,8 @@ import '../../data/story_pose_resolver.dart';
 import 'sprite_face_view.dart';
 import 'sprite_rig_view.dart';
 
+bool shouldFlipStoryCharacter(String facing) => facing == 'left';
+
 class StoryCharacterView extends StatefulWidget {
   const StoryCharacterView({
     required this.layer,
@@ -63,16 +65,23 @@ class _StoryCharacterViewState extends State<StoryCharacterView> {
           width: widget.width,
           height: widget.height,
           child: ClipRect(
-            child: Transform.scale(
-              scale: widget.scale,
-              alignment: Alignment.center,
-              child: FittedBox(
-                fit: BoxFit.contain,
-                child: SpriteRigView(
-                  rig: character.rig,
-                  pose: character.pose,
-                  faceCatalog: character.faceCatalog,
-                  faceOverlay: _faceOverlay(character),
+            child: Transform.flip(
+              key: ValueKey(
+                'story-facing-${widget.layer.characterId}-'
+                '${widget.layer.facing}',
+              ),
+              flipX: shouldFlipStoryCharacter(widget.layer.facing),
+              child: Transform.scale(
+                scale: widget.scale,
+                alignment: Alignment.center,
+                child: FittedBox(
+                  fit: BoxFit.contain,
+                  child: SpriteRigView(
+                    rig: character.rig,
+                    pose: character.pose,
+                    faceCatalog: character.faceCatalog,
+                    faceOverlay: _faceOverlay(character),
+                  ),
                 ),
               ),
             ),

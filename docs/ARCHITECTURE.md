@@ -176,6 +176,11 @@ analysis is requested, StoryTale assigns a varied deterministic set of empty,
 solo, pair, and three-character shots; Gemini later replaces only the
 structured values, not the Flutter screens or layout code.
 
+The player mirrors the final assembled rig for `left` facing, then applies
+approved scale and depth values at the stage level. This leaves Sprite Studio
+bones and saved pose coordinates unchanged. During multi-character dialogue,
+the current speaker stays fully visible while listeners are softly dimmed.
+
 ## Local-first rule
 
 ```text
