@@ -51,8 +51,10 @@ grouping. The test EPUB currently parses into 15 readable story sections.
 ## 5. Chapter Story Mode
 
 - Add `Book -> Volume -> Chapter` organization with stable IDs
-- Build a shared typed story bible for humans, animals, creatures, plants,
-  props, locations, and aliases
+- [x] Build typed, locally persisted per-book story bibles for humans, animals,
+  creatures, plants, props, locations, and aliases
+- [x] Extract safe unapproved entity candidates from each cleaned chapter
+- [ ] Review candidates and generate/register only approved matching assets
 - Create one `ChapterStory` package for every chapter
 - Preserve the complete chapter from its first to last source block
 - Add backgrounds, character sprites, voices, subtitles, movement, and sound

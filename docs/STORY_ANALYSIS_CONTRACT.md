@@ -60,7 +60,12 @@ bundled rose-garden background. That is why the demo may show Heroine or another
 prototype beside text about a flower: the player has no approved plant/focus
 asset yet. This proves the scene pipeline, not final story-to-visual accuracy.
 
-Imported EPUB text already uses the same contract, but typed entity extraction,
-persistent per-book story bibles, generated human/animal/plant/prop assets,
-focus-asset layers, and generated chapter background catalogs are the next
-work. See [Story Bible Entity and Asset Plan](STORY_BIBLE_ENTITY_ASSET_PLAN.md).
+Imported EPUB text already uses the same contract. Typed entity extraction and
+persistent per-book story bibles are now connected to chapter preparation.
+Candidates stay unapproved and cannot assign their own assets.
+
+The next work is the candidate review UI, generated
+human/animal/plant/prop assets, focus-asset layers, entity-aware scene catalogs,
+and generated chapter backgrounds. Until those are approved, the visible
+player still uses the prototype catalog. See
+[Story Bible Entity and Asset Plan](STORY_BIBLE_ENTITY_ASSET_PLAN.md).

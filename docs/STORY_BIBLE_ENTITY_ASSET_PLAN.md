@@ -1,6 +1,7 @@
 # Story Bible Entity and Asset Plan
 
-**Status: planned next; the current player still uses prototype actors.**
+**Status: Part 8A implemented; review, asset generation, and runtime entity
+layers are next. The current player still uses prototype actors.**
 
 ## Purpose
 
@@ -138,6 +139,25 @@ does not generate a new image for every scene.
 9. Validate that every visible layer matches its referenced entity.
 10. Cache the validated chapter plan locally.
 
+## Implementation status
+
+Implemented:
+
+- Typed `StoryEntity` and per-book story-bible models
+- Local story-bible persistence
+- Alias-aware candidate merging that preserves approved designs and assets
+- Private Worker `/entities` endpoint using Gemini structured output
+- Source-block, kind, confidence, candidate-approval, and asset-safety checks
+- Chapter preparation saves extracted candidates before scene planning
+
+Still pending:
+
+- Candidate review and approval UI
+- Entity-specific foreground asset generation and registration
+- Generated location background catalog
+- `focusAssetLayers` and entity-aware scene catalogs
+- Replacing prototype actors in the final player
+
 ## Safe fallback
 
 If any entity or asset is unresolved, normal reading and audio still work.
@@ -160,4 +180,3 @@ Before connecting real generated assets, add these deterministic cases:
 - Two aliases for one character resolve to the same ID.
 - A missing animal image hides the layer while its dialogue or narration stays.
 - Importing a later volume reuses the approved fox, rose, and location assets.
-

@@ -7,17 +7,26 @@ import '../../../shared/models/storytale_models.dart';
 import '../../../shared/widgets/storytale_components.dart';
 import '../../../shared/widgets/storytale_image_placeholder.dart';
 import '../data/sprite_layer_processor.dart';
+import '../data/story_bible_repository.dart';
 import '../data/story_artwork_service.dart';
 import '../data/story_analysis_contract.dart';
 import '../data/story_analysis_service.dart';
+import '../data/story_entity_service.dart';
 import 'sprite_positioner_page.dart';
 import 'widgets/story_shot_transition.dart';
 import 'widgets/visual_novel_stage.dart';
 
 class StoryPreparationPage extends StatefulWidget {
-  const StoryPreparationPage({super.key, this.analysisProvider});
+  const StoryPreparationPage({
+    super.key,
+    this.analysisProvider,
+    this.entityProvider,
+    this.storyBibleRepository,
+  });
 
   final StoryAnalysisProvider? analysisProvider;
+  final StoryEntityProvider? entityProvider;
+  final StoryBibleRepository? storyBibleRepository;
 
   @override
   State<StoryPreparationPage> createState() => _StoryPreparationPageState();
@@ -25,6 +34,8 @@ class StoryPreparationPage extends StatefulWidget {
 
 class _StoryPreparationPageState extends State<StoryPreparationPage> {
   late final StoryAnalysisProvider _analysisProvider;
+  late final StoryEntityProvider _entityProvider;
+  late final StoryBibleRepository _storyBibleRepository;
   double _progress = 0;
   bool _working = false;
   String? _message;
@@ -34,12 +45,16 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
     super.initState();
     _analysisProvider =
         widget.analysisProvider ?? GeminiStoryAnalysisProvider();
+    _entityProvider = widget.entityProvider ?? GeminiStoryEntityProvider();
+    _storyBibleRepository =
+        widget.storyBibleRepository ?? StoryBibleRepository();
   }
 
   Future<void> _prepare() async {
     final controller = StoryTaleScope.of(context);
+    final book = controller.currentBook;
     final chapter = controller.currentChapter;
-    if (chapter == null) return;
+    if (book == null || chapter == null) return;
     controller.storyFor(chapter).status = PreparationStatus.preparing;
     setState(() {
       _working = true;
@@ -47,9 +62,24 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
       _message = 'Checking the approved story scene catalog...';
     });
     try {
+      var candidateCount = 0;
+      if (_entityProvider.isConfigured) {
+        setState(() {
+          _progress = 0.35;
+          _message = 'Gemini is identifying this chapter\'s story subjects...';
+        });
+        final bible = await _storyBibleRepository.load(book.id);
+        final candidates = await _entityProvider.extract(
+          book: book,
+          chapter: chapter,
+          bible: bible,
+        );
+        await _storyBibleRepository.save(bible.mergeCandidates(candidates));
+        candidateCount = candidates.length;
+      }
       if (_analysisProvider.isConfigured) {
         setState(() {
-          _progress = 0.45;
+          _progress = 0.65;
           _message = 'Gemini is planning this chapter...';
         });
         final story = await _analysisProvider.analyze(
@@ -58,7 +88,9 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
         );
         if (!mounted) return;
         controller.replaceStory(chapter, story);
-        _message = 'Gemini chapter plan validated and connected.';
+        _message =
+            'Saved $candidateCount story-bible candidates. '
+            'Gemini chapter plan validated and connected.';
       } else {
         controller.markStoryPrepared(chapter);
         _message = 'Using the safe local preview plan.';
@@ -110,6 +142,7 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
           const SizedBox(height: 12),
           ...[
             'Analyze chapter and dialogue',
+            'Save story-bible entity candidates',
             'Create scene and moral data',
             'Prepare sprite/background placeholders',
             'Connect narration and subtitles',

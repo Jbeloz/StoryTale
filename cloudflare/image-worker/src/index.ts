@@ -44,6 +44,31 @@ type AnalysisRequest = {
   };
 };
 
+type EntityKind = "human" | "animal" | "creature" | "plant" | "prop" | "location";
+type EntityImportance = "background" | "supporting" | "focus";
+type ExistingStoryEntity = {
+  entityId: string;
+  kind: EntityKind;
+  canonicalName: string;
+  aliases: string[];
+  approved: boolean;
+  lockedAppearance: boolean;
+};
+type EntityExtractionRequest = {
+  book: { id: string; title: string };
+  chapter: {
+    id: string;
+    title: string;
+    blocks: Array<{ id: string; text: string }>;
+  };
+  storyBible: { entities: ExistingStoryEntity[] };
+};
+
+const ENTITY_KINDS = [
+  "human", "animal", "creature", "plant", "prop", "location",
+] as const;
+const ENTITY_IMPORTANCE = ["background", "supporting", "focus"] as const;
+
 const ANALYSIS_LAYOUT_IDS = [
   "background_establishing", "object_detail", "solo_center_full",
   "solo_left_full", "solo_right_full", "solo_medium",
@@ -265,6 +290,135 @@ function parseAnalysisRequest(value: unknown): AnalysisRequest | null {
     chapter: { id: chapterId, title, blocks },
     catalog: { characters, backgroundIds },
   };
+}
+
+function stringListAllowEmpty(
+  value: unknown,
+  maxItems: number,
+  maxLength = 80,
+): string[] | null {
+  if (!Array.isArray(value) || value.length > maxItems) return null;
+  const result: string[] = [];
+  for (const item of value) {
+    const text = shortString(item, maxLength);
+    if (!text) return null;
+    result.push(text);
+  }
+  return [...new Set(result)];
+}
+
+function parseEntityExtractionRequest(
+  value: unknown,
+): EntityExtractionRequest | null {
+  if (!isRecord(value) || value.schemaVersion !== 1) return null;
+  const bookValue = value.book;
+  const chapterValue = value.chapter;
+  const bibleValue = value.storyBible;
+  if (
+    !isRecord(bookValue) ||
+    !isRecord(chapterValue) ||
+    !isRecord(bibleValue)
+  ) return null;
+
+  const bookId = shortString(bookValue.id, 100);
+  const bookTitle = shortString(bookValue.title, 300);
+  const chapterId = shortString(chapterValue.id, 100);
+  const chapterTitle = shortString(chapterValue.title, 300);
+  if (
+    !bookId ||
+    !bookTitle ||
+    !chapterId ||
+    !chapterTitle ||
+    !Array.isArray(chapterValue.blocks) ||
+    chapterValue.blocks.length === 0 ||
+    chapterValue.blocks.length > 250 ||
+    !Array.isArray(bibleValue.entities) ||
+    bibleValue.entities.length > 250
+  ) return null;
+
+  let textLength = 0;
+  const blocks: Array<{ id: string; text: string }> = [];
+  for (const blockValue of chapterValue.blocks) {
+    if (!isRecord(blockValue)) return null;
+    const id = shortString(blockValue.id, 120);
+    const text = shortString(blockValue.text, 12_000);
+    if (!id || !text) return null;
+    textLength += text.length;
+    blocks.push({ id, text });
+  }
+  if (
+    textLength > 180_000 ||
+    new Set(blocks.map((block) => block.id)).size !== blocks.length
+  ) return null;
+
+  const entities: ExistingStoryEntity[] = [];
+  for (const entityValue of bibleValue.entities) {
+    if (!isRecord(entityValue)) return null;
+    const entityId = shortString(entityValue.entityId, 100);
+    const canonicalName = shortString(entityValue.canonicalName, 160);
+    const aliases = stringListAllowEmpty(entityValue.aliases, 30, 160);
+    const kind = entityValue.kind;
+    if (
+      !entityId ||
+      !canonicalName ||
+      !includes(ENTITY_KINDS, kind) ||
+      !aliases ||
+      typeof entityValue.approved !== "boolean" ||
+      typeof entityValue.lockedAppearance !== "boolean"
+    ) return null;
+    entities.push({
+      entityId,
+      kind: kind as EntityKind,
+      canonicalName,
+      aliases,
+      approved: entityValue.approved,
+      lockedAppearance: entityValue.lockedAppearance,
+    });
+  }
+  if (new Set(entities.map((entity) => entity.entityId)).size !== entities.length) {
+    return null;
+  }
+
+  return {
+    book: { id: bookId, title: bookTitle },
+    chapter: { id: chapterId, title: chapterTitle, blocks },
+    storyBible: { entities },
+  };
+}
+
+function entityExtractionSchema(): Record<string, unknown> {
+  return {
+    type: "object",
+    required: ["chapterId", "entitiesJson"],
+    properties: {
+      chapterId: { type: "string" },
+      entitiesJson: {
+        type: "string",
+        description:
+          "Compact JSON string containing the candidate entity array.",
+      },
+    },
+  };
+}
+
+function entityExtractionPrompt(input: EntityExtractionRequest): string {
+  return [
+    "You are StoryTale's book entity extractor.",
+    "Return only the JSON required by the supplied schema.",
+    "Extract only a subject that recurs, speaks, changes state, is a clear visual focus, or is an important reusable location.",
+    "Allowed kinds are human, animal, creature, plant, prop, and location.",
+    "The narrator is not a visible entity unless the text explicitly contains a separate narrator character.",
+    "Never classify an animal, creature, plant, prop, or location as human.",
+    "Use exact sourceBlockIds from this chapter and never invent a source ID.",
+    "Resolve names and aliases against the supplied story bible. Reuse its entityId for the same subject.",
+    "For a genuinely new subject, use a short stable lower_snake_case entityId.",
+    "Do not approve candidates, lock appearances, assign assets, invent visual details, or create a voice ID.",
+    "Descriptions must contain only details supported by the supplied text. Put uncertainty in unresolvedNotes.",
+    "Confidence is a number from 0 to 1.",
+    "entitiesJson must decode to an array of at most 40 objects with this exact shape: {entityId,kind,canonicalName,aliases,description,relationships,firstSeenChapterId,sourceBlockIds,recurring,importance,speaker,unresolvedNotes,confidence}.",
+    `Allowed importance values: ${JSON.stringify(ENTITY_IMPORTANCE)}`,
+    `Book, chapter, and existing story bible:\n${JSON.stringify(input)}`,
+  ].join("\n");
 }
 
 function storyAnalysisSchema(): Record<string, unknown> {
@@ -532,6 +686,171 @@ function validateStoryAnalysis(value: unknown, input: AnalysisRequest): string |
     }
   }
   return null;
+}
+
+function validateEntityExtraction(
+  value: unknown,
+  input: EntityExtractionRequest,
+): string | null {
+  if (!Array.isArray(value) || value.length > 40) return "invalid entity list";
+  const entityIds = new Set<string>();
+  const blockIds = new Set(input.chapter.blocks.map((block) => block.id));
+  const knownNames = input.storyBible.entities.map((entity) => ({
+    entityId: entity.entityId,
+    names: new Set(
+      [entity.canonicalName, ...entity.aliases].map(normalized),
+    ),
+  }));
+
+  for (const entity of value) {
+    if (!isRecord(entity)) return "invalid entity";
+    const entityId = shortString(entity.entityId, 100);
+    const canonicalName = shortString(entity.canonicalName, 160);
+    const aliases = stringListAllowEmpty(entity.aliases, 30, 160);
+    const description = shortString(entity.description, 1_000);
+    const relationships = stringListAllowEmpty(entity.relationships, 30, 240);
+    const sourceBlockIds = stringList(entity.sourceBlockIds, 250, 120);
+    const unresolvedNotes = stringListAllowEmpty(
+      entity.unresolvedNotes,
+      20,
+      300,
+    );
+    if (!entityId || !/^[a-z0-9][a-z0-9_:-]*$/.test(entityId)) {
+      return "invalid entityId";
+    }
+    if (!entityIds.add(entityId)) return "duplicate entityId";
+    if (!includes(ENTITY_KINDS, entity.kind)) return "invalid entity kind";
+    if (!canonicalName) return "invalid canonicalName";
+    if (!aliases) return "invalid aliases";
+    if (!description) return "invalid description";
+    if (!relationships) return "invalid relationships";
+    if (entity.firstSeenChapterId !== input.chapter.id) {
+      return "invalid firstSeenChapterId";
+    }
+    if (!sourceBlockIds || sourceBlockIds.some((id) => !blockIds.has(id))) {
+      return "invalid sourceBlockIds";
+    }
+    if (typeof entity.recurring !== "boolean") return "invalid recurring";
+    if (!includes(ENTITY_IMPORTANCE, entity.importance)) {
+      return "invalid importance";
+    }
+    if (typeof entity.speaker !== "boolean") return "invalid speaker";
+    if (!unresolvedNotes) return "invalid unresolvedNotes";
+    if (
+      typeof entity.confidence !== "number" ||
+      entity.confidence < 0 ||
+      entity.confidence > 1
+    ) return "invalid confidence";
+
+    const candidateNames = new Set(
+      [canonicalName, ...aliases].map(normalized),
+    );
+    for (const known of knownNames) {
+      const sameName = [...candidateNames].some((name) => known.names.has(name));
+      if (sameName && entityId !== known.entityId) {
+        return "existing entity received a new ID";
+      }
+      if (entityId === known.entityId && !sameName) {
+        return "existing entity ID changed subject";
+      }
+    }
+  }
+  return null;
+}
+
+function applySafeEntityDefaults(value: unknown): void {
+  if (!Array.isArray(value)) return;
+  for (const entity of value) {
+    if (!isRecord(entity)) continue;
+    if (!Array.isArray(entity.aliases)) entity.aliases = [];
+    if (!Array.isArray(entity.relationships)) entity.relationships = [];
+    if (!Array.isArray(entity.unresolvedNotes)) entity.unresolvedNotes = [];
+    if (typeof entity.sourceBlockIds === "string") {
+      entity.sourceBlockIds = [entity.sourceBlockIds];
+    }
+  }
+}
+
+async function generateStoryEntities(
+  input: EntityExtractionRequest,
+  env: StoryTaleEnv,
+): Promise<Array<Record<string, unknown>>> {
+  if (!env.GEMINI_API_KEY) {
+    throw new PublicWorkerError("Gemini entity extraction is not configured.", 503);
+  }
+  const response = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/interactions",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": env.GEMINI_API_KEY,
+      },
+      body: JSON.stringify({
+        model: env.GEMINI_MODEL,
+        input: entityExtractionPrompt(input),
+        response_format: {
+          type: "text",
+          mime_type: "application/json",
+          schema: entityExtractionSchema(),
+        },
+        store: false,
+      }),
+    },
+  );
+  if (!response.ok) {
+    const details = (await response.text()).slice(0, 1_000);
+    console.error(JSON.stringify({
+      message: "gemini_entity_request_failed",
+      status: response.status,
+      model: env.GEMINI_MODEL,
+      details,
+    }));
+    if (response.status === 429) {
+      throw new PublicWorkerError(
+        "Gemini entity-extraction quota is unavailable. Try again later.",
+        429,
+      );
+    }
+    if (response.status === 401 || response.status === 403) {
+      throw new PublicWorkerError("The Gemini API key was rejected by Google.", 503);
+    }
+    throw new Error(`Gemini returned HTTP ${response.status}`);
+  }
+  const outputText = findGeminiText(await response.json<unknown>());
+  if (!outputText) throw new Error("Gemini returned no entity text");
+
+  let entities: unknown;
+  try {
+    const envelope: unknown = JSON.parse(outputText);
+    if (
+      !isRecord(envelope) ||
+      envelope.chapterId !== input.chapter.id ||
+      typeof envelope.entitiesJson !== "string"
+    ) throw new Error("invalid envelope");
+    entities = JSON.parse(envelope.entitiesJson);
+  } catch {
+    throw new Error("Gemini returned invalid entity JSON");
+  }
+  applySafeEntityDefaults(entities);
+  const validationError = validateEntityExtraction(entities, input);
+  if (validationError) {
+    console.warn(JSON.stringify({
+      message: "gemini_entities_rejected",
+      reason: validationError,
+      chapterId: input.chapter.id,
+    }));
+    throw new PublicWorkerError(
+      "Gemini returned unsafe story entities. StoryTale kept the existing story bible.",
+      502,
+    );
+  }
+  return (entities as Array<Record<string, unknown>>).map((entity) => ({
+    ...entity,
+    approved: false,
+    lockedAppearance: false,
+    assetIds: [],
+  }));
 }
 
 async function generateStoryAnalysis(
@@ -860,6 +1179,60 @@ async function handleAnalyze(request: Request, env: StoryTaleEnv): Promise<Respo
   });
 }
 
+async function handleEntities(request: Request, env: StoryTaleEnv): Promise<Response> {
+  if (!env.APP_TOKEN) return json({ error: "Story service is not configured" }, 503);
+  if (!(await isAuthorized(request, env.APP_TOKEN))) {
+    return json({ error: "Unauthorized" }, 401);
+  }
+  if (!request.headers.get("Content-Type")?.includes("application/json")) {
+    return json({ error: "Content-Type must be application/json" }, 415);
+  }
+  const contentLength = Number(request.headers.get("Content-Length") ?? 0);
+  if (contentLength > 256 * 1024) {
+    return json({ error: "Chapter request is too large" }, 413);
+  }
+
+  const rawBody = await request.text();
+  if (rawBody.length > 256 * 1024) {
+    return json({ error: "Chapter request is too large" }, 413);
+  }
+  let value: unknown;
+  try {
+    value = JSON.parse(rawBody);
+  } catch {
+    return json({ error: "Request body must be valid JSON" }, 400);
+  }
+  const input = parseEntityExtractionRequest(value);
+  if (!input) {
+    return json({ error: "Invalid book, chapter, or story bible" }, 400);
+  }
+
+  const rateLimit = await env.IMAGE_RATE_LIMIT.limit({
+    key: "entities-private-prototype",
+  });
+  if (!rateLimit.success) return json({ error: "Try again in one minute" }, 429);
+
+  const entities = await generateStoryEntities(input, env);
+  const requestId = crypto.randomUUID();
+  console.log(JSON.stringify({
+    message: "chapter_entities_extracted",
+    requestId,
+    bookId: input.book.id,
+    chapterId: input.chapter.id,
+    blocks: input.chapter.blocks.length,
+    candidates: entities.length,
+    model: env.GEMINI_MODEL,
+  }));
+  return Response.json({ entities }, {
+    headers: {
+      ...CORS_HEADERS,
+      "Cache-Control": "no-store",
+      "X-Analysis-Model": env.GEMINI_MODEL,
+      "X-Request-Id": requestId,
+    },
+  });
+}
+
 export default {
   async fetch(request: Request, env: StoryTaleEnv): Promise<Response> {
     const url = new URL(request.url);
@@ -875,6 +1248,7 @@ export default {
           background: { provider: "cloudflare-workers-ai", model: BACKGROUND_MODEL },
           sprite: { provider: "google-gemini", model: env.GEMINI_IMAGE_MODEL },
           analysis: { provider: "google-gemini", model: env.GEMINI_MODEL },
+          entityAnalysis: { provider: "google-gemini", model: env.GEMINI_MODEL },
         },
         authConfigured: Boolean(env.APP_TOKEN),
         geminiConfigured: Boolean(env.GEMINI_API_KEY),
@@ -887,6 +1261,9 @@ export default {
       }
       if (request.method === "POST" && url.pathname === "/analyze") {
         return await handleAnalyze(request, env);
+      }
+      if (request.method === "POST" && url.pathname === "/entities") {
+        return await handleEntities(request, env);
       }
       return json({ error: "Not found" }, 404);
     } catch (error) {
