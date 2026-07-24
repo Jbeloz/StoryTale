@@ -429,6 +429,12 @@ class StoryTaleController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void replaceStory(ChapterData chapter, ChapterStoryData story) {
+    story.status = PreparationStatus.ready;
+    stories[chapter.id] = story;
+    notifyListeners();
+  }
+
   void updateProfileName(String value) {
     if (value.trim().isEmpty) return;
     localProfileName = value.trim();

@@ -1,4 +1,4 @@
-# StoryTale Private Image Worker
+# StoryTale Private Media and Analysis Worker
 
 ## Provider decision
 
@@ -11,6 +11,7 @@
 ```text
 ChapterStory artwork request
 -> private StoryTale Cloudflare Worker
+-> /analyze -> Gemini structured chapter plan
 -> kind=sprite -> one Gemini full-body master image
 -> kind=background -> FLUX.2 klein 4B
 -> generated image
@@ -25,6 +26,8 @@ Endpoint: `https://storytale-image-worker.jbalejoshift0928.workers.dev`
 ## API
 
 - `GET /health` checks the Worker.
+- `POST /analyze` accepts one cleaned chapter plus its approved story catalog
+  and returns a schema-validated `ChapterStoryData` plan.
 - `POST /generate?kind=background` accepts multipart form data.
 - `POST /generate?kind=sprite` sends the prompt and three reference images to Gemini.
 - `prompt` is required and must contain 3-500 characters.
@@ -44,7 +47,8 @@ Endpoint: `https://storytale-image-worker.jbalejoshift0928.workers.dev`
 The Flutter client is
 `lib/src/features/animated_story/data/story_artwork_service.dart`.
 
-The health response reports both providers and whether Gemini is configured.
+The health response reports the analysis, sprite, and background providers and
+whether Gemini is configured.
 The Flutter review page attaches the bundled proportion, approved-head, and
 approved-body references automatically. Gemini is called once; Flutter removes
 green and produces the matching head/body layers locally.

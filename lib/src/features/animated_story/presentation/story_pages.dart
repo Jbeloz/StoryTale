@@ -8,34 +8,71 @@ import '../../../shared/widgets/storytale_components.dart';
 import '../../../shared/widgets/storytale_image_placeholder.dart';
 import '../data/sprite_layer_processor.dart';
 import '../data/story_artwork_service.dart';
+import '../data/story_analysis_contract.dart';
+import '../data/story_analysis_service.dart';
 import 'sprite_positioner_page.dart';
 import 'widgets/story_shot_transition.dart';
 import 'widgets/visual_novel_stage.dart';
 
 class StoryPreparationPage extends StatefulWidget {
-  const StoryPreparationPage({super.key});
+  const StoryPreparationPage({super.key, this.analysisProvider});
+
+  final StoryAnalysisProvider? analysisProvider;
 
   @override
   State<StoryPreparationPage> createState() => _StoryPreparationPageState();
 }
 
 class _StoryPreparationPageState extends State<StoryPreparationPage> {
+  late final StoryAnalysisProvider _analysisProvider;
   double _progress = 0;
   bool _working = false;
+  String? _message;
+
+  @override
+  void initState() {
+    super.initState();
+    _analysisProvider =
+        widget.analysisProvider ?? GeminiStoryAnalysisProvider();
+  }
 
   Future<void> _prepare() async {
     final controller = StoryTaleScope.of(context);
     final chapter = controller.currentChapter;
     if (chapter == null) return;
     controller.storyFor(chapter).status = PreparationStatus.preparing;
-    setState(() => _working = true);
-    for (final value in [0.2, 0.4, 0.65, 0.85, 1.0]) {
-      await Future<void>.delayed(const Duration(milliseconds: 180));
+    setState(() {
+      _working = true;
+      _progress = 0.2;
+      _message = 'Checking the approved story scene catalog...';
+    });
+    try {
+      if (_analysisProvider.isConfigured) {
+        setState(() {
+          _progress = 0.45;
+          _message = 'Gemini is planning this chapter...';
+        });
+        final story = await _analysisProvider.analyze(
+          chapter: chapter,
+          catalog: StoryAnalysisCatalog.prototype,
+        );
+        if (!mounted) return;
+        controller.replaceStory(chapter, story);
+        _message = 'Gemini chapter plan validated and connected.';
+      } else {
+        controller.markStoryPrepared(chapter);
+        _message = 'Using the safe local preview plan.';
+      }
+    } catch (error) {
       if (!mounted) return;
-      setState(() => _progress = value);
+      controller.markStoryPrepared(chapter);
+      _message = '$error Using the safe local preview plan.';
     }
-    controller.markStoryPrepared(chapter);
-    setState(() => _working = false);
+    if (!mounted) return;
+    setState(() {
+      _progress = 1;
+      _working = false;
+    });
   }
 
   @override
@@ -62,9 +99,10 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 12),
-          const Text(
-            'This chapter package combines scene text, a moral, placeholder '
-            'sprites and backgrounds, movements, subtitles, and cached voices.',
+          Text(
+            _message ??
+                'This chapter package combines scene text, a moral, placeholder '
+                    'sprites and backgrounds, movements, subtitles, and cached voices.',
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),

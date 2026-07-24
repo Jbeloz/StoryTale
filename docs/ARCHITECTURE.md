@@ -167,14 +167,16 @@ ChapterStoryData
       -> StoryBeatData (one short subtitle/audio line and optional action)
 ```
 
-The prototype currently creates this structure deterministically. Gemini will
-later fill the same approved fields, so the player does not need a separate AI
-code path.
+`POST /analyze` on the private Cloudflare Worker asks Gemini for this exact
+structure. JSON Schema restricts the response to approved IDs, and both the
+Worker and Flutter perform semantic checks before the plan can replace the
+local preview. The player therefore does not need a separate AI code path.
 
 Imported EPUB chapters use this same player and layout resolver. Until Gemini
-analysis is requested, StoryTale assigns a varied deterministic set of empty,
-solo, pair, and three-character shots; Gemini later replaces only the
-structured values, not the Flutter screens or layout code.
+analysis is requested, or when analysis is unavailable or rejected, StoryTale
+assigns a varied deterministic set of empty, solo, pair, and three-character
+shots. A validated Gemini result replaces only the structured values, not the
+Flutter screens or layout code.
 
 The player mirrors the final assembled rig for `left` facing, then applies
 approved scale and depth values at the stage level. This leaves Sprite Studio
@@ -213,6 +215,7 @@ the Worker URL and prototype client token into Flutter. A distributed app needs
 real user authentication and per-user quotas instead of a shared client token.
 
 See [Cloudflare image generator](CLOUDFLARE_IMAGE_GENERATOR.md) for the setup and test flow.
+See [Story analysis contract](STORY_ANALYSIS_CONTRACT.md) for the strict request, validation, and fallback rules.
 See [Animated Story Mode plan](ANIMATED_STORY_MODE_PLAN.md) for the volume-aware chapter preparation plan.
 See [Visual-Novel Scene Library](ANIMATED_STORY_SCENE_LIBRARY.md) for reusable cutscene layouts and prompts.
 See [Sprite Studio plan](SPRITE_STUDIO_PLAN.md) for the final rig editor, input, layer, pose storage, and Story Mode integration plan.

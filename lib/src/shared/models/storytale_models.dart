@@ -86,6 +86,7 @@ class StoryBeatData {
     required this.id,
     required this.speakerId,
     required this.originalText,
+    this.sourceBlockIds = const [],
     this.filipinoText,
     this.audioAssetId,
     this.actionId,
@@ -94,9 +95,34 @@ class StoryBeatData {
   final String id;
   final String speakerId;
   final String originalText;
+  final List<String> sourceBlockIds;
   final String? filipinoText;
   final String? audioAssetId;
   final String? actionId;
+
+  factory StoryBeatData.fromJson(Map<String, dynamic> json) {
+    return StoryBeatData(
+      id: json['id'] as String,
+      speakerId: json['speakerId'] as String,
+      originalText: json['originalText'] as String,
+      sourceBlockIds:
+          (json['sourceBlockIds'] as List<dynamic>? ?? const <dynamic>[])
+              .cast<String>(),
+      filipinoText: json['filipinoText'] as String?,
+      audioAssetId: json['audioAssetId'] as String?,
+      actionId: json['actionId'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'speakerId': speakerId,
+    'originalText': originalText,
+    'sourceBlockIds': sourceBlockIds,
+    if (filipinoText != null) 'filipinoText': filipinoText,
+    if (audioAssetId != null) 'audioAssetId': audioAssetId,
+    if (actionId != null) 'actionId': actionId,
+  };
 }
 
 class StoryCameraPlanData {
@@ -109,6 +135,20 @@ class StoryCameraPlanData {
   final String presetId;
   final String targetId;
   final String? triggerBeatId;
+
+  factory StoryCameraPlanData.fromJson(Map<String, dynamic> json) {
+    return StoryCameraPlanData(
+      presetId: json['presetId'] as String? ?? 'camera_static',
+      targetId: json['targetId'] as String? ?? 'stage',
+      triggerBeatId: json['triggerBeatId'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'presetId': presetId,
+    'targetId': targetId,
+    if (triggerBeatId != null) 'triggerBeatId': triggerBeatId,
+  };
 }
 
 class StoryShotPlanData {
@@ -131,6 +171,39 @@ class StoryShotPlanData {
   final StoryCameraPlanData camera;
   final String transitionId;
   final String? backgroundPath;
+
+  factory StoryShotPlanData.fromJson(Map<String, dynamic> json) {
+    final camera = json['camera'];
+    return StoryShotPlanData(
+      id: json['id'] as String,
+      layoutId: json['layoutId'] as String,
+      backgroundId: json['backgroundId'] as String,
+      beats: _jsonMaps(
+        json['beats'],
+      ).map(StoryBeatData.fromJson).toList(growable: false),
+      characterLayers: _jsonMaps(
+        json['characterLayers'],
+      ).map(StoryCharacterLayerData.fromJson).toList(growable: false),
+      camera: camera is Map
+          ? StoryCameraPlanData.fromJson(Map<String, dynamic>.from(camera))
+          : const StoryCameraPlanData(),
+      transitionId: json['transitionId'] as String? ?? 'cut',
+      backgroundPath: json['backgroundPath'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'layoutId': layoutId,
+    'backgroundId': backgroundId,
+    'beats': beats.map((beat) => beat.toJson()).toList(growable: false),
+    'characterLayers': characterLayers
+        .map((layer) => layer.toJson())
+        .toList(growable: false),
+    'camera': camera.toJson(),
+    'transitionId': transitionId,
+    if (backgroundPath != null) 'backgroundPath': backgroundPath,
+  };
 }
 
 class StoryCutsceneData {
@@ -145,6 +218,24 @@ class StoryCutsceneData {
   final String locationId;
   final List<StoryShotPlanData> shots;
   final String timeOfDay;
+
+  factory StoryCutsceneData.fromJson(Map<String, dynamic> json) {
+    return StoryCutsceneData(
+      id: json['id'] as String,
+      locationId: json['locationId'] as String,
+      shots: _jsonMaps(
+        json['shots'],
+      ).map(StoryShotPlanData.fromJson).toList(growable: false),
+      timeOfDay: json['timeOfDay'] as String? ?? 'unspecified',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'locationId': locationId,
+    'shots': shots.map((shot) => shot.toJson()).toList(growable: false),
+    'timeOfDay': timeOfDay,
+  };
 }
 
 class StoryCharacterLayerData {
@@ -238,6 +329,32 @@ class ChapterStoryData {
     }
     return cutscenes.length;
   }
+
+  factory ChapterStoryData.fromJson(Map<String, dynamic> json) {
+    return ChapterStoryData(
+      chapterId: json['chapterId'] as String,
+      moral: json['moral'] as String? ?? '',
+      cutscenes: _jsonMaps(
+        json['cutscenes'],
+      ).map(StoryCutsceneData.fromJson).toList(growable: false),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'chapterId': chapterId,
+    'moral': moral,
+    'cutscenes': cutscenes
+        .map((cutscene) => cutscene.toJson())
+        .toList(growable: false),
+  };
+}
+
+List<Map<String, dynamic>> _jsonMaps(Object? value) {
+  if (value is! List) return const [];
+  return value
+      .whereType<Map>()
+      .map((item) => Map<String, dynamic>.from(item))
+      .toList(growable: false);
 }
 
 class ReaderSettingsData {

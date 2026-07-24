@@ -2,10 +2,11 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "storytale-image-worker",
   "main": "src/index.ts",
-  "compatibility_date": "2026-07-17",
+  "compatibility_date": "2026-07-24",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
   "vars": {
+    "GEMINI_MODEL": "gemini-3.5-flash",
     "GEMINI_IMAGE_MODEL": "gemini-3.1-flash-image"
   },
   "ai": {

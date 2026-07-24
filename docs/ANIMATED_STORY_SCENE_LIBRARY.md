@@ -1,6 +1,6 @@
 # StoryTale Visual-Novel Scene Library
 
-**Status: approved. Parts 1-3 are implemented.**
+**Status: approved. Parts 1-7 are implemented.**
 
 This replaces the current small-character technical demo with a visual-novel
 cutscene style. StoryTale still uses transparent full-body sprites, reusable
@@ -250,8 +250,10 @@ Replace bracketed words, but keep each request as one sentence.
    clamps, fixed subtitle UI, and reduced-motion fade fallback.
 6. **Completed:** add whole-rig character entrance/exit, walking, steps,
    reactions, approved shot transitions, and reduced-motion fallbacks.
-7. Change the Gemini schema so it chooses approved layout, character movement,
-   and camera preset IDs.
+7. **Completed:** Gemini structured analysis chooses only approved layout,
+   character, pose, face, movement, transition, background, and camera IDs.
+   Cloudflare and Flutter both reject changed text or unknown values and keep
+   the deterministic local preview as a fallback.
 8. Use one varied deterministic chapter fixture before generated scene data.
 9. Only after the player looks correct, continue the Character Builder.
 

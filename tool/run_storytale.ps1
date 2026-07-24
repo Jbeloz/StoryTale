@@ -42,7 +42,10 @@ try {
         $flutterOptions += "--dart-define-from-file=$flutterEnv"
     }
 
-    if ($Device -eq 'web-server') {
+    if ($Device -eq 'build-web') {
+        & flutter build web --no-pub --no-wasm-dry-run @flutterOptions
+    }
+    elseif ($Device -eq 'web-server') {
         & flutter run -d web-server --web-hostname 127.0.0.1 --web-port $Port @flutterOptions
     }
     else {
