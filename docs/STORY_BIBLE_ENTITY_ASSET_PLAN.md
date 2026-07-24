@@ -268,12 +268,17 @@ Implemented:
   locations
 - Local approve/pending, edit, merge, and delete actions
 - Safe type correction before assets exist
+- Local automatic approval for high-confidence, source-backed entities without
+  unresolved notes
+- Specific scene-location fields: parent setting, background brief, and
+  background-ready location status
+- Safe replacement of an unlocked broad location with a supported specific
+  scene place while retaining the former name as an alias
+- Ordered, deduplicated chapter background requirements using
+  `locationId::backgroundStateId`
 
 Still pending:
 
-- Automatic approval for high-confidence, conflict-free entities
-- Specific-location normalization and broad-setting context
-- Ordered multi-background chapter requirements and reuse
 - Entity-specific foreground asset generation and registration
 - Generated location background catalog
 - `focusAssetLayers` and entity-aware scene catalogs

@@ -18,10 +18,14 @@ class StoryEntityData {
     this.speaker = false,
     this.voiceId,
     this.approved = false,
+    this.automaticallyApproved = false,
     this.lockedAppearance = false,
     this.assetIds = const [],
     this.unresolvedNotes = const [],
     this.confidence = 0,
+    this.sceneLocation = false,
+    this.parentSetting,
+    this.backgroundBrief,
   });
 
   final String entityId;
@@ -38,10 +42,14 @@ class StoryEntityData {
   final bool speaker;
   final String? voiceId;
   final bool approved;
+  final bool automaticallyApproved;
   final bool lockedAppearance;
   final List<String> assetIds;
   final List<String> unresolvedNotes;
   final double confidence;
+  final bool sceneLocation;
+  final String? parentSetting;
+  final String? backgroundBrief;
 
   Map<String, dynamic> toJson() => {
     'entityId': entityId,
@@ -58,10 +66,14 @@ class StoryEntityData {
     'speaker': speaker,
     if (voiceId != null) 'voiceId': voiceId,
     'approved': approved,
+    'automaticallyApproved': automaticallyApproved,
     'lockedAppearance': lockedAppearance,
     'assetIds': assetIds,
     'unresolvedNotes': unresolvedNotes,
     'confidence': confidence,
+    'sceneLocation': sceneLocation,
+    if (parentSetting != null) 'parentSetting': parentSetting,
+    if (backgroundBrief != null) 'backgroundBrief': backgroundBrief,
   };
 
   factory StoryEntityData.fromJson(Map<String, dynamic> json) {
@@ -82,10 +94,14 @@ class StoryEntityData {
       speaker: json['speaker'] as bool? ?? false,
       voiceId: json['voiceId'] as String?,
       approved: json['approved'] as bool? ?? false,
+      automaticallyApproved: json['automaticallyApproved'] as bool? ?? false,
       lockedAppearance: json['lockedAppearance'] as bool? ?? false,
       assetIds: _strings(json['assetIds']),
       unresolvedNotes: _strings(json['unresolvedNotes']),
       confidence: (json['confidence'] as num?)?.toDouble() ?? 0,
+      sceneLocation: json['sceneLocation'] as bool? ?? false,
+      parentSetting: json['parentSetting'] as String?,
+      backgroundBrief: json['backgroundBrief'] as String?,
     );
   }
 
@@ -100,9 +116,13 @@ class StoryEntityData {
     bool? speaker,
     String? voiceId,
     bool? approved,
+    bool? automaticallyApproved,
     bool? lockedAppearance,
     List<String>? assetIds,
     List<String>? unresolvedNotes,
+    bool? sceneLocation,
+    String? parentSetting,
+    String? backgroundBrief,
   }) {
     return StoryEntityData(
       entityId: entityId,
@@ -119,24 +139,40 @@ class StoryEntityData {
       speaker: speaker ?? this.speaker,
       voiceId: voiceId ?? this.voiceId,
       approved: approved ?? this.approved,
+      automaticallyApproved:
+          automaticallyApproved ?? this.automaticallyApproved,
       lockedAppearance: lockedAppearance ?? this.lockedAppearance,
       assetIds: assetIds ?? this.assetIds,
       unresolvedNotes: unresolvedNotes ?? this.unresolvedNotes,
       confidence: confidence,
+      sceneLocation: sceneLocation ?? this.sceneLocation,
+      parentSetting: parentSetting ?? this.parentSetting,
+      backgroundBrief: backgroundBrief ?? this.backgroundBrief,
     );
   }
 
   StoryEntityData mergeCandidate(StoryEntityData candidate) {
+    final refreshLocation =
+        kind == StoryEntityKind.location &&
+        candidate.sceneLocation &&
+        !lockedAppearance &&
+        assetIds.isEmpty;
+    final mergedName = refreshLocation
+        ? candidate.canonicalName
+        : canonicalName;
     return StoryEntityData(
       entityId: entityId,
       kind: kind,
-      canonicalName: canonicalName,
+      canonicalName: mergedName,
       aliases: _union([
         ...aliases,
+        if (refreshLocation) canonicalName,
         candidate.canonicalName,
         ...candidate.aliases,
-      ], excluding: canonicalName),
-      description: description.isNotEmpty ? description : candidate.description,
+      ], excluding: mergedName),
+      description: refreshLocation || description.isEmpty
+          ? candidate.description
+          : description,
       relationships: _union([...relationships, ...candidate.relationships]),
       firstSeenVolumeId: firstSeenVolumeId ?? candidate.firstSeenVolumeId,
       firstSeenChapterId: firstSeenChapterId,
@@ -148,6 +184,7 @@ class StoryEntityData {
       speaker: speaker || candidate.speaker,
       voiceId: voiceId,
       approved: approved,
+      automaticallyApproved: automaticallyApproved,
       lockedAppearance: lockedAppearance,
       assetIds: assetIds,
       unresolvedNotes: _union([
@@ -157,6 +194,9 @@ class StoryEntityData {
       confidence: confidence >= candidate.confidence
           ? confidence
           : candidate.confidence,
+      sceneLocation: sceneLocation || candidate.sceneLocation,
+      parentSetting: candidate.parentSetting ?? parentSetting,
+      backgroundBrief: candidate.backgroundBrief ?? backgroundBrief,
     );
   }
 
@@ -177,6 +217,31 @@ class StoryEntityData {
           value.trim(),
     ];
   }
+}
+
+class StoryEntityPolicy {
+  const StoryEntityPolicy._();
+
+  static const autoApprovalConfidence = 0.85;
+
+  static StoryEntityData applyAutomaticApproval(StoryEntityData entity) {
+    final specificLocation =
+        entity.kind != StoryEntityKind.location ||
+        (entity.sceneLocation &&
+            (entity.backgroundBrief?.trim().isNotEmpty ?? false) &&
+            (entity.parentSetting == null ||
+                _normalize(entity.canonicalName) !=
+                    _normalize(entity.parentSetting!)));
+    final approve =
+        entity.confidence >= autoApprovalConfidence &&
+        entity.description.trim().isNotEmpty &&
+        entity.sourceBlockIds.isNotEmpty &&
+        entity.unresolvedNotes.isEmpty &&
+        specificLocation;
+    return entity.copyWith(approved: approve, automaticallyApproved: approve);
+  }
+
+  static String _normalize(String value) => value.trim().toLowerCase();
 }
 
 class BookStoryBibleData {

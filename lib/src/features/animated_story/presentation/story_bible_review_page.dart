@@ -145,7 +145,11 @@ class _StoryBibleReviewPageState extends State<StoryBibleReviewPage> {
         title: Text(entity.canonicalName),
         subtitle: Text(
           '${entity.kind.label} • '
-          '${entity.approved ? 'Approved' : 'Pending review'}',
+          '${entity.automaticallyApproved
+              ? 'Approved automatically'
+              : entity.approved
+              ? 'Approved'
+              : 'Pending review'}',
         ),
         trailing: Icon(
           entity.approved ? Icons.verified : Icons.pending_outlined,
@@ -163,11 +167,21 @@ class _StoryBibleReviewPageState extends State<StoryBibleReviewPage> {
               Chip(label: Text(entity.importance.label)),
               if (entity.recurring) const Chip(label: Text('Recurring')),
               if (entity.speaker) const Chip(label: Text('Speaks')),
+              if (entity.automaticallyApproved)
+                const Chip(label: Text('Auto-approved')),
               Chip(
                 label: Text('${(entity.confidence * 100).round()}% confidence'),
               ),
             ],
           ),
+          if (entity.parentSetting?.trim().isNotEmpty ?? false) ...[
+            const SizedBox(height: 8),
+            Text('Parent setting: ${entity.parentSetting}'),
+          ],
+          if (entity.backgroundBrief?.trim().isNotEmpty ?? false) ...[
+            const SizedBox(height: 4),
+            Text('Background: ${entity.backgroundBrief}'),
+          ],
           if (entity.aliases.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text('Aliases: ${entity.aliases.join(', ')}'),
@@ -187,8 +201,12 @@ class _StoryBibleReviewPageState extends State<StoryBibleReviewPage> {
             runSpacing: 8,
             children: [
               FilledButton.icon(
-                onPressed: () =>
-                    _replace(entity.copyWith(approved: !entity.approved)),
+                onPressed: () => _replace(
+                  entity.copyWith(
+                    approved: !entity.approved,
+                    automaticallyApproved: false,
+                  ),
+                ),
                 icon: Icon(
                   entity.approved ? Icons.undo : Icons.check_circle_outline,
                 ),

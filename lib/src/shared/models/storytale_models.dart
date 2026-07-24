@@ -212,12 +212,14 @@ class StoryCutsceneData {
     required this.locationId,
     required this.shots,
     this.timeOfDay = 'unspecified',
+    this.backgroundStateId = 'unspecified',
   });
 
   final String id;
   final String locationId;
   final List<StoryShotPlanData> shots;
   final String timeOfDay;
+  final String backgroundStateId;
 
   factory StoryCutsceneData.fromJson(Map<String, dynamic> json) {
     return StoryCutsceneData(
@@ -227,6 +229,10 @@ class StoryCutsceneData {
         json['shots'],
       ).map(StoryShotPlanData.fromJson).toList(growable: false),
       timeOfDay: json['timeOfDay'] as String? ?? 'unspecified',
+      backgroundStateId:
+          json['backgroundStateId'] as String? ??
+          json['timeOfDay'] as String? ??
+          'unspecified',
     );
   }
 
@@ -235,6 +241,7 @@ class StoryCutsceneData {
     'locationId': locationId,
     'shots': shots.map((shot) => shot.toJson()).toList(growable: false),
     'timeOfDay': timeOfDay,
+    'backgroundStateId': backgroundStateId,
   };
 }
 
@@ -321,6 +328,18 @@ class ChapterStoryData {
     for (final cutscene in cutscenes) ...cutscene.shots,
   ];
 
+  List<StoryBackgroundRequirementData> get backgroundRequirements {
+    final seen = <String>{};
+    return [
+      for (final cutscene in cutscenes)
+        if (seen.add('${cutscene.locationId}::${cutscene.backgroundStateId}'))
+          StoryBackgroundRequirementData(
+            locationId: cutscene.locationId,
+            stateId: cutscene.backgroundStateId,
+          ),
+    ];
+  }
+
   int cutsceneNumberForShot(int shotIndex) {
     var firstShot = 0;
     for (var index = 0; index < cutscenes.length; index++) {
@@ -347,6 +366,18 @@ class ChapterStoryData {
         .map((cutscene) => cutscene.toJson())
         .toList(growable: false),
   };
+}
+
+class StoryBackgroundRequirementData {
+  const StoryBackgroundRequirementData({
+    required this.locationId,
+    required this.stateId,
+  });
+
+  final String locationId;
+  final String stateId;
+
+  String get key => '$locationId::$stateId';
 }
 
 List<Map<String, dynamic>> _jsonMaps(Object? value) {

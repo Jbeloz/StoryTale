@@ -46,6 +46,41 @@ void main() {
     expect(merged.assetIds, ['fox-neutral']);
     expect(merged.sourceBlockIds, containsAll(['block-1', 'block-4']));
   });
+
+  test('refreshes an unlocked broad location with a specific scene place', () {
+    const broad = StoryEntityData(
+      entityId: 'chapter_place',
+      kind: StoryEntityKind.location,
+      canonicalName: 'Small Planet',
+      description: 'A small planet.',
+      firstSeenChapterId: 'chapter-1',
+      approved: true,
+    );
+    const specific = StoryEntityData(
+      entityId: 'chapter_place',
+      kind: StoryEntityKind.location,
+      canonicalName: 'Rose Garden Path',
+      description: 'A path beside the prince’s rose garden.',
+      firstSeenChapterId: 'chapter-1',
+      sourceBlockIds: ['block-1'],
+      approved: true,
+      automaticallyApproved: true,
+      sceneLocation: true,
+      parentSetting: 'Small Planet',
+      backgroundBrief: 'A narrow path bordered by roses.',
+      confidence: 0.96,
+    );
+
+    final merged = BookStoryBibleData(
+      bookId: 'book-1',
+      entities: [broad],
+    ).mergeCandidates([specific]).entities.single;
+
+    expect(merged.canonicalName, 'Rose Garden Path');
+    expect(merged.aliases, contains('Small Planet'));
+    expect(merged.parentSetting, 'Small Planet');
+    expect(merged.backgroundBrief, isNotEmpty);
+  });
 }
 
 StoryEntityData _fox() {

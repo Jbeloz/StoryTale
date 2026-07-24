@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:storytale/src/features/animated_story/data/story_analysis_contract.dart';
 import 'package:storytale/src/features/animated_story/data/story_analysis_service.dart';
+import 'package:storytale/src/features/animated_story/data/story_bible_models.dart';
 import 'package:storytale/src/shared/models/storytale_models.dart';
 
 void main() {
@@ -72,6 +73,56 @@ void main() {
     expect(story.chapterId, chapter.id);
     expect(story.shots, hasLength(2));
     expect(story.shots.last.beats.single.sourceBlockIds, ['block-2']);
+  });
+
+  test('builds approved location IDs and ordered background requirements', () {
+    const bible = BookStoryBibleData(
+      bookId: 'book-1',
+      entities: [
+        StoryEntityData(
+          entityId: 'castle_courtyard',
+          kind: StoryEntityKind.location,
+          canonicalName: 'Castle Courtyard',
+          description: 'A stone courtyard.',
+          firstSeenChapterId: 'chapter-1',
+          approved: true,
+          sceneLocation: true,
+          backgroundBrief: 'A stone courtyard beside a gate.',
+        ),
+      ],
+    );
+    final catalog = StoryAnalysisCatalog.fromStoryBible(bible);
+    final firstShot = _validStory().shots.first;
+    final story = ChapterStoryData(
+      chapterId: 'chapter-1',
+      moral: '',
+      cutscenes: [
+        StoryCutsceneData(
+          id: 'one',
+          locationId: 'castle_courtyard',
+          backgroundStateId: 'day',
+          shots: [firstShot],
+        ),
+        StoryCutsceneData(
+          id: 'two',
+          locationId: 'castle_courtyard',
+          backgroundStateId: 'night',
+          shots: [firstShot],
+        ),
+        StoryCutsceneData(
+          id: 'three',
+          locationId: 'castle_courtyard',
+          backgroundStateId: 'day',
+          shots: [firstShot],
+        ),
+      ],
+    );
+
+    expect(catalog.locationIds, ['castle_courtyard']);
+    expect(story.backgroundRequirements.map((item) => item.key), [
+      'castle_courtyard::day',
+      'castle_courtyard::night',
+    ]);
   });
 }
 

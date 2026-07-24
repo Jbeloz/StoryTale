@@ -1,4 +1,5 @@
 import '../../../shared/models/storytale_models.dart';
+import 'story_bible_models.dart';
 
 class StoryAnalysisCharacter {
   const StoryAnalysisCharacter({
@@ -27,14 +28,40 @@ class StoryAnalysisCharacter {
   };
 }
 
+class StoryAnalysisLocation {
+  const StoryAnalysisLocation({
+    required this.id,
+    required this.name,
+    required this.backgroundBrief,
+    this.parentSetting,
+  });
+
+  final String id;
+  final String name;
+  final String backgroundBrief;
+  final String? parentSetting;
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'backgroundBrief': backgroundBrief,
+    if (parentSetting != null) 'parentSetting': parentSetting,
+  };
+}
+
 class StoryAnalysisCatalog {
   const StoryAnalysisCatalog({
     required this.characters,
     required this.backgroundIds,
+    required this.locations,
   });
 
   final List<StoryAnalysisCharacter> characters;
   final List<String> backgroundIds;
+  final List<StoryAnalysisLocation> locations;
+
+  List<String> get locationIds =>
+      locations.map((location) => location.id).toList(growable: false);
 
   static const prototype = StoryAnalysisCatalog(
     characters: [
@@ -115,13 +142,48 @@ class StoryAnalysisCatalog {
       ),
     ],
     backgroundIds: ['moonlit_rose_garden'],
+    locations: [
+      StoryAnalysisLocation(
+        id: 'moonlit_rose_garden',
+        name: 'Moonlit rose garden',
+        backgroundBrief: 'A moonlit path surrounded by rose bushes.',
+      ),
+    ],
   );
+
+  factory StoryAnalysisCatalog.fromStoryBible(BookStoryBibleData bible) {
+    final locations = bible.entities
+        .where(
+          (entity) =>
+              entity.kind == StoryEntityKind.location &&
+              entity.approved &&
+              entity.sceneLocation &&
+              (entity.backgroundBrief?.trim().isNotEmpty ?? false),
+        )
+        .map(
+          (entity) => StoryAnalysisLocation(
+            id: entity.entityId,
+            name: entity.canonicalName,
+            parentSetting: entity.parentSetting,
+            backgroundBrief: entity.backgroundBrief!,
+          ),
+        )
+        .toList(growable: false);
+    return StoryAnalysisCatalog(
+      characters: prototype.characters,
+      backgroundIds: prototype.backgroundIds,
+      locations: locations.isEmpty ? prototype.locations : locations,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'characters': characters
         .map((character) => character.toJson())
         .toList(growable: false),
     'backgroundIds': backgroundIds,
+    'locations': locations
+        .map((location) => location.toJson())
+        .toList(growable: false),
     'layoutIds': StoryAnalysisContract.layoutIds,
     'cameraPresetIds': StoryAnalysisContract.cameraPresetIds,
     'transitionIds': StoryAnalysisContract.transitionIds,
@@ -130,6 +192,7 @@ class StoryAnalysisCatalog {
     'facingIds': StoryAnalysisContract.facingIds,
     'depthIds': StoryAnalysisContract.depthIds,
     'movementIds': StoryAnalysisContract.movementIds,
+    'backgroundStateIds': StoryAnalysisContract.backgroundStateIds,
   };
 }
 
@@ -199,6 +262,17 @@ class StoryAnalysisContract {
     'fade_in',
     'fade_out',
   ];
+  static const backgroundStateIds = [
+    'unspecified',
+    'dawn',
+    'day',
+    'sunset',
+    'night',
+    'rain',
+    'storm',
+    'snow',
+    'damaged',
+  ];
 
   static List<ChapterTextBlock> blocksFor(ChapterData chapter) {
     if (chapter.sourceBlocks.isNotEmpty) return chapter.sourceBlocks;
@@ -244,6 +318,15 @@ class StoryAnalysisContract {
     };
     final groupedText = <String, List<String>>{};
     final blockSequence = <String>[];
+
+    for (final cutscene in story.cutscenes) {
+      _require(catalog.locationIds, cutscene.locationId, 'location');
+      _require(
+        backgroundStateIds,
+        cutscene.backgroundStateId,
+        'background state',
+      );
+    }
 
     for (final shot in story.shots) {
       _require(layoutIds, shot.layoutId, 'layout');

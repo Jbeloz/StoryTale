@@ -96,7 +96,9 @@ class GeminiStoryEntityProvider implements StoryEntityProvider {
           )
           .toList(growable: false);
       StoryEntityContract.validate(entities: entities, chapter: chapter);
-      return entities;
+      return entities
+          .map(StoryEntityPolicy.applyAutomaticApproval)
+          .toList(growable: false);
     } on StoryAnalysisException {
       rethrow;
     } catch (_) {

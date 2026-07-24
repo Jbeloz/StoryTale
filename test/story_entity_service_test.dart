@@ -26,7 +26,7 @@ void main() {
     chapters: [chapter],
   );
 
-  test('posts the current bible and accepts unapproved candidates', () async {
+  test('locally auto-approves safe high-confidence candidates', () async {
     final client = MockClient((request) async {
       expect(request.url.toString(), 'https://worker.example/entities');
       expect(request.headers['authorization'], 'Bearer private-token');
@@ -54,9 +54,42 @@ void main() {
     );
 
     expect(entities.single.kind, StoryEntityKind.plant);
-    expect(entities.single.approved, isFalse);
+    expect(entities.single.approved, isTrue);
+    expect(entities.single.automaticallyApproved, isTrue);
     expect(entities.single.assetIds, isEmpty);
     expect(entities.single.sourceBlockIds, ['block-1']);
+  });
+
+  test('keeps uncertain candidates pending', () {
+    final entity = StoryEntityData.fromJson({
+      ..._roseJson(),
+      'confidence': 0.7,
+    });
+
+    final result = StoryEntityPolicy.applyAutomaticApproval(entity);
+
+    expect(result.approved, isFalse);
+    expect(result.automaticallyApproved, isFalse);
+  });
+
+  test('approves only background-ready scene locations', () {
+    final broad = StoryEntityData.fromJson({
+      ..._roseJson(),
+      'entityId': 'world',
+      'kind': 'location',
+      'canonicalName': 'Fantasy World',
+      'parentSetting': 'Fantasy World',
+      'backgroundBrief': 'A broad fantasy realm.',
+      'sceneLocation': true,
+    });
+    final specific = broad.copyWith(
+      canonicalName: 'Castle Courtyard',
+      parentSetting: 'Fantasy World',
+      backgroundBrief: 'A stone courtyard beside the castle gate.',
+    );
+
+    expect(StoryEntityPolicy.applyAutomaticApproval(broad).approved, isFalse);
+    expect(StoryEntityPolicy.applyAutomaticApproval(specific).approved, isTrue);
   });
 
   test('rejects candidates that try to approve themselves', () async {

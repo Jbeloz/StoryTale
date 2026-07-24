@@ -32,6 +32,13 @@ type AnalysisCharacter = {
   faceSetIds: string[];
 };
 
+type AnalysisLocation = {
+  id: string;
+  name: string;
+  parentSetting?: string;
+  backgroundBrief: string;
+};
+
 type AnalysisRequest = {
   chapter: {
     id: string;
@@ -41,6 +48,7 @@ type AnalysisRequest = {
   catalog: {
     characters: AnalysisCharacter[];
     backgroundIds: string[];
+    locations: AnalysisLocation[];
   };
 };
 
@@ -94,6 +102,10 @@ const ANALYSIS_MOVEMENT_IDS = [
   "none", "idle", "enter_left", "enter_right", "exit_left", "exit_right",
   "walk_left", "walk_right", "step_forward", "step_back", "focus_speaker",
   "idle_breathe", "gentle_bob", "reaction_pop", "fade_in", "fade_out",
+] as const;
+const ANALYSIS_BACKGROUND_STATE_IDS = [
+  "unspecified", "dawn", "day", "sunset", "night", "rain", "storm",
+  "snow", "damaged",
 ] as const;
 
 function json(body: unknown, status = 200): Response {
@@ -284,11 +296,41 @@ function parseAnalysisRequest(value: unknown): AnalysisRequest | null {
     return null;
   }
   const backgroundIds = stringList(catalogValue.backgroundIds, 80);
-  if (!backgroundIds) return null;
+  if (
+    !backgroundIds ||
+    !Array.isArray(catalogValue.locations) ||
+    catalogValue.locations.length === 0 ||
+    catalogValue.locations.length > 80
+  ) return null;
+  const locations: AnalysisLocation[] = [];
+  for (const locationValue of catalogValue.locations) {
+    if (!isRecord(locationValue)) return null;
+    const id = shortString(locationValue.id, 100);
+    const name = shortString(locationValue.name, 160);
+    const parentSetting = locationValue.parentSetting === undefined
+      ? undefined
+      : shortString(locationValue.parentSetting, 240);
+    const backgroundBrief = shortString(locationValue.backgroundBrief, 1_000);
+    if (
+      !id ||
+      !name ||
+      !backgroundBrief ||
+      (locationValue.parentSetting !== undefined && !parentSetting)
+    ) return null;
+    locations.push({
+      id,
+      name,
+      backgroundBrief,
+      ...(parentSetting ? { parentSetting } : {}),
+    });
+  }
+  if (new Set(locations.map((location) => location.id)).size !== locations.length) {
+    return null;
+  }
 
   return {
     chapter: { id: chapterId, title, blocks },
-    catalog: { characters, backgroundIds },
+    catalog: { characters, backgroundIds, locations },
   };
 }
 
@@ -414,8 +456,13 @@ function entityExtractionPrompt(input: EntityExtractionRequest): string {
     "For a genuinely new subject, use a short stable lower_snake_case entityId.",
     "Do not approve candidates, lock appearances, assign assets, invent visual details, or create a voice ID.",
     "Descriptions must contain only details supported by the supplied text. Put uncertainty in unresolvedNotes.",
+    "A location must be a specific scene place that characters can occupy, not only a broad world, realm, planet, country, or region.",
+    "For every location, set sceneLocation to true, put the broader setting in parentSetting, and write a source-backed backgroundBrief describing only visible details from the chapter.",
+    "When refining an existing broad location into a specific scene place, reuse its entityId and include its former broad name in aliases.",
+    "If the text names only a broad setting and provides no specific scene place, do not return it as a location candidate.",
+    "For non-location entities, set sceneLocation to false and omit parentSetting and backgroundBrief.",
     "Confidence is a number from 0 to 1.",
-    "entitiesJson must decode to an array of at most 40 objects with this exact shape: {entityId,kind,canonicalName,aliases,description,relationships,firstSeenChapterId,sourceBlockIds,recurring,importance,speaker,unresolvedNotes,confidence}.",
+    "entitiesJson must decode to an array of at most 40 objects with this exact shape: {entityId,kind,canonicalName,aliases,description,relationships,firstSeenChapterId,sourceBlockIds,recurring,importance,speaker,unresolvedNotes,confidence,sceneLocation,parentSetting?,backgroundBrief?}.",
     `Allowed importance values: ${JSON.stringify(ENTITY_IMPORTANCE)}`,
     `Book, chapter, and existing story bible:\n${JSON.stringify(input)}`,
   ].join("\n");
@@ -446,6 +493,7 @@ function storyAnalysisPrompt(input: AnalysisRequest): string {
     facingIds: ANALYSIS_FACING_IDS,
     depthIds: ANALYSIS_DEPTH_IDS,
     movementIds: ANALYSIS_MOVEMENT_IDS,
+    backgroundStateIds: ANALYSIS_BACKGROUND_STATE_IDS,
   };
   return [
     "You are StoryTale's visual-novel chapter planner.",
@@ -459,8 +507,12 @@ function storyAnalysisPrompt(input: AnalysisRequest): string {
     "Keep at least half of shots on camera_static and never use moving camera shots more than twice in a row.",
     "Do not repeat the same layout, scale composition, and camera preset more than twice in a row.",
     "Use movement sparingly. Never return coordinates, pixels, percentages, durations, easing values, or new IDs.",
+    "Use only supplied catalog.locations IDs and choose them from their names, parent settings, background briefs, and the source text.",
+    "Start a new ordered cutscene when the source changes place, time of day, weather, or the visible condition of the same place.",
+    "Set backgroundStateId to the closest approved background state. Reuse the same locationId and backgroundStateId while that setting remains unchanged.",
+    "Do not invent extra setting changes merely for variety. A chapter may require one or several location and background-state pairs.",
     "The moral is a short lesson derived from this chapter only.",
-    "The planJson string must decode to this exact shape: {chapterId,moral,cutscenes:[{id,locationId,timeOfDay,shots:[{id,layoutId,backgroundId,transitionId,camera:{presetId,targetId,triggerBeatId?},characterLayers:[{characterId,rigId,poseId,faceProfileId,faceSetId,stagePosition,scale,facing,depth,movement,isSpeaking}],beats:[{id,speakerId,originalText,sourceBlockIds:[oneBlockId],actionId?}]}]}]}.",
+    "The planJson string must decode to this exact shape: {chapterId,moral,cutscenes:[{id,locationId,timeOfDay,backgroundStateId,shots:[{id,layoutId,backgroundId,transitionId,camera:{presetId,targetId,triggerBeatId?},characterLayers:[{characterId,rigId,poseId,faceProfileId,faceSetId,stagePosition,scale,facing,depth,movement,isSpeaking}],beats:[{id,speakerId,originalText,sourceBlockIds:[oneBlockId],actionId?}]}]}]}.",
     `Approved runtime IDs:\n${JSON.stringify(approvedRuntimeIds)}`,
     `Chapter and approved story bible:\n${JSON.stringify(input)}`,
   ].join("\n");
@@ -488,6 +540,14 @@ function applySafeAnalysisDefaults(value: unknown, input: AnalysisRequest): void
   ]);
   for (const cutscene of value.cutscenes) {
     if (!isRecord(cutscene) || !Array.isArray(cutscene.shots)) continue;
+    if (!includes(ANALYSIS_BACKGROUND_STATE_IDS, cutscene.backgroundStateId)) {
+      cutscene.backgroundStateId = includes(
+        ANALYSIS_BACKGROUND_STATE_IDS,
+        cutscene.timeOfDay,
+      )
+        ? cutscene.timeOfDay
+        : "unspecified";
+    }
     for (const shot of cutscene.shots) {
       if (
         !isRecord(shot) ||
@@ -582,8 +642,16 @@ function validateStoryAnalysis(value: unknown, input: AnalysisRequest): string |
     if (!isRecord(cutscene) || !Array.isArray(cutscene.shots)) {
       return "invalid cutscene";
     }
-    if (!includes(input.catalog.backgroundIds, cutscene.locationId)) {
+    if (
+      typeof cutscene.locationId !== "string" ||
+      !input.catalog.locations.some(
+        (location) => location.id === cutscene.locationId,
+      )
+    ) {
       return "unapproved location";
+    }
+    if (!includes(ANALYSIS_BACKGROUND_STATE_IDS, cutscene.backgroundStateId)) {
+      return "unapproved background state";
     }
     for (const shot of cutscene.shots) {
       shotCount++;
@@ -736,6 +804,25 @@ function validateEntityExtraction(
     }
     if (typeof entity.speaker !== "boolean") return "invalid speaker";
     if (!unresolvedNotes) return "invalid unresolvedNotes";
+    if (typeof entity.sceneLocation !== "boolean") {
+      return "invalid sceneLocation";
+    }
+    if (entity.kind === "location") {
+      const parentSetting = shortString(entity.parentSetting, 240);
+      const backgroundBrief = shortString(entity.backgroundBrief, 1_000);
+      if (
+        !entity.sceneLocation ||
+        !parentSetting ||
+        !backgroundBrief ||
+        normalized(parentSetting) === normalized(canonicalName)
+      ) return "location is not background ready";
+    } else if (
+      entity.sceneLocation ||
+      entity.parentSetting !== undefined ||
+      entity.backgroundBrief !== undefined
+    ) {
+      return "non-location contains location fields";
+    }
     if (
       typeof entity.confidence !== "number" ||
       entity.confidence < 0 ||
@@ -765,6 +852,9 @@ function applySafeEntityDefaults(value: unknown): void {
     if (!Array.isArray(entity.aliases)) entity.aliases = [];
     if (!Array.isArray(entity.relationships)) entity.relationships = [];
     if (!Array.isArray(entity.unresolvedNotes)) entity.unresolvedNotes = [];
+    if (typeof entity.sceneLocation !== "boolean") {
+      entity.sceneLocation = false;
+    }
     if (typeof entity.sourceBlockIds === "string") {
       entity.sourceBlockIds = [entity.sourceBlockIds];
     }

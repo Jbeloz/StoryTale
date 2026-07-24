@@ -66,9 +66,9 @@ prototype beside text about a flower: the player has no approved plant/focus
 asset yet. This proves the scene pipeline, not final story-to-visual accuracy.
 
 Imported EPUB text already uses the same contract. Typed entity extraction and
-persistent per-book story bibles are now connected to chapter preparation.
-The next contract revision automatically approves only high-confidence,
-source-backed, conflict-free entities. Uncertain candidates stay pending and
+persistent per-book story bibles are connected to chapter preparation.
+StoryTale now automatically approves only high-confidence, source-backed
+entities with no unresolved notes. Uncertain candidates stay pending and
 cannot assign their own assets.
 
 The candidate review UI now supports approval, correction, merging, and
@@ -78,19 +78,20 @@ such as `Small Planet`. This is an example, not a title-specific rule. Every
 imported story uses the same source-evidence checks. Broad settings remain
 context or a parent setting.
 
-The chapter analysis returns an ordered background requirement for every
-cutscene. A real place or meaningful place-state change may select another
-background; unchanged consecutive shots reuse the same approved background.
-The number of backgrounds is therefore driven by the chapter, not fixed to one
+Chapter analysis now stores an approved location ID and background-state ID on
+every ordered cutscene. StoryTale deduplicates those pairs in first-use order
+to form the chapter's background requirements. A real place or meaningful
+place-state change may require another background; unchanged shots reuse the
+same pair. The number of backgrounds is driven by the chapter, not fixed to one
 and not padded to a target count.
 
 Entity approval only makes a subject eligible for generation. Generated art is
 reviewed separately and cannot enter scene planning until its asset ID is
 accepted and registered.
 
-The next work is automatic entity approval, specific-location normalization,
-then generated human/animal/plant/prop assets, focus-asset layers, entity-aware
-scene catalogs, and generated chapter backgrounds. Until matching assets are
-approved and registered, the visible player still uses the prototype catalog.
+The next work is generating and approving the required location backgrounds,
+then human/animal/plant/prop assets, focus-asset layers, and entity-aware scene
+catalogs. Until matching assets are approved and registered, the visible player
+still uses the prototype background and actor catalog.
 See
 [Story Bible Entity and Asset Plan](STORY_BIBLE_ENTITY_ASSET_PLAN.md).

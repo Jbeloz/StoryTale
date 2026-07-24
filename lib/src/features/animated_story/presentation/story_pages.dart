@@ -8,6 +8,7 @@ import '../../../shared/widgets/storytale_components.dart';
 import '../../../shared/widgets/storytale_image_placeholder.dart';
 import '../data/sprite_layer_processor.dart';
 import '../data/story_bible_repository.dart';
+import '../data/story_bible_models.dart';
 import '../data/story_artwork_service.dart';
 import '../data/story_analysis_contract.dart';
 import '../data/story_analysis_service.dart';
@@ -64,18 +65,22 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
     });
     try {
       var candidateCount = 0;
+      var bible = BookStoryBibleData.empty(book.id);
+      if (_entityProvider.isConfigured || _analysisProvider.isConfigured) {
+        bible = await _storyBibleRepository.load(book.id);
+      }
       if (_entityProvider.isConfigured) {
         setState(() {
           _progress = 0.35;
           _message = 'Gemini is identifying this chapter\'s story subjects...';
         });
-        final bible = await _storyBibleRepository.load(book.id);
         final candidates = await _entityProvider.extract(
           book: book,
           chapter: chapter,
           bible: bible,
         );
-        await _storyBibleRepository.save(bible.mergeCandidates(candidates));
+        bible = bible.mergeCandidates(candidates);
+        await _storyBibleRepository.save(bible);
         candidateCount = candidates.length;
       }
       if (_analysisProvider.isConfigured) {
@@ -85,13 +90,14 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
         });
         final story = await _analysisProvider.analyze(
           chapter: chapter,
-          catalog: StoryAnalysisCatalog.prototype,
+          catalog: StoryAnalysisCatalog.fromStoryBible(bible),
         );
         if (!mounted) return;
         controller.replaceStory(chapter, story);
         _message =
             'Saved $candidateCount story-bible candidates. '
-            'Gemini chapter plan validated and connected.';
+            'Gemini chapter plan validated with '
+            '${story.backgroundRequirements.length} background requirements.';
       } else {
         controller.markStoryPrepared(chapter);
         _message = 'Using the safe local preview plan.';

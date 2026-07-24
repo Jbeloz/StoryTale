@@ -309,7 +309,7 @@ class _SpriteFaceEditorState extends State<SpriteFaceEditor> {
                 selected != null
                     ? '${selected.label} is stored locally and ready to use.'
                     : bundled
-                    ? '${_partLabel(_partType, selectedId!)} is bundled and ready to use.'
+                    ? '${_partLabel(_partType, selectedId)} is bundled and ready to use.'
                     : 'Select a slot, then import its transparent PNG.',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
