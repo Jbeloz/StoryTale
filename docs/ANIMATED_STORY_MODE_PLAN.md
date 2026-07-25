@@ -252,6 +252,12 @@ ChapterSourceRange
 - Consecutive shots in one unchanged place reuse the same background. Camera,
   layout, focus assets, and sprite movement create variation without inventing
   another setting.
+- Every background must be a wide, grounded visual-novel stage with open
+  left/center/right sprite lanes. Square illustrations, isolated objects,
+  floating islands, portrait compositions, and miniature dioramas are invalid.
+  The complete contract, prompt order, provider migration, review flow, and
+  acceptance checks are defined in the
+  [Visual-Novel Background Plan](VISUAL_NOVEL_BACKGROUND_PLAN.md).
 - A coverage validator compares all source block IDs with all scripted line
   ranges. Missing or duplicated blocks keep the chapter in `needsReview`.
 
@@ -486,6 +492,9 @@ every image and audio file.
 - Save reusable poses as validated transforms in JSON instead of new body
   pictures. See [Sprite Studio plan](SPRITE_STUDIO_PLAN.md).
 - Connect approved sprites/backgrounds to stable asset IDs.
+- Implement landscape background briefs, Cloudflare generation, review, and
+  cutscene reuse from the
+  [Visual-Novel Background Plan](VISUAL_NOVEL_BACKGROUND_PLAN.md).
 - Add whole-sprite animal/creature characters and plant/prop focus assets before
   enabling final book-specific scene plans.
 

@@ -13,7 +13,8 @@ ChapterStory artwork request
 -> private StoryTale Cloudflare Worker
 -> /analyze -> Gemini structured chapter plan
 -> kind=sprite -> one Gemini full-body master image
--> kind=background -> FLUX.2 klein 4B
+-> kind=background -> current FLUX.1 square smoke-test route
+-> planned visual-novel background -> landscape SDXL
 -> generated image
 -> local review and storage
 -> Story Mode scene
@@ -34,6 +35,11 @@ Endpoint: `https://storytale-image-worker.jbalejoshift0928.workers.dev`
 - Up to four small reference images may lock a recurring character or location style.
 - Successful generation returns raw image bytes.
 - The Worker keeps both `APP_TOKEN` and `GEMINI_API_KEY` as secrets.
+
+The current FLUX.1 request proves the private Worker and Workers AI binding are
+operational, but its square result is not the final Story Mode background. The
+planned route uses SDXL at `1024 x 576` and follows the
+[Visual-Novel Background Plan](VISUAL_NOVEL_BACKGROUND_PLAN.md).
 
 ## Flutter test
 

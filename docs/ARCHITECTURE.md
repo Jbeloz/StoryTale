@@ -25,8 +25,8 @@ flowchart LR
     S --> U["Transparent Head + 9 Body Parts + Pose JSON"]
     U --> G
     J["Private Image Worker"] --> T
-    J --> L["Workers AI - FLUX.2 klein 4B"]
-    L --> R["Chapter Background JPEG"]
+    J --> L["Workers AI - current FLUX.1 / planned landscape SDXL"]
+    L --> R["Reviewed Visual-Novel Background"]
     R --> K["Saved Local Backgrounds"]
     K --> G
 ```
@@ -50,7 +50,7 @@ flowchart LR
 | Story Mode player | Moves sprites over backgrounds while playing voices, subtitles, and sound effects. |
 | Gemini image model | Uses `gemini-3.1-flash-image` with the proportion, approved-head, and approved-body references to create one master image. |
 | Cloudflare Image Worker | Private, rate-limited gateway. It routes sprite requests to Gemini and background requests to Workers AI. |
-| Workers AI | Runs `@cf/black-forest-labs/flux-1-schnell` and returns a background JPEG. |
+| Workers AI | The current smoke-test route uses `@cf/black-forest-labs/flux-1-schnell`; the planned visual-novel route uses landscape SDXL with explicit dimensions. |
 | Location background catalog | Saves one generated image per required location/state pair, keeps it pending during review, and registers its stable asset ID only after approval. |
 | Local sprite processor | Removes the flat green background and prepares the approved head and nine cropped body parts without redrawing them. |
 | Sprite Studio | Edits compatible rigs and named poses with precise joint transforms, validated layer rules, and local pose storage. |
@@ -108,7 +108,7 @@ subjects and important objects follow the
 | Voice processing | On-device, generated before playback, then cached locally |
 | Story Mode | Sprites and simple movements |
 | Sprite creation | One Gemini `gemini-3.1-flash-image` master using the locked description and three references |
-| Background creation | Cloudflare Workers AI with FLUX.2 klein 4B |
+| Background creation | Planned Cloudflare SDXL visual-novel stage at `1024 x 576`; FLUX.1 remains only the current square smoke-test route |
 | Sprite transparency | Local green removal; transparent cropped parts use saved positions and joint pivots |
 | Image storage | Save accepted sprites and backgrounds on the device |
 
@@ -222,6 +222,8 @@ the Worker URL and prototype client token into Flutter. A distributed app needs
 real user authentication and per-user quotas instead of a shared client token.
 
 See [Cloudflare image generator](CLOUDFLARE_IMAGE_GENERATOR.md) for the setup and test flow.
+See [Visual-Novel Background Plan](VISUAL_NOVEL_BACKGROUND_PLAN.md) for the
+landscape stage contract, prompt rules, review flow, and acceptance checks.
 See [Story analysis contract](STORY_ANALYSIS_CONTRACT.md) for the strict request, validation, and fallback rules.
 See [Animated Story Mode plan](ANIMATED_STORY_MODE_PLAN.md) for the volume-aware chapter preparation plan.
 See [Visual-Novel Scene Library](ANIMATED_STORY_SCENE_LIBRARY.md) for reusable cutscene layouts and prompts.
