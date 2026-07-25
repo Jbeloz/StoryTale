@@ -13,6 +13,7 @@ import '../data/story_artwork_service.dart';
 import '../data/story_analysis_contract.dart';
 import '../data/story_analysis_service.dart';
 import '../data/story_entity_service.dart';
+import 'story_background_catalog_page.dart';
 import 'story_bible_review_page.dart';
 import 'sprite_positioner_page.dart';
 import 'widgets/story_shot_transition.dart';
@@ -180,6 +181,15 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
               ),
               icon: const Icon(Icons.fact_check_outlined),
               label: const Text('Review Story Bible'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const StoryBackgroundCatalogPage(),
+                ),
+              ),
+              icon: const Icon(Icons.landscape_outlined),
+              label: const Text('Review Location Backgrounds'),
             ),
             OutlinedButton(
               onPressed: () => Navigator.of(context).push(

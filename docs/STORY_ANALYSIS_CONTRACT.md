@@ -89,9 +89,10 @@ Entity approval only makes a subject eligible for generation. Generated art is
 reviewed separately and cannot enter scene planning until its asset ID is
 accepted and registered.
 
-The next work is generating and approving the required location backgrounds,
-then human/animal/plant/prop assets, focus-asset layers, and entity-aware scene
-catalogs. Until matching assets are approved and registered, the visible player
-still uses the prototype background and actor catalog.
+Required location backgrounds can now be generated, reviewed, approved, and
+registered in the local catalog with stable asset IDs. The next work is
+human/animal/plant/prop assets, focus-asset layers, and entity-aware scene
+catalogs. Until those matching foreground assets and final scene catalogs are
+ready, the visible player still uses the prototype actor catalog.
 See
 [Story Bible Entity and Asset Plan](STORY_BIBLE_ENTITY_ASSET_PLAN.md).

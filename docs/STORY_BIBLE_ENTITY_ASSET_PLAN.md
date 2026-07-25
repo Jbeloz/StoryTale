@@ -1,9 +1,9 @@
 # Story Bible Entity and Asset Plan
 
-**Status: Parts 8A-8B implemented; entity extraction, local story bibles, and
-candidate review are ready. Automatic entity approval and specific-location
-normalization are planned before asset generation. The current player still
-uses prototype actors.**
+**Status: Parts 8A-8C implemented. Entity extraction, automatic approval,
+specific-location requirements, and the local generated-background catalog are
+ready. The current player still uses prototype actors until matching foreground
+assets and entity-aware scene catalogs are completed.**
 
 ## Purpose
 
@@ -276,11 +276,14 @@ Implemented:
   scene place while retaining the former name as an alias
 - Ordered, deduplicated chapter background requirements using
   `locationId::backgroundStateId`
+- Local generated-background records with stable asset IDs
+- Cloudflare background generation for approved specific locations
+- Background preview, regenerate, approve, and mark-pending actions
+- Approved background asset IDs registered back onto their location entities
 
 Still pending:
 
 - Entity-specific foreground asset generation and registration
-- Generated location background catalog
 - `focusAssetLayers` and entity-aware scene catalogs
 - Replacing prototype actors in the final player
 
