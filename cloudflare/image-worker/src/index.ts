@@ -1,4 +1,4 @@
-const BACKGROUND_MODEL = "@cf/black-forest-labs/flux-2-klein-4b" as const;
+const BACKGROUND_MODEL = "@cf/black-forest-labs/flux-1-schnell" as const;
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Authorization, Content-Type",
@@ -1057,15 +1057,12 @@ function spritePrompt(details: string, mode: SpriteMode): string {
 }
 
 async function generateBackground(
-  body: ReadableStream<Uint8Array> | undefined,
-  contentType: string | undefined,
+  prompt: string,
   env: StoryTaleEnv,
 ): Promise<{ bytes: Uint8Array; mimeType: string }> {
   const result = await env.AI.run(BACKGROUND_MODEL, {
-    multipart: {
-      body,
-      contentType,
-    },
+    prompt,
+    steps: 4,
   });
   if (!result.image) throw new Error("Workers AI returned no image");
   return { bytes: base64ToBytes(result.image), mimeType: "image/jpeg" };
@@ -1153,7 +1150,6 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
     return json({ error: "kind must be background or sprite" }, 400);
   }
   const kind: ImageKind = kindValue;
-  const modelRequest = request.clone();
   const body = await parseBody(request);
   if (!body) {
     return json({ error: "Use a 3-500 character prompt and up to four small image references" }, 400);
@@ -1166,11 +1162,7 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
   let provider = "cloudflare-workers-ai";
   let result: { bytes: Uint8Array; mimeType: string };
   if (kind === "background") {
-    result = await generateBackground(
-      modelRequest.body ?? undefined,
-      modelRequest.headers.get("Content-Type") ?? undefined,
-      env,
-    );
+    result = await generateBackground(body.prompt, env);
   } else {
     if (!env.GEMINI_API_KEY) return json({ error: "Gemini sprite generation is not configured" }, 503);
     const modeValue = url.searchParams.get("mode") ?? "master";

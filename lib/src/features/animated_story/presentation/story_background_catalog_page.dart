@@ -7,6 +7,7 @@ import '../../../shared/models/storytale_models.dart';
 import '../../../shared/widgets/storytale_components.dart';
 import '../data/story_artwork_service.dart';
 import '../data/story_background_repository.dart';
+import '../data/story_analysis_contract.dart';
 import '../data/story_bible_models.dart';
 import '../data/story_bible_repository.dart';
 
@@ -157,10 +158,7 @@ class _StoryBackgroundCatalogPageState
     final location = _locationFor(requirement.locationId);
     final asset = _assetFor(requirement);
     final working = _workingKey == requirement.key;
-    final canGenerate =
-        location?.approved == true &&
-        location?.sceneLocation == true &&
-        (location?.backgroundBrief?.trim().isNotEmpty ?? false);
+    final canGenerate = location != null;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -172,7 +170,7 @@ class _StoryBackgroundCatalogPageState
               leading: const CircleAvatar(
                 child: Icon(Icons.landscape_outlined),
               ),
-              title: Text(location?.canonicalName ?? requirement.locationId),
+              title: Text(location?.name ?? requirement.locationId),
               subtitle: Text('State: ${requirement.stateId}'),
               trailing: Icon(
                 asset?.approved == true
@@ -182,8 +180,13 @@ class _StoryBackgroundCatalogPageState
                     : Icons.pending_outlined,
               ),
             ),
-            if (location?.backgroundBrief?.trim().isNotEmpty ?? false)
-              Text(location!.backgroundBrief!),
+            if (location != null) ...[
+              Text(location.backgroundBrief),
+              if (location.builtIn) ...[
+                const SizedBox(height: 8),
+                const Chip(label: Text('Built-in preview location')),
+              ],
+            ],
             if (asset != null) ...[
               const SizedBox(height: 12),
               ClipRRect(
@@ -215,8 +218,9 @@ class _StoryBackgroundCatalogPageState
                 runSpacing: 8,
                 children: [
                   FilledButton.icon(
+                    key: Key('generate-background-${requirement.key}'),
                     onPressed: canGenerate
-                        ? () => _generate(requirement, location!)
+                        ? () => _generate(requirement, location)
                         : null,
                     icon: Icon(
                       asset == null
@@ -245,7 +249,7 @@ class _StoryBackgroundCatalogPageState
 
   Future<void> _generate(
     StoryBackgroundRequirementData requirement,
-    StoryEntityData location,
+    _BackgroundLocation location,
   ) async {
     setState(() => _workingKey = requirement.key);
     try {
@@ -320,11 +324,30 @@ class _StoryBackgroundCatalogPageState
     _bible = updated;
   }
 
-  StoryEntityData? _locationFor(String locationId) {
+  _BackgroundLocation? _locationFor(String locationId) {
     for (final entity in _bible?.entities ?? const <StoryEntityData>[]) {
       if (entity.entityId == locationId &&
           entity.kind == StoryEntityKind.location) {
-        return entity;
+        if (!entity.approved ||
+            !entity.sceneLocation ||
+            !(entity.backgroundBrief?.trim().isNotEmpty ?? false)) {
+          return null;
+        }
+        return _BackgroundLocation(
+          name: entity.canonicalName,
+          backgroundBrief: entity.backgroundBrief!,
+          parentSetting: entity.parentSetting,
+        );
+      }
+    }
+    for (final location in StoryAnalysisCatalog.prototype.locations) {
+      if (location.id == locationId) {
+        return _BackgroundLocation(
+          name: location.name,
+          backgroundBrief: location.backgroundBrief,
+          parentSetting: location.parentSetting,
+          builtIn: true,
+        );
       }
     }
     return null;
@@ -339,10 +362,10 @@ class _StoryBackgroundCatalogPageState
     return null;
   }
 
-  String _promptFor(StoryEntityData location, String stateId) {
+  String _promptFor(_BackgroundLocation location, String stateId) {
     return [
-      location.backgroundBrief!,
-      'Location: ${location.canonicalName}.',
+      location.backgroundBrief,
+      'Location: ${location.name}.',
       if (location.parentSetting?.trim().isNotEmpty ?? false)
         'Wider setting: ${location.parentSetting}.',
       'Required visual state: $stateId.',
@@ -354,4 +377,18 @@ class _StoryBackgroundCatalogPageState
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
+}
+
+class _BackgroundLocation {
+  const _BackgroundLocation({
+    required this.name,
+    required this.backgroundBrief,
+    this.parentSetting,
+    this.builtIn = false,
+  });
+
+  final String name;
+  final String backgroundBrief;
+  final String? parentSetting;
+  final bool builtIn;
 }

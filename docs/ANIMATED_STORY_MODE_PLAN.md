@@ -358,7 +358,7 @@ Gemini supplies only the full-body master. StoryTale removes the requested flat
 green background locally, splits that exact result into reusable head/body
 layers, and creates the rejoined preview without another API request. The
 Cloudflare Worker is a
-secure gateway for Gemini sprite calls, while its `flux-2-klein-4b` binding
+secure gateway for Gemini sprite calls, while its `flux-1-schnell` binding
 creates chapter backgrounds only.
 
 Reference-guided generation improves shape and style consistency but does not

@@ -50,7 +50,7 @@ flowchart LR
 | Story Mode player | Moves sprites over backgrounds while playing voices, subtitles, and sound effects. |
 | Gemini image model | Uses `gemini-3.1-flash-image` with the proportion, approved-head, and approved-body references to create one master image. |
 | Cloudflare Image Worker | Private, rate-limited gateway. It routes sprite requests to Gemini and background requests to Workers AI. |
-| Workers AI | Runs `@cf/black-forest-labs/flux-2-klein-4b` and returns a background JPEG. |
+| Workers AI | Runs `@cf/black-forest-labs/flux-1-schnell` and returns a background JPEG. |
 | Location background catalog | Saves one generated image per required location/state pair, keeps it pending during review, and registers its stable asset ID only after approval. |
 | Local sprite processor | Removes the flat green background and prepares the approved head and nine cropped body parts without redrawing them. |
 | Sprite Studio | Edits compatible rigs and named poses with precise joint transforms, validated layer rules, and local pose storage. |
