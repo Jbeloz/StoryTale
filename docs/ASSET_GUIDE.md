@@ -1,5 +1,8 @@
 # StoryTale Asset Guide
 
+This document defines asset ownership and the target local folder layout. See
+the [Master Roadmap](ROADMAP.md) for implementation status.
+
 ## Bundled demo assets
 
 ```text
@@ -21,7 +24,11 @@ the interface does not depend on downloading fonts at runtime.
 
 ## Dynamic local content
 
-Uploaded EPUBs and created sprites are stored on the device while the app is running. They do not go into the project `assets` folder.
+Uploaded EPUBs and generated book assets never go into the bundled Flutter
+`assets` folder. In the current prototype, imported books remain in memory for
+the app session while Story Bibles, background records, faces, and poses use
+small local repositories. The persistent file hierarchy below is the target for
+the later book/volume storage phase:
 
 ```text
 books/<book-id>/book.json

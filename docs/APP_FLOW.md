@@ -7,8 +7,10 @@ flowchart TD
     P --> R["Clean one chapter into source blocks"]
     R --> S["Gemini returns structured story analysis"]
     S --> Q["Review and update locked book story bible"]
-    Q --> T["Choose approved rig and Sprite Studio pose IDs"]
-    T --> C["Choose chapter"]
+    Q --> T["Generate or reuse required approved assets"]
+    T --> U["Gemini plans scenes using approved IDs only"]
+    U --> V["Validate and save ChapterStory package"]
+    V --> C["Choose prepared chapter"]
     C --> D["Read original text"]
     D --> E["Translate with DeepL"]
     D --> G["Open chapter Story Mode"]
@@ -29,6 +31,9 @@ flowchart TD
 - Story data is missing: keep normal reading available.
 - Volume boundary or dialogue speaker is uncertain: request review before
   preparing Story Mode; do not block normal reading.
-- Sprite is missing: show a simple placeholder image.
+- Matching sprite or focus asset is missing: hide that layer and use an approved
+  location/detail shot with subtitles or narration. Never substitute an
+  unrelated prototype human.
 
 See [Animated Story Mode plan](ANIMATED_STORY_MODE_PLAN.md) for the full preparation pipeline.
+See the [Master Roadmap](ROADMAP.md) for current implementation status.

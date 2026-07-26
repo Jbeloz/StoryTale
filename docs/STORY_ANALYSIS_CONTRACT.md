@@ -89,10 +89,13 @@ Entity approval only makes a subject eligible for generation. Generated art is
 reviewed separately and cannot enter scene planning until its asset ID is
 accepted and registered.
 
-Required location backgrounds can now be generated, reviewed, approved, and
-registered in the local catalog with stable asset IDs. The next work is
-human/animal/plant/prop assets, focus-asset layers, and entity-aware scene
-catalogs. Until those matching foreground assets and final scene catalogs are
-ready, the visible player still uses the prototype actor catalog.
+Required location backgrounds can now be requested, reviewed, approved, and
+registered in the local catalog with stable asset IDs. The catalog workflow is
+implemented, but the current provider remains a square FLUX smoke test. The
+global current phase is the final `1024 x 576` visual-novel background contract.
+Human/animal/plant/prop assets, focus-asset layers, and entity-aware scene
+catalogs follow it. Until those matching foreground assets and final scene
+catalogs are ready, the visible player still uses the prototype actor catalog.
 See
 [Story Bible Entity and Asset Plan](STORY_BIBLE_ENTITY_ASSET_PLAN.md).
+See the [Master Roadmap](ROADMAP.md) for the authoritative order.

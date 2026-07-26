@@ -1,34 +1,45 @@
 # Character Sprite Template
 
-Keep every layer on the same canvas size and use a transparent background.
+This folder is a legacy visual reference. New StoryTale humanoids use one
+approved transparent master, reusable rig parts, modular face parts, and JSON
+poses:
 
 ```text
-_sprite_template/
-|-- bodies/
-|   `-- default/
-|       `-- poses/
-|           |-- idle.png
-|           |-- talking.png
-|           |-- pointing.png
-|           `-- walking.png
-|-- heads/
-|   `-- expressions/
-|       |-- neutral.png
-|       |-- happy.png
-|       |-- sad.png
-|       |-- angry.png
-|       `-- surprised.png
-`-- composites/
-    `-- full-neutral.png
+<character-id>/
+|-- profile.json
+`-- sprites/
+    |-- master-transparent.png
+    |-- rig.json
+    |-- base-parts/
+    |   |-- torso.png
+    |   |-- upper_arm_left.png
+    |   |-- upper_arm_right.png
+    |   |-- forearm_hand_left.png
+    |   |-- forearm_hand_right.png
+    |   |-- thigh_left.png
+    |   |-- thigh_right.png
+    |   |-- lower_leg_foot_left.png
+    |   `-- lower_leg_foot_right.png
+    |-- faces/
+    |   |-- eyes/
+    |   |-- noses/
+    |   |-- mouths/
+    |   `-- details/
+    |-- outfits/<outfit-id>/parts/
+    |-- poses/<pose-id>.json
+    `-- composites/full-neutral.png
 ```
 
-- A body pose stops at the neck and does not contain a head.
-- A head file contains the complete head and expression only.
-- `full-neutral.png` is the reviewed head-and-body preview.
-- Keep the head about 45% and the body about 55% of the full character height.
-- Keep the head wider than the shoulders, matching the proportion references in
-  `docs/ui-concepts/ui/character_*.png`.
-- Lock one outline color for every layer. The current approved example uses
-  blue-black `#081440`; do not mix it with pure black body outlines.
-- New clothing uses another folder beside `default`, with the same `poses`
-  filenames.
+- Generate and approve one complete master before splitting it.
+- Keep every reusable face layer aligned to the same transparent head canvas.
+- `rig.json` stores parent, pivot, original placement, size, and layer order.
+- A pose stores transforms in JSON; do not generate a separate body PNG for
+  Idle, Talking, Pointing, or Walking.
+- `full-neutral.png` is the reviewed rejoined preview and fallback.
+- Keep the approved large-head, short-body chibi proportion and one consistent
+  outline/color style.
+- Clothing follows the matching rig parts and pivots. Loose coats, skirts, and
+  capes may use separate approved overlay layers.
+
+See `docs/SPRITE_STUDIO_PLAN.md`, `docs/MODULAR_FACE_SYSTEM_PLAN.md`, and
+`docs/ROADMAP.md`.

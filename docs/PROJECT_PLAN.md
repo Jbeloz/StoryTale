@@ -1,5 +1,9 @@
 # StoryTale Short Plan
 
+This is the short project overview. The authoritative current phase, dependency
+order, completed work, and complete remaining-work checklist are in the
+[Master Roadmap](ROADMAP.md).
+
 ## 1. Foundation - done
 
 - StoryTale name, folders, docs, theme, navigation, and placeholders
@@ -63,7 +67,10 @@ grouping. The test EPUB currently parses into 15 readable story sections.
   place and place-state changes
 - [x] Reuse backgrounds for unchanged consecutive shots instead of generating
   one image per paragraph
-- [x] Generate, review, and register approved location backgrounds
+- [x] Build the local location-background catalog, review flow, approval, and
+  stable asset registration
+- [ ] Replace the square FLUX smoke test with approved `1024 x 576`
+  visual-novel background generation and connect matching assets to cutscenes
 - [ ] Generate and register approved matching foreground assets
 - Create one `ChapterStory` package for every chapter
 - Preserve the complete chapter from its first to last source block
@@ -81,6 +88,8 @@ Detailed phases, folder organization, schemas, rebuilding rules, and tests are
 in [Animated Story Mode plan](ANIMATED_STORY_MODE_PLAN.md). Non-human subjects
 and important objects follow the
 [Story Bible Entity and Asset Plan](STORY_BIBLE_ENTITY_ASSET_PLAN.md).
+The current implementation phase follows the
+[Visual-Novel Background Plan](VISUAL_NOVEL_BACKGROUND_PLAN.md).
 
 ## 5.1 Sprite Studio
 

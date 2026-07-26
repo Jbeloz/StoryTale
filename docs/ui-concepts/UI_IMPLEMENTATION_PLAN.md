@@ -2,6 +2,11 @@
 
 This guide maps the current UI concept images to Flutter screens, reusable widgets, dynamic data, navigation, and required app artwork.
 
+This is a UI design reference, not the project progress tracker. Some screens
+listed as missing during the original mockup phase now have functional
+prototype routes. Use the [Master Roadmap](../ROADMAP.md) for current status and
+implementation order.
+
 ## Design rules
 
 - Use the purple StoryTale design from the mockups.
@@ -196,9 +201,11 @@ Source: `ui/16 my profile.png`
 - Downloads manages stored EPUBs, generated images, prepared voices, and cached audio.
 - Asset need: `default_profile_avatar.png`.
 
-## Missing screens still needed
+## Production screen and state reference
 
-These screens complete the full app flow and need mockups later.
+These screens and states are required for the finished product. Their presence
+in this table does not mean they are unimplemented; provider, persistence,
+loading, error, and polish work follows the owning roadmap phase.
 
 | Priority | Screen | Purpose |
 | --- | --- | --- |
@@ -342,13 +349,19 @@ error_epub.png
 
 Book covers extracted from EPUBs are stored dynamically. Generated Story Mode backgrounds and sprites continue using `assets/images/backgrounds/`, `assets/images/characters/`, and local app storage.
 
-## Recommended implementation order
+## Historical UI build order
+
+This was the initial screen-construction order and is retained only as a design
+history reference:
 
 1. Finalize theme tokens and create `StoryTaleAppShell`.
-2. Extract `StoryTaleBottomNav`, top bar, buttons, section headers, cards, and state widgets.
-3. Build onboarding and save completion locally.
+2. Extract shared navigation, top bars, buttons, headers, cards, and states.
+3. Build onboarding.
 4. Build EPUB import, Library, Search, Book Details, and Now Reading.
-5. Build Reader, settings, DeepL translation, caching, and progress.
-6. Build Audio hub, offline Tagalog TTS, five voice profiles, and chapter preparation.
-7. Build the preferred Story Mode player, contents sheet, and chapter moral.
-8. Add profile, downloads/storage, settings, help, and remaining empty/error states.
+5. Build Reader and settings.
+6. Build Audio and chapter preparation screens.
+7. Build the preferred Story Mode player, contents, and moral screens.
+8. Add profile, storage, help, and remaining empty/error states.
+
+Do not use this list to choose the next implementation. Follow the
+[Master Roadmap](../ROADMAP.md).

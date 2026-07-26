@@ -441,7 +441,12 @@ separated.
 
 ## 11. Recommended immediate next step
 
-Begin the generated-character pipeline: approve one analyzed character,
-generate one Gemini full-body master, remove its green background locally,
-split it into the compatible rig parts, and review the rejoined result before
-Story Mode can select it.
+For the modular-face subsystem, the next dependent task is the
+generated-character pipeline: approve one analyzed character, generate one
+Gemini full-body master, remove its green background locally, split it into the
+compatible rig parts, and review the rejoined result before Story Mode can
+select it.
+
+This is not the global next project phase. Finish the landscape background and
+matching foreground-entity phases first, as ordered in the
+[Master Roadmap](ROADMAP.md).

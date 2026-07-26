@@ -58,9 +58,10 @@ assets/images/characters/rigs/humanoid_v1/
 
 Open the editor through `Profile -> Sprite Studio`. Parent transforms are
 inherited, so rotating an upper arm also moves its connected lower arm. Parts
-1-4 provide alpha-aware selection, permanent body-layer rules, a responsive
+1-6 provide alpha-aware selection, permanent body-layer rules, a responsive
 pinned canvas, precise transform controls, Undo/Redo, bone controls derived
-from the existing pivots, and the five-expression face catalog. The next
-planned step is named custom poses and storage. The Story Mode connection is
-defined in
-[Sprite Studio plan](../../../SPRITE_STUDIO_PLAN.md).
+from the existing pivots, the modular face catalog, named custom poses, local
+storage, and Story Mode pose/face resolution. Generated book-specific rig
+import remains future work. See the
+[Sprite Studio plan](../../../SPRITE_STUDIO_PLAN.md) for editor behavior and the
+[Master Roadmap](../../../ROADMAP.md) for the global next phase.

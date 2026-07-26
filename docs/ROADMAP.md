@@ -1,0 +1,433 @@
+# StoryTale Master Roadmap
+
+This is the single source of truth for StoryTale development order and status.
+The architecture and feature plans explain how individual systems work, but
+only this file decides what is completed, what is current, and what comes next.
+
+Last reviewed: 2026-07-26
+
+## Status meanings
+
+- **Done**: implemented and suitable as a foundation for later phases.
+- **Prototype done**: the reusable system works with bundled or deterministic
+  test content, but it is not yet connected to every imported-book asset.
+- **Partial**: useful implementation exists, but required work remains.
+- **Current**: the only feature phase that should receive the next implementation
+  work unless a blocking defect is found.
+- **Planned**: not started or not complete enough to become the current phase.
+
+## Product goal
+
+StoryTale is a local-first Flutter EPUB library that supports:
+
+- importing user-owned `.epub` books;
+- English reading and DeepL Filipino translation;
+- prepared offline narration and character voices;
+- a chapter-based visual-novel Story Mode;
+- reusable characters, animals, plants, props, and locations;
+- simple sprite, camera, and scene movement without video generation; and
+- consistent story assets across chapters and volumes.
+
+## Connected system flow
+
+```mermaid
+flowchart TD
+    A["Import EPUB"] --> B["Parse metadata, spine, and chapters"]
+    B --> C["Create stable source blocks"]
+    C --> D["Gemini chapter analysis"]
+    D --> E["Merge approved Story Bible entities"]
+    E --> F["Collect required location and entity assets"]
+    F --> G["Generate and approve visual-novel backgrounds"]
+    G --> H["Generate and approve foreground/entity assets"]
+    H --> I["Generate and approve book-specific human rigs"]
+    I --> J["Gemini plans approved cutscenes, shots, and beats"]
+    J --> K["Flutter validates complete source coverage and asset IDs"]
+    K --> L["Prepare DeepL subtitles and offline voice audio"]
+    L --> M["Save the ChapterStory package locally"]
+    M --> N["Play the visual-novel chapter and moral"]
+```
+
+Gemini chooses only approved semantic IDs. Flutter owns coordinates, timing,
+animation limits, validation, storage, and safe fallbacks.
+
+## Roadmap summary
+
+| Phase | Status | Result |
+| --- | --- | --- |
+| 0. Foundation and reusable UI | **Done** | StoryTale app shell, theme, navigation, reusable widgets, routes, and placeholders |
+| 1. EPUB import foundation | **Partial** | EPUB picking, validation, metadata, cover, cleaned chapters, and stable text blocks work; permanent library storage and volumes remain |
+| 2. Sprite Studio and starter faces | **Prototype done** | Rig selection, bones, poses, layers, five starter actor profiles, modular face sets, and Story Mode loading work |
+| 3. Visual-novel runtime and Gemini contract | **Prototype done** | Cutscenes, shots, beats, layouts, facing, depth, camera presets, movement, transitions, and validated Gemini plans work with safe fixtures |
+| 4. Story Bible and location requirements | **Partial** | Entity extraction, review, automatic approval, specific locations, required background pairs, and the local background catalog work |
+| 5. Final visual-novel backgrounds | **Current** | Replace the square smoke-test generator with approved landscape environments and connect them to matching cutscenes |
+| 6. Foreground and non-human entity assets | **Planned** | Generate, review, register, and render matching animals, creatures, plants, and props |
+| 7. Generated book-specific humans | **Planned** | Create one approved Gemini master, transparent rig, face catalog, outfit, and reusable identity per important human |
+| 8. Persistent books and volumes | **Planned** | Save EPUBs, books, progress, story bibles, assets, jobs, and `Book -> Volume -> Chapter` data across restarts |
+| 9. Complete ChapterStory builder | **Planned** | Assemble approved assets, exact text coverage, subtitles, moral, movement, and manifests for any imported chapter |
+| 10. DeepL and offline audio | **Planned** | Real DeepL caching, Tagalog ONNX TTS, five tested voice packs, prepared line audio, and playback synchronization |
+| 11. MVP integration and release validation | **Planned** | Multi-volume tests, interrupted-job recovery, physical Android benchmarks, accessibility, storage cleanup, and failure tests |
+
+## Completed foundations
+
+### Phase 0 - Foundation and reusable UI
+
+Completed:
+
+- StoryTale naming and Poppins typography
+- reusable app shell and four-item bottom navigation
+- reusable book, chapter, progress, empty-state, and placeholder widgets
+- onboarding, Library, Search, Book Details, Reader, Audio, Profile, Sprite
+  Studio, Story Bible, location-background review, and Story Mode routes
+- dynamic demo data and responsive Flutter layouts
+
+Remaining UI polish belongs to the feature phase that owns the data. A visible
+screen does not mean its real provider, persistence, or error handling is done.
+
+### Phase 1 - EPUB import foundation
+
+Completed:
+
+- `.epub`-only file selection and validation
+- local metadata, author, cover, table-of-contents, and chapter parsing
+- HTML cleanup and readable chapter extraction
+- stable source-block IDs for analysis
+- imported books available to the current Library, Reader, Audio, and Story
+  preparation session
+
+Still missing:
+
+- permanent local book and original EPUB storage
+- saved reading, bookmark, translation, and preparation progress
+- `Book -> Volume -> Chapter` models and migration
+- box-set and separately imported volume grouping
+- chapter/volume boundary review for uncertain EPUBs
+- duplicate-title and stable-ID migration tests
+
+These items must be complete before Phase 9 can claim persistent ChapterStory
+packages, but they do not block the current background-provider correction.
+
+### Phase 2 - Sprite Studio and starter faces
+
+Completed prototype:
+
+- alpha-aware mouse, touchpad, and touch selection
+- fixed anatomical layer rules
+- drag, numeric X/Y/rotation, zoom, Undo, and Redo
+- bone controls derived from the rig hierarchy and pivots
+- built-in and named reusable pose JSON
+- local and development project-default pose saving
+- Default, Hero, Heroine, Elder, and Adult face profiles
+- modular eyes, nose, mouth, details, reusable face sets, and safe fallbacks
+- Story Mode resolution of rig, pose, profile, and face-set IDs
+
+Still missing:
+
+- importing a newly generated book-specific rig through the normal user flow
+- generated hair, clothing/outfit overlays, and accessories
+- compatibility validation for multiple humanoid body proportions
+- non-humanoid rig editing, which is optional after whole-sprite support works
+
+Sprite Studio itself is not the current blocker.
+
+### Phase 3 - Visual-novel runtime and Gemini contract
+
+Completed prototype:
+
+- `Chapter -> Cutscene -> Shot -> Beat` data
+- zero-, one-, two-, and three-character layouts
+- inward facing, whole-rig mirroring, scale, depth, and speaker focus
+- camera static, pan, drift, push, pull, snap, and shake presets
+- entrance, exit, walking, step, breathing, bob, reaction, and fade movement
+- cut, fade, and slide transitions
+- short source-preserving subtitle beats
+- Worker and Flutter semantic validation
+- deterministic fallback when Gemini returns an invalid plan
+
+Still missing:
+
+- approved book-specific entity assets in the runtime catalog
+- focus-asset layers for plants, props, and important silent subjects
+- final ChapterStory manifests and synchronized line audio
+- full end-to-end testing with arbitrary imported EPUB chapters
+
+### Phase 4 - Story Bible and location requirements
+
+Completed:
+
+- persistent per-book Story Bible records
+- typed humans, animals, creatures, plants, props, and locations
+- source-backed candidate extraction and alias merging
+- automatic approval for high-confidence, conflict-free entities
+- manual approve, edit, merge, delete, and type correction
+- specific background-ready locations with parent-setting context
+- ordered `locationId + backgroundStateId` requirements
+- stable local background records, review, approval, and entity registration
+
+Important limitation:
+
+The background **catalog workflow** is implemented, but the current Cloudflare
+image route still produces a square FLUX smoke-test image. Final visual-novel
+background generation is Phase 5 and is not complete.
+
+## Current phase
+
+### Phase 5 - Final visual-novel backgrounds
+
+Goal: every approved location/state pair produces a reusable `1024 x 576`
+visual-novel environment with open left, center, and right sprite lanes.
+
+Implementation order:
+
+1. Add `VisualNovelBackgroundBrief` with place, parent setting, foreground,
+   middle ground, distant background, stage surface, landmarks, safe zones,
+   lighting, weather, style, and exclusions.
+2. Add one prompt builder that converts only an approved brief and state into
+   the provider request.
+3. Move the Worker background adapter from square FLUX to a provider that
+   accepts explicit `1024 x 576` output.
+4. Preserve the returned MIME type and reject corrupt or incorrectly sized
+   images.
+5. Show the complete uncropped landscape result in the review screen.
+6. Keep the last approved background active while regeneration is pending.
+7. Connect each approved asset ID only to the matching
+   `locationId + backgroundStateId` cutscenes.
+8. Test one imported chapter with multiple places and multiple states of one
+   place.
+
+Acceptance checks:
+
+- output is a valid `1024 x 576` image
+- the frame shows one continuous, grounded physical environment
+- left, center, and right character lanes are usable
+- essential landmarks avoid the subtitle-safe lower area
+- no person, character, text, UI, floating island, miniature diorama, isolated
+  object, or portrait composition appears
+- rejecting or regenerating does not replace the approved asset
+- unchanged shots reuse one background
+- place and state changes use the correct ordered backgrounds
+
+Phase 5 is complete only after these checks pass. A successful square image
+request is not sufficient.
+
+## Planned phases after backgrounds
+
+### Phase 6 - Foreground and non-human entity assets
+
+Implementation order:
+
+1. Add generated asset records and approval states for humans, animals,
+   creatures, plants, and props.
+2. Generate only recurring, speaking, state-changing, or visually important
+   subjects.
+3. Use Gemini image generation for transparent foreground assets.
+4. Validate dimensions, transparency, entity ownership, and stable IDs.
+5. Add preview, approve, reject, regenerate, replace, and reuse actions.
+6. Add `focusAssetLayers` with at most two approved assets per shot.
+7. Add entity-aware scene catalogs to Gemini analysis.
+8. Remove prototype-human substitution from generated chapter plans.
+
+Minimum first-version assets:
+
+- speaking animal/creature: neutral and talking whole sprites
+- important silent animal: neutral whole sprite
+- plant: normal plus plot-required states only
+- prop: normal plus plot-required states only
+
+Safe fallback: approved matching asset, then no-character detail/background
+shot, then subtitles/audio. Never use an unrelated human.
+
+### Phase 7 - Generated book-specific humans
+
+Implementation order:
+
+1. Approve one analyzed human description and reusable actor/body profile.
+2. Generate one front-facing full-body Gemini master with locked references.
+3. Remove the flat background locally.
+4. Split that exact master into head and nine compatible body parts.
+5. Record hierarchy, pivots, neutral placement, sizes, and layer order.
+6. Rejoin and compare the neutral rig with the approved master.
+7. Create aligned modular face parts, hair, clothing overlays, and only required
+   accessories.
+8. Register the character, rig, pose compatibility, appearance lock, and voice
+   mapping in the Story Bible.
+9. Reuse the same approved identity across every chapter and volume.
+
+Do not regenerate the same character for every scene.
+
+### Phase 8 - Persistent books and volumes
+
+Implementation order:
+
+1. Choose the local database and file-storage repositories.
+2. Add `BookData -> VolumeData -> ChapterData`.
+3. Migrate bundled and session books into one default volume.
+4. Save original EPUBs, normalized text, metadata, story bibles, approved
+   assets, preparation jobs, progress, and settings.
+5. Add separately imported volumes to an existing book.
+6. Resume interrupted preparation after restart.
+7. Add storage cleanup that never silently removes original EPUBs or approved
+   assets.
+
+### Phase 9 - Complete ChapterStory builder
+
+Implementation order:
+
+1. Run analysis using the approved entity and asset catalogs.
+2. Validate every source block appears exactly once and in order.
+3. Resolve every location, background, character, focus asset, pose, face,
+   movement, transition, and camera ID.
+4. Apply safe fallbacks for missing assets without changing the source text.
+5. Create subtitles, optional sound effects, and an editable chapter moral.
+6. Write versioned `analysis.json`, `scenes.json`, `subtitles.json`, and
+   `manifest.json`.
+7. Save resumable preparation states and fingerprints.
+8. Load the saved package in the existing visual-novel player.
+
+### Phase 10 - DeepL and offline audio
+
+DeepL:
+
+- use DeepL as the only English-to-Filipino provider
+- send target code `TL`
+- cache translations by source-text hash
+- count usage and avoid repeated requests
+- keep original text available on every failure
+
+Offline audio:
+
+- convert and benchmark one Tagalog ONNX TTS base
+- run it inside Flutter through the chosen ONNX runtime
+- convert, test, and approve one mobile voice pack before adding four more
+- keep five roles: narrator, hero, heroine, adult/deep, and elder
+- prepare and cache line or short-group audio
+- synchronize audio, subtitle beat, speaker, and highlighted text
+- rebuild only audio when voice or pitch changes
+
+Background music remains optional and does not block readiness.
+
+### Phase 11 - MVP integration and release validation
+
+Required fixtures:
+
+- one standalone EPUB
+- one box-set EPUB
+- two separate EPUB volumes joined under one book
+- a chapter with one location
+- a chapter with multiple locations and a location-state change
+- a speaking animal
+- an important plant and prop
+- missing asset, background, voice, and network failures
+- interrupted and resumed chapter preparation
+
+Required validation:
+
+- no source text is omitted, duplicated, summarized, or reordered
+- recurring entities retain stable identities, assets, and voices
+- normal reading works even when Story Mode preparation fails
+- physical Android generation, playback, memory, storage, and battery benchmarks
+- reduced-motion, readable subtitles, screen scaling, and error-state checks
+- licensing/source records for bundled and generated assets
+
+## Complete remaining-work checklist
+
+### Library and storage
+
+- [ ] permanent EPUB and book repository
+- [ ] saved reading/bookmark/preparation progress
+- [ ] volume models, grouping, migration, and boundary review
+- [ ] resumable jobs and safe storage cleanup
+
+### Translation
+
+- [ ] real DeepL service
+- [ ] local translation cache and usage tracking
+- [ ] retry and offline behavior
+
+### Voice and audio
+
+- [ ] mobile Tagalog ONNX TTS runtime
+- [ ] one benchmarked voice-conversion pack
+- [ ] four additional tested packs
+- [ ] chapter audio preparation and synchronization
+
+### Backgrounds
+
+- [ ] structured visual-novel brief
+- [ ] final prompt builder
+- [ ] landscape Worker provider
+- [ ] MIME, corruption, and `1024 x 576` validation
+- [ ] landscape review/regeneration behavior
+- [ ] cutscene asset resolution and multi-location tests
+
+### Foreground entities
+
+- [ ] matching asset generation and approval
+- [ ] animals and creatures
+- [ ] plants and props with required states
+- [ ] focus-asset runtime layers
+- [ ] entity-aware analyzer catalogs
+
+### Book-specific humans
+
+- [ ] approved master generation
+- [ ] local transparency cleanup and splitting
+- [ ] rig, face, hair, outfit, and accessory registration
+- [ ] appearance locking across volumes
+
+### ChapterStory packages
+
+- [ ] exact coverage validator in the final package workflow
+- [ ] approved asset resolver and safe fallbacks
+- [ ] subtitles, optional SFX, moral, and audio references
+- [ ] versioned manifest and local cache
+- [ ] saved/resumable preparation and playback progress
+
+### Release readiness
+
+- [ ] full multi-volume fixtures
+- [ ] physical Android performance benchmark
+- [ ] accessibility and reduced-motion validation
+- [ ] licensing review
+- [ ] local database, supported-device, and voice-pack decisions
+
+## Open decisions
+
+- local database package and migration strategy
+- final landscape background provider if the planned Cloudflare model changes
+- sprite and generated-art licensing rules
+- the five voice packs that pass mobile conversion and testing
+- minimum supported Android hardware
+
+These decisions must be recorded here when resolved.
+
+## Document ownership
+
+| Document | Responsibility |
+| --- | --- |
+| `ROADMAP.md` | Development order, current phase, status, and all remaining work |
+| `PROJECT_PLAN.md` | Short overview that links to this roadmap |
+| `ARCHITECTURE.md` | Components, providers, data boundaries, and folders |
+| `APP_FLOW.md` | User-facing navigation and failure flow |
+| `REQUIREMENTS.md` | Product requirements and acceptance expectations |
+| `ANIMATED_STORY_MODE_PLAN.md` | Detailed chapter preparation, volume, package, and playback design |
+| `ANIMATED_STORY_SCENE_LIBRARY.md` | Approved layout, camera, transition, motion, and analyzer IDs |
+| `STORY_ANALYSIS_CONTRACT.md` | Gemini input/output and validation boundary |
+| `STORY_BIBLE_ENTITY_ASSET_PLAN.md` | Entity types, approval, asset ownership, and safe fallback |
+| `VISUAL_NOVEL_BACKGROUND_PLAN.md` | Current landscape-background implementation contract |
+| `SPRITE_STUDIO_PLAN.md` | Rig and pose editor behavior |
+| `MODULAR_FACE_SYSTEM_PLAN.md` | Face-part catalogs and set behavior |
+| `CLOUDFLARE_IMAGE_GENERATOR.md` | Worker routes and provider responsibilities |
+| `UI_IMPLEMENTATION_PLAN.md` | Responsive screen and reusable-widget reference |
+| prompt packs and asset READMEs | Historical production references; they never decide the global next phase |
+
+## Roadmap maintenance rules
+
+1. Only one phase may be marked **Current**.
+2. A subsystem plan may describe its own next task, but it must label it as a
+   subsystem task and link back to this roadmap.
+3. Prototype completion and production completion must remain separate.
+4. A phase becomes **Done** only after its acceptance checks pass.
+5. When implementation changes status, update this file in the same checkpoint.
+6. Do not mark a provider complete because a smoke-test request succeeds.
+7. Do not add title-specific rules for The Little Prince or any other fixture.
+8. Every imported EPUB must use the same validated contracts and safe fallbacks.

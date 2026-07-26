@@ -1,11 +1,14 @@
 # StoryTale UI Concepts
 
-The current custom app flow is stored in `ui/` and contains pages 1-16, including two states for page 13.
+The current custom app flow is stored in `ui/` and contains pages 1-17,
+including two states for page 13 and the audiobook screen.
 
 - [UI implementation plan](UI_IMPLEMENTATION_PLAN.md)
 - [Prompts used](PROMPTS.md)
 
-The implementation plan is now the source of truth for recreating these images as responsive, reusable Flutter screens.
+The implementation plan is the source of truth for recreating these images as
+responsive, reusable Flutter screens. The
+[Master Roadmap](../ROADMAP.md) owns project status and development order.
 
 This folder contains three complete visual directions for the same StoryTale app. Every direction has the same seven pages and the same features, so the comparison is based on visual design instead of missing content.
 

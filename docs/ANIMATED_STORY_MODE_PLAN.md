@@ -5,6 +5,10 @@ volume-aware Animated Story Mode. The first version uses 2D sprites, static
 backgrounds, subtitles, prepared voices, sound effects, and simple movements.
 It does not generate video.
 
+This document owns the detailed Story Mode design. Its numbered design phases
+are not the global project status. See the [Master Roadmap](ROADMAP.md) for the
+authoritative current phase and dependency order.
+
 ## 1. Content hierarchy
 
 StoryTale should use this hierarchy instead of storing every chapter directly

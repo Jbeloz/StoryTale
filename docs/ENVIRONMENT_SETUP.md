@@ -1,5 +1,8 @@
 # StoryTale Environment Setup
 
+This file documents configuration only. See the
+[Master Roadmap](ROADMAP.md) for provider implementation status.
+
 The repository root contains an ignored `.env` file for local development:
 
 ```dotenv
@@ -21,8 +24,8 @@ analysis.
 
 The run script passes only the private Worker URL and prototype client token to
 Flutter. DeepL and Gemini keys stay out of the app. `GEMINI_API_KEY` is copied
-to the deployed Worker as a Cloudflare secret for sprite generation; the later
-story-analysis service will also keep its key server-side. Start StoryTale with:
+to the deployed Worker as a Cloudflare secret for sprite generation and
+structured story analysis. Start StoryTale with:
 
 ```powershell
 .\tool\run_storytale.ps1

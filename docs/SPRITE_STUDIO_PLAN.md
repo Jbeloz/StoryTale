@@ -5,6 +5,9 @@ Positioner. It is a
 small editor for selecting rig parts, adjusting joints, fixing layer order,
 and creating reusable named poses for Animated Story Mode.
 
+This is a subsystem plan. The authoritative global next phase is maintained in
+the [Master Roadmap](ROADMAP.md).
+
 ## Implementation status
 
 Parts 1-6 are complete. Sprite Studio now has one canvas-level alpha

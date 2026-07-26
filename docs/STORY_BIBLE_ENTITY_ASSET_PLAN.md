@@ -2,8 +2,10 @@
 
 **Status: Parts 8A-8C implemented. Entity extraction, automatic approval,
 specific-location requirements, and the local generated-background catalog are
-ready. The current player still uses prototype actors until matching foreground
-assets and entity-aware scene catalogs are completed.**
+ready. The catalog still uses the square provider smoke test; the final
+landscape visual-novel background phase is current. Matching foreground assets
+and entity-aware scene catalogs follow it. See the
+[Master Roadmap](ROADMAP.md).**
 
 ## Purpose
 
@@ -283,6 +285,8 @@ Implemented:
 
 Still pending:
 
+- Final landscape visual-novel background provider, prompt contract, dimension
+  validation, and cutscene asset connection
 - Entity-specific foreground asset generation and registration
 - `focusAssetLayers` and entity-aware scene catalogs
 - Replacing prototype actors in the final player

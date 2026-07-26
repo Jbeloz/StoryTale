@@ -1,5 +1,9 @@
 # StoryTale Requirements
 
+This file states the required finished behavior; it is not an implementation
+status checklist. See the [Master Roadmap](ROADMAP.md) for completed and missing
+work.
+
 ## Local E-Library
 
 - Users can upload their own `.epub` books.

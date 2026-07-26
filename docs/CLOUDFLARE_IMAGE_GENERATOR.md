@@ -1,5 +1,8 @@
 # StoryTale Private Media and Analysis Worker
 
+The current Worker route and the planned final provider are intentionally
+separate below. See the [Master Roadmap](ROADMAP.md) for the current phase.
+
 ## Provider decision
 
 - Gemini analyzes cleaned chapter text into structured story data.

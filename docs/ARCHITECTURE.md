@@ -1,5 +1,9 @@
 # StoryTale Architecture
 
+This document owns system boundaries and provider responsibilities. It does not
+own development status. See the [Master Roadmap](ROADMAP.md) for the current
+phase and complete remaining work.
+
 ## Simple flow
 
 ```mermaid

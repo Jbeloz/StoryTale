@@ -1,7 +1,9 @@
 # Visual-Novel Background Plan
 
-Status: planned only. The app and Worker must not be treated as complete until
-the implementation and validation steps below pass.
+Status: **current implementation phase; not yet complete.** The app and Worker
+must not be treated as complete until the implementation and validation steps
+below pass. See the [Master Roadmap](ROADMAP.md) for its dependencies and the
+phases that follow it.
 
 ## Goal
 

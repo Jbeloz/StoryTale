@@ -1,7 +1,8 @@
 # StoryTale Visual-Novel Scene Library
 
-**Status: approved. Parts 1-7 are implemented; book-specific entity assets are
-the next planned extension.**
+**Status: approved. Parts 1-7 are implemented. The global current phase is the
+final landscape background pipeline; matching foreground/entity assets follow
+it. See the [Master Roadmap](ROADMAP.md).**
 
 This replaces the current small-character technical demo with a visual-novel
 cutscene style. StoryTale still uses transparent full-body sprites, reusable

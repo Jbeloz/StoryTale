@@ -94,7 +94,10 @@ Five complete nine-part body templates would be **45 base body PNGs**. Add the t
 
 Gemini analyzes the book and lists recurring characters. Only recurring or speaking characters receive full rigs. Minor characters receive a neutral full sprite, and background crowds or animals use static sprites.
 
-## Best next step
+## Historical first proof step
 
-Do not create dozens of bases yet. First make the approved heroine into one clean nine-part rig. If its joints, clothes, layering, and Flutter movement work correctly, the same template can safely be copied for the other bases.
-
+The original first proof step was to make the approved heroine into one clean
+nine-part rig before creating many bases. The reusable humanoid rig and Sprite
+Studio proof now exist. Do not treat this historical asset-production note as
+the current project phase; follow the
+[Master Roadmap](../../../ROADMAP.md).
