@@ -214,14 +214,16 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
 }
 
 class AnimatedStoryPage extends StatefulWidget {
-  const AnimatedStoryPage({super.key});
+  const AnimatedStoryPage({super.key, this.backgroundRepository});
+
+  final StoryBackgroundRepository? backgroundRepository;
 
   @override
   State<AnimatedStoryPage> createState() => _AnimatedStoryPageState();
 }
 
 class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
-  final _backgroundRepository = StoryBackgroundRepository();
+  late final StoryBackgroundRepository _backgroundRepository;
   int _shotIndex = 0;
   int _beatIndex = 0;
   bool _playing = false;
@@ -231,12 +233,33 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
   Map<String, Uint8List> _approvedBackgrounds = const {};
 
   @override
+  void initState() {
+    super.initState();
+    _backgroundRepository =
+        widget.backgroundRepository ?? StoryBackgroundRepository();
+    StoryBackgroundRepository.revision.addListener(_backgroundCatalogChanged);
+  }
+
+  @override
+  void dispose() {
+    StoryBackgroundRepository.revision.removeListener(
+      _backgroundCatalogChanged,
+    );
+    super.dispose();
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final bookId = StoryTaleScope.of(context).currentBook?.id;
     if (bookId == null || bookId == _backgroundBookId) return;
     _backgroundBookId = bookId;
     _loadBackgrounds(bookId);
+  }
+
+  void _backgroundCatalogChanged() {
+    final bookId = _backgroundBookId;
+    if (bookId != null) _loadBackgrounds(bookId);
   }
 
   Future<void> _loadBackgrounds(String bookId) async {
@@ -299,6 +322,12 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
     return StoryTaleAppShell(
       title: '${book.title} • ${chapter.title}',
       actions: [
+        IconButton(
+          key: const Key('reload-story-backgrounds'),
+          tooltip: 'Reload approved backgrounds',
+          onPressed: () => _loadBackgrounds(book.id),
+          icon: const Icon(Icons.refresh),
+        ),
         IconButton(
           tooltip: 'Table of contents',
           onPressed: () => _showContents(context),

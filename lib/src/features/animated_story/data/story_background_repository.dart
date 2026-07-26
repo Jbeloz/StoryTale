@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class StoryBackgroundAssetData {
@@ -116,6 +116,7 @@ class StoryBackgroundAssetData {
 
 class StoryBackgroundRepository {
   static const _keyPrefix = 'storytale.background_catalog.v1.';
+  static final ValueNotifier<int> revision = ValueNotifier<int>(0);
 
   Future<List<StoryBackgroundAssetData>> load(String bookId) async {
     final preferences = await SharedPreferences.getInstance();
@@ -188,15 +189,35 @@ class StoryBackgroundRepository {
     return _persist(candidate.bookId, assets);
   }
 
+  Future<StoryBackgroundAssetData?> loadApproved({
+    required String bookId,
+    required String locationId,
+    required String stateId,
+  }) async {
+    for (final asset in await load(bookId)) {
+      if (asset.locationId == locationId &&
+          asset.stateId == stateId &&
+          asset.approved &&
+          asset.isVisualNovelSize) {
+        return asset;
+      }
+    }
+    return null;
+  }
+
   Future<List<StoryBackgroundAssetData>> _persist(
     String bookId,
     List<StoryBackgroundAssetData> assets,
   ) async {
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(
+    final saved = await preferences.setString(
       '$_keyPrefix$bookId',
       jsonEncode(assets.map((item) => item.toJson()).toList()),
     );
+    if (!saved) {
+      throw StateError('The background catalog could not be saved.');
+    }
+    revision.value++;
     return List.unmodifiable(assets);
   }
 }

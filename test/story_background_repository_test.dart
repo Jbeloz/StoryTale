@@ -60,6 +60,25 @@ void main() {
     expect(assets.single.assetId, 'background.book_1.garden.night');
   });
 
+  test('approved lookup requires the exact location and state', () async {
+    final repository = StoryBackgroundRepository();
+    await repository.save(_asset(approved: true));
+
+    final match = await repository.loadApproved(
+      bookId: 'book-1',
+      locationId: 'garden',
+      stateId: 'night',
+    );
+    final wrongState = await repository.loadApproved(
+      bookId: 'book-1',
+      locationId: 'garden',
+      stateId: 'day',
+    );
+
+    expect(match?.assetId, 'background.book_1.garden.night');
+    expect(wrongState, isNull);
+  });
+
   test('legacy assets without dimensions are not treated as landscape', () {
     final legacy = StoryBackgroundAssetData.fromJson({
       'assetId': 'legacy',

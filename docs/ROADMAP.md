@@ -59,8 +59,8 @@ animation limits, validation, storage, and safe fallbacks.
 | 2. Sprite Studio and starter faces | **Prototype done** | Rig selection, bones, poses, layers, five starter actor profiles, modular face sets, and Story Mode loading work |
 | 3. Visual-novel runtime and Gemini contract | **Prototype done** | Cutscenes, shots, beats, layouts, facing, depth, camera presets, movement, transitions, and validated Gemini plans work with safe fixtures |
 | 4. Story Bible and location requirements | **Partial** | Entity extraction, review, automatic approval, specific locations, required background pairs, and the local background catalog work |
-| 5. Final visual-novel backgrounds | **Current** | Generation and approval work, but the approved asset is not yet appearing in the real Animated Story Mode flow |
-| 6. Foreground and non-human entity assets | **Planned** | Generate, review, register, and render matching animals, creatures, plants, and props |
+| 5. Final visual-novel backgrounds | **Done** | Generate, review, approve, persist, resolve, refresh, and render exact location/state backgrounds in Story Mode |
+| 6. Foreground and non-human entity assets | **Current** | Generate, review, register, and render matching animals, creatures, plants, and props |
 | 7. Generated book-specific humans | **Planned** | Create one approved Gemini master, transparent rig, face catalog, outfit, and reusable identity per important human |
 | 8. Persistent books and volumes | **Planned** | Save EPUBs, books, progress, story bibles, assets, jobs, and `Book -> Volume -> Chapter` data across restarts |
 | 9. Complete ChapterStory builder | **Planned** | Assemble approved assets, exact text coverage, subtitles, moral, movement, and manifests for any imported chapter |
@@ -166,7 +166,7 @@ Completed:
 The Story Bible and location-requirement foundation now feeds the completed
 landscape background workflow. Broader entity assets remain Phase 6 work.
 
-## Current phase
+## Completed background phase
 
 ### Phase 5 - Final visual-novel backgrounds
 
@@ -215,21 +215,21 @@ Validated so far:
 - provider output, dimensions, prompt construction, review, approval, rejection,
   and ordered key matching pass targeted tests
 
-Blocking acceptance defect found during manual app testing:
+Playback acceptance defect resolved:
 
-- an approved generated background remains replaced by the fallback image in
-  Animated Story Mode
-- Phase 5 remains current until the saved approved record is traced through the
-  active book, chapter, cutscene, and stage lifecycle and visibly rendered
-- add an integration test that saves an approved `1024 x 576` asset, opens the
-  matching story shot, and confirms that the approved image is used instead of
-  the fallback
+- the repository now exposes exact approved `locationId + stateId` lookup
+- successful catalog writes notify an already-open Story Mode page to reload
+- failed local catalog writes are reported instead of silently pretending to
+  save
+- Story Mode also provides a small manual reload action for recovery
+- the regression test saves and approves a `1024 x 576` asset while Story Mode
+  is already open and confirms that it replaces the fallback
 
-## Planned phases after backgrounds
+## Current phase
 
 ### Phase 6 - Foreground and non-human entity assets
 
-Status: **Planned after the Phase 5 playback defect is fixed.**
+Status: **Current.**
 
 Implementation order:
 
@@ -431,7 +431,7 @@ These decisions must be recorded here when resolved.
 | `ANIMATED_STORY_SCENE_LIBRARY.md` | Approved layout, camera, transition, motion, and analyzer IDs |
 | `STORY_ANALYSIS_CONTRACT.md` | Gemini input/output and validation boundary |
 | `STORY_BIBLE_ENTITY_ASSET_PLAN.md` | Entity types, approval, asset ownership, and safe fallback |
-| `VISUAL_NOVEL_BACKGROUND_PLAN.md` | Current landscape-background implementation contract |
+| `VISUAL_NOVEL_BACKGROUND_PLAN.md` | Completed landscape-background implementation contract |
 | `SPRITE_STUDIO_PLAN.md` | Rig and pose editor behavior |
 | `MODULAR_FACE_SYSTEM_PLAN.md` | Face-part catalogs and set behavior |
 | `CLOUDFLARE_IMAGE_GENERATOR.md` | Worker routes and provider responsibilities |
