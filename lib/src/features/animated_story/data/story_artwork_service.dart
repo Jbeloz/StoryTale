@@ -2,8 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:image/image.dart' as image;
 
 import 'sprite_references.dart';
+import 'visual_novel_background_brief.dart';
 
 class StoryArtworkService {
   StoryArtworkService({
@@ -29,16 +31,30 @@ class StoryArtworkService {
 
   bool get isConfigured => token.trim().isNotEmpty;
 
-  Future<Uint8List> generateBackground(String sceneDetails) {
-    final description = sceneDetails.trim().isEmpty
-        ? 'a quiet storybook forest clearing at sunrise'
-        : sceneDetails.trim();
-    final prompt =
-        'Create one polished 2D storybook background showing '
-        '$description. Use a wide stage-like composition with clear foreground '
-        'space for character sprites. No people, characters, text, speech '
-        'bubbles, UI, border, or watermark.';
-    return _generate(kind: 'background', prompt: prompt);
+  Future<GeneratedBackgroundData> generateBackground(
+    VisualNovelBackgroundBrief brief,
+  ) async {
+    final prompt = const VisualNovelBackgroundPromptBuilder().build(brief);
+    final result = await _generate(kind: 'background', prompt: prompt);
+    final decoded = image.decodeImage(result.bytes);
+    if (decoded == null) {
+      throw const ArtworkGenerationException(
+        'Cloudflare returned a corrupt background image.',
+      );
+    }
+    if (decoded.width != 1024 || decoded.height != 576) {
+      throw ArtworkGenerationException(
+        'The background was ${decoded.width}x${decoded.height}; '
+        'StoryTale requires exactly 1024x576.',
+      );
+    }
+    return GeneratedBackgroundData(
+      bytes: result.bytes,
+      mimeType: result.mimeType,
+      width: decoded.width,
+      height: decoded.height,
+      prompt: prompt,
+    );
   }
 
   Future<Uint8List> generateSpriteMaster(String characterDetails) async {
@@ -57,10 +73,14 @@ class StoryArtworkService {
         ),
       );
     }
-    return _generate(kind: 'sprite', prompt: description, files: files);
+    return (await _generate(
+      kind: 'sprite',
+      prompt: description,
+      files: files,
+    )).bytes;
   }
 
-  Future<Uint8List> _generate({
+  Future<_WorkerImage> _generate({
     required String kind,
     required String prompt,
     List<http.MultipartFile> files = const [],
@@ -87,7 +107,15 @@ class StoryArtworkService {
         _errorMessage(bytes, response.statusCode),
       );
     }
-    return Uint8List.fromList(bytes);
+    final mimeType =
+        response.headers['content-type']?.split(';').first.trim() ??
+        'application/octet-stream';
+    if (!const {'image/png', 'image/jpeg', 'image/webp'}.contains(mimeType)) {
+      throw ArtworkGenerationException(
+        'The image service returned an unsupported file type: $mimeType.',
+      );
+    }
+    return _WorkerImage(Uint8List.fromList(bytes), mimeType);
   }
 
   String _errorMessage(List<int> bytes, int statusCode) {
@@ -101,6 +129,29 @@ class StoryArtworkService {
     }
     return 'Story artwork generation failed (HTTP $statusCode).';
   }
+}
+
+class GeneratedBackgroundData {
+  const GeneratedBackgroundData({
+    required this.bytes,
+    required this.mimeType,
+    required this.width,
+    required this.height,
+    required this.prompt,
+  });
+
+  final Uint8List bytes;
+  final String mimeType;
+  final int width;
+  final int height;
+  final String prompt;
+}
+
+class _WorkerImage {
+  const _WorkerImage(this.bytes, this.mimeType);
+
+  final Uint8List bytes;
+  final String mimeType;
 }
 
 class ArtworkGenerationException implements Exception {

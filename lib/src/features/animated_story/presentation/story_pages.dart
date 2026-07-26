@@ -12,7 +12,9 @@ import '../data/story_bible_models.dart';
 import '../data/story_artwork_service.dart';
 import '../data/story_analysis_contract.dart';
 import '../data/story_analysis_service.dart';
+import '../data/story_background_repository.dart';
 import '../data/story_entity_service.dart';
+import '../data/visual_novel_background_brief.dart';
 import 'story_background_catalog_page.dart';
 import 'story_bible_review_page.dart';
 import 'sprite_positioner_page.dart';
@@ -219,11 +221,34 @@ class AnimatedStoryPage extends StatefulWidget {
 }
 
 class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
+  final _backgroundRepository = StoryBackgroundRepository();
   int _shotIndex = 0;
   int _beatIndex = 0;
   bool _playing = false;
   bool _filipinoSubtitles = false;
   bool _music = true;
+  String? _backgroundBookId;
+  Map<String, Uint8List> _approvedBackgrounds = const {};
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final bookId = StoryTaleScope.of(context).currentBook?.id;
+    if (bookId == null || bookId == _backgroundBookId) return;
+    _backgroundBookId = bookId;
+    _loadBackgrounds(bookId);
+  }
+
+  Future<void> _loadBackgrounds(String bookId) async {
+    final assets = await _backgroundRepository.load(bookId);
+    if (!mounted || _backgroundBookId != bookId) return;
+    setState(() {
+      _approvedBackgrounds = {
+        for (final asset in assets)
+          if (asset.approved && asset.isVisualNovelSize) asset.key: asset.bytes,
+      };
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -253,6 +278,12 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
     }
     final shots = story.shots;
     final shot = shots[_shotIndex];
+    final backgroundRequirement = story.backgroundRequirementForShot(
+      _shotIndex,
+    );
+    final backgroundBytes = backgroundRequirement == null
+        ? null
+        : _approvedBackgrounds[backgroundRequirement.key];
     final beat = shot.beats[_beatIndex];
     final subtitle = _filipinoSubtitles
         ? beat.filipinoText ?? 'Filipino: ${beat.originalText}'
@@ -279,22 +310,28 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-              child: AnimatedSwitcher(
-                duration: transitionDuration,
-                reverseDuration: transitionDuration,
-                transitionBuilder: (child, animation) {
-                  return buildStoryShotTransition(
-                    transitionId: shot.transitionId,
-                    reducedMotion: reducedMotion,
-                    animation: animation,
-                    child: child,
-                  );
-                },
-                child: VisualNovelStage(
-                  key: ValueKey('story-shot-${shot.id}'),
-                  shot: shot,
-                  speaker: beat.speakerId,
-                  subtitle: subtitle,
+              child: Center(
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: AnimatedSwitcher(
+                    duration: transitionDuration,
+                    reverseDuration: transitionDuration,
+                    transitionBuilder: (child, animation) {
+                      return buildStoryShotTransition(
+                        transitionId: shot.transitionId,
+                        reducedMotion: reducedMotion,
+                        animation: animation,
+                        child: child,
+                      );
+                    },
+                    child: VisualNovelStage(
+                      key: ValueKey('story-shot-${shot.id}'),
+                      shot: shot,
+                      speaker: beat.speakerId,
+                      subtitle: subtitle,
+                      backgroundBytes: backgroundBytes,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -554,9 +591,14 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
         }
       } else {
         final background = await _service.generateBackground(
-          _backgroundDetails.text,
+          VisualNovelBackgroundBrief.fromApprovedLocation(
+            locationId: 'preview',
+            stateId: 'unspecified',
+            place: 'Preview location',
+            sourceBrief: _backgroundDetails.text,
+          ),
         );
-        if (mounted) setState(() => _generatedImage = background);
+        if (mounted) setState(() => _generatedImage = background.bytes);
       }
     } on ArtworkGenerationException catch (error) {
       if (mounted) setState(() => _error = error.message);

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 import '../../../../shared/models/storytale_models.dart';
@@ -41,6 +43,7 @@ class VisualNovelStage extends StatelessWidget {
     required this.shot,
     required this.speaker,
     required this.subtitle,
+    this.backgroundBytes,
     super.key,
   });
 
@@ -50,6 +53,7 @@ class VisualNovelStage extends StatelessWidget {
   final StoryShotPlanData shot;
   final String speaker;
   final String subtitle;
+  final Uint8List? backgroundBytes;
 
   @override
   Widget build(BuildContext context) {
@@ -95,14 +99,21 @@ class VisualNovelStage extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    StoryTaleImagePlaceholder(
-                      key: const Key('visual-novel-background'),
-                      path: shot.backgroundPath ?? fallbackBackground,
-                      label: 'Chapter background',
-                      icon: Icons.landscape_outlined,
-                      height: double.infinity,
-                      borderRadius: 0,
-                    ),
+                    if (backgroundBytes != null)
+                      Image.memory(
+                        backgroundBytes!,
+                        key: const Key('approved-visual-novel-background'),
+                        fit: BoxFit.cover,
+                      )
+                    else
+                      StoryTaleImagePlaceholder(
+                        key: const Key('visual-novel-background'),
+                        path: shot.backgroundPath ?? fallbackBackground,
+                        label: 'Chapter background',
+                        icon: Icons.landscape_outlined,
+                        height: double.infinity,
+                        borderRadius: 0,
+                      ),
                     const DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(

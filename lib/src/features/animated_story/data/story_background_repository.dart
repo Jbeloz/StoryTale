@@ -13,6 +13,10 @@ class StoryBackgroundAssetData {
     required this.imageBase64,
     required this.createdAt,
     this.approved = false,
+    this.mimeType = 'image/jpeg',
+    this.width = 1024,
+    this.height = 576,
+    this.brief = const {},
   });
 
   final String assetId;
@@ -23,14 +27,20 @@ class StoryBackgroundAssetData {
   final String imageBase64;
   final String createdAt;
   final bool approved;
+  final String mimeType;
+  final int width;
+  final int height;
+  final Map<String, dynamic> brief;
 
   String get key => '$locationId::$stateId';
 
   Uint8List get bytes => base64Decode(imageBase64);
 
-  StoryBackgroundAssetData copyWith({bool? approved}) {
+  bool get isVisualNovelSize => width == 1024 && height == 576;
+
+  StoryBackgroundAssetData copyWith({String? assetId, bool? approved}) {
     return StoryBackgroundAssetData(
-      assetId: assetId,
+      assetId: assetId ?? this.assetId,
       bookId: bookId,
       locationId: locationId,
       stateId: stateId,
@@ -38,6 +48,10 @@ class StoryBackgroundAssetData {
       imageBase64: imageBase64,
       createdAt: createdAt,
       approved: approved ?? this.approved,
+      mimeType: mimeType,
+      width: width,
+      height: height,
+      brief: brief,
     );
   }
 
@@ -50,6 +64,10 @@ class StoryBackgroundAssetData {
     'imageBase64': imageBase64,
     'createdAt': createdAt,
     'approved': approved,
+    'mimeType': mimeType,
+    'width': width,
+    'height': height,
+    'brief': brief,
   };
 
   factory StoryBackgroundAssetData.fromJson(Map<String, dynamic> json) {
@@ -62,6 +80,10 @@ class StoryBackgroundAssetData {
       imageBase64: json['imageBase64'] as String,
       createdAt: json['createdAt'] as String? ?? '',
       approved: json['approved'] as bool? ?? false,
+      mimeType: json['mimeType'] as String? ?? 'image/jpeg',
+      width: json['width'] as int? ?? 0,
+      height: json['height'] as int? ?? 0,
+      brief: Map<String, dynamic>.from(json['brief'] as Map? ?? const {}),
     );
   }
 
@@ -72,6 +94,15 @@ class StoryBackgroundAssetData {
   }) {
     return 'background.${_segment(bookId)}.'
         '${_segment(locationId)}.${_segment(stateId)}';
+  }
+
+  static String candidateId({
+    required String bookId,
+    required String locationId,
+    required String stateId,
+    required DateTime createdAt,
+  }) {
+    return '${stableId(bookId: bookId, locationId: locationId, stateId: stateId)}.candidate.${createdAt.millisecondsSinceEpoch}';
   }
 
   static String _segment(String value) {
@@ -114,9 +145,56 @@ class StoryBackgroundRepository {
     } else {
       assets[index] = asset;
     }
+    return _persist(asset.bookId, assets);
+  }
+
+  Future<List<StoryBackgroundAssetData>> saveCandidate(
+    StoryBackgroundAssetData candidate,
+  ) async {
+    final assets = [
+      for (final asset in await load(candidate.bookId))
+        if (asset.key != candidate.key || asset.approved) asset,
+      candidate.copyWith(approved: false),
+    ];
+    return _persist(candidate.bookId, assets);
+  }
+
+  Future<List<StoryBackgroundAssetData>> approveCandidate(
+    StoryBackgroundAssetData candidate,
+  ) async {
+    final approved = candidate.copyWith(
+      assetId: StoryBackgroundAssetData.stableId(
+        bookId: candidate.bookId,
+        locationId: candidate.locationId,
+        stateId: candidate.stateId,
+      ),
+      approved: true,
+    );
+    final assets = [
+      for (final asset in await load(candidate.bookId))
+        if (asset.key != candidate.key) asset,
+      approved,
+    ];
+    return _persist(candidate.bookId, assets);
+  }
+
+  Future<List<StoryBackgroundAssetData>> rejectCandidate(
+    StoryBackgroundAssetData candidate,
+  ) async {
+    final assets = [
+      for (final asset in await load(candidate.bookId))
+        if (asset.assetId != candidate.assetId) asset,
+    ];
+    return _persist(candidate.bookId, assets);
+  }
+
+  Future<List<StoryBackgroundAssetData>> _persist(
+    String bookId,
+    List<StoryBackgroundAssetData> assets,
+  ) async {
     final preferences = await SharedPreferences.getInstance();
     await preferences.setString(
-      '$_keyPrefix${asset.bookId}',
+      '$_keyPrefix$bookId',
       jsonEncode(assets.map((item) => item.toJson()).toList()),
     );
     return List.unmodifiable(assets);

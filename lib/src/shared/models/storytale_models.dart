@@ -349,6 +349,21 @@ class ChapterStoryData {
     return cutscenes.length;
   }
 
+  StoryBackgroundRequirementData? backgroundRequirementForShot(int shotIndex) {
+    var offset = 0;
+    for (final cutscene in cutscenes) {
+      final end = offset + cutscene.shots.length;
+      if (shotIndex >= offset && shotIndex < end) {
+        return StoryBackgroundRequirementData(
+          locationId: cutscene.locationId,
+          stateId: cutscene.backgroundStateId,
+        );
+      }
+      offset = end;
+    }
+    return null;
+  }
+
   factory ChapterStoryData.fromJson(Map<String, dynamic> json) {
     return ChapterStoryData(
       chapterId: json['chapterId'] as String,

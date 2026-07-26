@@ -1,10 +1,10 @@
-const BACKGROUND_MODEL = "@cf/black-forest-labs/flux-1-schnell" as const;
+const BACKGROUND_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0" as const;
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Authorization, Content-Type",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Expose-Headers":
-    "X-Image-Model, X-Image-Provider, X-Analysis-Model, X-Request-Id",
+    "X-Image-Model, X-Image-Provider, X-Image-Width, X-Image-Height, X-Analysis-Model, X-Request-Id",
 };
 
 type StoryTaleEnv = Env & {
@@ -137,7 +137,7 @@ async function isAuthorized(request: Request, token: string): Promise<boolean> {
 async function parseBody(request: Request) {
   const form = await request.formData();
   const prompt = String(form.get("prompt") ?? "").trim();
-  if (prompt.length < 3 || prompt.length > 500) return null;
+  if (prompt.length < 3 || prompt.length > 2_500) return null;
 
   const references: File[] = [];
   let referenceBytes = 0;
@@ -1059,13 +1059,70 @@ function spritePrompt(details: string, mode: SpriteMode): string {
 async function generateBackground(
   prompt: string,
   env: StoryTaleEnv,
-): Promise<{ bytes: Uint8Array; mimeType: string }> {
-  const result = await env.AI.run(BACKGROUND_MODEL, {
+): Promise<{ bytes: Uint8Array; mimeType: string; width: number; height: number }> {
+  const stream = await env.AI.run(BACKGROUND_MODEL, {
     prompt,
-    steps: 4,
+    negative_prompt:
+      "people, person, character, animal, text, letters, logo, watermark, UI, " +
+      "frame, floating island, diorama, isolated object, portrait, close-up, " +
+      "square composition, obstructed foreground",
+    width: 1024,
+    height: 576,
+    num_steps: 20,
+    guidance: 7.5,
   });
-  if (!result.image) throw new Error("Workers AI returned no image");
-  return { bytes: base64ToBytes(result.image), mimeType: "image/jpeg" };
+  const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
+  const image = imageDetails(bytes);
+  if (!image) throw new Error("Workers AI returned an unsupported image");
+  if (image.width !== 1024 || image.height !== 576) {
+    throw new Error(
+      `Workers AI returned ${image.width}x${image.height}; expected 1024x576`,
+    );
+  }
+  return { bytes, ...image };
+}
+
+function imageDetails(
+  bytes: Uint8Array,
+): { mimeType: string; width: number; height: number } | null {
+  if (
+    bytes.length > 24 &&
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47
+  ) {
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    return {
+      mimeType: "image/png",
+      width: view.getUint32(16),
+      height: view.getUint32(20),
+    };
+  }
+  if (bytes.length > 4 && bytes[0] === 0xff && bytes[1] === 0xd8) {
+    let offset = 2;
+    while (offset + 8 < bytes.length) {
+      if (bytes[offset] !== 0xff) {
+        offset++;
+        continue;
+      }
+      const marker = bytes[offset + 1];
+      const length = (bytes[offset + 2] << 8) | bytes[offset + 3];
+      if (length < 2) break;
+      if (
+        marker >= 0xc0 &&
+        marker <= 0xc3
+      ) {
+        return {
+          mimeType: "image/jpeg",
+          height: (bytes[offset + 5] << 8) | bytes[offset + 6],
+          width: (bytes[offset + 7] << 8) | bytes[offset + 8],
+        };
+      }
+      offset += length + 2;
+    }
+  }
+  return null;
 }
 
 async function generateSprite(
@@ -1152,7 +1209,7 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
   const kind: ImageKind = kindValue;
   const body = await parseBody(request);
   if (!body) {
-    return json({ error: "Use a 3-500 character prompt and up to four small image references" }, 400);
+    return json({ error: "Use a 3-2500 character prompt and up to four small image references" }, 400);
   }
 
   const rateLimit = await env.IMAGE_RATE_LIMIT.limit({ key: "private-prototype" });
@@ -1160,7 +1217,12 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
 
   let model: string = BACKGROUND_MODEL;
   let provider = "cloudflare-workers-ai";
-  let result: { bytes: Uint8Array; mimeType: string };
+  let result: {
+    bytes: Uint8Array;
+    mimeType: string;
+    width?: number;
+    height?: number;
+  };
   if (kind === "background") {
     result = await generateBackground(body.prompt, env);
   } else {
@@ -1193,6 +1255,8 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
     model,
     provider,
     references: body.references.length,
+    width: result.width,
+    height: result.height,
   }));
 
   const responseBody = new Uint8Array(result.bytes.byteLength);
@@ -1204,6 +1268,8 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
       "Cache-Control": "no-store",
       "X-Image-Model": model,
       "X-Image-Provider": provider,
+      ...(result.width ? { "X-Image-Width": String(result.width) } : {}),
+      ...(result.height ? { "X-Image-Height": String(result.height) } : {}),
       "X-Request-Id": requestId,
     },
   });

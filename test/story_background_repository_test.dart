@@ -22,25 +22,64 @@ void main() {
   });
 
   test(
-    'repository replaces the same location state and keeps approval',
+    'candidate replacement keeps the approved background until accepted',
     () async {
       final repository = StoryBackgroundRepository();
-      final pending = _asset(approved: false);
-      await repository.save(pending);
-      await repository.save(pending.copyWith(approved: true));
+      final approved = _asset(approved: true);
+      final candidate = _asset(
+        approved: false,
+        assetId: 'background.book_1.garden.night.candidate.1',
+      );
+      await repository.save(approved);
+      await repository.saveCandidate(candidate);
 
-      final assets = await repository.load('book-1');
+      var assets = await repository.load('book-1');
+      expect(assets, hasLength(2));
+      expect(assets.where((asset) => asset.approved), hasLength(1));
 
+      await repository.rejectCandidate(candidate);
+      assets = await repository.load('book-1');
       expect(assets, hasLength(1));
       expect(assets.single.approved, isTrue);
       expect(assets.single.bytes, orderedEquals(Uint8List.fromList([1, 2, 3])));
     },
   );
+
+  test('approving a candidate promotes it to the stable asset ID', () async {
+    final repository = StoryBackgroundRepository();
+    final candidate = _asset(
+      approved: false,
+      assetId: 'background.book_1.garden.night.candidate.2',
+    );
+
+    await repository.saveCandidate(candidate);
+    final assets = await repository.approveCandidate(candidate);
+
+    expect(assets, hasLength(1));
+    expect(assets.single.approved, isTrue);
+    expect(assets.single.assetId, 'background.book_1.garden.night');
+  });
+
+  test('legacy assets without dimensions are not treated as landscape', () {
+    final legacy = StoryBackgroundAssetData.fromJson({
+      'assetId': 'legacy',
+      'bookId': 'book-1',
+      'locationId': 'garden',
+      'stateId': 'night',
+      'imageBase64': base64Encode([1, 2, 3]),
+      'approved': true,
+    });
+
+    expect(legacy.isVisualNovelSize, isFalse);
+  });
 }
 
-StoryBackgroundAssetData _asset({required bool approved}) {
+StoryBackgroundAssetData _asset({
+  required bool approved,
+  String assetId = 'background.book_1.garden.night',
+}) {
   return StoryBackgroundAssetData(
-    assetId: 'background.book_1.garden.night',
+    assetId: assetId,
     bookId: 'book-1',
     locationId: 'garden',
     stateId: 'night',

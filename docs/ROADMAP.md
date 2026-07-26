@@ -59,8 +59,8 @@ animation limits, validation, storage, and safe fallbacks.
 | 2. Sprite Studio and starter faces | **Prototype done** | Rig selection, bones, poses, layers, five starter actor profiles, modular face sets, and Story Mode loading work |
 | 3. Visual-novel runtime and Gemini contract | **Prototype done** | Cutscenes, shots, beats, layouts, facing, depth, camera presets, movement, transitions, and validated Gemini plans work with safe fixtures |
 | 4. Story Bible and location requirements | **Partial** | Entity extraction, review, automatic approval, specific locations, required background pairs, and the local background catalog work |
-| 5. Final visual-novel backgrounds | **Current** | Replace the square smoke-test generator with approved landscape environments and connect them to matching cutscenes |
-| 6. Foreground and non-human entity assets | **Planned** | Generate, review, register, and render matching animals, creatures, plants, and props |
+| 5. Final visual-novel backgrounds | **Done** | Approved `1024 x 576` environments are generated, reviewed safely, and matched to exact location/state cutscenes |
+| 6. Foreground and non-human entity assets | **Current** | Generate, review, register, and render matching animals, creatures, plants, and props |
 | 7. Generated book-specific humans | **Planned** | Create one approved Gemini master, transparent rig, face catalog, outfit, and reusable identity per important human |
 | 8. Persistent books and volumes | **Planned** | Save EPUBs, books, progress, story bibles, assets, jobs, and `Book -> Volume -> Chapter` data across restarts |
 | 9. Complete ChapterStory builder | **Planned** | Assemble approved assets, exact text coverage, subtitles, moral, movement, and manifests for any imported chapter |
@@ -163,13 +163,10 @@ Completed:
 - ordered `locationId + backgroundStateId` requirements
 - stable local background records, review, approval, and entity registration
 
-Important limitation:
+The Story Bible and location-requirement foundation now feeds the completed
+landscape background workflow. Broader entity assets remain Phase 6 work.
 
-The background **catalog workflow** is implemented, but the current Cloudflare
-image route still produces a square FLUX smoke-test image. Final visual-novel
-background generation is Phase 5 and is not complete.
-
-## Current phase
+## Completed background phase
 
 ### Phase 5 - Final visual-novel backgrounds
 
@@ -206,12 +203,23 @@ Acceptance checks:
 - unchanged shots reuse one background
 - place and state changes use the correct ordered backgrounds
 
-Phase 5 is complete only after these checks pass. A successful square image
-request is not sufficient.
+Completed validation:
 
-## Planned phases after backgrounds
+- the deployed Cloudflare adapter returned a valid `1024 x 576` PNG
+- the reviewed sample was a continuous landscape environment without people,
+  text, floating islands, or a portrait composition
+- automated tests cover corrupt and wrong-sized output rejection
+- automated tests cover approved-background preservation during replacement
+- automated tests cover ordered matching across multiple places and two states
+  of one place
+- Story Mode loads only approved assets for the current
+  `locationId + backgroundStateId`
+
+## Current and planned phases after backgrounds
 
 ### Phase 6 - Foreground and non-human entity assets
+
+Status: **Current.**
 
 Implementation order:
 

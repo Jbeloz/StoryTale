@@ -1,9 +1,7 @@
 # Visual-Novel Background Plan
 
-Status: **current implementation phase; not yet complete.** The app and Worker
-must not be treated as complete until the implementation and validation steps
-below pass. See the [Master Roadmap](ROADMAP.md) for its dependencies and the
-phases that follow it.
+Status: **implemented and validated on 2026-07-26.** See the
+[Master Roadmap](ROADMAP.md) for the current phase and the phases that follow.
 
 ## Goal
 
@@ -91,12 +89,9 @@ portrait composition.
 
 ## Cloudflare generation plan
 
-The current FLUX.1 smoke-test route proves that Workers AI and authentication
-work, but its square output is not the final Story Mode background contract.
-
-The planned visual-novel route uses Cloudflare Workers AI with
+The deployed visual-novel route uses Cloudflare Workers AI with
 `@cf/stabilityai/stable-diffusion-xl-base-1.0` because it accepts explicit
-`width` and `height` inputs. The first target is:
+`width` and `height` inputs:
 
 ```text
 width: 1024

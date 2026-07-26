@@ -29,7 +29,7 @@ flowchart LR
     S --> U["Transparent Head + 9 Body Parts + Pose JSON"]
     U --> G
     J["Private Image Worker"] --> T
-    J --> L["Workers AI - current FLUX.1 / planned landscape SDXL"]
+    J --> L["Workers AI - landscape SDXL at 1024 x 576"]
     L --> R["Reviewed Visual-Novel Background"]
     R --> K["Saved Local Backgrounds"]
     K --> G
@@ -54,7 +54,7 @@ flowchart LR
 | Story Mode player | Moves sprites over backgrounds while playing voices, subtitles, and sound effects. |
 | Gemini image model | Uses `gemini-3.1-flash-image` with the proportion, approved-head, and approved-body references to create one master image. |
 | Cloudflare Image Worker | Private, rate-limited gateway. It routes sprite requests to Gemini and background requests to Workers AI. |
-| Workers AI | The current smoke-test route uses `@cf/black-forest-labs/flux-1-schnell`; the planned visual-novel route uses landscape SDXL with explicit dimensions. |
+| Workers AI | The visual-novel route uses `@cf/stabilityai/stable-diffusion-xl-base-1.0` with explicit `1024 x 576` dimensions. |
 | Location background catalog | Saves one generated image per required location/state pair, keeps it pending during review, and registers its stable asset ID only after approval. |
 | Local sprite processor | Removes the flat green background and prepares the approved head and nine cropped body parts without redrawing them. |
 | Sprite Studio | Edits compatible rigs and named poses with precise joint transforms, validated layer rules, and local pose storage. |
@@ -112,7 +112,7 @@ subjects and important objects follow the
 | Voice processing | On-device, generated before playback, then cached locally |
 | Story Mode | Sprites and simple movements |
 | Sprite creation | One Gemini `gemini-3.1-flash-image` master using the locked description and three references |
-| Background creation | Planned Cloudflare SDXL visual-novel stage at `1024 x 576`; FLUX.1 remains only the current square smoke-test route |
+| Background creation | Cloudflare SDXL visual-novel stages at `1024 x 576`, validated before local approval |
 | Sprite transparency | Local green removal; transparent cropped parts use saved positions and joint pivots |
 | Image storage | Save accepted sprites and backgrounds on the device |
 

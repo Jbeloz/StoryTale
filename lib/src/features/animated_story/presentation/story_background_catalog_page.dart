@@ -10,6 +10,7 @@ import '../data/story_background_repository.dart';
 import '../data/story_analysis_contract.dart';
 import '../data/story_bible_models.dart';
 import '../data/story_bible_repository.dart';
+import '../data/visual_novel_background_brief.dart';
 
 class StoryBackgroundCatalogPage extends StatefulWidget {
   const StoryBackgroundCatalogPage({
@@ -119,7 +120,7 @@ class _StoryBackgroundCatalogPageState
       );
     }
     final approved = _requirements.where((requirement) {
-      return _assetFor(requirement)?.approved == true;
+      return _approvedAssetFor(requirement) != null;
     }).length;
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -156,7 +157,8 @@ class _StoryBackgroundCatalogPageState
 
   Widget _backgroundCard(StoryBackgroundRequirementData requirement) {
     final location = _locationFor(requirement.locationId);
-    final asset = _assetFor(requirement);
+    final approvedAsset = _approvedAssetFor(requirement);
+    final candidate = _pendingAssetFor(requirement);
     final working = _workingKey == requirement.key;
     final canGenerate = location != null;
     return Card(
@@ -173,9 +175,9 @@ class _StoryBackgroundCatalogPageState
               title: Text(location?.name ?? requirement.locationId),
               subtitle: Text('State: ${requirement.stateId}'),
               trailing: Icon(
-                asset?.approved == true
+                approvedAsset != null
                     ? Icons.verified
-                    : asset == null
+                    : candidate == null
                     ? Icons.image_not_supported_outlined
                     : Icons.pending_outlined,
               ),
@@ -187,21 +189,10 @@ class _StoryBackgroundCatalogPageState
                 const Chip(label: Text('Built-in preview location')),
               ],
             ],
-            if (asset != null) ...[
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: Image.memory(asset.bytes, fit: BoxFit.cover),
-                ),
-              ),
-              const SizedBox(height: 8),
-              SelectableText(
-                asset.assetId,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
+            if (approvedAsset != null)
+              _assetPreview('Approved background', approvedAsset),
+            if (candidate != null)
+              _assetPreview('Replacement candidate', candidate),
             if (!canGenerate) ...[
               const SizedBox(height: 8),
               const Text(
@@ -223,26 +214,66 @@ class _StoryBackgroundCatalogPageState
                         ? () => _generate(requirement, location)
                         : null,
                     icon: Icon(
-                      asset == null
+                      approvedAsset == null && candidate == null
                           ? Icons.auto_awesome_outlined
                           : Icons.refresh,
                     ),
-                    label: Text(asset == null ? 'Generate' : 'Regenerate'),
-                  ),
-                  if (asset != null)
-                    OutlinedButton.icon(
-                      onPressed: () => _setApproval(asset, !asset.approved),
-                      icon: Icon(
-                        asset.approved
-                            ? Icons.undo
-                            : Icons.check_circle_outline,
-                      ),
-                      label: Text(asset.approved ? 'Mark pending' : 'Approve'),
+                    label: Text(
+                      approvedAsset == null
+                          ? candidate == null
+                                ? 'Generate'
+                                : 'Regenerate candidate'
+                          : 'Generate replacement',
                     ),
+                  ),
+                  if (candidate != null) ...[
+                    OutlinedButton.icon(
+                      onPressed: () => _approveCandidate(candidate),
+                      icon: const Icon(Icons.check_circle_outline),
+                      label: const Text('Approve candidate'),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => _rejectCandidate(candidate),
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Reject'),
+                    ),
+                  ],
                 ],
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _assetPreview(String label, StoryBackgroundAssetData asset) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: ColoredBox(
+                color: Colors.black12,
+                child: Image.memory(asset.bytes, fit: BoxFit.contain),
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${asset.width}x${asset.height} • ${asset.mimeType}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          SelectableText(
+            asset.assetId,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
       ),
     );
   }
@@ -253,23 +284,34 @@ class _StoryBackgroundCatalogPageState
   ) async {
     setState(() => _workingKey = requirement.key);
     try {
-      final prompt = _promptFor(location, requirement.stateId);
-      final bytes = await _artworkService.generateBackground(prompt);
+      final brief = VisualNovelBackgroundBrief.fromApprovedLocation(
+        locationId: requirement.locationId,
+        stateId: requirement.stateId,
+        place: location.name,
+        sourceBrief: location.backgroundBrief,
+        parentSetting: location.parentSetting,
+      );
+      final generated = await _artworkService.generateBackground(brief);
+      final createdAt = DateTime.now().toUtc();
       final asset = StoryBackgroundAssetData(
-        assetId: StoryBackgroundAssetData.stableId(
+        assetId: StoryBackgroundAssetData.candidateId(
           bookId: _bookId!,
           locationId: requirement.locationId,
           stateId: requirement.stateId,
+          createdAt: createdAt,
         ),
         bookId: _bookId!,
         locationId: requirement.locationId,
         stateId: requirement.stateId,
-        prompt: prompt,
-        imageBase64: base64Encode(bytes),
-        createdAt: DateTime.now().toUtc().toIso8601String(),
+        prompt: generated.prompt,
+        imageBase64: base64Encode(generated.bytes),
+        createdAt: createdAt.toIso8601String(),
+        mimeType: generated.mimeType,
+        width: generated.width,
+        height: generated.height,
+        brief: brief.toJson(),
       );
-      _assets = await _backgroundRepository.save(asset);
-      await _syncLocationAsset(asset, approved: false);
+      _assets = await _backgroundRepository.saveCandidate(asset);
       _message('Background generated. Review it before approval.');
     } on ArtworkGenerationException catch (error) {
       _message(error.message);
@@ -280,19 +322,25 @@ class _StoryBackgroundCatalogPageState
     }
   }
 
-  Future<void> _setApproval(
-    StoryBackgroundAssetData asset,
-    bool approved,
-  ) async {
-    setState(() => _workingKey = asset.key);
-    final updated = asset.copyWith(approved: approved);
-    _assets = await _backgroundRepository.save(updated);
-    await _syncLocationAsset(updated, approved: approved);
+  Future<void> _approveCandidate(StoryBackgroundAssetData candidate) async {
+    setState(() => _workingKey = candidate.key);
+    _assets = await _backgroundRepository.approveCandidate(candidate);
+    final approved = _assets.firstWhere(
+      (asset) => asset.key == candidate.key && asset.approved,
+    );
+    await _syncLocationAsset(approved, approved: true);
     if (mounted) {
       setState(() => _workingKey = null);
-      _message(
-        approved ? 'Background approved.' : 'Background marked pending.',
-      );
+      _message('Background approved.');
+    }
+  }
+
+  Future<void> _rejectCandidate(StoryBackgroundAssetData candidate) async {
+    setState(() => _workingKey = candidate.key);
+    _assets = await _backgroundRepository.rejectCandidate(candidate);
+    if (mounted) {
+      setState(() => _workingKey = null);
+      _message('Candidate rejected. The approved background was kept.');
     }
   }
 
@@ -353,24 +401,26 @@ class _StoryBackgroundCatalogPageState
     return null;
   }
 
-  StoryBackgroundAssetData? _assetFor(
+  StoryBackgroundAssetData? _approvedAssetFor(
     StoryBackgroundRequirementData requirement,
   ) {
     for (final asset in _assets) {
-      if (asset.key == requirement.key) return asset;
+      if (asset.key == requirement.key &&
+          asset.approved &&
+          asset.isVisualNovelSize) {
+        return asset;
+      }
     }
     return null;
   }
 
-  String _promptFor(_BackgroundLocation location, String stateId) {
-    return [
-      location.backgroundBrief,
-      'Location: ${location.name}.',
-      if (location.parentSetting?.trim().isNotEmpty ?? false)
-        'Wider setting: ${location.parentSetting}.',
-      'Required visual state: $stateId.',
-      'Keep the place recognizable when another state of it is generated.',
-    ].join(' ');
+  StoryBackgroundAssetData? _pendingAssetFor(
+    StoryBackgroundRequirementData requirement,
+  ) {
+    for (final asset in _assets.reversed) {
+      if (asset.key == requirement.key && !asset.approved) return asset;
+    }
+    return null;
   }
 
   void _message(String text) {
