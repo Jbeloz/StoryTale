@@ -14,9 +14,30 @@ function Get-EnvValue([string]$Name) {
     return ($line -split '=', 2)[1].Trim()
 }
 
+function Get-AndroidDeviceId {
+    $allDevices = (& flutter devices --machine) | ConvertFrom-Json
+    $devices = @($allDevices |
+        Where-Object { $_.targetPlatform -like 'android-*' -and $_.isSupported })
+
+    if ($devices.Count -eq 0) {
+        throw 'No Android phone found. Connect and unlock the phone, then allow USB debugging.'
+    }
+    if ($devices.Count -gt 1) {
+        $ids = ($devices | ForEach-Object { "$($_.name) ($($_.id))" }) -join ', '
+        throw "More than one Android device found: $ids. Run again using -Device followed by the chosen ID."
+    }
+
+    Write-Host "Using Android phone: $($devices[0].name) ($($devices[0].id))"
+    return $devices[0].id
+}
+
 Push-Location $root
 $poseAdmin = $null
 try {
+    if ($Device -eq 'android') {
+        $Device = Get-AndroidDeviceId
+    }
+
     & "$PSScriptRoot\sync_voices.ps1"
 
     if ($Device -eq 'web-server') {
