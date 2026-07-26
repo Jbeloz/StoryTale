@@ -59,8 +59,8 @@ animation limits, validation, storage, and safe fallbacks.
 | 2. Sprite Studio and starter faces | **Prototype done** | Rig selection, bones, poses, layers, five starter actor profiles, modular face sets, and Story Mode loading work |
 | 3. Visual-novel runtime and Gemini contract | **Prototype done** | Cutscenes, shots, beats, layouts, facing, depth, camera presets, movement, transitions, and validated Gemini plans work with safe fixtures |
 | 4. Story Bible and location requirements | **Partial** | Entity extraction, review, automatic approval, specific locations, required background pairs, and the local background catalog work |
-| 5. Final visual-novel backgrounds | **Done** | Approved `1024 x 576` environments are generated, reviewed safely, and matched to exact location/state cutscenes |
-| 6. Foreground and non-human entity assets | **Current** | Generate, review, register, and render matching animals, creatures, plants, and props |
+| 5. Final visual-novel backgrounds | **Current** | Generation and approval work, but the approved asset is not yet appearing in the real Animated Story Mode flow |
+| 6. Foreground and non-human entity assets | **Planned** | Generate, review, register, and render matching animals, creatures, plants, and props |
 | 7. Generated book-specific humans | **Planned** | Create one approved Gemini master, transparent rig, face catalog, outfit, and reusable identity per important human |
 | 8. Persistent books and volumes | **Planned** | Save EPUBs, books, progress, story bibles, assets, jobs, and `Book -> Volume -> Chapter` data across restarts |
 | 9. Complete ChapterStory builder | **Planned** | Assemble approved assets, exact text coverage, subtitles, moral, movement, and manifests for any imported chapter |
@@ -166,7 +166,7 @@ Completed:
 The Story Bible and location-requirement foundation now feeds the completed
 landscape background workflow. Broader entity assets remain Phase 6 work.
 
-## Completed background phase
+## Current phase
 
 ### Phase 5 - Final visual-novel backgrounds
 
@@ -203,7 +203,7 @@ Acceptance checks:
 - unchanged shots reuse one background
 - place and state changes use the correct ordered backgrounds
 
-Completed validation:
+Validated so far:
 
 - the deployed Cloudflare adapter returned a valid `1024 x 576` PNG
 - the reviewed sample was a continuous landscape environment without people,
@@ -212,14 +212,24 @@ Completed validation:
 - automated tests cover approved-background preservation during replacement
 - automated tests cover ordered matching across multiple places and two states
   of one place
-- Story Mode loads only approved assets for the current
-  `locationId + backgroundStateId`
+- provider output, dimensions, prompt construction, review, approval, rejection,
+  and ordered key matching pass targeted tests
 
-## Current and planned phases after backgrounds
+Blocking acceptance defect found during manual app testing:
+
+- an approved generated background remains replaced by the fallback image in
+  Animated Story Mode
+- Phase 5 remains current until the saved approved record is traced through the
+  active book, chapter, cutscene, and stage lifecycle and visibly rendered
+- add an integration test that saves an approved `1024 x 576` asset, opens the
+  matching story shot, and confirms that the approved image is used instead of
+  the fallback
+
+## Planned phases after backgrounds
 
 ### Phase 6 - Foreground and non-human entity assets
 
-Status: **Current.**
+Status: **Planned after the Phase 5 playback defect is fixed.**
 
 Implementation order:
 

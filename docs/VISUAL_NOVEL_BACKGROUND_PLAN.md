@@ -1,7 +1,8 @@
 # Visual-Novel Background Plan
 
-Status: **implemented and validated on 2026-07-26.** See the
-[Master Roadmap](ROADMAP.md) for the current phase and the phases that follow.
+Status: **current; provider and catalog implemented, runtime playback still
+failing manual acceptance.** See the [Master Roadmap](ROADMAP.md) for the
+blocking defect and the phases that follow.
 
 ## Goal
 
@@ -141,6 +142,15 @@ pretend it can reliably judge whether the scenery matches the book.
 4. Update the review card for landscape preview, reject, and regenerate.
 5. Connect approved asset IDs to matching cutscenes.
 6. Test multiple locations and multiple states in one imported EPUB chapter.
+
+Before Phase 6 starts, the app must also pass this real-flow test:
+
+1. Generate and approve a valid background from the catalog.
+2. Open Animated Story Mode for that same book and chapter.
+3. Resolve the current shot's exact `locationId + stateId`.
+4. Load the approved local image record for that key.
+5. Render it in the `16:9` stage instead of the bundled fallback.
+6. Repeat after leaving and reopening Story Mode.
 
 ## Acceptance checks
 
