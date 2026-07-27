@@ -16,6 +16,7 @@ import '../data/volume_preparation_coordinator.dart';
 import '../data/volume_preparation_models.dart';
 import 'story_background_catalog_page.dart';
 import 'story_bible_review_page.dart';
+import 'story_foreground_inventory_page.dart';
 import 'sprite_positioner_page.dart';
 import 'widgets/story_shot_transition.dart';
 import 'widgets/visual_novel_stage.dart';
@@ -192,6 +193,18 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
                 title: const Text('Reusable backgrounds'),
                 trailing: Text('${job.reusedRequirementCount}'),
               ),
+              ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Foreground subjects'),
+                trailing: Text('${job.foregroundEntityCount}'),
+              ),
+              ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Foreground variants'),
+                trailing: Text('${job.foregroundAssetCount}'),
+              ),
               if (job.lastError != null)
                 SelectableText(job.lastError!, textAlign: TextAlign.left),
               for (final event in job.events.take(5))
@@ -224,6 +237,19 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const StoryBackgroundCatalogPage(),
+                    ),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.pets_outlined),
+                  title: const Text('Foreground assets'),
+                  subtitle: Text(
+                    '${job.foregroundApprovedCount} of '
+                    '${job.foregroundAssetCount} approved',
+                  ),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const StoryForegroundInventoryPage(),
                     ),
                   ),
                 ),

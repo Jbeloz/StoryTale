@@ -261,9 +261,11 @@ Implementation order:
 5. **Done for current background requirements:** Deduplicate recurring entity
    and location/state requirements before any
    image generation.
-6. **Next:** Add generated asset records and approval states for animals, creatures,
-   plants, and props.
-7. Generate only recurring, speaking, state-changing, or visually important
+6. **Done:** Add reusable asset records and approval states for animals,
+   creatures, plants, and props. The volume job now creates one stable record
+   per required entity variant, preserves its review state, and exposes a
+   minimal shared foreground inventory.
+7. **Next:** Generate only recurring, speaking, state-changing, or visually important
    subjects.
 8. Validate dimensions, transparency, entity ownership, and stable IDs.
 9. Add preview, approve, reject, regenerate, replace, and reuse actions.

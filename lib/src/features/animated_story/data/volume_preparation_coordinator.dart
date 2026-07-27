@@ -4,6 +4,7 @@ import 'story_analysis_service.dart';
 import 'story_bible_models.dart';
 import 'story_bible_repository.dart';
 import 'story_entity_service.dart';
+import 'story_foreground_repository.dart';
 import 'volume_preparation_models.dart';
 
 class VolumePreparationCoordinator {
@@ -11,11 +12,14 @@ class VolumePreparationCoordinator {
     required this.analysisProvider,
     required this.entityProvider,
     required this.storyBibleRepository,
-  });
+    StoryForegroundRepository? foregroundRepository,
+  }) : foregroundRepository =
+           foregroundRepository ?? StoryForegroundRepository();
 
   final StoryAnalysisProvider analysisProvider;
   final StoryEntityProvider entityProvider;
   final StoryBibleRepository storyBibleRepository;
+  final StoryForegroundRepository foregroundRepository;
 
   Future<void> prepare({
     required BookData book,
@@ -99,12 +103,24 @@ class VolumePreparationCoordinator {
       onChanged();
     }
 
+    final foregroundAssets = await foregroundRepository.sync(bible);
     job
       ..stage = VolumePreparationStage.mergingStoryBible
       ..currentChapterId = null
       ..entityCount = bible.entities.length
-      ..reusedRequirementCount = _requirementCount(book, localStory);
+      ..reusedRequirementCount = _requirementCount(book, localStory)
+      ..foregroundEntityCount = foregroundAssets
+          .map((asset) => asset.entityId)
+          .toSet()
+          .length
+      ..foregroundAssetCount = foregroundAssets.length
+      ..foregroundApprovedCount = foregroundAssets
+          .where((asset) => asset.status == StoryForegroundAssetStatus.approved)
+          .length;
     job.addEvent('Merged the volume inventory');
+    job.addEvent(
+      'Listed ${job.foregroundAssetCount} reusable foreground assets',
+    );
     onChanged();
 
     job

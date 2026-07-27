@@ -52,6 +52,9 @@ class VolumePreparationJobData {
   bool pauseRequested = false;
   int entityCount = 0;
   int reusedRequirementCount = 0;
+  int foregroundEntityCount = 0;
+  int foregroundAssetCount = 0;
+  int foregroundApprovedCount = 0;
   String? lastError;
 
   int get readyCount => chapters

@@ -15,6 +15,7 @@ class StoryEntityData {
     this.sourceBlockIds = const [],
     this.chapterAppearanceIds = const [],
     this.speakingChapterIds = const [],
+    this.visualStates = const [],
     this.recurring = false,
     this.importance = StoryEntityImportance.background,
     this.speaker = false,
@@ -41,6 +42,7 @@ class StoryEntityData {
   final List<String> sourceBlockIds;
   final List<String> chapterAppearanceIds;
   final List<String> speakingChapterIds;
+  final List<String> visualStates;
   final bool recurring;
   final StoryEntityImportance importance;
   final bool speaker;
@@ -67,6 +69,7 @@ class StoryEntityData {
     'sourceBlockIds': sourceBlockIds,
     'chapterAppearanceIds': chapterAppearanceIds,
     'speakingChapterIds': speakingChapterIds,
+    'visualStates': visualStates,
     'recurring': recurring,
     'importance': importance.name,
     'speaker': speaker,
@@ -95,6 +98,7 @@ class StoryEntityData {
       sourceBlockIds: _strings(json['sourceBlockIds']),
       chapterAppearanceIds: _strings(json['chapterAppearanceIds']),
       speakingChapterIds: _strings(json['speakingChapterIds']),
+      visualStates: _strings(json['visualStates']),
       recurring: json['recurring'] as bool? ?? false,
       importance: StoryEntityImportance.values.byName(
         json['importance'] as String? ?? 'background',
@@ -121,6 +125,7 @@ class StoryEntityData {
     List<String>? relationships,
     List<String>? chapterAppearanceIds,
     List<String>? speakingChapterIds,
+    List<String>? visualStates,
     bool? recurring,
     StoryEntityImportance? importance,
     bool? speaker,
@@ -146,6 +151,7 @@ class StoryEntityData {
       sourceBlockIds: sourceBlockIds,
       chapterAppearanceIds: chapterAppearanceIds ?? this.chapterAppearanceIds,
       speakingChapterIds: speakingChapterIds ?? this.speakingChapterIds,
+      visualStates: visualStates ?? this.visualStates,
       recurring: recurring ?? this.recurring,
       importance: importance ?? this.importance,
       speaker: speaker ?? this.speaker,
@@ -197,6 +203,7 @@ class StoryEntityData {
         ...speakingChapterIds,
         ...candidate.speakingChapterIds,
       ]),
+      visualStates: _union([...visualStates, ...candidate.visualStates]),
       recurring: recurring || candidate.recurring,
       importance: importance.index >= candidate.importance.index
           ? importance

@@ -455,14 +455,15 @@ function entityExtractionPrompt(input: EntityExtractionRequest): string {
     "Resolve names and aliases against the supplied story bible. Reuse its entityId for the same subject.",
     "For a genuinely new subject, use a short stable lower_snake_case entityId.",
     "Do not approve candidates, lock appearances, assign assets, invent visual details, or create a voice ID.",
-    "Descriptions must contain only details supported by the supplied text. Put uncertainty in unresolvedNotes.",
+    "Descriptions and visualStates must contain only details supported by the supplied text. Put uncertainty in unresolvedNotes.",
+    "For a non-location subject, visualStates is a short list of explicit appearance or condition changes needed by the plot; otherwise use an empty list.",
     "A location must be a specific scene place that characters can occupy, not only a broad world, realm, planet, country, or region.",
     "For every location, set sceneLocation to true, put the broader setting in parentSetting, and write a source-backed backgroundBrief describing only visible details from the chapter.",
     "When refining an existing broad location into a specific scene place, reuse its entityId and include its former broad name in aliases.",
     "If the text names only a broad setting and provides no specific scene place, do not return it as a location candidate.",
     "For non-location entities, set sceneLocation to false and omit parentSetting and backgroundBrief.",
     "Confidence is a number from 0 to 1.",
-    "entitiesJson must decode to an array of at most 40 objects with this exact shape: {entityId,kind,canonicalName,aliases,description,relationships,firstSeenChapterId,sourceBlockIds,recurring,importance,speaker,unresolvedNotes,confidence,sceneLocation,parentSetting?,backgroundBrief?}.",
+    "entitiesJson must decode to an array of at most 40 objects with this exact shape: {entityId,kind,canonicalName,aliases,description,relationships,firstSeenChapterId,sourceBlockIds,visualStates,recurring,importance,speaker,unresolvedNotes,confidence,sceneLocation,parentSetting?,backgroundBrief?}.",
     `Allowed importance values: ${JSON.stringify(ENTITY_IMPORTANCE)}`,
     `Book, chapter, and existing story bible:\n${JSON.stringify(input)}`,
   ].join("\n");
@@ -778,6 +779,7 @@ function validateEntityExtraction(
     const description = shortString(entity.description, 1_000);
     const relationships = stringListAllowEmpty(entity.relationships, 30, 240);
     const sourceBlockIds = stringList(entity.sourceBlockIds, 250, 120);
+    const visualStates = stringListAllowEmpty(entity.visualStates, 12, 120);
     const unresolvedNotes = stringListAllowEmpty(
       entity.unresolvedNotes,
       20,
@@ -792,6 +794,7 @@ function validateEntityExtraction(
     if (!aliases) return "invalid aliases";
     if (!description) return "invalid description";
     if (!relationships) return "invalid relationships";
+    if (!visualStates) return "invalid visualStates";
     if (entity.firstSeenChapterId !== input.chapter.id) {
       return "invalid firstSeenChapterId";
     }
@@ -851,6 +854,7 @@ function applySafeEntityDefaults(value: unknown): void {
     if (!isRecord(entity)) continue;
     if (!Array.isArray(entity.aliases)) entity.aliases = [];
     if (!Array.isArray(entity.relationships)) entity.relationships = [];
+    if (!Array.isArray(entity.visualStates)) entity.visualStates = [];
     if (!Array.isArray(entity.unresolvedNotes)) entity.unresolvedNotes = [];
     if (typeof entity.sceneLocation !== "boolean") {
       entity.sceneLocation = false;

@@ -315,9 +315,16 @@ source hashes, retries, and restart recovery remain Phase 8 work.
 
 ### Phase 6B - Shared foreground inventory
 
-- Generate/review only required animals, creatures, plants, and props from the
+Status: **Inventory foundation completed on 2026-07-27.**
+
+- [x] Derive only required animals, creatures, plants, and props from the
   merged volume inventory.
-- Reuse each approved asset across all matching chapters.
+- [x] Create stable book/entity/variant asset IDs.
+- [x] Track required, generated, approved, and rejected states.
+- [x] Preserve review state when the same merged inventory is refreshed.
+- [x] Show one minimal shared inventory under Animated Story preparation tools.
+- [ ] Generate images for the required records and review them.
+- [ ] Validate and register approved images for reuse in matching chapters.
 
 ### Phase 7 - Shared book-specific humans
 
