@@ -234,8 +234,9 @@ Status: **Current.**
 Implementation order:
 
 1. Add a volume preparation job and one job entry per chapter.
-2. Add weighted overall progress, current stage/chapter, elapsed time, item
-   counts, pause, resume, retry, and a short operational event log.
+2. Add a minimal Animated Story preparation status view with weighted overall
+   progress, current stage/chapter, elapsed time, ready chapter count,
+   Pause/Resume, Retry, and collapsed optional details.
 3. Analyze every Little Prince chapter separately and merge results into one
    volume inventory.
 4. Save canonical names, aliases, stable IDs, first appearances, chapter

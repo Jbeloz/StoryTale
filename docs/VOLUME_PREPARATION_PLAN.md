@@ -30,13 +30,34 @@ This keeps requests smaller, preserves exact chapter boundaries, supports
 resume after failure, and prevents one bad response from invalidating the
 entire book.
 
+## Book, volume, and chapter rules
+
+The hierarchy is `Book -> Volume -> Chapter`, but StoryTale must not assume that
+many chapters means many volumes.
+
+- One book may contain exactly one volume with any number of chapters.
+- A long EPUB with dozens or hundreds of chapters remains one volume unless
+  its metadata, navigation, headings, or the user confirms real volume
+  boundaries.
+- A box-set EPUB becomes multiple volumes only when clear source-backed
+  boundaries exist.
+- Separate EPUB files may be joined under one book as separate volumes after
+  user confirmation.
+- The file name, title number, chapter count, and genre are hints only; none of
+  them may silently create or split volumes.
+- If only one volume exists, the normal UI hides unnecessary volume controls
+  and shows the chapter list directly.
+- If boundaries are uncertain, normal reading still works while a simple
+  confirmation screen waits for the user.
+
 ## Reader flow
 
 1. The user imports an EPUB.
 2. StoryTale immediately makes the normal reader available.
 3. StoryTale shows **Prepare Animated Volume** with the chapter count and an
    estimated storage warning.
-4. Starting it opens a preparation dashboard.
+4. Starting it opens a small preparation status view inside the existing
+   Animated Story Mode flow.
 5. The job analyzes all story chapters in source order.
 6. StoryTale merges names, aliases, characters, locations, animals, plants,
    props, and timeline facts into one volume-aware Story Bible.
@@ -67,23 +88,31 @@ The weights are for understandable progress, not a promise of exact time.
 Elapsed time is always shown. An estimated time remaining appears only after
 StoryTale has completed enough requests to calculate a useful average.
 
-## Preparation dashboard
+## Minimal preparation status UI
 
-The dashboard shows operations and results, not private model reasoning:
+This is not a large admin dashboard. It uses the existing StoryTale cards,
+buttons, typography, and spacing.
 
-- overall percentage and elapsed time;
-- current stage and current chapter;
-- chapters analyzed, waiting, assembling, ready, failed, or needing review;
-- discovered people, animals, creatures, plants, props, and locations;
-- assets reused, generated, approved, missing, or rejected;
-- current visible activity such as `Analyzing Chapter 3`, `Merging aliases`,
-  `Generating the hero neutral master`, or `Building Chapter 1 shots`;
-- a short event log with timestamps;
-- Pause, Resume, Retry failed item, and Cancel remaining work;
-- an optional details page for validated Gemini request/result summaries and
-  source evidence.
+When the user taps **Animated Story** on a book:
 
-The dashboard never displays API keys, raw hidden prompts, or chain-of-thought.
+- **Not started:** show the chapter count, a short explanation, estimated asset
+  count/storage, and one **Prepare Animated Volume** button.
+- **Preparing:** show one progress bar, the percentage, current stage, current
+  chapter, `ready / total` chapters, elapsed time, and one Pause/Resume button.
+- **Partly ready:** show the normal chapter list; ready chapters can open, and a
+  small progress card remains above the list.
+- **Complete:** open the normal Story Mode chapter list or resume the last
+  chapter without showing the preparation card again.
+- **Needs attention:** show one short error and a Retry button. Technical
+  details stay collapsed under **View details**.
+
+The main screen does not show large entity tables, asset counters, raw logs, or
+many controls. A compact optional details sheet may show discovered subjects,
+reused/generated assets, warnings, and the short timestamped event log when
+the user asks for it.
+
+The status view never displays API keys, raw hidden prompts, or
+chain-of-thought.
 
 ## Volume job data
 
@@ -311,4 +340,3 @@ jobs, and explicit test approval are ready.
 - Run the deferred light-novel fixture with explicit approval.
 - Validate volume 9 metadata, boundaries, names, reusable cast, interrupted
   preparation, storage, performance, and physical Android playback.
-

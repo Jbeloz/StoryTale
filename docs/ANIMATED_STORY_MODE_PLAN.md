@@ -25,6 +25,8 @@ Book
 ```
 
 - A normal EPUB becomes one book with one volume by default.
+- One volume may contain any number of chapters. A high chapter count alone
+  never creates extra volumes.
 - A box-set EPUB may become one book with several volumes when its table of
   contents clearly contains volume headings.
 - Another EPUB can be added later as the next volume of an existing book.
@@ -34,6 +36,8 @@ Book
   Titles are not used as IDs because titles can repeat between volumes.
 - If volume boundaries are unclear, the import review screen asks the user to
   confirm them instead of guessing silently.
+- When a book has only one volume, StoryTale hides unnecessary volume-selection
+  UI and shows its chapters directly.
 
 The current `BookData -> chapters` prototype will eventually become
 `BookData -> volumes -> chapters`. Existing demo books can be migrated into a
