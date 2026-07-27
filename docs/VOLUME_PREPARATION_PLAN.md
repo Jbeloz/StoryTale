@@ -299,12 +299,19 @@ jobs, and explicit test approval are ready.
 
 ### Phase 6A - Volume preparation foundation
 
-- Add volume and chapter job models.
-- Add the preparation dashboard and weighted progress.
-- Analyze all Little Prince chapters one by one.
-- Merge names, aliases, first appearances, chapter appearances, and
-  requirements into one in-memory volume result.
-- Keep existing Story Mode assets and providers unchanged.
+Status: **Completed on 2026-07-27 as an in-memory foundation.**
+
+- [x] Add volume and chapter job models.
+- [x] Add the minimal preparation status view and chapter-weighted progress.
+- [x] Analyze all Little Prince chapters one by one.
+- [x] Merge names, aliases, first appearances, chapter appearances, speaking
+  chapters, and background requirements into one in-memory volume result.
+- [x] Keep existing Story Mode assets and providers unchanged.
+- [x] Add safe per-chapter fallback plus pause/resume between chapters.
+
+The job currently treats each `BookData` record as its one implicit volume and
+does not persist through an app restart. Explicit `VolumeData`, durable jobs,
+source hashes, retries, and restart recovery remain Phase 8 work.
 
 ### Phase 6B - Shared foreground inventory
 

@@ -5,16 +5,15 @@ import 'package:flutter/material.dart';
 import '../../../core/state/storytale_scope.dart';
 import '../../../shared/models/storytale_models.dart';
 import '../../../shared/widgets/storytale_components.dart';
-import '../../../shared/widgets/storytale_image_placeholder.dart';
 import '../data/sprite_layer_processor.dart';
 import '../data/story_bible_repository.dart';
-import '../data/story_bible_models.dart';
 import '../data/story_artwork_service.dart';
-import '../data/story_analysis_contract.dart';
 import '../data/story_analysis_service.dart';
 import '../data/story_background_repository.dart';
 import '../data/story_entity_service.dart';
 import '../data/visual_novel_background_brief.dart';
+import '../data/volume_preparation_coordinator.dart';
+import '../data/volume_preparation_models.dart';
 import 'story_background_catalog_page.dart';
 import 'story_bible_review_page.dart';
 import 'sprite_positioner_page.dart';
@@ -41,9 +40,6 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
   late final StoryAnalysisProvider _analysisProvider;
   late final StoryEntityProvider _entityProvider;
   late final StoryBibleRepository _storyBibleRepository;
-  double _progress = 0;
-  bool _working = false;
-  String? _message;
 
   @override
   void initState() {
@@ -58,158 +54,232 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
   Future<void> _prepare() async {
     final controller = StoryTaleScope.of(context);
     final book = controller.currentBook;
-    final chapter = controller.currentChapter;
-    if (book == null || chapter == null) return;
-    controller.storyFor(chapter).status = PreparationStatus.preparing;
-    setState(() {
-      _working = true;
-      _progress = 0.2;
-      _message = 'Checking the approved story scene catalog...';
-    });
+    if (book == null) return;
+    final job = controller.volumeJobFor(book);
+    if (job.status == VolumePreparationStatus.preparing) return;
+    final coordinator = VolumePreparationCoordinator(
+      analysisProvider: _analysisProvider,
+      entityProvider: _entityProvider,
+      storyBibleRepository: _storyBibleRepository,
+    );
     try {
-      var candidateCount = 0;
-      var bible = BookStoryBibleData.empty(book.id);
-      if (_entityProvider.isConfigured || _analysisProvider.isConfigured) {
-        bible = await _storyBibleRepository.load(book.id);
-      }
-      if (_entityProvider.isConfigured) {
-        setState(() {
-          _progress = 0.35;
-          _message = 'Gemini is identifying this chapter\'s story subjects...';
-        });
-        final candidates = await _entityProvider.extract(
-          book: book,
-          chapter: chapter,
-          bible: bible,
-        );
-        bible = bible.mergeCandidates(candidates);
-        await _storyBibleRepository.save(bible);
-        candidateCount = candidates.length;
-      }
-      if (_analysisProvider.isConfigured) {
-        setState(() {
-          _progress = 0.65;
-          _message = 'Gemini is planning this chapter...';
-        });
-        final story = await _analysisProvider.analyze(
-          chapter: chapter,
-          catalog: StoryAnalysisCatalog.fromStoryBible(bible),
-        );
-        if (!mounted) return;
-        controller.replaceStory(chapter, story);
-        _message =
-            'Saved $candidateCount story-bible candidates. '
-            'Gemini chapter plan validated with '
-            '${story.backgroundRequirements.length} background requirements.';
-      } else {
-        controller.markStoryPrepared(chapter);
-        _message = 'Using the safe local preview plan.';
-      }
+      await coordinator.prepare(
+        book: book,
+        job: job,
+        localStory: controller.storyFor,
+        saveStory: controller.replaceStory,
+        onChanged: controller.volumePreparationChanged,
+      );
     } catch (error) {
-      if (!mounted) return;
-      controller.markStoryPrepared(chapter);
-      _message = '$error Using the safe local preview plan.';
+      job
+        ..status = VolumePreparationStatus.failed
+        ..currentChapterId = null
+        ..lastError = '$error';
+      job.addEvent('Preparation stopped');
+      controller.volumePreparationChanged();
     }
-    if (!mounted) return;
-    setState(() {
-      _progress = 1;
-      _working = false;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     final controller = StoryTaleScope.of(context);
-    final chapter = controller.currentChapter;
-    final story = chapter == null ? null : controller.storyFor(chapter);
-    final ready = story?.status == PreparationStatus.ready;
+    final book = controller.currentBook;
+    if (book == null) {
+      return const StoryTaleInfoPage(
+        title: 'Animated Story',
+        description: 'Choose a book before preparing Animated Story Mode.',
+      );
+    }
+    final job = controller.volumeJobFor(book);
+    final preparing = job.status == VolumePreparationStatus.preparing;
+    final ready = job.status == VolumePreparationStatus.ready;
+    final currentJob = job.currentChapterId == null
+        ? null
+        : job.chapter(job.currentChapterId!);
     return StoryTaleAppShell(
-      title: 'Prepare Story Mode',
+      title: 'Animated Story',
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          const StoryTaleImagePlaceholder(
-            path: 'assets/images/ui/story_preparing.png',
-            label: 'Story preparation artwork placeholder',
-            icon: Icons.auto_awesome_motion,
-            height: 180,
-          ),
-          const SizedBox(height: 20),
-          Text(
-            chapter?.title ?? 'No chapter selected',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
+          Text(book.title, style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 6),
+          Text('${job.readyCount} of ${job.chapters.length} chapters ready'),
+          const SizedBox(height: 14),
+          LinearProgressIndicator(value: job.progress),
+          const SizedBox(height: 10),
+          Text(_activityLabel(job, currentJob)),
           const SizedBox(height: 12),
-          Text(
-            _message ??
-                'This chapter package combines scene text, a moral, placeholder '
-                    'sprites and backgrounds, movements, subtitles, and cached voices.',
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-          LinearProgressIndicator(value: ready ? 1 : _progress),
-          const SizedBox(height: 12),
-          ...[
-            'Analyze chapter and dialogue',
-            'Save story-bible entity candidates',
-            'Create scene and moral data',
-            'Prepare sprite/background placeholders',
-            'Connect narration and subtitles',
-          ].map(
-            (task) => ListTile(
-              dense: true,
-              leading: Icon(
-                ready ? Icons.check_circle_outline : Icons.circle_outlined,
-              ),
-              title: Text(task),
-            ),
-          ),
-          FilledButton(
-            onPressed: chapter == null || _working || ready ? null : _prepare,
-            child: Text(
-              ready
-                  ? 'Story Ready'
-                  : _working
-                  ? 'Preparing…'
-                  : 'Prepare Chapter Story',
-            ),
-          ),
-          const SizedBox(height: 8),
-          if (ready) ...[
+          if (preparing)
             OutlinedButton.icon(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const StoryBibleReviewPage()),
-              ),
-              icon: const Icon(Icons.fact_check_outlined),
-              label: const Text('Review Story Bible'),
-            ),
-            OutlinedButton.icon(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const StoryBackgroundCatalogPage(),
-                ),
-              ),
-              icon: const Icon(Icons.landscape_outlined),
-              label: const Text('Review Location Backgrounds'),
-            ),
-            OutlinedButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SpriteReviewPage()),
-              ),
-              child: const Text('Review Sprites & Backgrounds'),
-            ),
+              onPressed: () => controller.requestVolumePreparationPause(book),
+              icon: const Icon(Icons.pause),
+              label: const Text('Pause'),
+            )
+          else if (!ready)
             FilledButton.icon(
-              onPressed: () => Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const AnimatedStoryPage()),
+              onPressed: _prepare,
+              icon: Icon(
+                job.status == VolumePreparationStatus.paused
+                    ? Icons.play_arrow
+                    : job.status == VolumePreparationStatus.failed
+                    ? Icons.refresh
+                    : Icons.auto_awesome,
               ),
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('Open Story Mode'),
+              label: Text(
+                job.status == VolumePreparationStatus.paused
+                    ? 'Resume Preparation'
+                    : job.status == VolumePreparationStatus.failed
+                    ? 'Retry Preparation'
+                    : 'Prepare Animated Volume',
+              ),
+            ),
+          if (job.lastError != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Preparation stopped. Open details for the error, then retry.',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ],
+          const SizedBox(height: 20),
+          Text('Chapters', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 6),
+          for (final chapterJob in job.chapters)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(_chapterIcon(chapterJob.status)),
+              title: Text(chapterJob.title),
+              subtitle: chapterJob.lastError == null
+                  ? null
+                  : const Text('Ready with safe local preview'),
+              trailing: Text(_chapterStatus(chapterJob.status)),
+              enabled: chapterJob.status == PreparationStatus.ready,
+              onTap: chapterJob.status != PreparationStatus.ready
+                  ? null
+                  : () {
+                      final chapter = controller.chapterById(
+                        book,
+                        chapterJob.chapterId,
+                      );
+                      if (chapter == null) return;
+                      controller.openBook(book, chapter: chapter);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const AnimatedStoryPage(),
+                        ),
+                      );
+                    },
+            ),
+          ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            title: const Text('View details'),
+            childrenPadding: const EdgeInsets.only(bottom: 8),
+            children: [
+              ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Elapsed'),
+                trailing: Text(_durationLabel(job.elapsed)),
+              ),
+              ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Merged story subjects'),
+                trailing: Text('${job.entityCount}'),
+              ),
+              ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Reusable backgrounds'),
+                trailing: Text('${job.reusedRequirementCount}'),
+              ),
+              if (job.lastError != null)
+                SelectableText(job.lastError!, textAlign: TextAlign.left),
+              for (final event in job.events.take(5))
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Text(event),
+                  ),
+                ),
+            ],
+          ),
+          if (ready)
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: const Text('Preparation tools'),
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.fact_check_outlined),
+                  title: const Text('Story Bible'),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const StoryBibleReviewPage(),
+                    ),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.landscape_outlined),
+                  title: const Text('Location backgrounds'),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const StoryBackgroundCatalogPage(),
+                    ),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.accessibility_new),
+                  title: const Text('Sprites'),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const SpriteReviewPage()),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
+  }
+
+  String _activityLabel(
+    VolumePreparationJobData job,
+    ChapterPreparationJobData? chapter,
+  ) {
+    return switch (job.status) {
+      VolumePreparationStatus.notStarted =>
+        'Prepare every chapter in this volume once.',
+      VolumePreparationStatus.preparing =>
+        chapter == null
+            ? 'Merging the volume inventory...'
+            : 'Analyzing ${chapter.title}...',
+      VolumePreparationStatus.paused => 'Preparation paused.',
+      VolumePreparationStatus.ready => 'Animated volume preview is ready.',
+      VolumePreparationStatus.failed => 'Preparation needs to be retried.',
+    };
+  }
+
+  IconData _chapterIcon(PreparationStatus status) {
+    return switch (status) {
+      PreparationStatus.ready => Icons.check_circle_outline,
+      PreparationStatus.preparing => Icons.hourglass_top,
+      PreparationStatus.failed => Icons.error_outline,
+      PreparationStatus.notStarted => Icons.circle_outlined,
+    };
+  }
+
+  String _chapterStatus(PreparationStatus status) {
+    return switch (status) {
+      PreparationStatus.ready => 'Ready',
+      PreparationStatus.preparing => 'Preparing',
+      PreparationStatus.failed => 'Failed',
+      PreparationStatus.notStarted => 'Waiting',
+    };
+  }
+
+  String _durationLabel(Duration duration) {
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
   }
 }
 

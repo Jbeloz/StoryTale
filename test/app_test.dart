@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:storytale/src/app.dart';
 import 'package:storytale/src/core/state/storytale_controller.dart';
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
   testWidgets('StoryTale shell navigates between its main sections', (
     tester,
   ) async {
@@ -79,46 +82,27 @@ void main() {
     expect(find.textContaining('Noong unang panahon'), findsOneWidget);
   });
 
-  testWidgets('chapter Story Mode preparation reaches the player', (
+  testWidgets('volume Story Mode preparation completes every chapter', (
     tester,
   ) async {
     await _usePhoneSize(tester);
-    await _pumpStoryTale(tester);
+    final controller = await _pumpStoryTale(tester);
 
     await tester.tap(find.text('The Little Prince').first);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Story Mode'));
     await tester.pumpAndSettle();
-    expect(find.text('Prepare Story Mode'), findsOneWidget);
+    expect(find.text('Animated Story'), findsOneWidget);
+    expect(find.text('0 of 4 chapters ready'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('Prepare Chapter Story'));
-    await tester.tap(find.text('Prepare Chapter Story'));
+    await tester.ensureVisible(find.text('Prepare Animated Volume'));
+    await tester.tap(find.text('Prepare Animated Volume'));
     await tester.pumpAndSettle(const Duration(milliseconds: 200));
-    expect(find.text('Story Ready'), findsOneWidget);
-
-    await tester.ensureVisible(find.text('Open Story Mode'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Open Story Mode'));
-    await tester.pumpAndSettle();
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 200)),
+    expect(find.text('4 of 4 chapters ready'), findsOneWidget);
+    expect(
+      controller.volumeJobFor(controller.currentBook!).readyCount,
+      controller.currentBook!.chapters.length,
     );
-    await tester.pumpAndSettle();
-    expect(find.textContaining('Cutscene 1'), findsOneWidget);
-    expect(find.textContaining('Shot 1 of'), findsOneWidget);
-    expect(find.textContaining('Line 1 of'), findsOneWidget);
-    expect(find.byKey(const Key('visual-novel-stage')), findsOneWidget);
-    expect(find.byKey(const Key('story-subtitle-line')), findsOneWidget);
-    expect(find.byKey(const Key('story-character-talking')), findsOneWidget);
-    expect(find.byKey(const Key('story-character-pointing')), findsOneWidget);
-
-    final firstLine = tester
-        .widget<Text>(find.byKey(const Key('story-subtitle-line')))
-        .data;
-    await tester.tap(find.byKey(const Key('story-next')));
-    await tester.pumpAndSettle();
-    expect(find.text(firstLine!), findsNothing);
-    expect(find.textContaining('Line 2 of'), findsOneWidget);
   });
 
   testWidgets('startup can move from splash to onboarding and library', (

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../generated/voice_manifest.g.dart';
 import '../../features/animated_story/data/subtitle_beat_splitter.dart';
+import '../../features/animated_story/data/volume_preparation_models.dart';
 import '../../shared/models/storytale_models.dart';
 
 class StoryTaleController extends ChangeNotifier {
@@ -67,6 +68,7 @@ class StoryTaleController extends ChangeNotifier {
 
   final ReaderSettingsData readerSettings = ReaderSettingsData();
   final Map<String, ChapterStoryData> stories = {};
+  final Map<String, VolumePreparationJobData> volumePreparationJobs = {};
   final Map<String, Map<String, String>> voiceAudio = {};
   final Map<String, String> voiceModelFiles = {};
   final Map<String, int> voicePitches = {};
@@ -222,6 +224,22 @@ class StoryTaleController extends ChangeNotifier {
         ],
       );
     });
+  }
+
+  VolumePreparationJobData volumeJobFor(BookData book) {
+    return volumePreparationJobs.putIfAbsent(
+      book.id,
+      () => VolumePreparationJobData.forBook(book),
+    );
+  }
+
+  void volumePreparationChanged() {
+    notifyListeners();
+  }
+
+  void requestVolumePreparationPause(BookData book) {
+    volumeJobFor(book).pauseRequested = true;
+    notifyListeners();
   }
 
   static StoryShotPlanData _testShot(

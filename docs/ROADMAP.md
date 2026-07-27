@@ -4,7 +4,7 @@ This is the single source of truth for StoryTale development order and status.
 The architecture and feature plans explain how individual systems work, but
 only this file decides what is completed, what is current, and what comes next.
 
-Last reviewed: 2026-07-26
+Last reviewed: 2026-07-27
 
 ## Status meanings
 
@@ -231,19 +231,37 @@ Playback acceptance defect resolved:
 
 Status: **Current.**
 
+Phase 6A completed:
+
+- one in-memory preparation job per book/volume and one job per chapter
+- source-order analysis of all Little Prince demo chapters
+- merged canonical names, aliases, first appearances, chapter appearances,
+  speaking chapters, and reusable background requirements
+- a minimal Animated Story status view with one progress bar, current chapter,
+  elapsed time, ready counts, Pause/Resume, Retry, chapter access, and
+  collapsed details
+- safe local chapter previews when Gemini is unavailable or one chapter fails
+- targeted tests for full-volume preparation, inventory merging, pause/resume,
+  and the four-chapter UI flow
+
+Phase 6A is intentionally session-only. Persistent recovery after an app
+restart belongs to Phase 8.
+
 Implementation order:
 
-1. Add a volume preparation job and one job entry per chapter.
-2. Add a minimal Animated Story preparation status view with weighted overall
+1. **Done:** Add a volume preparation job and one job entry per chapter.
+2. **Done:** Add a minimal Animated Story preparation status view with weighted overall
    progress, current stage/chapter, elapsed time, ready chapter count,
    Pause/Resume, Retry, and collapsed optional details.
-3. Analyze every Little Prince chapter separately and merge results into one
+3. **Done:** Analyze every Little Prince chapter separately and merge results into one
    volume inventory.
-4. Save canonical names, aliases, stable IDs, first appearances, chapter
+4. **Done for the in-memory foundation:** Save canonical names, aliases,
+   stable IDs, first appearances, chapter
    appearances, speaking chapters, visual states, and unresolved conflicts.
-5. Deduplicate recurring entity and location/state requirements before any
+5. **Done for current background requirements:** Deduplicate recurring entity
+   and location/state requirements before any
    image generation.
-6. Add generated asset records and approval states for animals, creatures,
+6. **Next:** Add generated asset records and approval states for animals, creatures,
    plants, and props.
 7. Generate only recurring, speaking, state-changing, or visually important
    subjects.

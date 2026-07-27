@@ -13,6 +13,8 @@ class StoryEntityData {
     this.relationships = const [],
     this.firstSeenVolumeId,
     this.sourceBlockIds = const [],
+    this.chapterAppearanceIds = const [],
+    this.speakingChapterIds = const [],
     this.recurring = false,
     this.importance = StoryEntityImportance.background,
     this.speaker = false,
@@ -37,6 +39,8 @@ class StoryEntityData {
   final String? firstSeenVolumeId;
   final String firstSeenChapterId;
   final List<String> sourceBlockIds;
+  final List<String> chapterAppearanceIds;
+  final List<String> speakingChapterIds;
   final bool recurring;
   final StoryEntityImportance importance;
   final bool speaker;
@@ -61,6 +65,8 @@ class StoryEntityData {
     if (firstSeenVolumeId != null) 'firstSeenVolumeId': firstSeenVolumeId,
     'firstSeenChapterId': firstSeenChapterId,
     'sourceBlockIds': sourceBlockIds,
+    'chapterAppearanceIds': chapterAppearanceIds,
+    'speakingChapterIds': speakingChapterIds,
     'recurring': recurring,
     'importance': importance.name,
     'speaker': speaker,
@@ -87,6 +93,8 @@ class StoryEntityData {
       firstSeenVolumeId: json['firstSeenVolumeId'] as String?,
       firstSeenChapterId: json['firstSeenChapterId'] as String,
       sourceBlockIds: _strings(json['sourceBlockIds']),
+      chapterAppearanceIds: _strings(json['chapterAppearanceIds']),
+      speakingChapterIds: _strings(json['speakingChapterIds']),
       recurring: json['recurring'] as bool? ?? false,
       importance: StoryEntityImportance.values.byName(
         json['importance'] as String? ?? 'background',
@@ -111,6 +119,8 @@ class StoryEntityData {
     List<String>? aliases,
     String? description,
     List<String>? relationships,
+    List<String>? chapterAppearanceIds,
+    List<String>? speakingChapterIds,
     bool? recurring,
     StoryEntityImportance? importance,
     bool? speaker,
@@ -134,6 +144,8 @@ class StoryEntityData {
       firstSeenVolumeId: firstSeenVolumeId,
       firstSeenChapterId: firstSeenChapterId,
       sourceBlockIds: sourceBlockIds,
+      chapterAppearanceIds: chapterAppearanceIds ?? this.chapterAppearanceIds,
+      speakingChapterIds: speakingChapterIds ?? this.speakingChapterIds,
       recurring: recurring ?? this.recurring,
       importance: importance ?? this.importance,
       speaker: speaker ?? this.speaker,
@@ -177,6 +189,14 @@ class StoryEntityData {
       firstSeenVolumeId: firstSeenVolumeId ?? candidate.firstSeenVolumeId,
       firstSeenChapterId: firstSeenChapterId,
       sourceBlockIds: _union([...sourceBlockIds, ...candidate.sourceBlockIds]),
+      chapterAppearanceIds: _union([
+        ...chapterAppearanceIds,
+        ...candidate.chapterAppearanceIds,
+      ]),
+      speakingChapterIds: _union([
+        ...speakingChapterIds,
+        ...candidate.speakingChapterIds,
+      ]),
       recurring: recurring || candidate.recurring,
       importance: importance.index >= candidate.importance.index
           ? importance
@@ -197,6 +217,15 @@ class StoryEntityData {
       sceneLocation: sceneLocation || candidate.sceneLocation,
       parentSetting: candidate.parentSetting ?? parentSetting,
       backgroundBrief: candidate.backgroundBrief ?? backgroundBrief,
+    );
+  }
+
+  StoryEntityData withChapterAppearance(String chapterId) {
+    return copyWith(
+      chapterAppearanceIds: _union([...chapterAppearanceIds, chapterId]),
+      speakingChapterIds: speaker
+          ? _union([...speakingChapterIds, chapterId])
+          : speakingChapterIds,
     );
   }
 
