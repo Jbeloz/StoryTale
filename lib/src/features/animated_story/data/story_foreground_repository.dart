@@ -23,6 +23,8 @@ class StoryForegroundAssetData {
     this.mimeType = 'image/png',
     this.width,
     this.height,
+    this.generationPrompt,
+    this.generatedAt,
   });
 
   final String assetId;
@@ -39,6 +41,8 @@ class StoryForegroundAssetData {
   final String mimeType;
   final int? width;
   final int? height;
+  final String? generationPrompt;
+  final String? generatedAt;
 
   String get key => '$entityId::$variantId';
 
@@ -52,6 +56,8 @@ class StoryForegroundAssetData {
     String? mimeType,
     int? width,
     int? height,
+    String? generationPrompt,
+    String? generatedAt,
   }) {
     return StoryForegroundAssetData(
       assetId: assetId,
@@ -68,6 +74,8 @@ class StoryForegroundAssetData {
       mimeType: mimeType ?? this.mimeType,
       width: width ?? this.width,
       height: height ?? this.height,
+      generationPrompt: generationPrompt ?? this.generationPrompt,
+      generatedAt: generatedAt ?? this.generatedAt,
     );
   }
 
@@ -86,6 +94,8 @@ class StoryForegroundAssetData {
     'mimeType': mimeType,
     if (width != null) 'width': width,
     if (height != null) 'height': height,
+    if (generationPrompt != null) 'generationPrompt': generationPrompt,
+    if (generatedAt != null) 'generatedAt': generatedAt,
   };
 
   factory StoryForegroundAssetData.fromJson(Map<String, dynamic> json) {
@@ -106,6 +116,8 @@ class StoryForegroundAssetData {
       mimeType: json['mimeType'] as String? ?? 'image/png',
       width: json['width'] as int?,
       height: json['height'] as int?,
+      generationPrompt: json['generationPrompt'] as String?,
+      generatedAt: json['generatedAt'] as String?,
     );
   }
 

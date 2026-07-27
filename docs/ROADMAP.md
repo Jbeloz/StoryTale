@@ -265,9 +265,12 @@ Implementation order:
    creatures, plants, and props. The volume job now creates one stable record
    per required entity variant, preserves its review state, and exposes a
    minimal shared foreground inventory.
-7. **Next:** Generate only recurring, speaking, state-changing, or visually important
-   subjects.
-8. Validate dimensions, transparency, entity ownership, and stable IDs.
+7. **Done:** Generate candidates only for recurring, speaking, state-changing,
+   or visually important subjects. Gemini creates one whole subject on a
+   magenta removal background, StoryTale converts it to a local transparent
+   PNG, and the stable inventory record moves to `generated`.
+8. **Next:** Validate dimensions, transparency, entity ownership, and stable
+   IDs.
 9. Add preview, approve, reject, regenerate, replace, and reuse actions.
 10. Add `focusAssetLayers` with at most two approved assets per shot.
 11. Add entity-aware scene catalogs to Gemini analysis.

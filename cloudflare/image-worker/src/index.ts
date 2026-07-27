@@ -12,7 +12,13 @@ type StoryTaleEnv = Env & {
   GEMINI_API_KEY?: string;
 };
 type ImageKind = "background" | "sprite";
-type SpriteMode = "master" | "head-design" | "head-expression" | "face-layer" | "body-pose";
+type SpriteMode =
+  | "master"
+  | "head-design"
+  | "head-expression"
+  | "face-layer"
+  | "body-pose"
+  | "foreground";
 type TimingSafeSubtleCrypto = SubtleCrypto & {
   timingSafeEqual(left: ArrayBuffer, right: ArrayBuffer): boolean;
 };
@@ -1025,6 +1031,14 @@ async function generateStoryAnalysis(
 }
 
 function spritePrompt(details: string, mode: SpriteMode): string {
+  if (mode === "foreground") {
+    return `${details} ` +
+      "Create one reusable 2D visual-novel foreground asset in a clean, cute storybook style. " +
+      "Show exactly one complete subject centered on the canvas, fully visible and clearly separated from the background. " +
+      "Keep the subject front-facing or in the clearest natural view for its kind, with consistent identity, colors, proportions, and line art that later state variants can reuse. " +
+      "Do not add scenery, ground, shadows, frames, text, labels, UI, extra subjects, or unrelated objects. " +
+      "Do not use magenta anywhere in the subject. Fill every pixel outside the subject with flat pure chroma magenta #FF00FF for local transparency removal.";
+  }
   if (mode === "face-layer") {
     return `Edit only the supplied transparent facial-feature layer: ${details}. ` +
       "The reference is a layer, not a complete head. Output only the two eyes, two eyebrows, small nose mark, and mouth needed for the expression, aligned at the exact same canvas coordinates, scale, spacing, line thickness, grayscale colors, and art style. " +
@@ -1160,10 +1174,10 @@ async function generateSprite(
       response_format: {
         type: "image",
         mime_type: "image/jpeg",
-        aspect_ratio: mode === "head-design" || mode === "head-expression" || mode === "face-layer"
+        aspect_ratio: mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "foreground"
           ? "1:1"
           : mode === "body-pose" ? "9:16" : "3:4",
-        image_size: mode === "head-design" || mode === "head-expression" || mode === "face-layer" ? "1K" : "512",
+        image_size: mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "foreground" ? "1K" : "512",
       },
       store: false,
     }),
@@ -1237,14 +1251,22 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
       modeValue !== "head-design" &&
       modeValue !== "head-expression" &&
       modeValue !== "face-layer" &&
-      modeValue !== "body-pose"
+      modeValue !== "body-pose" &&
+      modeValue !== "foreground"
     ) {
       return json({
-        error: "mode must be master, head-design, head-expression, face-layer, or body-pose",
+        error: "mode must be master, head-design, head-expression, face-layer, body-pose, or foreground",
       }, 400);
     }
-    if (modeValue !== "master" && body.references.length !== 1) {
+    if (
+      modeValue !== "master" &&
+      modeValue !== "foreground" &&
+      body.references.length !== 1
+    ) {
       return json({ error: `${modeValue} requires exactly one image reference` }, 400);
+    }
+    if (modeValue === "foreground" && body.references.length !== 0) {
+      return json({ error: "foreground does not accept image references" }, 400);
     }
     model = env.GEMINI_IMAGE_MODEL;
     provider = "google-gemini";

@@ -282,12 +282,18 @@ Implemented:
 - Cloudflare background generation for approved specific locations
 - Background preview, regenerate, approve, and mark-pending actions
 - Approved background asset IDs registered back onto their location entities
+- Required animal, creature, plant, and prop inventory records generated
+  through Gemini as reusable transparent PNG candidates
+- Generated foreground candidates retain stable entity and variant ownership
+  and remain unavailable to scenes until the later validation and approval
+  phases
 
 Still pending:
 
 - Final landscape visual-novel background provider, prompt contract, dimension
   validation, and cutscene asset connection
-- Entity-specific foreground asset generation and registration
+- Foreground candidate validation, review, approval, and Story Bible
+  registration
 - `focusAssetLayers` and entity-aware scene catalogs
 - Replacing prototype actors in the final player
 

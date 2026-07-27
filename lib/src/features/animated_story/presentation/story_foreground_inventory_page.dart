@@ -1,17 +1,22 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/state/storytale_scope.dart';
 import '../../../shared/widgets/storytale_components.dart';
+import '../data/story_artwork_service.dart';
 import '../data/story_bible_repository.dart';
 import '../data/story_foreground_repository.dart';
 
 class StoryForegroundInventoryPage extends StatefulWidget {
   const StoryForegroundInventoryPage({
     super.key,
+    this.artworkService,
     this.foregroundRepository,
     this.storyBibleRepository,
   });
 
+  final StoryArtworkService? artworkService;
   final StoryForegroundRepository? foregroundRepository;
   final StoryBibleRepository? storyBibleRepository;
 
@@ -24,13 +29,16 @@ class _StoryForegroundInventoryPageState
     extends State<StoryForegroundInventoryPage> {
   late final StoryForegroundRepository _foregroundRepository;
   late final StoryBibleRepository _storyBibleRepository;
+  late final StoryArtworkService _artworkService;
   List<StoryForegroundAssetData> _assets = const [];
   String? _bookId;
+  String? _workingAssetId;
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
+    _artworkService = widget.artworkService ?? StoryArtworkService();
     _foregroundRepository =
         widget.foregroundRepository ?? StoryForegroundRepository();
     _storyBibleRepository =
@@ -97,6 +105,9 @@ class _StoryForegroundInventoryPageState
     final approved = _assets
         .where((asset) => asset.status == StoryForegroundAssetStatus.approved)
         .length;
+    final generated = _assets
+        .where((asset) => asset.status == StoryForegroundAssetStatus.generated)
+        .length;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -104,7 +115,8 @@ class _StoryForegroundInventoryPageState
         const SizedBox(height: 6),
         const Text(
           'One shared asset record is reused everywhere the same story '
-          'subject appears. Image generation is added in the next phase.',
+          'subject appears. Generate only the listed reusable variants; '
+          'validation and approval follow in the next phase.',
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -113,6 +125,7 @@ class _StoryForegroundInventoryPageState
           children: [
             Chip(label: Text('$entityCount subjects')),
             Chip(label: Text('${_assets.length} variants')),
+            Chip(label: Text('$generated generated')),
             Chip(label: Text('$approved approved')),
           ],
         ),
@@ -149,12 +162,59 @@ class _StoryForegroundInventoryPageState
             ListTile(
               dense: true,
               title: Text(asset.variantId),
-              subtitle: Text(asset.assetId),
-              trailing: Text(_status(asset.status)),
+              subtitle: Text('${asset.assetId}\n${_status(asset.status)}'),
+              isThreeLine: false,
+              trailing: _assetAction(asset),
             ),
         ],
       ),
     );
+  }
+
+  Widget _assetAction(StoryForegroundAssetData asset) {
+    if (_workingAssetId == asset.assetId) {
+      return const SizedBox.square(
+        dimension: 24,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    }
+    if (asset.status == StoryForegroundAssetStatus.generated ||
+        asset.status == StoryForegroundAssetStatus.approved) {
+      return Icon(
+        asset.status == StoryForegroundAssetStatus.approved
+            ? Icons.verified_outlined
+            : Icons.pending_outlined,
+      );
+    }
+    return FilledButton.tonal(
+      onPressed: _workingAssetId == null ? () => _generate(asset) : null,
+      child: const Text('Generate'),
+    );
+  }
+
+  Future<void> _generate(StoryForegroundAssetData asset) async {
+    setState(() => _workingAssetId = asset.assetId);
+    try {
+      final generated = await _artworkService.generateForeground(asset);
+      _assets = await _foregroundRepository.save(
+        asset.copyWith(
+          status: StoryForegroundAssetStatus.generated,
+          imageBase64: base64Encode(generated.bytes),
+          mimeType: generated.mimeType,
+          width: generated.width,
+          height: generated.height,
+          generationPrompt: generated.prompt,
+          generatedAt: DateTime.now().toUtc().toIso8601String(),
+        ),
+      );
+      _message('${asset.entityName} ${asset.variantId} was generated.');
+    } on ArtworkGenerationException catch (error) {
+      _message(error.message);
+    } catch (_) {
+      _message('The foreground image could not be generated.');
+    } finally {
+      if (mounted) setState(() => _workingAssetId = null);
+    }
   }
 
   IconData _icon(StoryForegroundAssetData asset) {
@@ -178,5 +238,10 @@ class _StoryForegroundInventoryPageState
       StoryForegroundAssetStatus.approved => 'Approved',
       StoryForegroundAssetStatus.rejected => 'Rejected',
     };
+  }
+
+  void _message(String text) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 }

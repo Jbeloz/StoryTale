@@ -74,6 +74,25 @@ class SpriteLayerProcessor {
     return Uint8List.fromList(image.encodePng(transparent));
   }
 
+  Uint8List removeMagentaBackground(Uint8List source) {
+    final decoded = image.decodeImage(source);
+    if (decoded == null) throw const FormatException('Invalid sprite image.');
+    final transparent = image.Image.from(decoded)
+      ..channels = image.Channels.rgba;
+    for (var y = 0; y < transparent.height; y++) {
+      for (var x = 0; x < transparent.width; x++) {
+        final pixel = transparent.getPixel(x, y);
+        final red = image.getRed(pixel);
+        final green = image.getGreen(pixel);
+        final blue = image.getBlue(pixel);
+        if (red > 80 && blue > 80 && red > green + 25 && blue > green + 25) {
+          transparent.setPixelRgba(x, y, 0, 0, 0, 0);
+        }
+      }
+    }
+    return Uint8List.fromList(image.encodePng(transparent));
+  }
+
   Uint8List composeLayers(Uint8List base, Uint8List overlay) {
     final baseImage = _decodeTransparent(base);
     final overlayImage = _decodeTransparent(overlay);
