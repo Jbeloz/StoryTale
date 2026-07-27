@@ -247,6 +247,11 @@ Phase 6A completed:
 Phase 6A is intentionally session-only. Persistent recovery after an app
 restart belongs to Phase 8.
 
+Phase 6D therefore uses a lightweight session binary store for generated image
+bytes and persists only small metadata. Phase 8 replaces it with durable local
+files/database records so generated assets survive an app restart without
+putting large Base64 images in SharedPreferences.
+
 Implementation order:
 
 1. **Done:** Add a volume preparation job and one job entry per chapter.
@@ -269,12 +274,30 @@ Implementation order:
    or visually important subjects. Gemini creates one whole subject on a
    magenta removal background, StoryTale converts it to a local transparent
    PNG, and the stable inventory record moves to `generated`.
-8. **Next:** Validate dimensions, transparency, entity ownership, and stable
-   IDs.
-9. Add preview, approve, reject, regenerate, replace, and reuse actions.
-10. Add `focusAssetLayers` with at most two approved assets per shot.
-11. Add entity-aware scene catalogs to Gemini analysis.
-12. Remove prototype-human substitution from generated chapter plans.
+8. **Next - Phase 6D: automatic asset preparation and smooth updates:**
+   - repair and validate every required asset's chapter links so a recurring
+     record cannot incorrectly show `0 chapters`;
+   - build one deduplicated queue containing every missing location background
+     plus every required animal, creature, plant, and prop variant;
+   - generate the queue automatically after volume analysis, one request at a
+     time, while respecting provider limits and reusing existing assets;
+   - keep large image bytes outside SharedPreferences and the visible widget
+     state during this session so saving a generated result does not freeze the
+     app;
+   - decode, remove the flat background, and validate dimensions,
+     transparency, entity ownership, variant ownership, and stable IDs before
+     notifying the UI;
+   - automatically register a candidate that passes every deterministic check;
+     no approval click is required; and
+   - mark only invalid or failed results `needsReview`, retain the safe
+     fallback, and show simple queue progress.
+9. **Phase 6E: connect prepared assets to ChapterStory:** add ready background
+   IDs and at most two matching `focusAssetLayers` per shot, give Gemini the
+   entity-aware catalog, remove unrelated prototype-human substitution,
+   rebuild Chapter 1, and load the prepared assets when Story Mode opens.
+10. **Phase 6F: optional review and replacement:** show lightweight previews
+    of automatically accepted assets and provide regenerate, replace, and
+    reuse actions. Manual approval is not part of the normal flow.
 
 Minimum first-version assets:
 

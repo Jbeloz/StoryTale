@@ -273,7 +273,11 @@ storage. The app therefore:
 - generates assets only for narratively important subjects;
 - allows Pause and Resume;
 - supports **Analysis only** before any images are generated;
-- supports **Prepare all chapters** after the user accepts the asset inventory;
+- uses **Prepare all chapters** as the default path: analyze, validate
+  requirements, automatically generate missing reusable assets, and register
+  deterministic successes without an approval click;
+- shows a simple review list after preparation, while requiring attention only
+  for invalid or failed items;
 - lets the user remove generated chapter packages while retaining the EPUB,
   Story Bible, and approved reusable assets.
 
@@ -315,7 +319,7 @@ source hashes, retries, and restart recovery remain Phase 8 work.
 
 ### Phase 6B - Shared foreground inventory
 
-Status: **Inventory and candidate generation completed on 2026-07-27.**
+Status: **Completed on 2026-07-27.**
 
 - [x] Derive only required animals, creatures, plants, and props from the
   merged volume inventory.
@@ -323,11 +327,57 @@ Status: **Inventory and candidate generation completed on 2026-07-27.**
 - [x] Track required, generated, approved, and rejected states.
 - [x] Preserve review state when the same merged inventory is refreshed.
 - [x] Show one minimal shared inventory under Animated Story preparation tools.
+
+### Phase 6C - Foreground candidate generation
+
+Status: **Completed on 2026-07-27.**
+
 - [x] Generate Gemini image candidates only for required records, remove the
   magenta background locally, and retain the result as a transparent PNG with
   its stable inventory record.
-- [ ] Validate generated candidates and add review actions.
-- [ ] Validate and register approved images for reuse in matching chapters.
+
+### Phase 6D - Automatic asset preparation and validation
+
+Status: **Next.**
+
+- [ ] Repair missing chapter appearances before requirements are queued. A
+  required Chair or Flower from Chapter 1 must show Chapter 1 rather than
+  `0 chapters`.
+- [ ] Combine missing location backgrounds and required foreground variants
+  into one deduplicated volume queue.
+- [ ] Start the queue automatically after analysis instead of requiring a
+  Generate button for every item.
+- [ ] Generate sequentially and reuse ready assets so the three-request
+  provider limit is not exceeded.
+- [ ] Move full image bytes out of SharedPreferences and large widget state.
+  Use a session binary store until Phase 8 adds durable local asset storage.
+- [ ] Perform image decoding, chroma removal, metadata checks, and binary
+  storage before the small UI state update to prevent the visible freeze after
+  generation.
+- [ ] Validate format, dimensions, alpha transparency, entity ID, variant ID,
+  stable asset ID, and chapter ownership.
+- [ ] Automatically mark and register deterministic successes as ready; no
+  manual approval is required.
+- [ ] Keep failed or invalid items visible as `needsReview` with Retry while
+  normal reading and safe Story Mode fallbacks continue.
+- [ ] Show one compact progress line with current item, ready count, failed
+  count, and remaining count.
+
+### Phase 6E - ChapterStory asset connection
+
+- [ ] Give scene planning the ready location and foreground catalogs.
+- [ ] Assign the ready background ID for each matching location/state.
+- [ ] Add at most two matching foreground assets to `focusAssetLayers`.
+- [ ] Remove unrelated prototype-human substitution.
+- [ ] Rebuild Chapter 1 and load those prepared assets automatically when its
+  Animated Story Mode opens.
+
+### Phase 6F - Optional review and replacement
+
+- [ ] Show lightweight previews for automatically accepted assets.
+- [ ] Provide Regenerate, Replace, and Reuse without requiring normal approval.
+- [ ] Keep manual attention only for invalid, failed, or visibly unsuitable
+  results.
 
 ### Phase 7 - Shared book-specific humans
 

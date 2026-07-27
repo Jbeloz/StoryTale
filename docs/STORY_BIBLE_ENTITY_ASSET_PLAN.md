@@ -246,12 +246,15 @@ does not generate a new image for every scene.
    the broad setting as context.
 4. Map ordered plot beats to their specific place and background state.
 5. Build the chapter's distinct required-background list from those mappings.
-6. Automatically approve a new candidate only when every deterministic check
-   passes.
-7. Let the user review uncertain, conflicting, or incomplete candidates.
+6. Automatically register a generated asset when its source requirement,
+   stable entity/variant ownership, format, dimensions, and transparency pass
+   every deterministic check. Normal preparation requires no approval click.
+7. Let the user review only invalid, failed, conflicting, or visibly
+   unsuitable candidates.
 8. Reuse an approved asset when one already exists.
 9. Generate only the missing approved masters and required states.
-10. Review and register the resulting asset IDs in the story bible.
+10. Register deterministic successes in the story bible automatically and
+    retain Regenerate or Replace for optional later review.
 11. Run Gemini scene planning with the updated approved catalog.
 12. Validate that every visible layer matches its referenced entity.
 13. Cache the validated chapter plan locally.
