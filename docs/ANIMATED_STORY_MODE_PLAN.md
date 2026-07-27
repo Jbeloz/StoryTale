@@ -307,6 +307,30 @@ beat shows one short subtitle/audio line. The approved visual-novel layouts,
 movement IDs, analyzer rules, and reference prompts are defined in the
 [Visual-Novel Scene Library](ANIMATED_STORY_SCENE_LIBRARY.md).
 
+Beat playback is dynamic, but it must not force a large movement on every
+dialogue line:
+
+1. Advancing a beat always updates the subtitle, speaker name, and highlighted
+   speaker.
+2. The current speaker uses the beat's approved expression. Neutral speech may
+   temporarily use the Talking mouth; Happy, Sad, or Angry remain unchanged.
+3. A beat with an `actionId` may change pose or replay one small approved
+   movement. A beat without an action keeps the current pose and uses only
+   speaker focus.
+4. A matching `cameraTriggerBeatId` may run one approved reaction such as a
+   short push-in, snap, shake, or focus change.
+5. Shot changes control the larger cut: visible characters, layout, scale,
+   depth, facing, background, transition, and primary camera movement.
+6. Auto-play advances after prepared line audio ends. Until audio is ready, it
+   uses a readable duration calculated from the exact subtitle text.
+7. Manual Previous, Play/Pause, and Next remain available and reset the active
+   beat animation correctly.
+
+This prevents a static chapter while also avoiding distracting motion on every
+sentence. Local fallback fixtures are development previews only; a prepared
+chapter is complete only when its saved package supplies the resolved beat and
+shot instructions above.
+
 Location and background rules apply to every imported EPUB:
 
 1. Resolve the active place from each plot beat's source blocks.
@@ -520,7 +544,12 @@ generation begins. See
 ### Phase 6 - Dynamic player
 
 - Load one chapter package.
-- Synchronize line audio, subtitles, sprite layers, and movements.
+- On every beat change, synchronize the subtitle, speaker focus, expression,
+  optional `actionId`, movement replay, and optional camera trigger.
+- On every shot change, update the layout, visible cast, facing, scale, depth,
+  background, transition, and primary camera movement.
+- Auto-advance from prepared audio duration, with a readable text-duration
+  fallback before audio is ready.
 - Support previous, pause/play, next, chapter contents, language, and moral.
 - Persist scene position and completed status locally.
 

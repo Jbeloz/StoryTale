@@ -334,7 +334,22 @@ Implementation order:
 7. Save resumable preparation states and fingerprints.
 8. Mark each valid chapter Story Mode Ready and load its saved package in the
    existing visual-novel player.
-9. Replace the normal Prepare Chapter action with Repair/Rebuild for failed,
+9. Complete beat-level playback binding:
+   - every beat changes the subtitle and active speaker;
+   - neutral speech temporarily uses the talking mouth while strong emotions
+     remain visible;
+   - `actionId` may change the pose or replay one small movement for that beat;
+   - `cameraTriggerBeatId` may trigger one approved snap, shake, or focus
+     reaction; and
+   - a new shot, rather than every dialogue line, changes the full layout,
+     visible cast, background, and primary camera movement.
+10. Add timed auto-advance using prepared audio duration when available and a
+    readable text-duration fallback otherwise. Previous/Next must continue to
+    work without auto-play.
+11. Reject or repair packages whose beat speaker, action, camera trigger, or
+    source range cannot be resolved. Never replace an unresolved subject with
+    an unrelated prototype actor.
+12. Replace the normal Prepare Chapter action with Repair/Rebuild for failed,
    stale, or edited chapters.
 
 ### Phase 10 - DeepL and offline audio
