@@ -4,8 +4,15 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'story_bible_models.dart';
+import 'story_asset_binary_store.dart';
 
-enum StoryForegroundAssetStatus { required, generated, approved, rejected }
+enum StoryForegroundAssetStatus {
+  required,
+  generated,
+  approved,
+  needsReview,
+  rejected,
+}
 
 class StoryForegroundAssetData {
   const StoryForegroundAssetData({
@@ -25,6 +32,7 @@ class StoryForegroundAssetData {
     this.height,
     this.generationPrompt,
     this.generatedAt,
+    this.validationError,
   });
 
   final String assetId;
@@ -43,8 +51,18 @@ class StoryForegroundAssetData {
   final int? height;
   final String? generationPrompt;
   final String? generatedAt;
+  final String? validationError;
 
   String get key => '$entityId::$variantId';
+
+  Uint8List get bytes {
+    final stored = StoryAssetBinaryStore.read(assetId);
+    if (stored != null) return stored;
+    final encoded = imageBase64;
+    return encoded == null ? Uint8List(0) : base64Decode(encoded);
+  }
+
+  bool get hasBytes => bytes.isNotEmpty;
 
   StoryForegroundAssetData copyWith({
     String? entityName,
@@ -58,6 +76,9 @@ class StoryForegroundAssetData {
     int? height,
     String? generationPrompt,
     String? generatedAt,
+    String? validationError,
+    bool clearImage = false,
+    bool clearValidationError = false,
   }) {
     return StoryForegroundAssetData(
       assetId: assetId,
@@ -70,12 +91,15 @@ class StoryForegroundAssetData {
       chapterIds: chapterIds ?? this.chapterIds,
       reasons: reasons ?? this.reasons,
       status: status ?? this.status,
-      imageBase64: imageBase64 ?? this.imageBase64,
+      imageBase64: clearImage ? null : imageBase64 ?? this.imageBase64,
       mimeType: mimeType ?? this.mimeType,
       width: width ?? this.width,
       height: height ?? this.height,
       generationPrompt: generationPrompt ?? this.generationPrompt,
       generatedAt: generatedAt ?? this.generatedAt,
+      validationError: clearValidationError
+          ? null
+          : validationError ?? this.validationError,
     );
   }
 
@@ -96,6 +120,7 @@ class StoryForegroundAssetData {
     if (height != null) 'height': height,
     if (generationPrompt != null) 'generationPrompt': generationPrompt,
     if (generatedAt != null) 'generatedAt': generatedAt,
+    if (validationError != null) 'validationError': validationError,
   };
 
   factory StoryForegroundAssetData.fromJson(Map<String, dynamic> json) {
@@ -118,6 +143,7 @@ class StoryForegroundAssetData {
       height: json['height'] as int?,
       generationPrompt: json['generationPrompt'] as String?,
       generatedAt: json['generatedAt'] as String?,
+      validationError: json['validationError'] as String?,
     );
   }
 
@@ -154,7 +180,7 @@ class StoryForegroundRepository {
     final source = preferences.getString('$_keyPrefix$bookId');
     if (source == null) return const [];
     try {
-      return (jsonDecode(source) as List<dynamic>)
+      final assets = (jsonDecode(source) as List<dynamic>)
           .map(
             (value) => StoryForegroundAssetData.fromJson(
               Map<String, dynamic>.from(value as Map),
@@ -162,6 +188,14 @@ class StoryForegroundRepository {
           )
           .where((asset) => asset.bookId == bookId)
           .toList(growable: false);
+      final compact = [for (final asset in assets) _compact(asset)];
+      if (assets.any((asset) => asset.imageBase64 != null)) {
+        await preferences.setString(
+          '$_keyPrefix$bookId',
+          jsonEncode(compact.map((asset) => asset.toJson()).toList()),
+        );
+      }
+      return compact;
     } catch (_) {
       return const [];
     }
@@ -220,7 +254,7 @@ class StoryForegroundRepository {
             entityName: entity.canonicalName,
             variantId: variant,
             description: entity.description,
-            chapterIds: entity.chapterAppearanceIds,
+            chapterIds: _chapterIds(entity),
             reasons: reasons,
           ),
         );
@@ -237,6 +271,15 @@ class StoryForegroundRepository {
       StoryEntityKind.prop => true,
       StoryEntityKind.human || StoryEntityKind.location => false,
     };
+  }
+
+  List<String> _chapterIds(StoryEntityData entity) {
+    if (entity.chapterAppearanceIds.isNotEmpty) {
+      return entity.chapterAppearanceIds;
+    }
+    return entity.firstSeenChapterId.trim().isEmpty
+        ? const []
+        : [entity.firstSeenChapterId];
   }
 
   List<String> _reasons(StoryEntityData entity) {
@@ -273,15 +316,24 @@ class StoryForegroundRepository {
     String bookId,
     List<StoryForegroundAssetData> assets,
   ) async {
+    final compact = [for (final asset in assets) _compact(asset)];
     final preferences = await SharedPreferences.getInstance();
     final saved = await preferences.setString(
       '$_keyPrefix$bookId',
-      jsonEncode(assets.map((asset) => asset.toJson()).toList()),
+      jsonEncode(compact.map((asset) => asset.toJson()).toList()),
     );
     if (!saved) {
       throw StateError('The foreground inventory could not be saved.');
     }
     revision.value++;
-    return List.unmodifiable(assets);
+    return List.unmodifiable(compact);
+  }
+
+  StoryForegroundAssetData _compact(StoryForegroundAssetData asset) {
+    final encoded = asset.imageBase64;
+    if (encoded != null && encoded.isNotEmpty) {
+      StoryAssetBinaryStore.write(asset.assetId, base64Decode(encoded));
+    }
+    return asset.copyWith(clearImage: true);
   }
 }

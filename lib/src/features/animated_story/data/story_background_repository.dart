@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'story_asset_binary_store.dart';
+
 class StoryBackgroundAssetData {
   const StoryBackgroundAssetData({
     required this.assetId,
@@ -10,13 +12,15 @@ class StoryBackgroundAssetData {
     required this.locationId,
     required this.stateId,
     required this.prompt,
-    required this.imageBase64,
     required this.createdAt,
+    this.imageBase64,
     this.approved = false,
     this.mimeType = 'image/jpeg',
     this.width = 1024,
     this.height = 576,
     this.brief = const {},
+    this.chapterIds = const [],
+    this.validationError,
   });
 
   final String assetId;
@@ -24,34 +28,55 @@ class StoryBackgroundAssetData {
   final String locationId;
   final String stateId;
   final String prompt;
-  final String imageBase64;
+  final String? imageBase64;
   final String createdAt;
   final bool approved;
   final String mimeType;
   final int width;
   final int height;
   final Map<String, dynamic> brief;
+  final List<String> chapterIds;
+  final String? validationError;
 
   String get key => '$locationId::$stateId';
 
-  Uint8List get bytes => base64Decode(imageBase64);
+  Uint8List get bytes {
+    final stored = StoryAssetBinaryStore.read(assetId);
+    if (stored != null) return stored;
+    final encoded = imageBase64;
+    return encoded == null ? Uint8List(0) : base64Decode(encoded);
+  }
+
+  bool get hasBytes => bytes.isNotEmpty;
 
   bool get isVisualNovelSize => width == 1024 && height == 576;
 
-  StoryBackgroundAssetData copyWith({String? assetId, bool? approved}) {
+  StoryBackgroundAssetData copyWith({
+    String? assetId,
+    bool? approved,
+    String? imageBase64,
+    bool clearImage = false,
+    List<String>? chapterIds,
+    String? validationError,
+    bool clearValidationError = false,
+  }) {
     return StoryBackgroundAssetData(
       assetId: assetId ?? this.assetId,
       bookId: bookId,
       locationId: locationId,
       stateId: stateId,
       prompt: prompt,
-      imageBase64: imageBase64,
+      imageBase64: clearImage ? null : imageBase64 ?? this.imageBase64,
       createdAt: createdAt,
       approved: approved ?? this.approved,
       mimeType: mimeType,
       width: width,
       height: height,
       brief: brief,
+      chapterIds: chapterIds ?? this.chapterIds,
+      validationError: clearValidationError
+          ? null
+          : validationError ?? this.validationError,
     );
   }
 
@@ -61,13 +86,15 @@ class StoryBackgroundAssetData {
     'locationId': locationId,
     'stateId': stateId,
     'prompt': prompt,
-    'imageBase64': imageBase64,
+    if (imageBase64 != null) 'imageBase64': imageBase64,
     'createdAt': createdAt,
     'approved': approved,
     'mimeType': mimeType,
     'width': width,
     'height': height,
     'brief': brief,
+    'chapterIds': chapterIds,
+    if (validationError != null) 'validationError': validationError,
   };
 
   factory StoryBackgroundAssetData.fromJson(Map<String, dynamic> json) {
@@ -77,13 +104,17 @@ class StoryBackgroundAssetData {
       locationId: json['locationId'] as String,
       stateId: json['stateId'] as String,
       prompt: json['prompt'] as String? ?? '',
-      imageBase64: json['imageBase64'] as String,
+      imageBase64: json['imageBase64'] as String?,
       createdAt: json['createdAt'] as String? ?? '',
       approved: json['approved'] as bool? ?? false,
       mimeType: json['mimeType'] as String? ?? 'image/jpeg',
       width: json['width'] as int? ?? 0,
       height: json['height'] as int? ?? 0,
       brief: Map<String, dynamic>.from(json['brief'] as Map? ?? const {}),
+      chapterIds: (json['chapterIds'] as List<dynamic>? ?? const [])
+          .whereType<String>()
+          .toList(growable: false),
+      validationError: json['validationError'] as String?,
     );
   }
 
@@ -123,7 +154,7 @@ class StoryBackgroundRepository {
     final source = preferences.getString('$_keyPrefix$bookId');
     if (source == null) return const [];
     try {
-      return (jsonDecode(source) as List<dynamic>)
+      final assets = (jsonDecode(source) as List<dynamic>)
           .map(
             (item) => StoryBackgroundAssetData.fromJson(
               Map<String, dynamic>.from(item as Map),
@@ -131,6 +162,14 @@ class StoryBackgroundRepository {
           )
           .where((item) => item.bookId == bookId)
           .toList(growable: false);
+      final compact = [for (final asset in assets) _compact(asset)];
+      if (assets.any((asset) => asset.imageBase64 != null)) {
+        await preferences.setString(
+          '$_keyPrefix$bookId',
+          jsonEncode(compact.map((asset) => asset.toJson()).toList()),
+        );
+      }
+      return compact;
     } catch (_) {
       return const [];
     }
@@ -163,14 +202,13 @@ class StoryBackgroundRepository {
   Future<List<StoryBackgroundAssetData>> approveCandidate(
     StoryBackgroundAssetData candidate,
   ) async {
-    final approved = candidate.copyWith(
-      assetId: StoryBackgroundAssetData.stableId(
-        bookId: candidate.bookId,
-        locationId: candidate.locationId,
-        stateId: candidate.stateId,
-      ),
-      approved: true,
+    final approvedId = StoryBackgroundAssetData.stableId(
+      bookId: candidate.bookId,
+      locationId: candidate.locationId,
+      stateId: candidate.stateId,
     );
+    StoryAssetBinaryStore.move(candidate.assetId, approvedId);
+    final approved = candidate.copyWith(assetId: approvedId, approved: true);
     final assets = [
       for (final asset in await load(candidate.bookId))
         if (asset.key != candidate.key) asset,
@@ -182,6 +220,7 @@ class StoryBackgroundRepository {
   Future<List<StoryBackgroundAssetData>> rejectCandidate(
     StoryBackgroundAssetData candidate,
   ) async {
+    StoryAssetBinaryStore.remove(candidate.assetId);
     final assets = [
       for (final asset in await load(candidate.bookId))
         if (asset.assetId != candidate.assetId) asset,
@@ -198,7 +237,8 @@ class StoryBackgroundRepository {
       if (asset.locationId == locationId &&
           asset.stateId == stateId &&
           asset.approved &&
-          asset.isVisualNovelSize) {
+          asset.isVisualNovelSize &&
+          asset.hasBytes) {
         return asset;
       }
     }
@@ -209,15 +249,24 @@ class StoryBackgroundRepository {
     String bookId,
     List<StoryBackgroundAssetData> assets,
   ) async {
+    final compact = [for (final asset in assets) _compact(asset)];
     final preferences = await SharedPreferences.getInstance();
     final saved = await preferences.setString(
       '$_keyPrefix$bookId',
-      jsonEncode(assets.map((item) => item.toJson()).toList()),
+      jsonEncode(compact.map((item) => item.toJson()).toList()),
     );
     if (!saved) {
       throw StateError('The background catalog could not be saved.');
     }
     revision.value++;
-    return List.unmodifiable(assets);
+    return List.unmodifiable(compact);
+  }
+
+  StoryBackgroundAssetData _compact(StoryBackgroundAssetData asset) {
+    final encoded = asset.imageBase64;
+    if (encoded != null && encoded.isNotEmpty) {
+      StoryAssetBinaryStore.write(asset.assetId, base64Decode(encoded));
+    }
+    return asset.copyWith(clearImage: true);
   }
 }

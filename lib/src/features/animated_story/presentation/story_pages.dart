@@ -109,6 +109,16 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
           LinearProgressIndicator(value: job.progress),
           const SizedBox(height: 10),
           Text(_activityLabel(job, currentJob)),
+          if (preparing &&
+              job.stage == VolumePreparationStage.preparingAssets) ...[
+            const SizedBox(height: 6),
+            Text(
+              '${job.assetReadyCount} ready • '
+              '${job.assetNeedsReviewCount} need review • '
+              '${job.assetTotal - job.assetReadyCount - job.assetNeedsReviewCount} '
+              'remaining',
+            ),
+          ],
           const SizedBox(height: 12),
           if (preparing)
             OutlinedButton.icon(
@@ -133,6 +143,12 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
                     ? 'Retry Preparation'
                     : 'Prepare Animated Volume',
               ),
+            ),
+          if (ready && job.assetNeedsReviewCount > 0)
+            OutlinedButton.icon(
+              onPressed: _prepare,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry Missing Artwork'),
             ),
           if (job.lastError != null) ...[
             const SizedBox(height: 8),
@@ -205,6 +221,19 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
                 title: const Text('Foreground variants'),
                 trailing: Text('${job.foregroundAssetCount}'),
               ),
+              ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Ready artwork'),
+                trailing: Text('${job.assetReadyCount}'),
+              ),
+              if (job.assetNeedsReviewCount > 0)
+                ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Artwork using safe fallback'),
+                  trailing: Text('${job.assetNeedsReviewCount}'),
+                ),
               if (job.lastError != null)
                 SelectableText(job.lastError!, textAlign: TextAlign.left),
               for (final event in job.events.take(5))
@@ -275,7 +304,11 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
       VolumePreparationStatus.notStarted =>
         'Prepare every chapter in this volume once.',
       VolumePreparationStatus.preparing =>
-        chapter == null
+        job.stage == VolumePreparationStage.preparingAssets
+            ? job.currentAssetLabel == null
+                  ? 'Preparing reusable story artwork...'
+                  : 'Preparing ${job.currentAssetLabel}...'
+            : chapter == null
             ? 'Merging the volume inventory...'
             : 'Analyzing ${chapter.title}...',
       VolumePreparationStatus.paused => 'Preparation paused.',
@@ -364,7 +397,8 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
     setState(() {
       _approvedBackgrounds = {
         for (final asset in assets)
-          if (asset.approved && asset.isVisualNovelSize) asset.key: asset.bytes,
+          if (asset.approved && asset.isVisualNovelSize && asset.hasBytes)
+            asset.key: asset.bytes,
       };
     });
   }

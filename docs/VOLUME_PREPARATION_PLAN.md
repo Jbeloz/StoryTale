@@ -338,32 +338,34 @@ Status: **Completed on 2026-07-27.**
 
 ### Phase 6D - Automatic asset preparation and validation
 
-Status: **Next.**
+Status: **Completed on 2026-07-27.**
 
-- [ ] Repair missing chapter appearances before requirements are queued. A
+- [x] Repair missing chapter appearances before requirements are queued. A
   required Chair or Flower from Chapter 1 must show Chapter 1 rather than
   `0 chapters`.
-- [ ] Combine missing location backgrounds and required foreground variants
+- [x] Combine missing location backgrounds and required foreground variants
   into one deduplicated volume queue.
-- [ ] Start the queue automatically after analysis instead of requiring a
+- [x] Start the queue automatically after analysis instead of requiring a
   Generate button for every item.
-- [ ] Generate sequentially and reuse ready assets so the three-request
+- [x] Generate sequentially and reuse ready assets so the three-request
   provider limit is not exceeded.
-- [ ] Move full image bytes out of SharedPreferences and large widget state.
+- [x] Move full image bytes out of SharedPreferences and large widget state.
   Use a session binary store until Phase 8 adds durable local asset storage.
-- [ ] Perform image decoding, chroma removal, metadata checks, and binary
+- [x] Perform image decoding, chroma removal, metadata checks, and binary
   storage before the small UI state update to prevent the visible freeze after
   generation.
-- [ ] Validate format, dimensions, alpha transparency, entity ID, variant ID,
+- [x] Validate format, dimensions, alpha transparency, entity ID, variant ID,
   stable asset ID, and chapter ownership.
-- [ ] Automatically mark and register deterministic successes as ready; no
+- [x] Automatically mark and register deterministic successes as ready; no
   manual approval is required.
-- [ ] Keep failed or invalid items visible as `needsReview` with Retry while
+- [x] Keep failed or invalid items visible as `needsReview` with Retry while
   normal reading and safe Story Mode fallbacks continue.
-- [ ] Show one compact progress line with current item, ready count, failed
+- [x] Show one compact progress line with current item, ready count, failed
   count, and remaining count.
 
 ### Phase 6E - ChapterStory asset connection
+
+Status: **Next.**
 
 - [ ] Give scene planning the ready location and foreground catalogs.
 - [ ] Assign the ready background ID for each matching location/state.

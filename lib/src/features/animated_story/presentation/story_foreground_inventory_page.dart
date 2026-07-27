@@ -1,10 +1,10 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 
 import '../../../core/state/storytale_scope.dart';
 import '../../../shared/widgets/storytale_components.dart';
 import '../data/story_artwork_service.dart';
+import '../data/story_asset_binary_store.dart';
+import '../data/story_asset_validator.dart';
 import '../data/story_bible_repository.dart';
 import '../data/story_foreground_repository.dart';
 
@@ -30,6 +30,7 @@ class _StoryForegroundInventoryPageState
   late final StoryForegroundRepository _foregroundRepository;
   late final StoryBibleRepository _storyBibleRepository;
   late final StoryArtworkService _artworkService;
+  final _validator = const StoryAssetValidator();
   List<StoryForegroundAssetData> _assets = const [];
   String? _bookId;
   String? _workingAssetId;
@@ -114,9 +115,8 @@ class _StoryForegroundInventoryPageState
         Text(bookTitle, style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 6),
         const Text(
-          'One shared asset record is reused everywhere the same story '
-          'subject appears. Generate only the listed reusable variants; '
-          'validation and approval follow in the next phase.',
+          'Volume preparation creates and validates these shared assets '
+          'automatically. Items needing review keep a safe placeholder.',
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -188,7 +188,11 @@ class _StoryForegroundInventoryPageState
     }
     return FilledButton.tonal(
       onPressed: _workingAssetId == null ? () => _generate(asset) : null,
-      child: const Text('Generate'),
+      child: Text(
+        asset.status == StoryForegroundAssetStatus.needsReview
+            ? 'Retry'
+            : 'Generate',
+      ),
     );
   }
 
@@ -196,18 +200,21 @@ class _StoryForegroundInventoryPageState
     setState(() => _workingAssetId = asset.assetId);
     try {
       final generated = await _artworkService.generateForeground(asset);
-      _assets = await _foregroundRepository.save(
-        asset.copyWith(
-          status: StoryForegroundAssetStatus.generated,
-          imageBase64: base64Encode(generated.bytes),
-          mimeType: generated.mimeType,
-          width: generated.width,
-          height: generated.height,
-          generationPrompt: generated.prompt,
-          generatedAt: DateTime.now().toUtc().toIso8601String(),
-        ),
+      final prepared = asset.copyWith(
+        status: StoryForegroundAssetStatus.approved,
+        mimeType: generated.mimeType,
+        width: generated.width,
+        height: generated.height,
+        generationPrompt: generated.prompt,
+        generatedAt: DateTime.now().toUtc().toIso8601String(),
+        clearImage: true,
+        clearValidationError: true,
       );
-      _message('${asset.entityName} ${asset.variantId} was generated.');
+      final error = _validator.validateForeground(prepared, generated.bytes);
+      if (error != null) throw ArtworkGenerationException(error);
+      StoryAssetBinaryStore.write(asset.assetId, generated.bytes);
+      _assets = await _foregroundRepository.save(prepared);
+      _message('${asset.entityName} ${asset.variantId} is ready.');
     } on ArtworkGenerationException catch (error) {
       _message(error.message);
     } catch (_) {
@@ -236,6 +243,7 @@ class _StoryForegroundInventoryPageState
       StoryForegroundAssetStatus.required => 'Required',
       StoryForegroundAssetStatus.generated => 'Review',
       StoryForegroundAssetStatus.approved => 'Approved',
+      StoryForegroundAssetStatus.needsReview => 'Needs review',
       StoryForegroundAssetStatus.rejected => 'Rejected',
     };
   }

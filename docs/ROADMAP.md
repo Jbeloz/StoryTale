@@ -274,7 +274,7 @@ Implementation order:
    or visually important subjects. Gemini creates one whole subject on a
    magenta removal background, StoryTale converts it to a local transparent
    PNG, and the stable inventory record moves to `generated`.
-8. **Next - Phase 6D: automatic asset preparation and smooth updates:**
+8. **Done - Phase 6D: automatic asset preparation and smooth updates:**
    - repair and validate every required asset's chapter links so a recurring
      record cannot incorrectly show `0 chapters`;
    - build one deduplicated queue containing every missing location background
@@ -291,7 +291,7 @@ Implementation order:
      no approval click is required; and
    - mark only invalid or failed results `needsReview`, retain the safe
      fallback, and show simple queue progress.
-9. **Phase 6E: connect prepared assets to ChapterStory:** add ready background
+9. **Next - Phase 6E: connect prepared assets to ChapterStory:** add ready background
    IDs and at most two matching `focusAssetLayers` per shot, give Gemini the
    entity-aware catalog, remove unrelated prototype-human substitution,
    rebuild Chapter 1, and load the prepared assets when Story Mode opens.

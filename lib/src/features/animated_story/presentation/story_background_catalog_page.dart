@@ -1,11 +1,10 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 
 import '../../../core/state/storytale_scope.dart';
 import '../../../shared/models/storytale_models.dart';
 import '../../../shared/widgets/storytale_components.dart';
 import '../data/story_artwork_service.dart';
+import '../data/story_asset_binary_store.dart';
 import '../data/story_background_repository.dart';
 import '../data/story_analysis_contract.dart';
 import '../data/story_bible_models.dart';
@@ -128,9 +127,8 @@ class _StoryBackgroundCatalogPageState
         Text(bookTitle, style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 6),
         const Text(
-          'Generate one reusable background for each location and meaningful '
-          'place state required by this chapter. Generated images must be '
-          'approved before Story Mode can use their asset IDs.',
+          'Volume preparation creates and validates each required background '
+          'automatically. This page is for review and optional replacements.',
         ),
         const SizedBox(height: 12),
         Card(
@@ -260,7 +258,9 @@ class _StoryBackgroundCatalogPageState
               aspectRatio: 16 / 9,
               child: ColoredBox(
                 color: Colors.black12,
-                child: Image.memory(asset.bytes, fit: BoxFit.contain),
+                child: asset.hasBytes
+                    ? Image.memory(asset.bytes, fit: BoxFit.contain)
+                    : const Center(child: Text('Safe placeholder in use')),
               ),
             ),
           ),
@@ -293,18 +293,19 @@ class _StoryBackgroundCatalogPageState
       );
       final generated = await _artworkService.generateBackground(brief);
       final createdAt = DateTime.now().toUtc();
+      final candidateId = StoryBackgroundAssetData.candidateId(
+        bookId: _bookId!,
+        locationId: requirement.locationId,
+        stateId: requirement.stateId,
+        createdAt: createdAt,
+      );
+      StoryAssetBinaryStore.write(candidateId, generated.bytes);
       final asset = StoryBackgroundAssetData(
-        assetId: StoryBackgroundAssetData.candidateId(
-          bookId: _bookId!,
-          locationId: requirement.locationId,
-          stateId: requirement.stateId,
-          createdAt: createdAt,
-        ),
+        assetId: candidateId,
         bookId: _bookId!,
         locationId: requirement.locationId,
         stateId: requirement.stateId,
         prompt: generated.prompt,
-        imageBase64: base64Encode(generated.bytes),
         createdAt: createdAt.toIso8601String(),
         mimeType: generated.mimeType,
         width: generated.width,
@@ -407,7 +408,8 @@ class _StoryBackgroundCatalogPageState
     for (final asset in _assets) {
       if (asset.key == requirement.key &&
           asset.approved &&
-          asset.isVisualNovelSize) {
+          asset.isVisualNovelSize &&
+          asset.hasBytes) {
         return asset;
       }
     }
