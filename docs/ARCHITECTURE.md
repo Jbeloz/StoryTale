@@ -43,12 +43,13 @@ flowchart LR
 | EPUB importer | Accepts `.epub` only and extracts cover, title, author, and chapters. |
 | Local storage | Saves EPUBs, progress, translations, chapter data, sprites, and settings on the device. |
 | DeepL service | The only translation API. It translates English chapter text into Filipino. |
-| Gemini analyzer | Converts one cleaned chapter plus the compact story-bible registry into schema-validated character, dialogue, location, plot, and scene data. |
+| Gemini analyzer | A resumable volume job sends one cleaned chapter at a time with the compact story-bible registry, then merges every validated result into one volume inventory. |
 | Offline TTS engine | Runs a Tagalog ONNX TTS model inside the app without depending on Android voices. |
 | Tagalog base model | Uses the Meta MMS Tagalog model, converted to ONNX, to create correctly pronounced source audio. |
 | Voice packs | Stores five selected RVC voices as ONNX models installed with the app. Only the active voice is loaded into memory. |
 | Audio generator | Creates narration in the background and caches completed chapter audio for smooth playback. |
 | Book story bible | Locks recurring humans, animals, creatures, plants, props, appearances, aliases, locations, assets, and voices across all volumes. |
+| Volume preparation coordinator | Tracks analysis, entity merging, shared assets, chapter assembly, validation, progress, pause/resume, and failures for the complete imported volume. |
 | Visual entity catalog | Maps each story subject to its own approved sprite, state, rig, focus asset, or background ID and prevents unrelated substitutions. |
 | ChapterStory data | Stores the sprites, dialogue, movements, sounds, and moral for one chapter. |
 | Story Mode player | Moves sprites over backgrounds while playing voices, subtitles, and sound effects. |
@@ -92,6 +93,9 @@ Character identities, aliases, appearances, voices, and locations live in one
 book-level story bible so they can be reused across chapters and volumes. See
 [Animated Story Mode plan](ANIMATED_STORY_MODE_PLAN.md) for the complete data,
 analysis, generation, and validation flow. See the
+[Volume Preparation Plan](VOLUME_PREPARATION_PLAN.md) for whole-volume
+orchestration, progress, reusable assets, readiness, and repair behavior. See
+the
 [Visual-Novel Scene Library](ANIMATED_STORY_SCENE_LIBRARY.md) for the approved
 shot layouts, movements, subtitle rules, and analyzer choices. Non-human
 subjects and important objects follow the

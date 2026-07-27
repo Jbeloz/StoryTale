@@ -60,7 +60,7 @@ animation limits, validation, storage, and safe fallbacks.
 | 3. Visual-novel runtime and Gemini contract | **Prototype done** | Cutscenes, shots, beats, layouts, facing, depth, camera presets, movement, transitions, and validated Gemini plans work with safe fixtures |
 | 4. Story Bible and location requirements | **Partial** | Entity extraction, review, automatic approval, specific locations, required background pairs, and the local background catalog work |
 | 5. Final visual-novel backgrounds | **Done** | Generate, review, approve, persist, resolve, refresh, and render exact location/state backgrounds in Story Mode |
-| 6. Foreground and non-human entity assets | **Current** | Generate, review, register, and render matching animals, creatures, plants, and props |
+| 6. Volume analysis and foreground inventory | **Current** | Analyze all chapters through one resumable job, merge names and appearances, show progress, and prepare reusable non-human requirements |
 | 7. Generated book-specific humans | **Planned** | Create one approved Gemini master, transparent rig, face catalog, outfit, and reusable identity per important human |
 | 8. Persistent books and volumes | **Planned** | Save EPUBs, books, progress, story bibles, assets, jobs, and `Book -> Volume -> Chapter` data across restarts |
 | 9. Complete ChapterStory builder | **Planned** | Assemble approved assets, exact text coverage, subtitles, moral, movement, and manifests for any imported chapter |
@@ -227,22 +227,30 @@ Playback acceptance defect resolved:
 
 ## Current phase
 
-### Phase 6 - Foreground and non-human entity assets
+### Phase 6 - Volume analysis and foreground inventory
 
 Status: **Current.**
 
 Implementation order:
 
-1. Add generated asset records and approval states for humans, animals,
-   creatures, plants, and props.
-2. Generate only recurring, speaking, state-changing, or visually important
+1. Add a volume preparation job and one job entry per chapter.
+2. Add weighted overall progress, current stage/chapter, elapsed time, item
+   counts, pause, resume, retry, and a short operational event log.
+3. Analyze every Little Prince chapter separately and merge results into one
+   volume inventory.
+4. Save canonical names, aliases, stable IDs, first appearances, chapter
+   appearances, speaking chapters, visual states, and unresolved conflicts.
+5. Deduplicate recurring entity and location/state requirements before any
+   image generation.
+6. Add generated asset records and approval states for animals, creatures,
+   plants, and props.
+7. Generate only recurring, speaking, state-changing, or visually important
    subjects.
-3. Use Gemini image generation for transparent foreground assets.
-4. Validate dimensions, transparency, entity ownership, and stable IDs.
-5. Add preview, approve, reject, regenerate, replace, and reuse actions.
-6. Add `focusAssetLayers` with at most two approved assets per shot.
-7. Add entity-aware scene catalogs to Gemini analysis.
-8. Remove prototype-human substitution from generated chapter plans.
+8. Validate dimensions, transparency, entity ownership, and stable IDs.
+9. Add preview, approve, reject, regenerate, replace, and reuse actions.
+10. Add `focusAssetLayers` with at most two approved assets per shot.
+11. Add entity-aware scene catalogs to Gemini analysis.
+12. Remove prototype-human substitution from generated chapter plans.
 
 Minimum first-version assets:
 
@@ -253,6 +261,10 @@ Minimum first-version assets:
 
 Safe fallback: approved matching asset, then no-character detail/background
 shot, then subtitles/audio. Never use an unrelated human.
+
+The complete orchestration, progress, reuse, readiness, and repair contract is
+in [Volume Preparation Plan](VOLUME_PREPARATION_PLAN.md). The provided light
+novel EPUB remains deferred; Phase 6 uses the Little Prince fixture first.
 
 ### Phase 7 - Generated book-specific humans
 
@@ -290,7 +302,7 @@ Implementation order:
 
 Implementation order:
 
-1. Run analysis using the approved entity and asset catalogs.
+1. Load every validated chapter analysis produced by the volume job.
 2. Validate every source block appears exactly once and in order.
 3. Resolve every location, background, character, focus asset, pose, face,
    movement, transition, and camera ID.
@@ -299,7 +311,10 @@ Implementation order:
 6. Write versioned `analysis.json`, `scenes.json`, `subtitles.json`, and
    `manifest.json`.
 7. Save resumable preparation states and fingerprints.
-8. Load the saved package in the existing visual-novel player.
+8. Mark each valid chapter Story Mode Ready and load its saved package in the
+   existing visual-novel player.
+9. Replace the normal Prepare Chapter action with Repair/Rebuild for failed,
+   stale, or edited chapters.
 
 ### Phase 10 - DeepL and offline audio
 
@@ -428,6 +443,7 @@ These decisions must be recorded here when resolved.
 | `APP_FLOW.md` | User-facing navigation and failure flow |
 | `REQUIREMENTS.md` | Product requirements and acceptance expectations |
 | `ANIMATED_STORY_MODE_PLAN.md` | Detailed chapter preparation, volume, package, and playback design |
+| `VOLUME_PREPARATION_PLAN.md` | Whole-volume job, progress, name/appearance merging, asset reuse, readiness, and repair contract |
 | `ANIMATED_STORY_SCENE_LIBRARY.md` | Approved layout, camera, transition, motion, and analyzer IDs |
 | `STORY_ANALYSIS_CONTRACT.md` | Gemini input/output and validation boundary |
 | `STORY_BIBLE_ENTITY_ASSET_PLAN.md` | Entity types, approval, asset ownership, and safe fallback |

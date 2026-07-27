@@ -423,19 +423,22 @@ flowchart TD
     A["Import EPUB"] --> B["Confirm book, volume, and chapter boundaries"]
     B --> C["Analyze chapters in small chunks"]
     C --> D["Merge volume summary into story bible"]
-    D --> E["Review characters, aliases, locations, and style"]
-    E --> F["Choose one chapter to prepare"]
-    F --> G["Build complete dialogue and scene script"]
-    G --> H["Reuse or create sprites and backgrounds"]
-    H --> I["Prepare voices, subtitles, SFX, and moral"]
-    I --> J["Validate coverage and asset files"]
-    J --> K["Save ChapterStory package"]
-    K --> L["Play scenes with simple movement"]
+    D --> E["Build the volume entity and asset inventory"]
+    E --> F["Review only uncertain facts or generated assets"]
+    F --> G["Reuse or create shared sprites and backgrounds once"]
+    G --> H["Assemble every chapter scene package"]
+    H --> I["Prepare subtitles, optional voices, SFX, and morals"]
+    I --> J["Validate coverage and asset files per chapter"]
+    J --> K["Save ready ChapterStory packages"]
+    K --> L["Play ready chapters while remaining work continues"]
 ```
 
-Large books are prepared on demand. Importing 20 volumes should build their
-indexes and story-bible summaries, but it should not immediately generate
-every image and audio file.
+Normal reading is available immediately after parsing. A user-started,
+resumable volume job analyzes every chapter and prepares shared assets once.
+Ready chapters can be played while later chapters are still being assembled.
+The app shows the estimated asset count and storage before image or audio
+generation begins. See
+[Volume Preparation Plan](VOLUME_PREPARATION_PLAN.md).
 
 ## 12. Failure and storage rules
 
@@ -504,9 +507,11 @@ every image and audio file.
 
 ### Phase 5 - Audio and package builder
 
-- Split all chapter text into ordered narrator/dialogue lines.
+- Assemble every analyzed chapter into ordered narrator/dialogue lines.
 - Generate/copy subtitles and prepared voices.
-- Validate source coverage and write the final `manifest.json`.
+- Validate source coverage and write one final `manifest.json` per chapter.
+- Mark valid packages ready while retaining Repair/Rebuild for failed or stale
+  chapters.
 
 ### Phase 6 - Dynamic player
 
@@ -576,3 +581,6 @@ Expected first import result:
 - validated `ChapterAnalysis` JSON saved locally without generating music; and
 - character candidates merged into the locked book story bible before any
   sprite generation.
+
+This fixture is deferred until the Little Prince volume-preparation flow,
+persistent jobs, and explicit test approval are ready.
