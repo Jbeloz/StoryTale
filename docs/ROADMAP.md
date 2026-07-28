@@ -312,7 +312,27 @@ Implementation order:
    - automatically relink/rebuild the fixture after its asset queue completes
      or when Story Mode opens, so the user never has to approve or attach a
      prepared asset manually.
-10. **Next - Phase 6F: optional review and replacement:**
+10. **Required next - Phase 6E.1: live Chapter 1 stabilization:**
+    - trace the complete foreground connection from Story Bible entity,
+      generated variant, automatic acceptance, binary bytes, ready catalog,
+      `focusAssetLayers`, and final player byte lookup;
+    - fix the live Chapter 1 fixture so the Chair appears only during the
+      chair action and the Flower appears only when the flower is introduced;
+    - replace the repeated demo passage with a short, unique, ordered fixture
+      containing one background moment, one chair action, and one flower
+      introduction so manual results are unambiguous;
+    - require story planning to start a new shot when the active speaker,
+      meaningful action, focus subject, location, or background state changes;
+    - keep one to three short subtitle beats in a normal fixture shot. Preserve
+      every source word in order by continuing a long block in another shot
+      instead of placing many lines under one unchanged composition;
+    - keep full pose and talking-face changes at beat level in Phase 9. Phase
+      6E.1 only guarantees that shot-level composition changes occur at useful
+      story moments; and
+    - do not start Phase 6F until the generated background, Chair, Flower,
+      source order, shot cadence, refresh behavior, and missing-byte fallback
+      pass the Chapter 1 manual check.
+11. **After Phase 6E.1 - Phase 6F: optional review and replacement:**
     - show lightweight previews of automatically accepted assets;
     - provide Retry, Regenerate, Replace, and Reuse while preserving the stable
       canonical asset ID used by prepared chapters; and
