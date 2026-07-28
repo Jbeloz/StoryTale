@@ -297,9 +297,15 @@ Implemented:
 
 Still pending:
 
-- Cutscene asset connection for ready location and foreground records
-- `focusAssetLayers` and entity-aware scene catalogs
-- Replacing prototype actors in the final player
+- **Phase 6E:** add the serializable `focusAssetLayers` model, ready-only
+  entity-aware scene catalogs, strict ID validation, and visual-novel rendering
+  for prepared location and foreground records
+- **Phase 6E:** replace prototype-human substitution with source-supported
+  assets or the safe no-character fallback
+- **Phase 6F:** add optional preview, retry, regenerate, replace, and reuse
+  controls without making manual approval part of normal preparation
+- **Phase 8:** replace the session binary store with durable asset files,
+  integrity metadata, restart recovery, and orphan-safe cleanup
 
 ## Safe fallback
 

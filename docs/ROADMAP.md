@@ -291,13 +291,34 @@ Implementation order:
      no approval click is required; and
    - mark only invalid or failed results `needsReview`, retain the safe
      fallback, and show simple queue progress.
-9. **Next - Phase 6E: connect prepared assets to ChapterStory:** add ready background
-   IDs and at most two matching `focusAssetLayers` per shot, give Gemini the
-   entity-aware catalog, remove unrelated prototype-human substitution,
-   rebuild Chapter 1, and load the prepared assets when Story Mode opens.
-10. **Phase 6F: optional review and replacement:** show lightweight previews
-    of automatically accepted assets and provide regenerate, replace, and
-    reuse actions. Manual approval is not part of the normal flow.
+9. **Next - Phase 6E: connect prepared assets to ChapterStory:**
+   - add a serializable `FocusAssetLayerData` model containing the stable
+     entity, asset, and variant IDs plus placement, scale, and depth; keep image
+     bytes out of `ChapterStoryData`;
+   - build a ready-only scene catalog from the location and foreground
+     repositories. An asset is selectable only when its metadata is valid and
+     its binary image is available;
+   - give Gemini only those stable catalog IDs, require exact
+     location/background-state matches, allow at most two source-supported
+     foreground layers per shot, and reject unknown or unrelated IDs;
+   - resolve and render the selected background and transparent foreground
+     bytes in the visual-novel player without copying large bytes into widget
+     or preferences state;
+   - remove unrelated prototype-human substitution. Missing subjects produce
+     an object/location shot or narration-only fallback instead;
+   - implement the resolver generically for any imported book and chapter,
+     then rebuild Chapter 1 only as the first deterministic fixture. Phase 9
+     applies the same resolver to every prepared chapter; and
+   - automatically relink/rebuild the fixture after its asset queue completes
+     or when Story Mode opens, so the user never has to approve or attach a
+     prepared asset manually.
+10. **Phase 6F: optional review and replacement:**
+    - show lightweight previews of automatically accepted assets;
+    - provide Retry, Regenerate, Replace, and Reuse while preserving the stable
+      canonical asset ID used by prepared chapters; and
+    - keep manual review optional and non-blocking except for invalid, failed,
+      or visibly unsuitable output. Manual approval is not part of the normal
+      flow.
 
 Minimum first-version assets:
 
@@ -341,9 +362,18 @@ Implementation order:
 4. Save original EPUBs, normalized text, metadata, story bibles, approved
    assets, preparation jobs, progress, and settings.
 5. Add separately imported volumes to an existing book.
-6. Resume interrupted preparation after restart.
-7. Add storage cleanup that never silently removes original EPUBs or approved
-   assets.
+6. Replace the session binary image store with durable local files plus indexed
+   metadata containing stable asset ID, owner, variant, MIME type, dimensions,
+   checksum, and preparation status.
+7. Migrate valid session assets atomically, and treat metadata whose file is
+   missing or corrupt as not ready so it can be regenerated safely.
+8. Resume interrupted preparation and restore generated backgrounds,
+   foregrounds, prepared ChapterStory packages, and queue progress after
+   restart without unnecessary regeneration.
+9. Make replacement and deletion update metadata and files together, and
+   remove only confirmed orphaned generated files.
+10. Add storage cleanup that never silently removes original EPUBs or ready
+    assets still referenced by a Story Bible or ChapterStory package.
 
 ### Phase 9 - Complete ChapterStory builder
 
