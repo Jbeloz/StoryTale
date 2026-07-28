@@ -9,8 +9,10 @@ import '../data/sprite_layer_processor.dart';
 import '../data/story_bible_repository.dart';
 import '../data/story_artwork_service.dart';
 import '../data/story_analysis_service.dart';
+import '../data/story_asset_binary_store.dart';
 import '../data/story_background_repository.dart';
 import '../data/story_entity_service.dart';
+import '../data/story_foreground_repository.dart';
 import '../data/visual_novel_background_brief.dart';
 import '../data/volume_preparation_coordinator.dart';
 import '../data/volume_preparation_models.dart';
@@ -304,7 +306,9 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
       VolumePreparationStatus.notStarted =>
         'Prepare every chapter in this volume once.',
       VolumePreparationStatus.preparing =>
-        job.stage == VolumePreparationStage.preparingAssets
+        job.stage == VolumePreparationStage.connectingStoryAssets
+            ? 'Connecting prepared artwork to Chapter 1...'
+            : job.stage == VolumePreparationStage.preparingAssets
             ? job.currentAssetLabel == null
                   ? 'Preparing reusable story artwork...'
                   : 'Preparing ${job.currentAssetLabel}...'
@@ -343,9 +347,14 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
 }
 
 class AnimatedStoryPage extends StatefulWidget {
-  const AnimatedStoryPage({super.key, this.backgroundRepository});
+  const AnimatedStoryPage({
+    super.key,
+    this.backgroundRepository,
+    this.foregroundRepository,
+  });
 
   final StoryBackgroundRepository? backgroundRepository;
+  final StoryForegroundRepository? foregroundRepository;
 
   @override
   State<AnimatedStoryPage> createState() => _AnimatedStoryPageState();
@@ -353,27 +362,34 @@ class AnimatedStoryPage extends StatefulWidget {
 
 class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
   late final StoryBackgroundRepository _backgroundRepository;
+  late final StoryForegroundRepository _foregroundRepository;
   int _shotIndex = 0;
   int _beatIndex = 0;
   bool _playing = false;
   bool _filipinoSubtitles = false;
   bool _music = true;
-  String? _backgroundBookId;
-  Map<String, Uint8List> _approvedBackgrounds = const {};
+  String? _assetBookId;
+  Set<String> _readyBackgroundIds = const {};
+  Map<String, String> _backgroundIdByRequirement = const {};
+  Set<String> _readyForegroundIds = const {};
 
   @override
   void initState() {
     super.initState();
     _backgroundRepository =
         widget.backgroundRepository ?? StoryBackgroundRepository();
-    StoryBackgroundRepository.revision.addListener(_backgroundCatalogChanged);
+    _foregroundRepository =
+        widget.foregroundRepository ?? StoryForegroundRepository();
+    StoryBackgroundRepository.revision.addListener(_assetCatalogChanged);
+    StoryForegroundRepository.revision.addListener(_assetCatalogChanged);
+    StoryAssetBinaryStore.revision.addListener(_assetCatalogChanged);
   }
 
   @override
   void dispose() {
-    StoryBackgroundRepository.revision.removeListener(
-      _backgroundCatalogChanged,
-    );
+    StoryBackgroundRepository.revision.removeListener(_assetCatalogChanged);
+    StoryForegroundRepository.revision.removeListener(_assetCatalogChanged);
+    StoryAssetBinaryStore.revision.removeListener(_assetCatalogChanged);
     super.dispose();
   }
 
@@ -381,25 +397,26 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final bookId = StoryTaleScope.of(context).currentBook?.id;
-    if (bookId == null || bookId == _backgroundBookId) return;
-    _backgroundBookId = bookId;
-    _loadBackgrounds(bookId);
+    if (bookId == null || bookId == _assetBookId) return;
+    _assetBookId = bookId;
+    _loadAssets(bookId);
   }
 
-  void _backgroundCatalogChanged() {
-    final bookId = _backgroundBookId;
-    if (bookId != null) _loadBackgrounds(bookId);
+  void _assetCatalogChanged() {
+    final bookId = _assetBookId;
+    if (bookId != null) _loadAssets(bookId);
   }
 
-  Future<void> _loadBackgrounds(String bookId) async {
-    final assets = await _backgroundRepository.load(bookId);
-    if (!mounted || _backgroundBookId != bookId) return;
+  Future<void> _loadAssets(String bookId) async {
+    final backgrounds = await _backgroundRepository.loadReady(bookId);
+    final foregrounds = await _foregroundRepository.loadReady(bookId);
+    if (!mounted || _assetBookId != bookId) return;
     setState(() {
-      _approvedBackgrounds = {
-        for (final asset in assets)
-          if (asset.approved && asset.isVisualNovelSize && asset.hasBytes)
-            asset.key: asset.bytes,
+      _readyBackgroundIds = {for (final asset in backgrounds) asset.assetId};
+      _backgroundIdByRequirement = {
+        for (final asset in backgrounds) asset.key: asset.assetId,
       };
+      _readyForegroundIds = {for (final asset in foregrounds) asset.assetId};
     });
   }
 
@@ -434,9 +451,20 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
     final backgroundRequirement = story.backgroundRequirementForShot(
       _shotIndex,
     );
-    final backgroundBytes = backgroundRequirement == null
+    final backgroundAssetId = _readyBackgroundIds.contains(shot.backgroundId)
+        ? shot.backgroundId
+        : backgroundRequirement == null
         ? null
-        : _approvedBackgrounds[backgroundRequirement.key];
+        : _backgroundIdByRequirement[backgroundRequirement.key];
+    final backgroundBytes = backgroundAssetId == null
+        ? null
+        : StoryAssetBinaryStore.read(backgroundAssetId);
+    final focusAssetBytes = <String, Uint8List>{};
+    for (final layer in shot.focusAssetLayers) {
+      if (!_readyForegroundIds.contains(layer.assetId)) continue;
+      final bytes = StoryAssetBinaryStore.read(layer.assetId);
+      if (bytes != null) focusAssetBytes[layer.assetId] = bytes;
+    }
     final beat = shot.beats[_beatIndex];
     final subtitle = _filipinoSubtitles
         ? beat.filipinoText ?? 'Filipino: ${beat.originalText}'
@@ -454,8 +482,8 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
       actions: [
         IconButton(
           key: const Key('reload-story-backgrounds'),
-          tooltip: 'Reload approved backgrounds',
-          onPressed: () => _loadBackgrounds(book.id),
+          tooltip: 'Reload prepared artwork',
+          onPressed: () => _loadAssets(book.id),
           icon: const Icon(Icons.refresh),
         ),
         IconButton(
@@ -489,6 +517,7 @@ class _AnimatedStoryPageState extends State<AnimatedStoryPage> {
                       speaker: beat.speakerId,
                       subtitle: subtitle,
                       backgroundBytes: backgroundBytes,
+                      focusAssetBytes: focusAssetBytes,
                     ),
                   ),
                 ),

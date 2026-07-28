@@ -291,7 +291,7 @@ Implementation order:
      no approval click is required; and
    - mark only invalid or failed results `needsReview`, retain the safe
      fallback, and show simple queue progress.
-9. **Next - Phase 6E: connect prepared assets to ChapterStory:**
+9. **Done - Phase 6E: connect prepared assets to ChapterStory:**
    - add a serializable `FocusAssetLayerData` model containing the stable
      entity, asset, and variant IDs plus placement, scale, and depth; keep image
      bytes out of `ChapterStoryData`;
@@ -312,7 +312,7 @@ Implementation order:
    - automatically relink/rebuild the fixture after its asset queue completes
      or when Story Mode opens, so the user never has to approve or attach a
      prepared asset manually.
-10. **Phase 6F: optional review and replacement:**
+10. **Next - Phase 6F: optional review and replacement:**
     - show lightweight previews of automatically accepted assets;
     - provide Retry, Regenerate, Replace, and Reuse while preserving the stable
       canonical asset ID used by prepared chapters; and

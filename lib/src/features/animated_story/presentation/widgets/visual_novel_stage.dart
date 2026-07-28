@@ -44,6 +44,7 @@ class VisualNovelStage extends StatelessWidget {
     required this.speaker,
     required this.subtitle,
     this.backgroundBytes,
+    this.focusAssetBytes = const {},
     super.key,
   });
 
@@ -54,6 +55,7 @@ class VisualNovelStage extends StatelessWidget {
   final String speaker;
   final String subtitle;
   final Uint8List? backgroundBytes;
+  final Map<String, Uint8List> focusAssetBytes;
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +87,44 @@ class VisualNovelStage extends StatelessWidget {
         final reducedMotion =
             media?.disableAnimations == true ||
             media?.accessibleNavigation == true;
+        final stageLayers =
+            <_StageLayerWidget>[
+              for (final entry in entries)
+                _StageLayerWidget(
+                  depth: storyDepthOrder(entry.layer.depth),
+                  originalIndex: entry.originalIndex * 2,
+                  child: _character(
+                    entry: entry,
+                    shot: shot,
+                    constraints: constraints,
+                    hasSpeaker: hasSpeaker,
+                    characterCount: characters.length,
+                    reducedMotion: reducedMotion,
+                  ),
+                ),
+              for (final entry
+                  in shot.focusAssetLayers
+                      .where(
+                        (layer) => focusAssetBytes.containsKey(layer.assetId),
+                      )
+                      .take(2)
+                      .indexed)
+                _StageLayerWidget(
+                  depth: storyDepthOrder(entry.$2.depth),
+                  originalIndex: entry.$1 * 2 + 1,
+                  child: _focusAsset(
+                    layer: entry.$2,
+                    bytes: focusAssetBytes[entry.$2.assetId]!,
+                    constraints: constraints,
+                    reducedMotion: reducedMotion,
+                  ),
+                ),
+            ]..sort((a, b) {
+              final depth = a.depth.compareTo(b.depth);
+              return depth == 0
+                  ? a.originalIndex.compareTo(b.originalIndex)
+                  : depth;
+            });
         return ClipRRect(
           key: const Key('visual-novel-stage'),
           borderRadius: BorderRadius.circular(20),
@@ -124,51 +164,7 @@ class VisualNovelStage extends StatelessWidget {
                         ),
                       ),
                     ),
-                    for (final entry in entries)
-                      AnimatedAlign(
-                        duration: const Duration(milliseconds: 450),
-                        curve: Curves.easeOutCubic,
-                        alignment: entry.slot.alignment,
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 48),
-                          child: AnimatedOpacity(
-                            key: ValueKey(
-                              'story-focus-${entry.layer.characterId}-'
-                              '${entry.layer.isSpeaking}',
-                            ),
-                            duration: const Duration(milliseconds: 220),
-                            opacity: storyCharacterOpacity(
-                              isSpeaking: entry.layer.isSpeaking,
-                              hasSpeaker: hasSpeaker,
-                              characterCount: characters.length,
-                              depth: entry.layer.depth,
-                            ),
-                            child: StoryCharacterMotion(
-                              animationKey:
-                                  '${shot.id}-${entry.layer.characterId}',
-                              movementId: entry.layer.movement,
-                              reducedMotion: reducedMotion,
-                              child: StoryCharacterView(
-                                key: ValueKey(
-                                  '${entry.layer.characterId}-'
-                                  '${entry.originalIndex}',
-                                ),
-                                layer: entry.layer,
-                                width:
-                                    constraints.maxHeight *
-                                    entry.slot.heightFactor *
-                                    storyScaleFactor(entry.layer.scale) *
-                                    0.94,
-                                height:
-                                    constraints.maxHeight *
-                                    entry.slot.heightFactor *
-                                    storyScaleFactor(entry.layer.scale),
-                                scale: 1.48,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+                    for (final layer in stageLayers) layer.child,
                   ],
                 ),
               ),
@@ -182,6 +178,102 @@ class VisualNovelStage extends StatelessWidget {
       },
     );
   }
+
+  Widget _character({
+    required _StageCharacter entry,
+    required StoryShotPlanData shot,
+    required BoxConstraints constraints,
+    required bool hasSpeaker,
+    required int characterCount,
+    required bool reducedMotion,
+  }) {
+    return AnimatedAlign(
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOutCubic,
+      alignment: entry.slot.alignment,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 48),
+        child: AnimatedOpacity(
+          key: ValueKey(
+            'story-focus-${entry.layer.characterId}-'
+            '${entry.layer.isSpeaking}',
+          ),
+          duration: const Duration(milliseconds: 220),
+          opacity: storyCharacterOpacity(
+            isSpeaking: entry.layer.isSpeaking,
+            hasSpeaker: hasSpeaker,
+            characterCount: characterCount,
+            depth: entry.layer.depth,
+          ),
+          child: StoryCharacterMotion(
+            animationKey: '${shot.id}-${entry.layer.characterId}',
+            movementId: entry.layer.movement,
+            reducedMotion: reducedMotion,
+            child: StoryCharacterView(
+              key: ValueKey(
+                '${entry.layer.characterId}-${entry.originalIndex}',
+              ),
+              layer: entry.layer,
+              width:
+                  constraints.maxHeight *
+                  entry.slot.heightFactor *
+                  storyScaleFactor(entry.layer.scale) *
+                  0.94,
+              height:
+                  constraints.maxHeight *
+                  entry.slot.heightFactor *
+                  storyScaleFactor(entry.layer.scale),
+              scale: 1.48,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _focusAsset({
+    required StoryFocusAssetLayerData layer,
+    required Uint8List bytes,
+    required BoxConstraints constraints,
+    required bool reducedMotion,
+  }) {
+    final alignment = switch (layer.stagePosition) {
+      'left' => const Alignment(-0.68, 0.88),
+      'right' => const Alignment(0.68, 0.88),
+      _ => const Alignment(0, 0.88),
+    };
+    final heightFactor = switch (layer.scale) {
+      'background' => 0.38,
+      'full' => 0.62,
+      'close' => 0.78,
+      _ => 0.54,
+    };
+    return AnimatedAlign(
+      key: ValueKey('story-focus-asset-${layer.assetId}'),
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOutCubic,
+      alignment: alignment,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 48),
+        child: StoryCharacterMotion(
+          animationKey: '${shot.id}-${layer.assetId}',
+          movementId: layer.movement,
+          reducedMotion: reducedMotion,
+          child: SizedBox(
+            height: constraints.maxHeight * heightFactor,
+            width: constraints.maxWidth * 0.46,
+            child: Image.memory(
+              bytes,
+              key: ValueKey('prepared-foreground-${layer.assetId}'),
+              fit: BoxFit.contain,
+              gaplessPlayback: true,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _StageCharacter {
@@ -190,6 +282,18 @@ class _StageCharacter {
   final StoryCharacterLayerData layer;
   final VisualNovelSlot slot;
   final int originalIndex;
+}
+
+class _StageLayerWidget {
+  const _StageLayerWidget({
+    required this.depth,
+    required this.originalIndex,
+    required this.child,
+  });
+
+  final int depth;
+  final int originalIndex;
+  final Widget child;
 }
 
 class _SubtitleBar extends StatelessWidget {

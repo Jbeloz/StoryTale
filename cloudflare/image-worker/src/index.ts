@@ -45,6 +45,22 @@ type AnalysisLocation = {
   backgroundBrief: string;
 };
 
+type AnalysisBackgroundAsset = {
+  assetId: string;
+  locationId: string;
+  stateId: string;
+};
+
+type AnalysisForegroundAsset = {
+  entityId: string;
+  assetId: string;
+  variantId: string;
+  name: string;
+  aliases: string[];
+  kind: "animal" | "creature" | "plant" | "prop";
+  sourceBlockIds: string[];
+};
+
 type AnalysisRequest = {
   chapter: {
     id: string;
@@ -54,6 +70,8 @@ type AnalysisRequest = {
   catalog: {
     characters: AnalysisCharacter[];
     backgroundIds: string[];
+    backgroundAssets: AnalysisBackgroundAsset[];
+    foregroundAssets: AnalysisForegroundAsset[];
     locations: AnalysisLocation[];
   };
 };
@@ -281,7 +299,6 @@ function parseAnalysisRequest(value: unknown): AnalysisRequest | null {
 
   if (
     !Array.isArray(catalogValue.characters) ||
-    catalogValue.characters.length === 0 ||
     catalogValue.characters.length > 40
   ) return null;
   const characters: AnalysisCharacter[] = [];
@@ -304,10 +321,70 @@ function parseAnalysisRequest(value: unknown): AnalysisRequest | null {
   const backgroundIds = stringList(catalogValue.backgroundIds, 80);
   if (
     !backgroundIds ||
+    !Array.isArray(catalogValue.backgroundAssets) ||
+    catalogValue.backgroundAssets.length > 80 ||
+    !Array.isArray(catalogValue.foregroundAssets) ||
+    catalogValue.foregroundAssets.length > 120 ||
     !Array.isArray(catalogValue.locations) ||
     catalogValue.locations.length === 0 ||
     catalogValue.locations.length > 80
   ) return null;
+  const backgroundAssets: AnalysisBackgroundAsset[] = [];
+  for (const assetValue of catalogValue.backgroundAssets) {
+    if (!isRecord(assetValue)) return null;
+    const assetId = shortString(assetValue.assetId, 160);
+    const locationId = shortString(assetValue.locationId, 100);
+    const stateId = shortString(assetValue.stateId, 80);
+    if (
+      !assetId ||
+      !locationId ||
+      !stateId ||
+      !backgroundIds.includes(assetId) ||
+      !includes(ANALYSIS_BACKGROUND_STATE_IDS, stateId)
+    ) return null;
+    backgroundAssets.push({ assetId, locationId, stateId });
+  }
+  if (
+    new Set(backgroundAssets.map((asset) => asset.assetId)).size !==
+    backgroundAssets.length
+  ) return null;
+
+  const foregroundAssets: AnalysisForegroundAsset[] = [];
+  for (const assetValue of catalogValue.foregroundAssets) {
+    if (!isRecord(assetValue)) return null;
+    const entityId = shortString(assetValue.entityId, 100);
+    const assetId = shortString(assetValue.assetId, 160);
+    const variantId = shortString(assetValue.variantId, 100);
+    const name = shortString(assetValue.name, 160);
+    const aliases = stringListAllowEmpty(assetValue.aliases, 30, 160);
+    const sourceBlockIds = stringList(assetValue.sourceBlockIds, 250, 120);
+    if (
+      !entityId ||
+      !assetId ||
+      !variantId ||
+      !name ||
+      !aliases ||
+      !sourceBlockIds ||
+      (assetValue.kind !== "animal" &&
+        assetValue.kind !== "creature" &&
+        assetValue.kind !== "plant" &&
+        assetValue.kind !== "prop")
+    ) return null;
+    foregroundAssets.push({
+      entityId,
+      assetId,
+      variantId,
+      name,
+      aliases,
+      kind: assetValue.kind,
+      sourceBlockIds,
+    });
+  }
+  if (
+    new Set(foregroundAssets.map((asset) => asset.assetId)).size !==
+    foregroundAssets.length
+  ) return null;
+
   const locations: AnalysisLocation[] = [];
   for (const locationValue of catalogValue.locations) {
     if (!isRecord(locationValue)) return null;
@@ -336,7 +413,13 @@ function parseAnalysisRequest(value: unknown): AnalysisRequest | null {
 
   return {
     chapter: { id: chapterId, title, blocks },
-    catalog: { characters, backgroundIds, locations },
+    catalog: {
+      characters,
+      backgroundIds,
+      backgroundAssets,
+      foregroundAssets,
+      locations,
+    },
   };
 }
 
@@ -510,16 +593,20 @@ function storyAnalysisPrompt(input: AnalysisRequest): string {
     "Do not summarize, translate, rewrite, censor, or add story text. DeepL owns Filipino translation.",
     "Use only supplied character, asset, layout, pose, face, movement, transition, and camera IDs.",
     "Use zero to three visible characters. Prefer one or two. Use background or detail shots when no supported pose exists.",
+    "Use zero to two focusAssetLayers. A focus asset is a supplied animal, creature, plant, or prop, never a substitute human.",
+    "Add a focus asset only when its sourceBlockIds contains the exact block used by that shot. Never select an asset merely because it looks similar.",
+    "For a speaking animal or creature, prefer its talking variant while it speaks and neutral otherwise. For plants and props, use normal unless the source explicitly supports another supplied variant.",
     "Characters on the left normally face right; characters on the right normally face left.",
     "Keep at least half of shots on camera_static and never use moving camera shots more than twice in a row.",
     "Do not repeat the same layout, scale composition, and camera preset more than twice in a row.",
     "Use movement sparingly. Never return coordinates, pixels, percentages, durations, easing values, or new IDs.",
     "Use only supplied catalog.locations IDs and choose them from their names, parent settings, background briefs, and the source text.",
+    "Each shot backgroundId must use the supplied background asset whose locationId and stateId exactly match its containing cutscene.",
     "Start a new ordered cutscene when the source changes place, time of day, weather, or the visible condition of the same place.",
     "Set backgroundStateId to the closest approved background state. Reuse the same locationId and backgroundStateId while that setting remains unchanged.",
     "Do not invent extra setting changes merely for variety. A chapter may require one or several location and background-state pairs.",
     "The moral is a short lesson derived from this chapter only.",
-    "The planJson string must decode to this exact shape: {chapterId,moral,cutscenes:[{id,locationId,timeOfDay,backgroundStateId,shots:[{id,layoutId,backgroundId,transitionId,camera:{presetId,targetId,triggerBeatId?},characterLayers:[{characterId,rigId,poseId,faceProfileId,faceSetId,stagePosition,scale,facing,depth,movement,isSpeaking}],beats:[{id,speakerId,originalText,sourceBlockIds:[oneBlockId],actionId?}]}]}]}.",
+    "The planJson string must decode to this exact shape: {chapterId,moral,cutscenes:[{id,locationId,timeOfDay,backgroundStateId,shots:[{id,layoutId,backgroundId,transitionId,camera:{presetId,targetId,triggerBeatId?},characterLayers:[{characterId,rigId,poseId,faceProfileId,faceSetId,stagePosition,scale,facing,depth,movement,isSpeaking}],focusAssetLayers:[{entityId,assetId,variantId,stagePosition,scale,depth,movement}],beats:[{id,speakerId,originalText,sourceBlockIds:[oneBlockId],actionId?}]}]}]}.",
     `Approved runtime IDs:\n${JSON.stringify(approvedRuntimeIds)}`,
     `Chapter and approved story bible:\n${JSON.stringify(input)}`,
   ].join("\n");
@@ -556,6 +643,16 @@ function applySafeAnalysisDefaults(value: unknown, input: AnalysisRequest): void
         : "unspecified";
     }
     for (const shot of cutscene.shots) {
+      if (isRecord(shot) && !Array.isArray(shot.focusAssetLayers)) {
+        shot.focusAssetLayers = [];
+      }
+      if (isRecord(shot) && Array.isArray(shot.focusAssetLayers)) {
+        for (const layer of shot.focusAssetLayers) {
+          if (isRecord(layer) && typeof layer.movement !== "string") {
+            layer.movement = "idle";
+          }
+        }
+      }
       if (
         !isRecord(shot) ||
         !isRecord(shot.camera) ||
@@ -671,9 +768,21 @@ function validateStoryAnalysis(value: unknown, input: AnalysisRequest): string |
         !includes(ANALYSIS_CAMERA_IDS, shot.camera.presetId) ||
         !Array.isArray(shot.characterLayers) ||
         shot.characterLayers.length > 3 ||
+        !Array.isArray(shot.focusAssetLayers) ||
+        shot.focusAssetLayers.length > 2 ||
         !Array.isArray(shot.beats) ||
         shot.beats.length === 0
       ) return "invalid shot fields";
+      if (input.catalog.backgroundAssets.length > 0) {
+        const background = input.catalog.backgroundAssets.find(
+          (asset) => asset.assetId === shot.backgroundId,
+        );
+        if (
+          !background ||
+          background.locationId !== cutscene.locationId ||
+          background.stateId !== cutscene.backgroundStateId
+        ) return "background does not match cutscene location and state";
+      }
 
       if (shot.camera.presetId === "camera_static") {
         staticCameraCount++;
@@ -713,6 +822,7 @@ function validateStoryAnalysis(value: unknown, input: AnalysisRequest): string |
       ) return "camera target is not visible";
 
       const beatIds = new Set<string>();
+      const shotBlockIds = new Set<string>();
       for (const beat of shot.beats) {
         if (
           !isRecord(beat) ||
@@ -728,11 +838,31 @@ function validateStoryAnalysis(value: unknown, input: AnalysisRequest): string |
         if (!input.chapter.blocks.some((block) => block.id === blockId)) {
           return "unknown source block";
         }
+        shotBlockIds.add(blockId);
         beatIds.add(beat.id);
         if (blockSequence.at(-1) !== blockId) blockSequence.push(blockId);
         const text = groupedText.get(blockId) ?? [];
         text.push(beat.originalText);
         groupedText.set(blockId, text);
+      }
+      const focusEntities = new Set<string>();
+      for (const layer of shot.focusAssetLayers) {
+        if (!isRecord(layer)) return "invalid focus asset layer";
+        const asset = input.catalog.foregroundAssets.find(
+          (candidate) => candidate.assetId === layer.assetId,
+        );
+        if (
+          !asset ||
+          layer.entityId !== asset.entityId ||
+          layer.variantId !== asset.variantId ||
+          focusEntities.has(asset.entityId) ||
+          !asset.sourceBlockIds.some((id) => shotBlockIds.has(id)) ||
+          !includes(ANALYSIS_POSITION_IDS, layer.stagePosition) ||
+          !includes(ANALYSIS_SCALE_IDS, layer.scale) ||
+          !includes(ANALYSIS_DEPTH_IDS, layer.depth) ||
+          !includes(ANALYSIS_MOVEMENT_IDS, layer.movement)
+        ) return "unapproved focus asset layer";
+        focusEntities.add(asset.entityId);
       }
       if (
         shot.camera.triggerBeatId !== undefined &&

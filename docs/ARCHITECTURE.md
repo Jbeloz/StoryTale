@@ -77,8 +77,8 @@ ChapterStory
 - beats: one short subtitle/audio line in exact source order
 - characterLayers: characterId, rigId, poseId, faceProfileId, faceSetId,
   outfitId, stage slot, scale, facing, depth, and movement
-- focusAssetLayers: entityId, assetId, stateId, stage slot, scale, depth, and
-  movement for animals, plants, creatures, and props (planned next)
+- focusAssetLayers: entityId, assetId, variantId, stage slot, scale, depth, and
+  movement for animals, plants, creatures, and props
 ```
 
 The UI reads this data, so we do not create a separate Flutter screen for every book or chapter.

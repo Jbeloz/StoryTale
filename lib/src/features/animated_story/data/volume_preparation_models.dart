@@ -7,6 +7,7 @@ enum VolumePreparationStage {
   analyzingChapters,
   mergingStoryBible,
   preparingAssets,
+  connectingStoryAssets,
   ready,
 }
 
@@ -83,6 +84,7 @@ class VolumePreparationJobData {
       final processed = assetReadyCount + assetNeedsReviewCount;
       return (0.75 + (processed / assetTotal) * 0.25).clamp(0, 1);
     }
+    if (stage == VolumePreparationStage.connectingStoryAssets) return 0.99;
     if (stage == VolumePreparationStage.mergingStoryBible) return 0.75;
     return (analyzed * 0.75).clamp(0, 1);
   }

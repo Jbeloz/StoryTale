@@ -365,38 +365,40 @@ Status: **Completed on 2026-07-27.**
 
 ### Phase 6E - ChapterStory asset connection
 
-Status: **Next.**
+Status: **Completed on 2026-07-28.**
 
-- [ ] Add a serializable `FocusAssetLayerData` record with stable `entityId`,
-  `assetId`, `variantId`, placement, scale, and depth. `ChapterStoryData`
+- [x] Add a serializable `FocusAssetLayerData` record with stable `entityId`,
+  `assetId`, `variantId`, placement, scale, depth, and movement. `ChapterStoryData`
   stores IDs only; the binary store owns the image bytes.
-- [ ] Build ready-only location and foreground catalogs from repository
+- [x] Build ready-only location and foreground catalogs from repository
   metadata plus the binary store. A metadata record with missing bytes is not
   ready for scene planning or playback.
-- [ ] Give Gemini only the ready catalog IDs and validate every returned ID.
+- [x] Give Gemini only the ready catalog IDs and validate every returned ID.
   Require an exact location/background-state match and reject unrelated
   entities even when they look visually similar.
-- [ ] Assign the ready background ID for each matching location/state.
-- [ ] Add at most two source-supported foreground assets to
+- [x] Assign the ready background ID for each matching location/state.
+- [x] Add at most two source-supported foreground assets to
   `focusAssetLayers`; include only subjects present in the shot's source block.
-- [ ] Resolve background and transparent foreground bytes by ID in the
+- [x] Resolve background and transparent foreground bytes by ID in the
   visual-novel player, preserve foreground layer order, and keep large bytes
   outside widget and preferences state.
-- [ ] Remove unrelated prototype-human substitution. If an asset is missing,
+- [x] Remove unrelated prototype-human substitution. If an asset is missing,
   hide that layer and retain its subtitle/narration or use an object/location
   fallback.
-- [ ] Make the resolver book- and chapter-agnostic. Rebuild Chapter 1 only as
+- [x] Make the resolver book- and chapter-agnostic. Rebuild Chapter 1 only as
   the first fixture; Phase 9 runs the same connection for every analyzed
   chapter.
-- [ ] Automatically relink/rebuild the fixture after the automatic asset queue
+- [x] Automatically relink/rebuild the fixture after the automatic asset queue
   completes or when its Animated Story Mode opens. No Generate, Approve, or
   Attach action is required.
-- [ ] Add targeted fixtures: the rose uses the flower foreground instead of
+- [x] Add targeted fixtures: the rose uses the flower foreground instead of
   Heroine, the chair uses the chair foreground, the generated location is the
   stage background, unknown asset IDs fail validation, and missing bytes use a
   safe fallback without freezing the UI.
 
 ### Phase 6F - Optional review and replacement
+
+Status: **Next.**
 
 - [ ] Show lightweight previews for automatically accepted assets.
 - [ ] Provide Retry, Regenerate, Replace, and Reuse without requiring normal

@@ -202,7 +202,7 @@ class StoryTaleController extends ChangeNotifier {
 
   ChapterStoryData storyFor(ChapterData chapter) {
     return stories.putIfAbsent(chapter.id, () {
-      final shotTexts = _storyShotTexts(chapter);
+      final blocks = _sourceBlocks(chapter);
       return ChapterStoryData(
         chapterId: chapter.id,
         moral: 'Kindness and friendship make every journey meaningful.',
@@ -212,13 +212,8 @@ class StoryTaleController extends ChangeNotifier {
             locationId: 'moonlit_rose_garden',
             timeOfDay: 'night',
             shots: List.generate(
-              shotTexts.length,
-              (index) => _testShot(
-                chapter,
-                index + 1,
-                shotTexts[index],
-                _reviewShots[index % _reviewShots.length],
-              ),
+              blocks.length,
+              (index) => _safeShot(chapter, index + 1, blocks[index]),
             ),
           ),
         ],
@@ -242,205 +237,56 @@ class StoryTaleController extends ChangeNotifier {
     notifyListeners();
   }
 
-  static StoryShotPlanData _testShot(
+  static StoryShotPlanData _safeShot(
     ChapterData chapter,
     int number,
-    String subtitle,
-    _ReviewShotTemplate template,
+    ChapterTextBlock block,
   ) {
     final shotId = '${chapter.id}-shot-$number';
-    final lines = splitSubtitleBeats(subtitle);
-    final speakerIndex = template.speakerActorIndex;
-    final speaker = speakerIndex == null
-        ? 'Narrator'
-        : _reviewCast[speakerIndex].speaker;
+    final lines = splitSubtitleBeats(block.text);
+    final detailShot = number.isEven;
     return StoryShotPlanData(
       id: shotId,
-      layoutId: template.layoutId,
+      layoutId: detailShot ? 'object_detail' : 'background_establishing',
       backgroundId: 'moonlit_rose_garden',
-      transitionId: template.transitionId,
-      camera: StoryCameraPlanData(presetId: template.cameraPresetId),
+      transitionId: number == 1 ? 'fade_in' : 'cut',
+      camera: StoryCameraPlanData(
+        presetId: detailShot ? 'camera_push_in_slow' : 'camera_static',
+        targetId: 'background',
+      ),
       beats: List.generate(
         lines.length,
         (index) => StoryBeatData(
           id: '$shotId-beat-${index + 1}',
-          speakerId: speaker,
+          speakerId: 'Narrator',
           originalText: lines[index],
-          actionId: index == 0 && speakerIndex != null
-              ? _reviewCast[speakerIndex].movement
-              : null,
+          sourceBlockIds: [block.id],
         ),
       ),
-      characterLayers: template.placements.map((placement) {
-        final actor = _reviewCast[placement.actorIndex];
-        return StoryCharacterLayerData(
-          characterId: actor.characterId,
-          rigId: 'humanoid_v1',
-          poseId: actor.poseId,
-          faceProfileId: actor.faceProfileId,
-          faceSetId: actor.faceSetId,
-          stagePosition: placement.stagePosition,
-          scale: placement.scale,
-          facing: switch (placement.stagePosition) {
-            'left' => 'right',
-            'right' => 'left',
-            _ => 'front',
-          },
-          depth: placement.depth,
-          movement: placement.movementId ?? actor.movement,
-          isSpeaking: placement.actorIndex == speakerIndex,
-        );
-      }).toList(),
     );
   }
 
-  static List<String> _storyShotTexts(ChapterData chapter) {
-    final blocks = chapter.sourceBlocks.isNotEmpty
-        ? chapter.sourceBlocks.map((block) => block.text)
-        : chapter.originalText.split(RegExp(r'\n\s*\n'));
-    final lines = blocks
+  static List<ChapterTextBlock> _sourceBlocks(ChapterData chapter) {
+    if (chapter.sourceBlocks.isNotEmpty) return chapter.sourceBlocks;
+    final paragraphs = chapter.originalText
+        .split(RegExp(r'\n\s*\n'))
         .map((text) => text.trim())
         .where((text) => text.isNotEmpty)
-        .toList();
-    if (lines.isEmpty) return [chapter.title];
-
-    final targetScenes = lines.length > 8 ? 8 : lines.length;
-    final blocksPerScene = (lines.length / targetScenes).ceil();
-    final scenes = <String>[];
-    for (var start = 0; start < lines.length; start += blocksPerScene) {
-      final proposedEnd = start + blocksPerScene;
-      final end = proposedEnd > lines.length ? lines.length : proposedEnd;
-      scenes.add(lines.sublist(start, end).join('\n\n'));
+        .toList(growable: false);
+    if (paragraphs.isEmpty) {
+      return [
+        ChapterTextBlock(id: '${chapter.id}-block-1', text: chapter.title),
+      ];
     }
-    return scenes;
+    return List.generate(
+      paragraphs.length,
+      (index) => ChapterTextBlock(
+        id: '${chapter.id}-block-${index + 1}',
+        text: paragraphs[index],
+      ),
+      growable: false,
+    );
   }
-
-  // Generic layout fixture used for demo and imported EPUB chapters until
-  // validated Gemini shot plans replace it.
-  static const _reviewShots = [
-    _ReviewShotTemplate(
-      layoutId: 'two_balanced',
-      speakerActorIndex: 1,
-      transitionId: 'fade',
-      placements: [
-        _ReviewPlacement(
-          actorIndex: 1,
-          stagePosition: 'left',
-          movementId: 'enter_left',
-        ),
-        _ReviewPlacement(
-          actorIndex: 2,
-          stagePosition: 'right',
-          movementId: 'enter_right',
-        ),
-      ],
-    ),
-    _ReviewShotTemplate(
-      layoutId: 'background_establishing',
-      cameraPresetId: 'camera_pull_out_slow',
-      transitionId: 'slide_left',
-    ),
-    _ReviewShotTemplate(
-      layoutId: 'solo_left_full',
-      speakerActorIndex: 0,
-      cameraPresetId: 'camera_push_in_slow',
-      placements: [_ReviewPlacement(actorIndex: 0, stagePosition: 'left')],
-    ),
-    _ReviewShotTemplate(
-      layoutId: 'group_three',
-      speakerActorIndex: 3,
-      transitionId: 'fade',
-      placements: [
-        _ReviewPlacement(
-          actorIndex: 3,
-          stagePosition: 'left',
-          scale: 'medium',
-          depth: 'front',
-        ),
-        _ReviewPlacement(actorIndex: 1, stagePosition: 'center'),
-        _ReviewPlacement(actorIndex: 2, stagePosition: 'right'),
-      ],
-    ),
-    _ReviewShotTemplate(
-      layoutId: 'solo_right_full',
-      speakerActorIndex: 4,
-      cameraPresetId: 'camera_snap_in',
-      transitionId: 'slide_right',
-      placements: [_ReviewPlacement(actorIndex: 4, stagePosition: 'right')],
-    ),
-    _ReviewShotTemplate(
-      layoutId: 'depth_pair',
-      speakerActorIndex: 5,
-      cameraPresetId: 'camera_pan_left_slow',
-      placements: [
-        _ReviewPlacement(
-          actorIndex: 5,
-          stagePosition: 'left',
-          scale: 'medium',
-          depth: 'front',
-          movementId: 'walk_right',
-        ),
-        _ReviewPlacement(
-          actorIndex: 4,
-          stagePosition: 'right',
-          scale: 'background',
-          depth: 'back',
-          movementId: 'step_back',
-        ),
-      ],
-    ),
-  ];
-
-  static const _reviewCast = [
-    _StoryActor(
-      characterId: 'default_actor',
-      speaker: 'Narrator',
-      faceProfileId: 'default',
-      faceSetId: 'neutral',
-      poseId: 'neutral',
-      movement: 'fade_in',
-    ),
-    _StoryActor(
-      characterId: 'hero_actor',
-      speaker: 'Hero',
-      faceProfileId: 'hero',
-      faceSetId: 'neutral',
-      poseId: 'talking',
-      movement: 'focus_speaker',
-    ),
-    _StoryActor(
-      characterId: 'heroine_actor',
-      speaker: 'Heroine',
-      faceProfileId: 'heroine',
-      faceSetId: 'happy',
-      poseId: 'pointing',
-      movement: 'reaction_pop',
-    ),
-    _StoryActor(
-      characterId: 'elder_actor',
-      speaker: 'Elder',
-      faceProfileId: 'elder',
-      faceSetId: 'sad',
-      poseId: 'neutral',
-      movement: 'idle_breathe',
-    ),
-    _StoryActor(
-      characterId: 'adult_actor',
-      speaker: 'Adult',
-      faceProfileId: 'adult_deep',
-      faceSetId: 'angry',
-      poseId: 'talking',
-      movement: 'reaction_pop',
-    ),
-    _StoryActor(
-      characterId: 'hero_walking_actor',
-      speaker: 'Hero',
-      faceProfileId: 'hero',
-      faceSetId: 'neutral',
-      poseId: 'walking',
-      movement: 'walk_right',
-    ),
-  ];
 
   void markStoryPrepared(ChapterData chapter) {
     storyFor(chapter).status = PreparationStatus.ready;
@@ -515,56 +361,6 @@ class StoryTaleController extends ChangeNotifier {
       ),
     ];
   }
-}
-
-class _StoryActor {
-  const _StoryActor({
-    required this.characterId,
-    required this.speaker,
-    required this.faceProfileId,
-    required this.faceSetId,
-    required this.poseId,
-    required this.movement,
-  });
-
-  final String characterId;
-  final String speaker;
-  final String faceProfileId;
-  final String faceSetId;
-  final String poseId;
-  final String movement;
-}
-
-class _ReviewShotTemplate {
-  const _ReviewShotTemplate({
-    required this.layoutId,
-    this.speakerActorIndex,
-    this.cameraPresetId = 'camera_static',
-    this.transitionId = 'cut',
-    this.placements = const [],
-  });
-
-  final String layoutId;
-  final int? speakerActorIndex;
-  final String cameraPresetId;
-  final String transitionId;
-  final List<_ReviewPlacement> placements;
-}
-
-class _ReviewPlacement {
-  const _ReviewPlacement({
-    required this.actorIndex,
-    required this.stagePosition,
-    this.scale = 'full',
-    this.depth = 'normal',
-    this.movementId,
-  });
-
-  final int actorIndex;
-  final String stagePosition;
-  final String scale;
-  final String depth;
-  final String? movementId;
 }
 
 extension _FirstOrNull<T> on List<T> {

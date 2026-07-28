@@ -1,4 +1,5 @@
 import '../../../shared/models/storytale_models.dart';
+import 'chapter_story_asset_connector.dart';
 import 'story_analysis_contract.dart';
 import 'story_analysis_service.dart';
 import 'story_artwork_service.dart';
@@ -160,6 +161,49 @@ class VolumePreparationCoordinator {
     if (job.status == VolumePreparationStatus.paused) return;
 
     await storyBibleRepository.save(bible);
+    job
+      ..stage = VolumePreparationStage.connectingStoryAssets
+      ..currentAssetLabel = 'Chapter 1 story';
+    job.addEvent('Connecting prepared artwork to Chapter 1');
+    onChanged();
+
+    if (book.chapters.isNotEmpty) {
+      final chapter = book.chapters.first;
+      final backgrounds = await backgroundRepository.loadReady(
+        book.id,
+        chapterId: chapter.id,
+      );
+      final readyForegrounds = await foregroundRepository.loadReady(
+        book.id,
+        chapterId: chapter.id,
+      );
+      var sourceStory = localStory(chapter);
+      if (analysisProvider.isConfigured && backgrounds.isNotEmpty) {
+        try {
+          sourceStory = await analysisProvider.analyze(
+            chapter: chapter,
+            catalog: StoryAnalysisCatalog.fromPreparedAssets(
+              bible: bible,
+              chapterId: chapter.id,
+              backgrounds: backgrounds,
+              foregrounds: readyForegrounds,
+            ),
+          );
+        } catch (_) {
+          job.addEvent('Chapter 1 kept its safe narration plan');
+        }
+      }
+      final connected = const ChapterStoryAssetConnector().connect(
+        chapter: chapter,
+        story: sourceStory,
+        bible: bible,
+        backgrounds: backgrounds,
+        foregrounds: readyForegrounds,
+      )..status = PreparationStatus.ready;
+      saveStory(chapter, connected);
+      job.addEvent('Prepared artwork is connected to Chapter 1');
+    }
+
     job
       ..foregroundApprovedCount = foregroundAssets
           .where((asset) => asset.status == StoryForegroundAssetStatus.approved)

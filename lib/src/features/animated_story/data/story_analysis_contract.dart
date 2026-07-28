@@ -1,5 +1,7 @@
 import '../../../shared/models/storytale_models.dart';
+import 'story_background_repository.dart';
 import 'story_bible_models.dart';
+import 'story_foreground_repository.dart';
 
 class StoryAnalysisCharacter {
   const StoryAnalysisCharacter({
@@ -49,16 +51,68 @@ class StoryAnalysisLocation {
   };
 }
 
+class StoryAnalysisBackgroundAsset {
+  const StoryAnalysisBackgroundAsset({
+    required this.assetId,
+    required this.locationId,
+    required this.stateId,
+  });
+
+  final String assetId;
+  final String locationId;
+  final String stateId;
+
+  Map<String, dynamic> toJson() => {
+    'assetId': assetId,
+    'locationId': locationId,
+    'stateId': stateId,
+  };
+}
+
+class StoryAnalysisForegroundAsset {
+  const StoryAnalysisForegroundAsset({
+    required this.entityId,
+    required this.assetId,
+    required this.variantId,
+    required this.name,
+    required this.kind,
+    required this.sourceBlockIds,
+    this.aliases = const [],
+  });
+
+  final String entityId;
+  final String assetId;
+  final String variantId;
+  final String name;
+  final String kind;
+  final List<String> sourceBlockIds;
+  final List<String> aliases;
+
+  Map<String, dynamic> toJson() => {
+    'entityId': entityId,
+    'assetId': assetId,
+    'variantId': variantId,
+    'name': name,
+    'kind': kind,
+    'sourceBlockIds': sourceBlockIds,
+    'aliases': aliases,
+  };
+}
+
 class StoryAnalysisCatalog {
   const StoryAnalysisCatalog({
     required this.characters,
     required this.backgroundIds,
     required this.locations,
+    this.backgroundAssets = const [],
+    this.foregroundAssets = const [],
   });
 
   final List<StoryAnalysisCharacter> characters;
   final List<String> backgroundIds;
   final List<StoryAnalysisLocation> locations;
+  final List<StoryAnalysisBackgroundAsset> backgroundAssets;
+  final List<StoryAnalysisForegroundAsset> foregroundAssets;
 
   List<String> get locationIds =>
       locations.map((location) => location.id).toList(growable: false);
@@ -142,6 +196,13 @@ class StoryAnalysisCatalog {
       ),
     ],
     backgroundIds: ['moonlit_rose_garden'],
+    backgroundAssets: [
+      StoryAnalysisBackgroundAsset(
+        assetId: 'moonlit_rose_garden',
+        locationId: 'moonlit_rose_garden',
+        stateId: 'unspecified',
+      ),
+    ],
     locations: [
       StoryAnalysisLocation(
         id: 'moonlit_rose_garden',
@@ -176,11 +237,67 @@ class StoryAnalysisCatalog {
     );
   }
 
+  factory StoryAnalysisCatalog.fromPreparedAssets({
+    required BookStoryBibleData bible,
+    required String chapterId,
+    required List<StoryBackgroundAssetData> backgrounds,
+    required List<StoryForegroundAssetData> foregrounds,
+  }) {
+    final base = StoryAnalysisCatalog.fromStoryBible(bible);
+    final entities = {
+      for (final entity in bible.entities)
+        if (entity.approved) entity.entityId: entity,
+    };
+    final readyBackgrounds = [
+      for (final asset in backgrounds)
+        if (asset.approved &&
+            asset.isVisualNovelSize &&
+            asset.hasBytes &&
+            (asset.chapterIds.isEmpty || asset.chapterIds.contains(chapterId)))
+          StoryAnalysisBackgroundAsset(
+            assetId: asset.assetId,
+            locationId: asset.locationId,
+            stateId: asset.stateId,
+          ),
+    ];
+    final readyForegrounds = [
+      for (final asset in foregrounds)
+        if (asset.status == StoryForegroundAssetStatus.approved &&
+            asset.hasBytes &&
+            (asset.chapterIds.isEmpty || asset.chapterIds.contains(chapterId)))
+          if (entities[asset.entityId] case final entity?)
+            StoryAnalysisForegroundAsset(
+              entityId: asset.entityId,
+              assetId: asset.assetId,
+              variantId: asset.variantId,
+              name: entity.canonicalName,
+              aliases: entity.aliases,
+              kind: entity.kind.name,
+              sourceBlockIds: entity.sourceBlockIds,
+            ),
+    ];
+    return StoryAnalysisCatalog(
+      characters: const [],
+      backgroundIds: readyBackgrounds
+          .map((asset) => asset.assetId)
+          .toList(growable: false),
+      backgroundAssets: readyBackgrounds,
+      foregroundAssets: readyForegrounds,
+      locations: base.locations,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
     'characters': characters
         .map((character) => character.toJson())
         .toList(growable: false),
     'backgroundIds': backgroundIds,
+    'backgroundAssets': backgroundAssets
+        .map((asset) => asset.toJson())
+        .toList(growable: false),
+    'foregroundAssets': foregroundAssets
+        .map((asset) => asset.toJson())
+        .toList(growable: false),
     'locations': locations
         .map((location) => location.toJson())
         .toList(growable: false),
@@ -331,6 +448,22 @@ class StoryAnalysisContract {
     for (final shot in story.shots) {
       _require(layoutIds, shot.layoutId, 'layout');
       _require(catalog.backgroundIds, shot.backgroundId, 'background');
+      if (catalog.backgroundAssets.isNotEmpty) {
+        final requirement = story.backgroundRequirementForShot(
+          story.shots.indexOf(shot),
+        );
+        final exactBackground = catalog.backgroundAssets.any(
+          (asset) =>
+              asset.assetId == shot.backgroundId &&
+              asset.locationId == requirement?.locationId &&
+              asset.stateId == requirement?.stateId,
+        );
+        if (!exactBackground) {
+          throw const StoryAnalysisException(
+            'A shot used the wrong location background.',
+          );
+        }
+      }
       _require(transitionIds, shot.transitionId, 'transition');
       _require(cameraPresetIds, shot.camera.presetId, 'camera');
       if (shot.characterLayers.length > 3) {
@@ -365,6 +498,41 @@ class StoryAnalysisContract {
         if (layer.faceSetId != null) {
           _require(character.faceSetIds, layer.faceSetId!, 'face set');
         }
+      }
+      if (shot.focusAssetLayers.length > 2) {
+        throw const StoryAnalysisException(
+          'A shot cannot show more than two focus assets.',
+        );
+      }
+      final focusEntities = <String>{};
+      final shotBlockIds = {
+        for (final beat in shot.beats) ...beat.sourceBlockIds,
+      };
+      for (final layer in shot.focusAssetLayers) {
+        final asset = catalog.foregroundAssets
+            .where((candidate) => candidate.assetId == layer.assetId)
+            .firstOrNull;
+        if (asset == null ||
+            asset.entityId != layer.entityId ||
+            asset.variantId != layer.variantId) {
+          throw StoryAnalysisException(
+            'Unknown foreground asset ID: ${layer.assetId}.',
+          );
+        }
+        if (!focusEntities.add(layer.entityId)) {
+          throw const StoryAnalysisException(
+            'A shot cannot repeat the same focus entity.',
+          );
+        }
+        if (!asset.sourceBlockIds.any(shotBlockIds.contains)) {
+          throw StoryAnalysisException(
+            'Foreground ${layer.entityId} is not supported by this shot.',
+          );
+        }
+        _require(stagePositions, layer.stagePosition, 'focus stage position');
+        _require(scaleIds, layer.scale, 'focus scale');
+        _require(depthIds, layer.depth, 'focus depth');
+        _require(movementIds, layer.movement, 'focus movement');
       }
 
       final cameraTarget = shot.camera.targetId;

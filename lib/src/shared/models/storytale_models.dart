@@ -151,6 +151,48 @@ class StoryCameraPlanData {
   };
 }
 
+class StoryFocusAssetLayerData {
+  const StoryFocusAssetLayerData({
+    required this.entityId,
+    required this.assetId,
+    required this.variantId,
+    this.stagePosition = 'center',
+    this.scale = 'medium',
+    this.depth = 'normal',
+    this.movement = 'idle',
+  });
+
+  final String entityId;
+  final String assetId;
+  final String variantId;
+  final String stagePosition;
+  final String scale;
+  final String depth;
+  final String movement;
+
+  factory StoryFocusAssetLayerData.fromJson(Map<String, dynamic> json) {
+    return StoryFocusAssetLayerData(
+      entityId: json['entityId'] as String,
+      assetId: json['assetId'] as String,
+      variantId: json['variantId'] as String,
+      stagePosition: json['stagePosition'] as String? ?? 'center',
+      scale: json['scale'] as String? ?? 'medium',
+      depth: json['depth'] as String? ?? 'normal',
+      movement: json['movement'] as String? ?? 'idle',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'entityId': entityId,
+    'assetId': assetId,
+    'variantId': variantId,
+    'stagePosition': stagePosition,
+    'scale': scale,
+    'depth': depth,
+    'movement': movement,
+  };
+}
+
 class StoryShotPlanData {
   const StoryShotPlanData({
     required this.id,
@@ -158,6 +200,7 @@ class StoryShotPlanData {
     required this.backgroundId,
     required this.beats,
     this.characterLayers = const [],
+    this.focusAssetLayers = const [],
     this.camera = const StoryCameraPlanData(),
     this.transitionId = 'cut',
     this.backgroundPath,
@@ -168,6 +211,7 @@ class StoryShotPlanData {
   final String backgroundId;
   final List<StoryBeatData> beats;
   final List<StoryCharacterLayerData> characterLayers;
+  final List<StoryFocusAssetLayerData> focusAssetLayers;
   final StoryCameraPlanData camera;
   final String transitionId;
   final String? backgroundPath;
@@ -184,6 +228,9 @@ class StoryShotPlanData {
       characterLayers: _jsonMaps(
         json['characterLayers'],
       ).map(StoryCharacterLayerData.fromJson).toList(growable: false),
+      focusAssetLayers: _jsonMaps(
+        json['focusAssetLayers'],
+      ).map(StoryFocusAssetLayerData.fromJson).toList(growable: false),
       camera: camera is Map
           ? StoryCameraPlanData.fromJson(Map<String, dynamic>.from(camera))
           : const StoryCameraPlanData(),
@@ -198,6 +245,9 @@ class StoryShotPlanData {
     'backgroundId': backgroundId,
     'beats': beats.map((beat) => beat.toJson()).toList(growable: false),
     'characterLayers': characterLayers
+        .map((layer) => layer.toJson())
+        .toList(growable: false),
+    'focusAssetLayers': focusAssetLayers
         .map((layer) => layer.toJson())
         .toList(growable: false),
     'camera': camera.toJson(),

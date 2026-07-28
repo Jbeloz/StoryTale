@@ -1,53 +1,48 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:storytale/src/core/state/storytale_controller.dart';
-import 'package:storytale/src/features/animated_story/data/story_pose_resolver.dart';
+import 'package:storytale/src/shared/models/storytale_models.dart';
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUp(() => SharedPreferences.setMockInitialValues({}));
-
-  testWidgets('one review chapter covers its text and all starter actors', (
-    tester,
-  ) async {
+  test('safe fallback narrates source blocks without prototype actors', () {
     final controller = StoryTaleController();
-    final chapter = controller.books.first.chapters.first;
+    final chapter = ChapterData(
+      id: 'safe-fallback-chapter',
+      title: 'A Safe Chapter',
+      originalText: 'A boy entered the garden.\n\nHe noticed a flower.',
+      sourceBlocks: const [
+        ChapterTextBlock(
+          id: 'source-block-1',
+          text: 'A boy entered the garden.',
+        ),
+        ChapterTextBlock(id: 'source-block-2', text: 'He noticed a flower.'),
+      ],
+    );
     final story = controller.storyFor(chapter);
-    final sourceText = chapter.originalText
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
     final storyText = story.shots
         .expand((shot) => shot.beats)
         .map((beat) => beat.originalText)
         .join(' ');
 
-    expect(storyText, sourceText);
-    expect(story.shots.length, inInclusiveRange(4, 10));
-
-    final profiles = story.shots
-        .expand((shot) => shot.characterLayers)
-        .map((layer) => layer.faceProfileId)
-        .toSet();
-    expect(profiles, {'default', 'hero', 'heroine', 'elder', 'adult_deep'});
-
-    final resolvedSets = <String, String>{};
-    final resolver = StoryPoseResolver();
-    for (final layer in story.shots.expand((shot) => shot.characterLayers)) {
-      final resolved = await tester.runAsync(() => resolver.resolve(layer));
-      expect(
-        resolved,
-        isNotNull,
-        reason: 'Character ${layer.characterId} did not resolve.',
-      );
-      expect(resolved!.faceComposition?.profileId, layer.faceProfileId);
-      resolvedSets[layer.characterId] = resolved.faceComposition!.setId;
-    }
-
-    expect(resolvedSets['hero_actor'], 'neutral');
-    expect(resolvedSets['hero_walking_actor'], 'talking');
-    expect(resolvedSets['heroine_actor'], 'happy');
-    expect(resolvedSets['elder_actor'], 'sad');
-    expect(resolvedSets['adult_actor'], 'angry');
+    expect(storyText, 'A boy entered the garden. He noticed a flower.');
+    expect(story.shots, hasLength(2));
+    expect(
+      story.shots.every(
+        (shot) => shot.characterLayers.isEmpty && shot.focusAssetLayers.isEmpty,
+      ),
+      isTrue,
+    );
+    expect(
+      story.shots
+          .expand((shot) => shot.beats)
+          .every((beat) => beat.speakerId == 'Narrator'),
+      isTrue,
+    );
+    expect(
+      story.shots.map((shot) => shot.beats.single.sourceBlockIds).toList(),
+      [
+        ['source-block-1'],
+        ['source-block-2'],
+      ],
+    );
   });
 }

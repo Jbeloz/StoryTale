@@ -245,6 +245,24 @@ class StoryBackgroundRepository {
     return null;
   }
 
+  Future<List<StoryBackgroundAssetData>> loadReady(
+    String bookId, {
+    String? chapterId,
+  }) async {
+    final assets = await load(bookId);
+    return List.unmodifiable(
+      assets.where(
+        (asset) =>
+            asset.approved &&
+            asset.isVisualNovelSize &&
+            asset.hasBytes &&
+            (chapterId == null ||
+                asset.chapterIds.isEmpty ||
+                asset.chapterIds.contains(chapterId)),
+      ),
+    );
+  }
+
   Future<List<StoryBackgroundAssetData>> _persist(
     String bookId,
     List<StoryBackgroundAssetData> assets,

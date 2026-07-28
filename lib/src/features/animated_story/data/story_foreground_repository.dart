@@ -234,6 +234,23 @@ class StoryForegroundRepository {
     return _persist(asset.bookId, assets);
   }
 
+  Future<List<StoryForegroundAssetData>> loadReady(
+    String bookId, {
+    String? chapterId,
+  }) async {
+    final assets = await load(bookId);
+    return List.unmodifiable(
+      assets.where(
+        (asset) =>
+            asset.status == StoryForegroundAssetStatus.approved &&
+            asset.hasBytes &&
+            (chapterId == null ||
+                asset.chapterIds.isEmpty ||
+                asset.chapterIds.contains(chapterId)),
+      ),
+    );
+  }
+
   List<StoryForegroundAssetData> _requirements(BookStoryBibleData bible) {
     final assets = <StoryForegroundAssetData>[];
     for (final entity in bible.entities) {
