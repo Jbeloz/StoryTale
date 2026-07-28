@@ -312,7 +312,8 @@ Implementation order:
    - automatically relink/rebuild the fixture after its asset queue completes
      or when Story Mode opens, so the user never has to approve or attach a
      prepared asset manually.
-10. **Required next - Phase 6E.1: live Chapter 1 stabilization:**
+10. **Implemented, awaiting manual gate - Phase 6E.1: live Chapter 1
+    stabilization:**
     - trace the complete foreground connection from Story Bible entity,
       generated variant, automatic acceptance, binary bytes, ready catalog,
       `focusAssetLayers`, and final player byte lookup;
@@ -332,7 +333,8 @@ Implementation order:
     - do not start Phase 6F until the generated background, Chair, Flower,
       source order, shot cadence, refresh behavior, and missing-byte fallback
       pass the Chapter 1 manual check.
-11. **After Phase 6E.1 - Phase 6F: optional review and replacement:**
+11. **After the Phase 6E.1 manual gate - Phase 6F: optional review and
+    replacement:**
     - show lightweight previews of automatically accepted assets;
     - provide Retry, Regenerate, Replace, and Reuse while preserving the stable
       canonical asset ID used by prepared chapters; and

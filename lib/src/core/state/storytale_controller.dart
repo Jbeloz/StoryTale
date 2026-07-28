@@ -306,13 +306,14 @@ class StoryTaleController extends ChangeNotifier {
   }
 
   static List<BookData> _demoBooks() {
+    // Short Story Mode fixture: each visual moment appears once and in order.
     const passage =
         'Once upon a time, there was a little prince who lived on a small '
         'planet. He loved watching the sunset.\n\nEvery evening, he would '
         'move his chair a little closer and enjoy the changing colors of '
         'the sky.\n\nOne day, he saw a beautiful flower growing on his '
         'planet. He took care of it with great love.';
-    final chapterText = List.filled(6, passage).join('\n\n');
+    const chapterText = passage;
 
     BookData book({
       required String id,

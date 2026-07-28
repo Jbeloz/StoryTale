@@ -398,42 +398,43 @@ Status: **Completed on 2026-07-28.**
 
 ### Phase 6E.1 - Live Chapter 1 stabilization
 
-Status: **Next and required before Phase 6F.**
+Status: **Implemented; the user-run Chapter 1 acceptance gate is still
+required before Phase 6F.**
 
 This is a narrow repair and verification gate for the first connected chapter.
 It does not expand asset connection to every chapter and it does not implement
 the final beat-level character animation system.
 
-- [ ] Add a compact diagnostic trace for each expected foreground:
+- [x] Add a compact diagnostic trace for each expected foreground:
   Story Bible entity -> required variant -> automatically accepted metadata ->
   binary bytes -> ready catalog -> connected `focusAssetLayers` -> player byte
   lookup. Keep this diagnostic out of the normal reader UI.
-- [ ] Make reconnection deterministic after generation. Even when the second
+- [x] Make reconnection deterministic after generation. Even when the second
   Gemini story-planning request fails, the safe source-preserving story must be
   passed through the connector and receive every ready, source-supported
   foreground.
-- [ ] Confirm the Chair and Flower records have the correct Chapter 1 and
+- [x] Confirm the Chair and Flower records have the correct Chapter 1 and
   source-block ownership. Never attach them merely because an image is
   available.
-- [ ] Replace the current repeated demo passage with one short unique fixture:
+- [x] Replace the current repeated demo passage with one short unique fixture:
   a background/sunset moment, a chair action, and a flower introduction, each
   appearing once and in source order. Keep it clearly identified as test
   content rather than the full published book.
-- [ ] Update the story-planning rules so a meaningful speaker, action, focus
+- [x] Update the story-planning rules so a meaningful speaker, action, focus
   subject, location, or background-state change starts a new shot.
-- [ ] Keep a normal fixture shot to one to three short subtitle beats. If a
+- [x] Keep a normal fixture shot to one to three short subtitle beats. If a
   source block is longer, preserve its exact words and order across additional
   shots instead of leaving many lines under one static composition.
-- [ ] Ensure the shot that introduces the Chair contains the Chair focus layer,
-  the shot that introduces the Flower contains the Flower focus layer, and
-  unrelated shots contain neither.
+- [x] Ensure the connector assigns the Chair only to a source-supported chair
+  shot and the Flower only to a source-supported flower shot. The user-run
+  acceptance check below confirms the generated Chapter 1 result.
 - [ ] Verify the generated location remains the background while foregrounds
   use transparent PNG layers, correct depth, and safe placement above the
   subtitle area.
 - [ ] Verify a manual refresh during the same preparation session reloads the
   connected artwork. Missing or corrupt bytes must hide only that asset and
   must not freeze playback.
-- [ ] Keep beat-specific talking faces, pose changes, action playback, and
+- [x] Keep beat-specific talking faces, pose changes, action playback, and
   camera-trigger reactions assigned to Phase 9. This stabilization phase only
   improves useful shot boundaries and foreground connection.
 

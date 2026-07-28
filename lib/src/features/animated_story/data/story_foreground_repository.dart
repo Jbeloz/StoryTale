@@ -214,6 +214,11 @@ class StoryForegroundRepository {
             description: requirement.description,
             chapterIds: requirement.chapterIds,
             reasons: requirement.reasons,
+            status:
+                saved.status == StoryForegroundAssetStatus.generated &&
+                    saved.hasBytes
+                ? StoryForegroundAssetStatus.approved
+                : saved.status,
           )
         else
           requirement,

@@ -545,6 +545,11 @@ class StoryAnalysisContract {
       if (shot.beats.isEmpty) {
         throw const StoryAnalysisException('Every shot needs subtitle text.');
       }
+      if (shot.beats.length > 3) {
+        throw const StoryAnalysisException(
+          'A shot cannot contain more than three subtitle beats.',
+        );
+      }
       for (final beat in shot.beats) {
         if (!speakerIds.contains(beat.speakerId)) {
           throw StoryAnalysisException('Unknown speaker: ${beat.speakerId}.');

@@ -201,6 +201,28 @@ class VolumePreparationCoordinator {
         foregrounds: readyForegrounds,
       )..status = PreparationStatus.ready;
       saveStory(chapter, connected);
+      final connectedForegroundIds = {
+        for (final shot in connected.shots)
+          for (final layer in shot.focusAssetLayers) layer.assetId,
+      };
+      final connectedWithBytes = connectedForegroundIds
+          .where(StoryAssetBinaryStore.contains)
+          .length;
+      job.addEvent(
+        'Chapter 1 foreground trace: ${readyForegrounds.length} ready, '
+        '${connectedForegroundIds.length} linked, '
+        '$connectedWithBytes available to the player',
+      );
+      final missingForegrounds = readyForegrounds
+          .where((asset) => !connectedForegroundIds.contains(asset.assetId))
+          .map((asset) => asset.entityName)
+          .toSet();
+      if (missingForegrounds.isNotEmpty) {
+        job.addEvent(
+          'Not linked outside supported source: '
+          '${missingForegrounds.join(', ')}',
+        );
+      }
       job.addEvent('Prepared artwork is connected to Chapter 1');
     }
 

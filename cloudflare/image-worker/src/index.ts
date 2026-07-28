@@ -590,6 +590,8 @@ function storyAnalysisPrompt(input: AnalysisRequest): string {
     "Return only the JSON required by the supplied schema.",
     "Preserve every chapter block verbatim and in the original order.",
     "You may split one block into several short one-line subtitle beats, but each segment must keep that same single sourceBlockIds value and all segments joined with spaces must equal the original block.",
+    "Keep one to three subtitle beats in a shot. Continue a longer source block in another consecutive shot.",
+    "Start a new shot when the active speaker, meaningful action, focus subject, location, or background state changes.",
     "Do not summarize, translate, rewrite, censor, or add story text. DeepL owns Filipino translation.",
     "Use only supplied character, asset, layout, pose, face, movement, transition, and camera IDs.",
     "Use zero to three visible characters. Prefer one or two. Use background or detail shots when no supported pose exists.",
@@ -681,7 +683,11 @@ function applySafeAnalysisDefaults(value: unknown, input: AnalysisRequest): void
               approvedSpeakers.has(beat.speakerId)
                 ? beat.speakerId
                 : "Narrator",
-            originalText: sourceText,
+            originalText:
+              typeof beat.originalText === "string" &&
+              beat.originalText.trim().length > 0
+                ? beat.originalText
+                : sourceText,
             sourceBlockIds: [sourceId],
             actionId: includes(ANALYSIS_MOVEMENT_IDS, beat.actionId)
               ? beat.actionId
@@ -771,7 +777,8 @@ function validateStoryAnalysis(value: unknown, input: AnalysisRequest): string |
         !Array.isArray(shot.focusAssetLayers) ||
         shot.focusAssetLayers.length > 2 ||
         !Array.isArray(shot.beats) ||
-        shot.beats.length === 0
+        shot.beats.length === 0 ||
+        shot.beats.length > 3
       ) return "invalid shot fields";
       if (input.catalog.backgroundAssets.length > 0) {
         const background = input.catalog.backgroundAssets.find(
