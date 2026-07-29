@@ -60,8 +60,8 @@ animation limits, validation, storage, and safe fallbacks.
 | 3. Visual-novel runtime and Gemini contract | **Prototype done** | Cutscenes, shots, beats, layouts, facing, depth, camera presets, movement, transitions, and validated Gemini plans work with safe fixtures |
 | 4. Story Bible and location requirements | **Partial** | Entity extraction, review, automatic approval, specific locations, required background pairs, and the local background catalog work |
 | 5. Final visual-novel backgrounds | **Done** | Generate, review, approve, persist, resolve, refresh, and render exact location/state backgrounds in Story Mode |
-| 6. Volume analysis and foreground inventory | **Current** | Analyze all chapters through one resumable job, merge names and appearances, show progress, and prepare reusable non-human requirements |
-| 7. Generated book-specific humans | **Planned** | Create one approved Gemini master, transparent rig, face catalog, outfit, and reusable identity per important human |
+| 6. Volume analysis and foreground inventory | **Done** | Analyze all chapters through one resumable job, prepare reusable non-human assets, connect them to stories, and provide optional review/replacement |
+| 7. Generated book-specific humans | **Current** | Create one approved Gemini master, transparent rig, face catalog, outfit, and reusable identity per important human |
 | 8. Persistent books and volumes | **Planned** | Save EPUBs, books, progress, story bibles, assets, jobs, and `Book -> Volume -> Chapter` data across restarts |
 | 9. Complete ChapterStory builder | **Planned** | Assemble approved assets, exact text coverage, subtitles, moral, movement, and manifests for any imported chapter |
 | 10. DeepL and offline audio | **Planned** | Real DeepL caching, Tagalog ONNX TTS, five tested voice packs, prepared line audio, and playback synchronization |
@@ -225,11 +225,11 @@ Playback acceptance defect resolved:
 - the regression test saves and approves a `1024 x 576` asset while Story Mode
   is already open and confirms that it replaces the fallback
 
-## Current phase
+## Completed asset phase
 
 ### Phase 6 - Volume analysis and foreground inventory
 
-Status: **Current.**
+Status: **Done.**
 
 Phase 6A completed:
 
@@ -333,8 +333,7 @@ Implementation order:
     - do not start Phase 6F until the generated background, Chair, Flower,
       source order, shot cadence, refresh behavior, and missing-byte fallback
       pass the Chapter 1 manual check.
-11. **After the Phase 6E.1 manual gate - Phase 6F: optional review and
-    replacement:**
+11. **Done - Phase 6F: optional review and replacement:**
     - show lightweight previews of automatically accepted assets;
     - provide Retry, Regenerate, Replace, and Reuse while preserving the stable
       canonical asset ID used by prepared chapters; and
@@ -357,6 +356,8 @@ in [Volume Preparation Plan](VOLUME_PREPARATION_PLAN.md). The provided light
 novel EPUB remains deferred; Phase 6 uses the Little Prince fixture first.
 
 ### Phase 7 - Generated book-specific humans
+
+Status: **Current.**
 
 Implementation order:
 

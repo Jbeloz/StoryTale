@@ -156,6 +156,10 @@ class StoryForegroundAssetData {
         '${_segment(entityId)}.${_segment(variantId)}';
   }
 
+  static String candidateId(String assetId, DateTime createdAt) {
+    return '$assetId.candidate.${createdAt.millisecondsSinceEpoch}';
+  }
+
   static List<String> _strings(dynamic value) {
     return (value as List<dynamic>? ?? const []).whereType<String>().toList(
       growable: false,
@@ -169,6 +173,29 @@ class StoryForegroundAssetData {
         .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
         .replaceAll(RegExp(r'^_+|_+$'), '');
   }
+}
+
+class StoryForegroundReplacementData {
+  const StoryForegroundReplacementData({
+    required this.candidateAssetId,
+    required this.mimeType,
+    required this.width,
+    required this.height,
+    required this.generationPrompt,
+    required this.generatedAt,
+  });
+
+  final String candidateAssetId;
+  final String mimeType;
+  final int width;
+  final int height;
+  final String generationPrompt;
+  final String generatedAt;
+
+  Uint8List get bytes =>
+      StoryAssetBinaryStore.read(candidateAssetId) ?? Uint8List(0);
+
+  bool get hasBytes => bytes.isNotEmpty;
 }
 
 class StoryForegroundRepository {
@@ -237,6 +264,32 @@ class StoryForegroundRepository {
       assets[index] = asset;
     }
     return _persist(asset.bookId, assets);
+  }
+
+  Future<List<StoryForegroundAssetData>> applyReplacement(
+    StoryForegroundAssetData asset,
+    StoryForegroundReplacementData replacement,
+  ) async {
+    if (!replacement.hasBytes) {
+      throw StateError('The replacement image is missing.');
+    }
+    StoryAssetBinaryStore.move(replacement.candidateAssetId, asset.assetId);
+    return save(
+      asset.copyWith(
+        status: StoryForegroundAssetStatus.approved,
+        mimeType: replacement.mimeType,
+        width: replacement.width,
+        height: replacement.height,
+        generationPrompt: replacement.generationPrompt,
+        generatedAt: replacement.generatedAt,
+        clearImage: true,
+        clearValidationError: true,
+      ),
+    );
+  }
+
+  void discardReplacement(StoryForegroundReplacementData replacement) {
+    StoryAssetBinaryStore.remove(replacement.candidateAssetId);
   }
 
   Future<List<StoryForegroundAssetData>> loadReady(

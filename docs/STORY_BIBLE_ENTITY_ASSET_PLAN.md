@@ -1,9 +1,9 @@
 # Story Bible Entity and Asset Plan
 
 **Status: Story Bible extraction, automatic approval, final landscape
-backgrounds, shared foreground requirements, and automatic validated asset
-preparation are implemented. ChapterStory asset connection and entity-aware
-scene catalogs follow next. See the
+backgrounds, shared foreground requirements, automatic validated asset
+preparation, ChapterStory connection, and optional asset replacement are
+implemented. Book-specific human generation follows next. See the
 [Master Roadmap](ROADMAP.md).**
 
 ## Purpose
@@ -300,11 +300,12 @@ Implemented:
   backgrounds and at most two source-supported foreground layers
 - Story Mode resolves image bytes by stable ID, renders transparent focus
   layers by placement/depth/movement, and never substitutes an unrelated human
+- Optional asset review shows compact previews and supports Retry, Regenerate,
+  Replace, and Reuse without changing the canonical ID used by prepared stories
 
 Still pending:
 
-- **Phase 6F:** add optional preview, retry, regenerate, replace, and reuse
-  controls without making manual approval part of normal preparation
+- **Phase 7:** generate reusable book-specific human masters and modular rigs
 - **Phase 8:** replace the session binary store with durable asset files,
   integrity metadata, restart recovery, and orphan-safe cleanup
 

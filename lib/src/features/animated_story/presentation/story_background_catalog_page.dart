@@ -5,6 +5,7 @@ import '../../../shared/models/storytale_models.dart';
 import '../../../shared/widgets/storytale_components.dart';
 import '../data/story_artwork_service.dart';
 import '../data/story_asset_binary_store.dart';
+import '../data/story_asset_validator.dart';
 import '../data/story_background_repository.dart';
 import '../data/story_analysis_contract.dart';
 import '../data/story_bible_models.dart';
@@ -33,11 +34,13 @@ class _StoryBackgroundCatalogPageState
   late final StoryArtworkService _artworkService;
   late final StoryBackgroundRepository _backgroundRepository;
   late final StoryBibleRepository _storyBibleRepository;
+  final _validator = const StoryAssetValidator();
 
   BookStoryBibleData? _bible;
   List<StoryBackgroundAssetData> _assets = const [];
   List<StoryBackgroundRequirementData> _requirements = const [];
   String? _bookId;
+  String? _chapterId;
   String? _workingKey;
   bool _loading = true;
 
@@ -57,8 +60,10 @@ class _StoryBackgroundCatalogPageState
     final controller = StoryTaleScope.of(context);
     final book = controller.currentBook;
     final chapter = controller.currentChapter;
-    if (book == null || chapter == null || _bookId == book.id) return;
+    if (book == null || chapter == null) return;
+    if (_bookId == book.id && _chapterId == chapter.id) return;
     _bookId = book.id;
+    _chapterId = chapter.id;
     _load(book.id, controller.storyFor(chapter).backgroundRequirements);
   }
 
@@ -212,28 +217,35 @@ class _StoryBackgroundCatalogPageState
                         ? () => _generate(requirement, location)
                         : null,
                     icon: Icon(
-                      approvedAsset == null && candidate == null
+                      candidate?.validationError != null
+                          ? Icons.replay
+                          : approvedAsset == null
                           ? Icons.auto_awesome_outlined
                           : Icons.refresh,
                     ),
                     label: Text(
-                      approvedAsset == null
-                          ? candidate == null
-                                ? 'Generate'
-                                : 'Regenerate candidate'
-                          : 'Generate replacement',
+                      candidate?.validationError != null
+                          ? 'Retry'
+                          : approvedAsset == null
+                          ? 'Generate'
+                          : 'Regenerate',
                     ),
                   ),
                   if (candidate != null) ...[
-                    OutlinedButton.icon(
-                      onPressed: () => _approveCandidate(candidate),
-                      icon: const Icon(Icons.check_circle_outline),
-                      label: const Text('Approve candidate'),
-                    ),
+                    if (candidate.validationError == null)
+                      OutlinedButton.icon(
+                        key: Key('replace-background-${requirement.key}'),
+                        onPressed: () => _replaceCandidate(candidate),
+                        icon: const Icon(Icons.swap_horiz),
+                        label: const Text('Replace'),
+                      ),
                     TextButton.icon(
-                      onPressed: () => _rejectCandidate(candidate),
-                      icon: const Icon(Icons.delete_outline),
-                      label: const Text('Reject'),
+                      key: Key('reuse-background-${requirement.key}'),
+                      onPressed: () => _reuseApproved(candidate),
+                      icon: const Icon(Icons.undo),
+                      label: Text(
+                        approvedAsset == null ? 'Discard' : 'Reuse current',
+                      ),
                     ),
                   ],
                 ],
@@ -284,6 +296,11 @@ class _StoryBackgroundCatalogPageState
   ) async {
     setState(() => _workingKey = requirement.key);
     try {
+      final previousCandidate = _pendingAssetFor(requirement);
+      if (previousCandidate != null) {
+        StoryAssetBinaryStore.remove(previousCandidate.assetId);
+      }
+      final hadApproved = _approvedAssetFor(requirement) != null;
       final brief = VisualNovelBackgroundBrief.fromApprovedLocation(
         locationId: requirement.locationId,
         stateId: requirement.stateId,
@@ -311,9 +328,33 @@ class _StoryBackgroundCatalogPageState
         width: generated.width,
         height: generated.height,
         brief: brief.toJson(),
+        chapterIds: [if (_chapterId != null) _chapterId!],
       );
+      final validationError = _validator.validateBackground(
+        bytes: generated.bytes,
+        mimeType: generated.mimeType,
+        width: generated.width,
+        height: generated.height,
+        chapterIds: asset.chapterIds,
+      );
+      if (validationError != null) {
+        _assets = await _backgroundRepository.saveCandidate(
+          asset.copyWith(validationError: validationError),
+        );
+        _message(validationError);
+        return;
+      }
       _assets = await _backgroundRepository.saveCandidate(asset);
-      _message('Background generated. Review it before approval.');
+      if (hadApproved) {
+        _message('Replacement ready. Choose Replace or Reuse current.');
+        return;
+      }
+      _assets = await _backgroundRepository.approveCandidate(asset);
+      final approved = _assets.firstWhere(
+        (item) => item.key == asset.key && item.approved,
+      );
+      await _syncLocationAsset(approved, approved: true);
+      _message('Background is ready.');
     } on ArtworkGenerationException catch (error) {
       _message(error.message);
     } catch (_) {
@@ -323,7 +364,7 @@ class _StoryBackgroundCatalogPageState
     }
   }
 
-  Future<void> _approveCandidate(StoryBackgroundAssetData candidate) async {
+  Future<void> _replaceCandidate(StoryBackgroundAssetData candidate) async {
     setState(() => _workingKey = candidate.key);
     _assets = await _backgroundRepository.approveCandidate(candidate);
     final approved = _assets.firstWhere(
@@ -332,16 +373,16 @@ class _StoryBackgroundCatalogPageState
     await _syncLocationAsset(approved, approved: true);
     if (mounted) {
       setState(() => _workingKey = null);
-      _message('Background approved.');
+      _message('Replacement applied without changing the asset ID.');
     }
   }
 
-  Future<void> _rejectCandidate(StoryBackgroundAssetData candidate) async {
+  Future<void> _reuseApproved(StoryBackgroundAssetData candidate) async {
     setState(() => _workingKey = candidate.key);
     _assets = await _backgroundRepository.rejectCandidate(candidate);
     if (mounted) {
       setState(() => _workingKey = null);
-      _message('Candidate rejected. The approved background was kept.');
+      _message('Current background kept.');
     }
   }
 

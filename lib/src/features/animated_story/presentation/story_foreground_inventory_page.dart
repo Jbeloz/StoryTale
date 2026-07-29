@@ -1,4 +1,8 @@
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as image;
 
 import '../../../core/state/storytale_scope.dart';
 import '../../../shared/widgets/storytale_components.dart';
@@ -31,6 +35,7 @@ class _StoryForegroundInventoryPageState
   late final StoryBibleRepository _storyBibleRepository;
   late final StoryArtworkService _artworkService;
   final _validator = const StoryAssetValidator();
+  final Map<String, StoryForegroundReplacementData> _replacements = {};
   List<StoryForegroundAssetData> _assets = const [];
   String? _bookId;
   String? _workingAssetId;
@@ -53,6 +58,14 @@ class _StoryForegroundInventoryPageState
     if (bookId == null || bookId == _bookId) return;
     _bookId = bookId;
     _load(bookId);
+  }
+
+  @override
+  void dispose() {
+    for (final replacement in _replacements.values) {
+      _foregroundRepository.discardReplacement(replacement);
+    }
+    super.dispose();
   }
 
   Future<void> _load(String bookId) async {
@@ -106,8 +119,10 @@ class _StoryForegroundInventoryPageState
     final approved = _assets
         .where((asset) => asset.status == StoryForegroundAssetStatus.approved)
         .length;
-    final generated = _assets
-        .where((asset) => asset.status == StoryForegroundAssetStatus.generated)
+    final needsReview = _assets
+        .where(
+          (asset) => asset.status == StoryForegroundAssetStatus.needsReview,
+        )
         .length;
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -115,8 +130,8 @@ class _StoryForegroundInventoryPageState
         Text(bookTitle, style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 6),
         const Text(
-          'Volume preparation creates and validates these shared assets '
-          'automatically. Items needing review keep a safe placeholder.',
+          'Volume preparation accepts valid assets automatically. Review is '
+          'optional unless an item failed or needs attention.',
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -125,8 +140,8 @@ class _StoryForegroundInventoryPageState
           children: [
             Chip(label: Text('$entityCount subjects')),
             Chip(label: Text('${_assets.length} variants')),
-            Chip(label: Text('$generated generated')),
-            Chip(label: Text('$approved approved')),
+            Chip(label: Text('$approved ready')),
+            if (needsReview > 0) Chip(label: Text('$needsReview need review')),
           ],
         ),
         const SizedBox(height: 8),
@@ -157,42 +172,121 @@ class _StoryForegroundInventoryPageState
           '${entity.chapterIds.length} chapter'
           '${entity.chapterIds.length == 1 ? '' : 's'}',
         ),
+        children: [for (final asset in assets) _assetTile(asset)],
+      ),
+    );
+  }
+
+  Widget _assetTile(StoryForegroundAssetData asset) {
+    final replacement = _replacements[asset.assetId];
+    final ready =
+        asset.status == StoryForegroundAssetStatus.approved && asset.hasBytes;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (final asset in assets)
-            ListTile(
-              dense: true,
-              title: Text(asset.variantId),
-              subtitle: Text('${asset.assetId}\n${_status(asset.status)}'),
-              isThreeLine: false,
-              trailing: _assetAction(asset),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            title: Text(asset.variantId),
+            subtitle: Text('${asset.assetId}\n${_status(asset.status)}'),
+            trailing: Icon(
+              ready ? Icons.verified_outlined : Icons.error_outline,
             ),
+          ),
+          if (ready)
+            _assetPreview('Current asset', asset.bytes)
+          else
+            const Text(
+              'A safe placeholder remains active until this is ready.',
+            ),
+          if (replacement != null)
+            _assetPreview('Replacement preview', replacement.bytes),
+          const SizedBox(height: 10),
+          _assetActions(asset, replacement, ready),
         ],
       ),
     );
   }
 
-  Widget _assetAction(StoryForegroundAssetData asset) {
-    if (_workingAssetId == asset.assetId) {
-      return const SizedBox.square(
-        dimension: 24,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      );
-    }
-    if (asset.status == StoryForegroundAssetStatus.generated ||
-        asset.status == StoryForegroundAssetStatus.approved) {
-      return Icon(
-        asset.status == StoryForegroundAssetStatus.approved
-            ? Icons.verified_outlined
-            : Icons.pending_outlined,
-      );
-    }
-    return FilledButton.tonal(
-      onPressed: _workingAssetId == null ? () => _generate(asset) : null,
-      child: Text(
-        asset.status == StoryForegroundAssetStatus.needsReview
-            ? 'Retry'
-            : 'Generate',
+  Widget _assetPreview(String label, Uint8List bytes) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 6),
+          Container(
+            key: Key('foreground-preview-$label'),
+            height: 160,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.all(8),
+            child: Image.memory(
+              bytes,
+              fit: BoxFit.contain,
+              gaplessPlayback: true,
+            ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _assetActions(
+    StoryForegroundAssetData asset,
+    StoryForegroundReplacementData? replacement,
+    bool ready,
+  ) {
+    if (_workingAssetId == asset.assetId) {
+      return const LinearProgressIndicator();
+    }
+    if (replacement != null) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          FilledButton.icon(
+            key: Key('replace-foreground-${asset.assetId}'),
+            onPressed: () => _applyReplacement(asset, replacement),
+            icon: const Icon(Icons.swap_horiz),
+            label: const Text('Replace'),
+          ),
+          TextButton.icon(
+            key: Key('reuse-foreground-${asset.assetId}'),
+            onPressed: () => _reuseExisting(asset, replacement),
+            icon: const Icon(Icons.undo),
+            label: const Text('Reuse current'),
+          ),
+        ],
+      );
+    }
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        FilledButton.tonalIcon(
+          key: Key(
+            '${ready ? 'regenerate' : 'retry'}-foreground-${asset.assetId}',
+          ),
+          onPressed: _workingAssetId == null ? () => _generate(asset) : null,
+          icon: Icon(ready ? Icons.refresh : Icons.replay),
+          label: Text(ready ? 'Regenerate' : 'Retry'),
+        ),
+        OutlinedButton.icon(
+          key: Key('choose-foreground-${asset.assetId}'),
+          onPressed: _workingAssetId == null
+              ? () => _chooseReplacement(asset)
+              : null,
+          icon: const Icon(Icons.upload_file_outlined),
+          label: const Text('Replace PNG'),
+        ),
+      ],
     );
   }
 
@@ -200,28 +294,166 @@ class _StoryForegroundInventoryPageState
     setState(() => _workingAssetId = asset.assetId);
     try {
       final generated = await _artworkService.generateForeground(asset);
-      final prepared = asset.copyWith(
-        status: StoryForegroundAssetStatus.approved,
+      final replacement = _createReplacement(
+        asset,
+        bytes: generated.bytes,
         mimeType: generated.mimeType,
         width: generated.width,
         height: generated.height,
-        generationPrompt: generated.prompt,
-        generatedAt: DateTime.now().toUtc().toIso8601String(),
-        clearImage: true,
-        clearValidationError: true,
+        prompt: generated.prompt,
       );
-      final error = _validator.validateForeground(prepared, generated.bytes);
-      if (error != null) throw ArtworkGenerationException(error);
-      StoryAssetBinaryStore.write(asset.assetId, generated.bytes);
-      _assets = await _foregroundRepository.save(prepared);
-      _message('${asset.entityName} ${asset.variantId} is ready.');
+      await _acceptOrReview(asset, replacement);
     } on ArtworkGenerationException catch (error) {
-      _message(error.message);
+      await _handleFailure(asset, error.message);
     } catch (_) {
-      _message('The foreground image could not be generated.');
+      await _handleFailure(
+        asset,
+        'The foreground image could not be generated.',
+      );
     } finally {
       if (mounted) setState(() => _workingAssetId = null);
     }
+  }
+
+  Future<void> _chooseReplacement(StoryForegroundAssetData asset) async {
+    final result = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['png'],
+      withData: true,
+    );
+    if (result == null || !mounted) return;
+    final bytes = result.files.single.bytes;
+    final decoded = bytes == null ? null : image.decodePng(bytes);
+    if (bytes == null || decoded == null) {
+      _message('Choose a valid PNG file.');
+      return;
+    }
+    setState(() => _workingAssetId = asset.assetId);
+    try {
+      final replacement = _createReplacement(
+        asset,
+        bytes: bytes,
+        mimeType: 'image/png',
+        width: decoded.width,
+        height: decoded.height,
+        prompt: 'User-selected replacement PNG.',
+      );
+      await _acceptOrReview(asset, replacement);
+    } finally {
+      if (mounted) setState(() => _workingAssetId = null);
+    }
+  }
+
+  StoryForegroundReplacementData _createReplacement(
+    StoryForegroundAssetData asset, {
+    required Uint8List bytes,
+    required String mimeType,
+    required int width,
+    required int height,
+    required String prompt,
+  }) {
+    final createdAt = DateTime.now().toUtc();
+    final candidateId = StoryForegroundAssetData.candidateId(
+      asset.assetId,
+      createdAt,
+    );
+    StoryAssetBinaryStore.write(candidateId, bytes);
+    return StoryForegroundReplacementData(
+      candidateAssetId: candidateId,
+      mimeType: mimeType,
+      width: width,
+      height: height,
+      generationPrompt: prompt,
+      generatedAt: createdAt.toIso8601String(),
+    );
+  }
+
+  Future<void> _acceptOrReview(
+    StoryForegroundAssetData asset,
+    StoryForegroundReplacementData replacement,
+  ) async {
+    final prepared = asset.copyWith(
+      status: StoryForegroundAssetStatus.approved,
+      mimeType: replacement.mimeType,
+      width: replacement.width,
+      height: replacement.height,
+      generationPrompt: replacement.generationPrompt,
+      generatedAt: replacement.generatedAt,
+      clearImage: true,
+      clearValidationError: true,
+    );
+    final error = _validator.validateForeground(prepared, replacement.bytes);
+    if (error != null) {
+      _foregroundRepository.discardReplacement(replacement);
+      await _handleFailure(asset, error);
+      return;
+    }
+    final hasReadyAsset =
+        asset.status == StoryForegroundAssetStatus.approved && asset.hasBytes;
+    if (!hasReadyAsset) {
+      _assets = await _foregroundRepository.applyReplacement(
+        asset,
+        replacement,
+      );
+      _message('${asset.entityName} ${asset.variantId} is ready.');
+      return;
+    }
+    final old = _replacements[asset.assetId];
+    if (old != null) _foregroundRepository.discardReplacement(old);
+    if (mounted) {
+      setState(() => _replacements[asset.assetId] = replacement);
+      _message('Replacement ready. Choose Replace or Reuse current.');
+    }
+  }
+
+  Future<void> _applyReplacement(
+    StoryForegroundAssetData asset,
+    StoryForegroundReplacementData replacement,
+  ) async {
+    setState(() => _workingAssetId = asset.assetId);
+    try {
+      _assets = await _foregroundRepository.applyReplacement(
+        asset,
+        replacement,
+      );
+      _replacements.remove(asset.assetId);
+      _message('Replacement applied without changing the asset ID.');
+    } finally {
+      if (mounted) setState(() => _workingAssetId = null);
+    }
+  }
+
+  void _reuseExisting(
+    StoryForegroundAssetData asset,
+    StoryForegroundReplacementData replacement,
+  ) {
+    _foregroundRepository.discardReplacement(replacement);
+    setState(() => _replacements.remove(asset.assetId));
+    _message('Current asset kept.');
+  }
+
+  Future<void> _handleFailure(
+    StoryForegroundAssetData asset,
+    String message,
+  ) async {
+    if (asset.status == StoryForegroundAssetStatus.approved && asset.hasBytes) {
+      _message('$message Current asset kept.');
+      return;
+    }
+    await _markNeedsReview(asset, message);
+  }
+
+  Future<void> _markNeedsReview(
+    StoryForegroundAssetData asset,
+    String message,
+  ) async {
+    _assets = await _foregroundRepository.save(
+      asset.copyWith(
+        status: StoryForegroundAssetStatus.needsReview,
+        validationError: message,
+      ),
+    );
+    _message(message);
   }
 
   IconData _icon(StoryForegroundAssetData asset) {
@@ -241,8 +473,8 @@ class _StoryForegroundInventoryPageState
   String _status(StoryForegroundAssetStatus status) {
     return switch (status) {
       StoryForegroundAssetStatus.required => 'Required',
-      StoryForegroundAssetStatus.generated => 'Review',
-      StoryForegroundAssetStatus.approved => 'Approved',
+      StoryForegroundAssetStatus.generated => 'Generated',
+      StoryForegroundAssetStatus.approved => 'Ready',
       StoryForegroundAssetStatus.needsReview => 'Needs review',
       StoryForegroundAssetStatus.rejected => 'Rejected',
     };

@@ -450,17 +450,22 @@ Acceptance checklist before Phase 6F:
 
 ### Phase 6F - Optional review and replacement
 
-Status: **Blocked until Phase 6E.1 passes.**
+Status: **Completed on 2026-07-29.**
 
-- [ ] Show lightweight previews for automatically accepted assets.
-- [ ] Provide Retry, Regenerate, Replace, and Reuse without requiring normal
+- [x] Show lightweight previews for automatically accepted assets.
+- [x] Provide Retry, Regenerate, Replace, and Reuse without requiring normal
   approval.
-- [ ] Preserve the canonical asset ID when replacing its bytes so existing
+- [x] Preserve the canonical asset ID when replacing its bytes so existing
   ChapterStory packages remain connected, then refresh affected previews.
-- [ ] Retry only failed or `needsReview` work; do not regenerate valid reused
+- [x] Retry only failed or `needsReview` work; do not regenerate valid reused
   assets or block normal reading.
-- [ ] Keep manual attention only for invalid, failed, or visibly unsuitable
+- [x] Keep manual attention only for invalid, failed, or visibly unsuitable
   results.
+
+Valid foregrounds now show compact previews and keep their stable IDs when a
+generated or user-selected PNG replaces their bytes. Background replacement
+uses the same candidate-first behavior. A failed replacement never removes a
+working asset, and Reuse discards only the candidate.
 
 ### Phase 7 - Shared book-specific humans
 
