@@ -437,16 +437,14 @@ separated.
 - Removing custom content never leaves a broken pose or story scene.
 - Old `faceExpressionId` files still display the same Default faces.
 - A generated book character can use its own profile and sets without changing
-  the Story Mode player.
+  the Story Mode player. This remains a Phase 7G acceptance requirement; the
+  current generated-human prototype has one baked face and does not yet load
+  character-specific modular face parts.
 
 ## 11. Recommended immediate next step
 
-For the modular-face subsystem, the next dependent task is the
-generated-character pipeline: approve one analyzed character, generate one
-Gemini full-body master, remove its green background locally, split it into the
-compatible rig parts, and review the rejoined result before Story Mode can
-select it.
-
-This is not the global next project phase. Finish the landscape background and
-matching foreground-entity phases first, as ordered in the
-[Master Roadmap](ROADMAP.md).
+For the modular-face subsystem, the current dependent task is Phase 7G:
+generate a custom head base and aligned character-specific eyes, nose, mouth,
+details, and face sets, then validate them on the exact generated rig. The
+complete order and acceptance gate are in the
+[Generated Character Pipeline Plan](GENERATED_CHARACTER_PIPELINE_PLAN.md).

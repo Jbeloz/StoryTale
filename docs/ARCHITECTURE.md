@@ -24,9 +24,9 @@ flowchart LR
     G --> H["Story Mode Player"]
     O --> H
     H --> I["Sprites + Movement + Voices + Moral"]
-    Q --> T["One Gemini Full-Body Master"]
-    T --> S["Local Green Removal + Modular Rig Split"]
-    S --> U["Transparent Head + 9 Body Parts + Pose JSON"]
+    Q --> T["One Template-Constrained Gemini Character Master"]
+    T --> S["Local Green Removal + Masked Rig Extraction"]
+    S --> U["Real Rig + 10 Parts + Modular Faces + Pose JSON"]
     U --> G
     J["Private Image Worker"] --> T
     J --> L["Workers AI - landscape SDXL at 1024 x 576"]
@@ -53,14 +53,14 @@ flowchart LR
 | Visual entity catalog | Maps each story subject to its own approved sprite, state, rig, focus asset, or background ID and prevents unrelated substitutions. |
 | ChapterStory data | Stores the sprites, dialogue, movements, sounds, and moral for one chapter. |
 | Story Mode player | Moves sprites over backgrounds while playing voices, subtitles, and sound effects. |
-| Gemini image model | Uses `gemini-3.1-flash-image` with the proportion, approved-head, and approved-body references to create one master image. |
+| Gemini image model | Uses `gemini-3.1-flash-image` with blank Sprite Studio geometry, anchor, and style references to create one character-specific neutral master. |
 | Cloudflare Image Worker | Private, rate-limited gateway. It routes sprite requests to Gemini and background requests to Workers AI. |
 | Workers AI | The visual-novel route uses `@cf/stabilityai/stable-diffusion-xl-base-1.0` with explicit `1024 x 576` dimensions. |
 | Location background catalog | Saves one generated image per required location/state pair, keeps it pending during review, and registers its stable asset ID only after approval. |
-| Local sprite processor | Removes the flat green background and prepares the approved head and nine cropped body parts without redrawing them. |
-| Book human catalog | Stores one stable actor profile, rig, face profile, existing voice mapping, locked appearance, master, and reusable part IDs for every approved human. |
+| Local sprite processor | Removes edge-connected green, extracts ten canonical parts with template masks and seam overlaps, exports a real rig, and validates neutral/pose composites. |
+| Book human catalog | Stores one stable design brief, rig, modular face profile, existing voice mapping, locked appearance, master, canonical part IDs, pose proof, and validation status for every approved human. |
 | Sprite Studio | Edits compatible rigs and named poses with precise joint transforms, validated layer rules, and local pose storage. |
-| Book Characters review | Read-only page showing the generated reusable identity used across the book without regeneration controls. |
+| Book Characters review | Read-only proof page showing the neutral character, ten parts, six faces, and four pose composites without regeneration controls. |
 
 ## Dynamic chapter data
 
@@ -90,6 +90,9 @@ hair/clothing overlays, face catalog, and compatible poses. Story Mode resolves
 those IDs dynamically and falls back to Neutral when a pose or face is missing;
 an incompatible rig is hidden while subtitles continue.
 
+The production contract for creating and proving those generated rigs is in
+[Generated Character Pipeline Plan](GENERATED_CHARACTER_PIPELINE_PLAN.md).
+
 Character identities, aliases, appearances, voices, and locations live in one
 book-level story bible so they can be reused across chapters and volumes. See
 [Animated Story Mode plan](ANIMATED_STORY_MODE_PLAN.md) for the complete data,
@@ -116,7 +119,7 @@ subjects and important objects follow the
 | Character voices | Five selected RVC `.pth` models converted to `.onnx` voice packs |
 | Voice processing | On-device, generated before playback, then cached locally |
 | Story Mode | Sprites and simple movements |
-| Sprite creation | One Gemini `gemini-3.1-flash-image` master using the locked description and three references |
+| Sprite creation | One Gemini `gemini-3.1-flash-image` master using the locked design brief and four references: assembled geometry, head base, separated-part/anchor guide, and style guide |
 | Background creation | Cloudflare SDXL visual-novel stages at `1024 x 576`, validated before local approval |
 | Sprite transparency | Local green removal; transparent cropped parts use saved positions and joint pivots |
 | Image storage | Save accepted sprites and backgrounds on the device |

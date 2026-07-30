@@ -378,26 +378,35 @@ different Flutter page for each chapter.
    candidate; it does not silently replace approved artwork.
 2. The user reviews the description, palette, clothing, proportions, and style.
 3. Use `gemini-3.1-flash-image` once to generate one front-facing full-body
-   master on flat green. Attach the full-proportion, approved-head, and
-   approved-body references through the private Worker.
+   master on flat green. Attach the blank assembled Sprite Studio geometry,
+   aligned head, separated-part/anchor, and style references through the
+   private Worker. Do not attach another character's finished face or outfit.
 4. Keep that approved master sheet for every later volume. Do not generate the
    same character again per chapter.
 5. Remove the green background locally and save `master-transparent.png`.
-6. Keep the neutral master as the alignment reference, then split that exact
-   image into the head and nine body parts. Save each cropped part's original
-   position, parent, pivot, size, and layer order in `rig.json`.
-7. Rejoin the parts locally as `composites/full-neutral.png` and reject the rig
-   if it no longer matches the approved master. A new outfit adds overlays for
-   those same parts and pivots; ordinary emotions change only the face layer.
+6. Keep the neutral master as the alignment reference, then use the authored
+   anatomical masks and seam overlaps to extract the head and nine body parts.
+   Save each cropped part's original position, parent, pivot, size, rotation
+   range, and layer order in a real Sprite Studio `rig.json`.
+7. Create the aligned character-specific head base, eyes, nose, mouth, details,
+   and face sets. Rejoin the body parts locally as
+   `composites/full-neutral.png` and reject the rig if its anatomy, outfit
+   seams, anchors, or face alignment fail validation. A new outfit adds
+   overlays for those same parts and pivots; ordinary emotions change only the
+   face layers.
 8. Save the prompt, seed when available, model, hash, version, review state,
    and source/license note.
 
-Gemini supplies only the full-body master. StoryTale removes the requested flat
-green background locally, splits that exact result into reusable head/body
-layers, and creates the rejoined preview without another API request. The
-Cloudflare Worker is a
-secure gateway for Gemini sprite calls, while its `flux-1-schnell` binding
-creates chapter backgrounds only.
+Gemini supplies the locked character artwork and character-specific face
+layers. StoryTale removes the requested flat green locally, extracts the
+approved master with deterministic template masks, and applies all pose
+transforms locally without generating separate Talking, Pointing, or Walking
+body images. The Cloudflare Worker is a secure gateway for Gemini sprite
+calls, while its Cloudflare Workers AI SDXL binding creates chapter backgrounds
+only.
+
+The complete readiness, proof UI, and Story Mode reconnection gate is in the
+[Generated Character Pipeline Plan](GENERATED_CHARACTER_PIPELINE_PLAN.md).
 
 Reference-guided generation improves shape and style consistency but does not
 guarantee it. Consistency still comes from approving one master sheet, locking
@@ -510,13 +519,20 @@ generation begins. See
 ### Phase 4 - Review and asset reuse
 
 - Build entity/alias, speaker, location, and art-style review screens.
-- Generate and approve one Gemini full-body master per character.
+- Lock one source-backed design brief per character.
+- Generate and approve one neutral Gemini master per character from blank
+  Sprite Studio geometry, anchor, and style references.
 - Generate only narratively important animal, creature, plant, and prop assets;
   do not generate an image for every noun.
-- Attach locked shape and approved-design references to each Gemini request.
+- Never attach another finished character's face or outfit as a geometry
+  reference.
 - Add local transparent sprite cleanup and validation.
-- Split the approved master into the head and nine transparent body parts.
-- Record the hierarchy, pivots, neutral placement, and layer order in `rig.json`.
+- Extract the approved master into the ten canonical transparent parts with
+  authored anatomical masks and seam overlaps.
+- Record hierarchy, pivots, neutral placement, rotation ranges, and layer order
+  in a real Sprite Studio `rig.json`.
+- Create the custom head base plus aligned eyes, nose, mouth, details, and
+  reusable face sets.
 - Complete Sprite Studio with consistent pointer selection, fixed layer rules,
   a non-scrolling canvas/inspector layout, direct bone controls, a five-face
   default catalog, and named app-local poses.
@@ -532,6 +548,9 @@ generation begins. See
   [Visual-Novel Background Plan](VISUAL_NOVEL_BACKGROUND_PLAN.md).
 - Add whole-sprite animal/creature characters and plant/prop focus assets before
   enabling final book-specific scene plans.
+- Prove every generated character through Character, Parts, Faces, and Poses
+  previews before connecting it to all affected chapters. See the
+  [Generated Character Pipeline Plan](GENERATED_CHARACTER_PIPELINE_PLAN.md).
 
 ### Phase 5 - Audio and package builder
 

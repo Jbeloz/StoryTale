@@ -39,7 +39,7 @@ flowchart TD
     E --> F["Collect required location and entity assets"]
     F --> G["Generate and approve visual-novel backgrounds"]
     G --> H["Generate and approve foreground/entity assets"]
-    H --> I["Generate and approve book-specific human rigs"]
+    H --> I["Generate and validate Sprite Studio character packages"]
     I --> J["Gemini plans approved cutscenes, shots, and beats"]
     J --> K["Flutter validates complete source coverage and asset IDs"]
     K --> L["Prepare DeepL subtitles and offline voice audio"]
@@ -61,8 +61,8 @@ animation limits, validation, storage, and safe fallbacks.
 | 4. Story Bible and location requirements | **Partial** | Entity extraction, review, automatic approval, specific locations, required background pairs, and the local background catalog work |
 | 5. Final visual-novel backgrounds | **Done** | Generate, review, approve, persist, resolve, refresh, and render exact location/state backgrounds in Story Mode |
 | 6. Volume analysis and foreground inventory | **Done** | Analyze all chapters through one resumable job, prepare reusable non-human assets, connect them to stories, and provide optional review/replacement |
-| 7. Generated book-specific humans | **Done** | Create one approved Gemini master, transparent rig, face catalog, outfit, and reusable identity per important human |
-| 8. Persistent books and volumes | **Current** | Save EPUBs, books, progress, story bibles, assets, jobs, and `Book -> Volume -> Chapter` data across restarts |
+| 7. Generated book-specific humans | **Current** | Gemini master and stable IDs work, but template-compatible parts, modular faces, pose proof, Sprite Studio loading, and reliable Story Mode binding remain |
+| 8. Persistent books and volumes | **Planned** | Save EPUBs, books, progress, story bibles, assets, jobs, and `Book -> Volume -> Chapter` data across restarts after the generated-character gate passes |
 | 9. Complete ChapterStory builder | **Planned** | Assemble approved assets, exact text coverage, subtitles, moral, movement, and manifests for any imported chapter |
 | 10. DeepL and offline audio | **Planned** | Real DeepL caching, Tagalog ONNX TTS, five tested voice packs, prepared line audio, and playback synchronization |
 | 11. MVP integration and release validation | **Planned** | Multi-volume tests, interrupted-job recovery, physical Android benchmarks, accessibility, storage cleanup, and failure tests |
@@ -127,7 +127,8 @@ Still missing:
 - compatibility validation for multiple humanoid body proportions
 - non-humanoid rig editing, which is optional after whole-sprite support works
 
-Sprite Studio itself is not the current blocker.
+The core Sprite Studio editor is complete. Its generated-package import and
+runtime integration are the current Phase 7G blocker.
 
 ### Phase 3 - Visual-novel runtime and Gemini contract
 
@@ -359,25 +360,29 @@ novel EPUB remains deferred; Phase 6 uses the Little Prince fixture first.
 
 ### Phase 7 - Generated book-specific humans
 
-Status: **Done.**
+Status: **Current.** The existing implementation is a partial prototype;
+Phase 7G is the immediate blocker.
 
 Implementation order:
 
-1. Approve one analyzed human description and reusable actor/body profile.
-2. Generate one front-facing full-body Gemini master with locked references.
+1. Lock one source-backed character design brief and actor/body profile.
+2. Generate one neutral Gemini master from blank Sprite Studio geometry,
+   anchor, and style references.
 3. Remove the flat background locally.
-4. Split that exact master into head and nine compatible body parts.
-5. Record hierarchy, pivots, neutral placement, sizes, and layer order.
-6. Rejoin and compare the neutral rig with the approved master.
-7. Create aligned modular face parts, hair, clothing overlays, and only required
-   accessories.
-8. Register the character, rig, pose compatibility, appearance lock, and voice
-   mapping in the Story Bible.
-9. Reuse the same approved identity across every chapter and volume.
+4. Extract the ten canonical parts with anatomical masks and seam overlaps.
+5. Export a real `rig.json` with hierarchy, pivots, neutral placement, sizes,
+   rotation ranges, and layer order.
+6. Create the custom head base and aligned modular face parts and sets.
+7. Render and validate Neutral, Talking, Pointing, and Walking through the
+   normal Sprite Studio rig and pose repositories.
+8. Show the character, parts, faces, and poses in Book Characters and open the
+   exact package in Sprite Studio.
+9. Register the validated character package and rebuild every affected
+   ChapterStory so Story Mode uses it across chapters and volumes.
 
 Do not regenerate the same character for every scene.
 
-Implemented:
+Prototype implemented:
 
 - [x] Create one stable human catalog record per approved Story Bible person.
 - [x] Select and persist the reusable actor, face, rig, and existing voice
@@ -385,23 +390,49 @@ Implemented:
 - [x] Generate one front-facing Gemini master with the three locked StoryTale
   references.
 - [x] Remove the green background locally.
-- [x] Split the exact cleaned master into a head and nine named body parts.
-- [x] Persist hierarchy, pivots, neutral offsets, sizes, layer order, supported
-  poses, and face-set compatibility as rig metadata.
+- [x] Split the exact cleaned master into ten provisional image regions.
+- [x] Persist provisional hierarchy, pivots, neutral offsets, layer order, and
+  advertised pose/face compatibility as metadata.
 - [x] Rejoin all parts locally and reject the result if it does not match the
   cleaned master pixel-for-pixel.
 - [x] Register stable asset IDs and lock the approved appearance in the Story
   Bible.
 - [x] Give Gemini the real book character IDs and locked rig IDs instead of the
   generic prototype actors once the human assets are ready.
-- [x] Render generated layers with neutral, talking, pointing, and walking pose
-  transforms, including existing facing and scene movement.
+- [x] Render generated regions with provisional hard-coded neutral, talking,
+  pointing, and walking transforms, including facing and scene movement.
 - [x] Add a small read-only Book Characters catalog.
 
+Audit correction:
+
+- [ ] Replace the styled brown-haired head and navy/yellow body references with
+  blank Sprite Studio geometry and anchor references.
+- [ ] Replace broad rectangular splitting with template-aware anatomical masks,
+  seam overlaps, crops, and the canonical Sprite Studio part IDs.
+- [ ] Export a real generated `rig.json` that the normal Sprite Studio loader
+  can open.
+- [ ] Create the custom head base and aligned eyes, nose, mouth, details, and
+  six reusable face sets.
+- [ ] Use the normal rig, pose, and modular-face renderers instead of a separate
+  hard-coded generated-human renderer.
+- [ ] Show the ten parts, six faces, and Idle/Talking/Pointing/Walking
+  composites in Book Characters so `Ready` is visually provable.
+- [ ] Strengthen readiness checks so existing bytes alone cannot approve an
+  empty, swapped, clipped, or incompatible part.
+- [ ] Rebuild and reconnect affected ChapterStory data after a human becomes
+  ready, for every chapter rather than only Chapter 1.
+- [ ] Prove the generated book character appears in Story Mode without an
+  unrelated prototype fallback.
+
+The exact Phase 7G character-package and Phase 7H playback plan is in
+[Generated Character Pipeline Plan](GENERATED_CHARACTER_PIPELINE_PLAN.md).
 Generated image bytes intentionally remain session-only until Phase 8 replaces
 the binary store with durable local files.
 
 ### Phase 8 - Persistent books and volumes
+
+Status: **Planned.** Begin only after the Phase 7G character-package and
+Phase 7H Story Mode binding gates pass.
 
 Implementation order:
 
@@ -543,9 +574,12 @@ Required validation:
 
 ### Book-specific humans
 
-- [ ] approved master generation
-- [ ] local transparency cleanup and splitting
-- [ ] rig, face, hair, outfit, and accessory registration
+- [x] provisional Gemini master and stable identity generation
+- [x] local transparency cleanup and provisional image-region split
+- [ ] blank-template-constrained character generation
+- [ ] canonical anatomical part extraction and real `rig.json`
+- [ ] custom modular faces and four validated pose previews
+- [ ] exact generated-rig loading in Sprite Studio and Story Mode
 - [ ] appearance locking across volumes
 
 ### ChapterStory packages
@@ -591,6 +625,7 @@ These decisions must be recorded here when resolved.
 | `VISUAL_NOVEL_BACKGROUND_PLAN.md` | Completed landscape-background implementation contract |
 | `SPRITE_STUDIO_PLAN.md` | Rig and pose editor behavior |
 | `MODULAR_FACE_SYSTEM_PLAN.md` | Face-part catalogs and set behavior |
+| `GENERATED_CHARACTER_PIPELINE_PLAN.md` | Template-constrained Gemini character, real rig, face/pose proof, and Story Mode binding gate |
 | `CLOUDFLARE_IMAGE_GENERATOR.md` | Worker routes and provider responsibilities |
 | `UI_IMPLEMENTATION_PLAN.md` | Responsive screen and reusable-widget reference |
 | prompt packs and asset READMEs | Historical production references; they never decide the global next phase |

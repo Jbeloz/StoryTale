@@ -62,6 +62,8 @@ inherited, so rotating an upper arm also moves its connected lower arm. Parts
 pinned canvas, precise transform controls, Undo/Redo, bone controls derived
 from the existing pivots, the modular face catalog, named custom poses, local
 storage, and Story Mode pose/face resolution. Generated book-specific rig
-import remains future work. See the
+creation/import is the current Phase 7G correction. See the
 [Sprite Studio plan](../../../SPRITE_STUDIO_PLAN.md) for editor behavior and the
+[Generated Character Pipeline plan](../../../GENERATED_CHARACTER_PIPELINE_PLAN.md)
+for the production rig gate, plus the
 [Master Roadmap](../../../ROADMAP.md) for the global next phase.

@@ -25,8 +25,15 @@ testing all five starter face profiles and all four approved poses.
 
 ## Current prototype gap
 
-- Generated character rigs still need the later character-approval and local
-  asset-import flow before users can add them from the app UI.
+- Generated book characters are not yet real Sprite Studio rigs. The current
+  prototype uses different part IDs, broad rectangular image regions,
+  provisional metadata, baked faces, and a separate renderer.
+- Phase 7G must export canonical part assets plus a real `rig.json`, modular
+  face catalog, and compatible pose files. Book Characters must then open that
+  exact generated package in Sprite Studio.
+
+See the
+[Generated Character Pipeline Plan](GENERATED_CHARACTER_PIPELINE_PLAN.md).
 
 ## 1. Final scope
 
