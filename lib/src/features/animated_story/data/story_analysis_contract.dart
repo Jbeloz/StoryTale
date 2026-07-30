@@ -1,7 +1,9 @@
 import '../../../shared/models/storytale_models.dart';
+import 'story_asset_binary_store.dart';
 import 'story_background_repository.dart';
 import 'story_bible_models.dart';
 import 'story_foreground_repository.dart';
+import 'story_human_repository.dart';
 
 class StoryAnalysisCharacter {
   const StoryAnalysisCharacter({
@@ -213,6 +215,7 @@ class StoryAnalysisCatalog {
   );
 
   factory StoryAnalysisCatalog.fromStoryBible(BookStoryBibleData bible) {
+    final humans = _humanCharacters(bible, requireReadyMaster: false);
     final locations = bible.entities
         .where(
           (entity) =>
@@ -231,7 +234,7 @@ class StoryAnalysisCatalog {
         )
         .toList(growable: false);
     return StoryAnalysisCatalog(
-      characters: prototype.characters,
+      characters: humans.isEmpty ? prototype.characters : humans,
       backgroundIds: prototype.backgroundIds,
       locations: locations.isEmpty ? prototype.locations : locations,
     );
@@ -244,6 +247,7 @@ class StoryAnalysisCatalog {
     required List<StoryForegroundAssetData> foregrounds,
   }) {
     final base = StoryAnalysisCatalog.fromStoryBible(bible);
+    final readyHumans = _humanCharacters(bible, requireReadyMaster: true);
     final entities = {
       for (final entity in bible.entities)
         if (entity.approved) entity.entityId: entity,
@@ -277,7 +281,7 @@ class StoryAnalysisCatalog {
             ),
     ];
     return StoryAnalysisCatalog(
-      characters: const [],
+      characters: readyHumans,
       backgroundIds: readyBackgrounds
           .map((asset) => asset.assetId)
           .toList(growable: false),
@@ -285,6 +289,53 @@ class StoryAnalysisCatalog {
       foregroundAssets: readyForegrounds,
       locations: base.locations,
     );
+  }
+
+  static List<StoryAnalysisCharacter> _humanCharacters(
+    BookStoryBibleData bible, {
+    required bool requireReadyMaster,
+  }) {
+    return [
+      for (final entity in bible.entities)
+        if (entity.kind == StoryEntityKind.human && entity.approved)
+          if (entity.rigId case final rigId?)
+            if (!requireReadyMaster ||
+                StoryAssetBinaryStore.contains('$rigId.master'))
+              StoryAnalysisCharacter(
+                id: entity.entityId,
+                name: entity.canonicalName,
+                rigIds: [rigId],
+                poseIds: const ['neutral', 'talking', 'pointing', 'walking'],
+                faceProfileIds: [
+                  entity.faceProfileId ??
+                      StoryHumanProfileSelector.select(entity),
+                ],
+                faceSetIds: const [
+                  'neutral',
+                  'talking',
+                  'happy',
+                  'sad',
+                  'angry',
+                  'surprised',
+                ],
+              )
+            else if (!requireReadyMaster)
+              StoryAnalysisCharacter(
+                id: entity.entityId,
+                name: entity.canonicalName,
+                rigIds: const ['humanoid_v1'],
+                poseIds: const ['neutral', 'talking', 'pointing', 'walking'],
+                faceProfileIds: [StoryHumanProfileSelector.select(entity)],
+                faceSetIds: const [
+                  'neutral',
+                  'talking',
+                  'happy',
+                  'sad',
+                  'angry',
+                  'surprised',
+                ],
+              ),
+    ];
   }
 
   Map<String, dynamic> toJson() => {

@@ -57,6 +57,8 @@ class VolumePreparationJobData {
   int foregroundEntityCount = 0;
   int foregroundAssetCount = 0;
   int foregroundApprovedCount = 0;
+  int humanEntityCount = 0;
+  int humanReadyCount = 0;
   int backgroundAssetCount = 0;
   int backgroundReadyCount = 0;
   int assetTotal = 0;

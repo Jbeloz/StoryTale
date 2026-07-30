@@ -61,8 +61,8 @@ animation limits, validation, storage, and safe fallbacks.
 | 4. Story Bible and location requirements | **Partial** | Entity extraction, review, automatic approval, specific locations, required background pairs, and the local background catalog work |
 | 5. Final visual-novel backgrounds | **Done** | Generate, review, approve, persist, resolve, refresh, and render exact location/state backgrounds in Story Mode |
 | 6. Volume analysis and foreground inventory | **Done** | Analyze all chapters through one resumable job, prepare reusable non-human assets, connect them to stories, and provide optional review/replacement |
-| 7. Generated book-specific humans | **Current** | Create one approved Gemini master, transparent rig, face catalog, outfit, and reusable identity per important human |
-| 8. Persistent books and volumes | **Planned** | Save EPUBs, books, progress, story bibles, assets, jobs, and `Book -> Volume -> Chapter` data across restarts |
+| 7. Generated book-specific humans | **Done** | Create one approved Gemini master, transparent rig, face catalog, outfit, and reusable identity per important human |
+| 8. Persistent books and volumes | **Current** | Save EPUBs, books, progress, story bibles, assets, jobs, and `Book -> Volume -> Chapter` data across restarts |
 | 9. Complete ChapterStory builder | **Planned** | Assemble approved assets, exact text coverage, subtitles, moral, movement, and manifests for any imported chapter |
 | 10. DeepL and offline audio | **Planned** | Real DeepL caching, Tagalog ONNX TTS, five tested voice packs, prepared line audio, and playback synchronization |
 | 11. MVP integration and release validation | **Planned** | Multi-volume tests, interrupted-job recovery, physical Android benchmarks, accessibility, storage cleanup, and failure tests |
@@ -359,7 +359,7 @@ novel EPUB remains deferred; Phase 6 uses the Little Prince fixture first.
 
 ### Phase 7 - Generated book-specific humans
 
-Status: **Current.**
+Status: **Done.**
 
 Implementation order:
 
@@ -376,6 +376,30 @@ Implementation order:
 9. Reuse the same approved identity across every chapter and volume.
 
 Do not regenerate the same character for every scene.
+
+Implemented:
+
+- [x] Create one stable human catalog record per approved Story Bible person.
+- [x] Select and persist the reusable actor, face, rig, and existing voice
+  mapping without replacing an already approved identity.
+- [x] Generate one front-facing Gemini master with the three locked StoryTale
+  references.
+- [x] Remove the green background locally.
+- [x] Split the exact cleaned master into a head and nine named body parts.
+- [x] Persist hierarchy, pivots, neutral offsets, sizes, layer order, supported
+  poses, and face-set compatibility as rig metadata.
+- [x] Rejoin all parts locally and reject the result if it does not match the
+  cleaned master pixel-for-pixel.
+- [x] Register stable asset IDs and lock the approved appearance in the Story
+  Bible.
+- [x] Give Gemini the real book character IDs and locked rig IDs instead of the
+  generic prototype actors once the human assets are ready.
+- [x] Render generated layers with neutral, talking, pointing, and walking pose
+  transforms, including existing facing and scene movement.
+- [x] Add a small read-only Book Characters catalog.
+
+Generated image bytes intentionally remain session-only until Phase 8 replaces
+the binary store with durable local files.
 
 ### Phase 8 - Persistent books and volumes
 

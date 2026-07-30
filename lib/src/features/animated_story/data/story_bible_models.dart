@@ -20,6 +20,9 @@ class StoryEntityData {
     this.importance = StoryEntityImportance.background,
     this.speaker = false,
     this.voiceId,
+    this.actorProfileId,
+    this.rigId,
+    this.faceProfileId,
     this.approved = false,
     this.automaticallyApproved = false,
     this.lockedAppearance = false,
@@ -47,6 +50,9 @@ class StoryEntityData {
   final StoryEntityImportance importance;
   final bool speaker;
   final String? voiceId;
+  final String? actorProfileId;
+  final String? rigId;
+  final String? faceProfileId;
   final bool approved;
   final bool automaticallyApproved;
   final bool lockedAppearance;
@@ -74,6 +80,9 @@ class StoryEntityData {
     'importance': importance.name,
     'speaker': speaker,
     if (voiceId != null) 'voiceId': voiceId,
+    if (actorProfileId != null) 'actorProfileId': actorProfileId,
+    if (rigId != null) 'rigId': rigId,
+    if (faceProfileId != null) 'faceProfileId': faceProfileId,
     'approved': approved,
     'automaticallyApproved': automaticallyApproved,
     'lockedAppearance': lockedAppearance,
@@ -105,6 +114,9 @@ class StoryEntityData {
       ),
       speaker: json['speaker'] as bool? ?? false,
       voiceId: json['voiceId'] as String?,
+      actorProfileId: json['actorProfileId'] as String?,
+      rigId: json['rigId'] as String?,
+      faceProfileId: json['faceProfileId'] as String?,
       approved: json['approved'] as bool? ?? false,
       automaticallyApproved: json['automaticallyApproved'] as bool? ?? false,
       lockedAppearance: json['lockedAppearance'] as bool? ?? false,
@@ -130,6 +142,9 @@ class StoryEntityData {
     StoryEntityImportance? importance,
     bool? speaker,
     String? voiceId,
+    String? actorProfileId,
+    String? rigId,
+    String? faceProfileId,
     bool? approved,
     bool? automaticallyApproved,
     bool? lockedAppearance,
@@ -156,6 +171,9 @@ class StoryEntityData {
       importance: importance ?? this.importance,
       speaker: speaker ?? this.speaker,
       voiceId: voiceId ?? this.voiceId,
+      actorProfileId: actorProfileId ?? this.actorProfileId,
+      rigId: rigId ?? this.rigId,
+      faceProfileId: faceProfileId ?? this.faceProfileId,
       approved: approved ?? this.approved,
       automaticallyApproved:
           automaticallyApproved ?? this.automaticallyApproved,
@@ -210,6 +228,9 @@ class StoryEntityData {
           : candidate.importance,
       speaker: speaker || candidate.speaker,
       voiceId: voiceId,
+      actorProfileId: actorProfileId,
+      rigId: rigId,
+      faceProfileId: faceProfileId,
       approved: approved,
       automaticallyApproved: automaticallyApproved,
       lockedAppearance: lockedAppearance,

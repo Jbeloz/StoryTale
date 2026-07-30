@@ -10,6 +10,8 @@ import 'story_bible_models.dart';
 import 'story_bible_repository.dart';
 import 'story_entity_service.dart';
 import 'story_foreground_repository.dart';
+import 'story_human_repository.dart';
+import 'sprite_layer_processor.dart';
 import 'visual_novel_background_brief.dart';
 import 'volume_preparation_models.dart';
 
@@ -21,12 +23,14 @@ class VolumePreparationCoordinator {
     StoryArtworkService? artworkService,
     StoryBackgroundRepository? backgroundRepository,
     StoryForegroundRepository? foregroundRepository,
+    StoryHumanRepository? humanRepository,
     StoryAssetValidator? assetValidator,
   }) : artworkService = artworkService ?? StoryArtworkService(),
        backgroundRepository =
            backgroundRepository ?? StoryBackgroundRepository(),
        foregroundRepository =
            foregroundRepository ?? StoryForegroundRepository(),
+       humanRepository = humanRepository ?? StoryHumanRepository(),
        assetValidator = assetValidator ?? const StoryAssetValidator();
 
   final StoryAnalysisProvider analysisProvider;
@@ -35,6 +39,7 @@ class VolumePreparationCoordinator {
   final StoryArtworkService artworkService;
   final StoryBackgroundRepository backgroundRepository;
   final StoryForegroundRepository foregroundRepository;
+  final StoryHumanRepository humanRepository;
   final StoryAssetValidator assetValidator;
   final _rateGate = _ArtworkRateGate();
 
@@ -58,7 +63,8 @@ class VolumePreparationCoordinator {
       ..assetReadyCount = 0
       ..assetNeedsReviewCount = 0
       ..backgroundReadyCount = 0
-      ..foregroundApprovedCount = 0;
+      ..foregroundApprovedCount = 0
+      ..humanReadyCount = 0;
     job.addEvent('Preparing ${book.chapters.length} chapters');
     onChanged();
 
@@ -129,6 +135,7 @@ class VolumePreparationCoordinator {
 
     final backgroundItems = _backgroundItems(book, localStory);
     var foregroundAssets = await foregroundRepository.sync(bible);
+    var humanAssets = await humanRepository.sync(bible);
     job
       ..stage = VolumePreparationStage.preparingAssets
       ..backgroundAssetCount = backgroundItems.length
@@ -137,7 +144,9 @@ class VolumePreparationCoordinator {
           .toSet()
           .length
       ..foregroundAssetCount = foregroundAssets.length
-      ..assetTotal = backgroundItems.length + foregroundAssets.length;
+      ..humanEntityCount = humanAssets.length
+      ..assetTotal =
+          backgroundItems.length + foregroundAssets.length + humanAssets.length;
     job.addEvent('Preparing ${job.assetTotal} reusable assets');
     onChanged();
 
@@ -158,6 +167,16 @@ class VolumePreparationCoordinator {
     );
     bible = foregroundResult.bible;
     foregroundAssets = foregroundResult.assets;
+    if (job.status == VolumePreparationStatus.paused) return;
+
+    final humanResult = await _prepareHumans(
+      bible: bible,
+      assets: humanAssets,
+      job: job,
+      onChanged: onChanged,
+    );
+    bible = humanResult.bible;
+    humanAssets = humanResult.assets;
     if (job.status == VolumePreparationStatus.paused) return;
 
     await storyBibleRepository.save(bible);
@@ -229,6 +248,13 @@ class VolumePreparationCoordinator {
     job
       ..foregroundApprovedCount = foregroundAssets
           .where((asset) => asset.status == StoryForegroundAssetStatus.approved)
+          .length
+      ..humanReadyCount = humanAssets
+          .where(
+            (asset) =>
+                asset.status == StoryHumanAssetStatus.approved &&
+                asset.hasReadyBytes,
+          )
           .length
       ..currentAssetLabel = null
       ..stage = VolumePreparationStage.ready
@@ -430,6 +456,101 @@ class VolumePreparationCoordinator {
     return _ForegroundResult(updatedBible, updatedAssets);
   }
 
+  Future<_HumanResult> _prepareHumans({
+    required BookStoryBibleData bible,
+    required List<StoryHumanAssetData> assets,
+    required VolumePreparationJobData job,
+    required void Function() onChanged,
+  }) async {
+    var updatedBible = bible;
+    var updatedAssets = [...assets];
+    const processor = SpriteLayerProcessor();
+    for (final asset in assets) {
+      if (_pause(job, onChanged)) {
+        return _HumanResult(updatedBible, updatedAssets);
+      }
+      if (asset.status == StoryHumanAssetStatus.approved &&
+          asset.hasReadyBytes) {
+        job.assetReadyCount++;
+        job.humanReadyCount++;
+        continue;
+      }
+
+      job.currentAssetLabel = 'Character: ${asset.name}';
+      onChanged();
+      if (!artworkService.isConfigured) {
+        updatedAssets = await humanRepository.save(
+          asset.copyWith(
+            status: StoryHumanAssetStatus.needsReview,
+            validationError: 'The image service token is not configured.',
+          ),
+        );
+        _failedAsset(
+          job,
+          '${asset.name} is waiting for image setup',
+          onChanged,
+        );
+        continue;
+      }
+
+      try {
+        await _rateGate.waitForSlot();
+        final prompt = _humanPrompt(asset);
+        final generated = await artworkService.generateSpriteMaster(prompt);
+        final layers = processor.processRig(generated);
+        if (!processor.visuallyMatches(layers.source, layers.rejoined)) {
+          throw StateError(
+            'The locally rejoined character changed the master.',
+          );
+        }
+
+        StoryAssetBinaryStore.write(asset.masterAssetId, layers.source);
+        StoryAssetBinaryStore.write(asset.rejoinedAssetId, layers.rejoined);
+        for (final entry in layers.parts.entries) {
+          StoryAssetBinaryStore.write(
+            asset.partAssetIds[entry.key]!,
+            entry.value,
+          );
+        }
+        final readyAsset = asset.copyWith(
+          status: StoryHumanAssetStatus.approved,
+          width: layers.width,
+          height: layers.height,
+          generationPrompt: prompt,
+          generatedAt: DateTime.now().toUtc().toIso8601String(),
+          clearValidationError: true,
+        );
+        updatedAssets = await humanRepository.save(readyAsset);
+        updatedBible = _registerHuman(updatedBible, readyAsset);
+        job.assetReadyCount++;
+        job.humanReadyCount++;
+        job.addEvent('${asset.name} reusable character is ready');
+      } catch (error) {
+        updatedAssets = await humanRepository.save(
+          asset.copyWith(
+            status: StoryHumanAssetStatus.needsReview,
+            validationError: '$error',
+          ),
+        );
+        _failedAsset(job, '${asset.name} needs review', onChanged);
+        continue;
+      }
+      onChanged();
+    }
+    return _HumanResult(updatedBible, updatedAssets);
+  }
+
+  String _humanPrompt(StoryHumanAssetData asset) {
+    return 'Create one front-facing full-body StoryTale character master for '
+        '${asset.name}. Identity and appearance: ${asset.description}. '
+        'Use the supplied StoryTale head, body, and full-proportion references '
+        'exactly. Show one complete character in a neutral standing pose, '
+        'centered, with the whole head, hands, body, and feet visible. Keep '
+        'the face, hair, clothing, colors, and proportions consistent for '
+        'every chapter. Use a flat pure green background, no scenery, no text, '
+        'no extra subject, and no cropped body parts.';
+  }
+
   Future<void> _saveBackgroundFailure({
     required BookData book,
     required _BackgroundItem item,
@@ -537,6 +658,35 @@ class VolumePreparationCoordinator {
     );
   }
 
+  BookStoryBibleData _registerHuman(
+    BookStoryBibleData bible,
+    StoryHumanAssetData asset,
+  ) {
+    final assetIds = [
+      asset.masterAssetId,
+      asset.rejoinedAssetId,
+      ...asset.partAssetIds.values,
+    ];
+    return BookStoryBibleData(
+      bookId: bible.bookId,
+      version: bible.version,
+      entities: [
+        for (final entity in bible.entities)
+          if (entity.entityId == asset.entityId)
+            entity.copyWith(
+              actorProfileId: asset.actorProfileId,
+              rigId: asset.rigId,
+              faceProfileId: asset.faceProfileId,
+              voiceId: asset.voiceId,
+              lockedAppearance: true,
+              assetIds: {...entity.assetIds, ...assetIds}.toList(),
+            )
+          else
+            entity,
+      ],
+    );
+  }
+
   int _requirementCount(
     BookData book,
     ChapterStoryData Function(ChapterData chapter) storyFor,
@@ -565,6 +715,13 @@ class _ForegroundResult {
 
   final BookStoryBibleData bible;
   final List<StoryForegroundAssetData> assets;
+}
+
+class _HumanResult {
+  const _HumanResult(this.bible, this.assets);
+
+  final BookStoryBibleData bible;
+  final List<StoryHumanAssetData> assets;
 }
 
 class _ArtworkRateGate {

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../../shared/models/storytale_models.dart';
+import '../../data/story_asset_binary_store.dart';
+import '../../data/sprite_layer_processor.dart';
 import '../../data/story_pose_resolver.dart';
 import 'sprite_face_view.dart';
 import 'sprite_rig_view.dart';
+import 'story_generated_human_view.dart';
 
 bool shouldFlipStoryCharacter(String facing) => facing == 'left';
 
@@ -55,39 +58,73 @@ class _StoryCharacterViewState extends State<StoryCharacterView> {
 
   @override
   Widget build(BuildContext context) {
+    final generatedMaster = StoryAssetBinaryStore.read(
+      '${widget.layer.rigId}.master',
+    );
+    if (generatedMaster != null) {
+      final parts = {
+        for (final partId in SpriteLayerProcessor.rigPartIds)
+          if (StoryAssetBinaryStore.read('${widget.layer.rigId}.$partId')
+              case final bytes?)
+            partId: bytes,
+      };
+      return _frame(
+        key: ValueKey('story-human-${widget.layer.characterId}'),
+        child: parts.length == SpriteLayerProcessor.rigPartIds.length
+            ? FittedBox(
+                fit: BoxFit.contain,
+                child: StoryGeneratedHumanView(
+                  parts: parts,
+                  poseId: widget.layer.poseId,
+                ),
+              )
+            : Image.memory(
+                generatedMaster,
+                fit: BoxFit.contain,
+                gaplessPlayback: true,
+              ),
+      );
+    }
     return FutureBuilder<ResolvedStoryCharacter?>(
       future: _character,
       builder: (context, snapshot) {
         final character = snapshot.data;
         if (character == null) return const SizedBox.shrink();
-        return SizedBox(
+        return _frame(
           key: ValueKey('story-character-${character.pose.id}'),
-          width: widget.width,
-          height: widget.height,
-          child: ClipRect(
-            child: Transform.flip(
-              key: ValueKey(
-                'story-facing-${widget.layer.characterId}-'
-                '${widget.layer.facing}',
-              ),
-              flipX: shouldFlipStoryCharacter(widget.layer.facing),
-              child: Transform.scale(
-                scale: widget.scale,
-                alignment: Alignment.center,
-                child: FittedBox(
-                  fit: BoxFit.contain,
-                  child: SpriteRigView(
-                    rig: character.rig,
-                    pose: character.pose,
-                    faceCatalog: character.faceCatalog,
-                    faceOverlay: _faceOverlay(character),
-                  ),
-                ),
-              ),
+          child: FittedBox(
+            fit: BoxFit.contain,
+            child: SpriteRigView(
+              rig: character.rig,
+              pose: character.pose,
+              faceCatalog: character.faceCatalog,
+              faceOverlay: _faceOverlay(character),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _frame({required Key key, required Widget child}) {
+    return SizedBox(
+      key: key,
+      width: widget.width,
+      height: widget.height,
+      child: ClipRect(
+        child: Transform.flip(
+          key: ValueKey(
+            'story-facing-${widget.layer.characterId}-'
+            '${widget.layer.facing}',
+          ),
+          flipX: shouldFlipStoryCharacter(widget.layer.facing),
+          child: Transform.scale(
+            scale: widget.scale,
+            alignment: Alignment.center,
+            child: child,
+          ),
+        ),
+      ),
     );
   }
 

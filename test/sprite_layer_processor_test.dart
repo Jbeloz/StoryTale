@@ -53,6 +53,30 @@ void main() {
     expect(image.getAlpha(decoded.getPixel(0, 0)), 0);
   });
 
+  test('keeps enclosed green character details', () {
+    final source = image.Image(5, 5);
+    for (var y = 0; y < source.height; y++) {
+      for (var x = 0; x < source.width; x++) {
+        source.setPixelRgba(x, y, 0, 255, 0, 255);
+      }
+    }
+    for (var y = 1; y < 4; y++) {
+      for (var x = 1; x < 4; x++) {
+        source.setPixelRgba(x, y, 80, 80, 80, 255);
+      }
+    }
+    source.setPixelRgba(2, 2, 0, 120, 0, 255);
+
+    final result = const SpriteLayerProcessor().removeGreenBackground(
+      Uint8List.fromList(image.encodePng(source)),
+    );
+    final decoded = image.decodePng(result)!;
+
+    expect(image.getAlpha(decoded.getPixel(0, 0)), 0);
+    expect(image.getGreen(decoded.getPixel(2, 2)), 120);
+    expect(image.getAlpha(decoded.getPixel(2, 2)), 255);
+  });
+
   test('composes matching transparent sprite layers', () {
     final base = image.Image(2, 2);
     base.setPixelRgba(1, 1, 200, 100, 50, 255);
@@ -67,5 +91,23 @@ void main() {
 
     expect(image.getRed(decoded.getPixel(0, 0)), 20);
     expect(image.getRed(decoded.getPixel(1, 1)), 200);
+  });
+
+  test('splits one master into head and nine exact neutral rig parts', () {
+    final source = image.Image(10, 10);
+    for (var y = 0; y < source.height; y++) {
+      for (var x = 0; x < source.width; x++) {
+        source.setPixelRgba(x, y, x * 10, y * 10, 120, 255);
+      }
+    }
+
+    const processor = SpriteLayerProcessor();
+    final rig = processor.processRig(
+      Uint8List.fromList(image.encodePng(source)),
+    );
+
+    expect(rig.parts.keys, SpriteLayerProcessor.rigPartIds);
+    expect(rig.parts, hasLength(10));
+    expect(processor.visuallyMatches(rig.source, rig.rejoined), isTrue);
   });
 }

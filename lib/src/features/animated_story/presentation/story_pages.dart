@@ -19,6 +19,7 @@ import '../data/volume_preparation_models.dart';
 import 'story_background_catalog_page.dart';
 import 'story_bible_review_page.dart';
 import 'story_foreground_inventory_page.dart';
+import 'story_human_catalog_page.dart';
 import 'sprite_positioner_page.dart';
 import 'widgets/story_shot_transition.dart';
 import 'widgets/visual_novel_stage.dart';
@@ -226,6 +227,14 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
               ListTile(
                 dense: true,
                 contentPadding: EdgeInsets.zero,
+                title: const Text('Book characters'),
+                trailing: Text(
+                  '${job.humanReadyCount}/${job.humanEntityCount}',
+                ),
+              ),
+              ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
                 title: const Text('Ready artwork'),
                 trailing: Text('${job.assetReadyCount}'),
               ),
@@ -286,9 +295,15 @@ class _StoryPreparationPageState extends State<StoryPreparationPage> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.accessibility_new),
-                  title: const Text('Sprites'),
+                  title: const Text('Book characters'),
+                  subtitle: Text(
+                    '${job.humanReadyCount} of '
+                    '${job.humanEntityCount} ready',
+                  ),
                   onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const SpriteReviewPage()),
+                    MaterialPageRoute(
+                      builder: (_) => const StoryHumanCatalogPage(),
+                    ),
                   ),
                 ),
               ],

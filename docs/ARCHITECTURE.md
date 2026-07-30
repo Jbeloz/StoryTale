@@ -58,8 +58,9 @@ flowchart LR
 | Workers AI | The visual-novel route uses `@cf/stabilityai/stable-diffusion-xl-base-1.0` with explicit `1024 x 576` dimensions. |
 | Location background catalog | Saves one generated image per required location/state pair, keeps it pending during review, and registers its stable asset ID only after approval. |
 | Local sprite processor | Removes the flat green background and prepares the approved head and nine cropped body parts without redrawing them. |
+| Book human catalog | Stores one stable actor profile, rig, face profile, existing voice mapping, locked appearance, master, and reusable part IDs for every approved human. |
 | Sprite Studio | Edits compatible rigs and named poses with precise joint transforms, validated layer rules, and local pose storage. |
-| Sprite review | Shows the Gemini source, modular parts, and locally rejoined neutral preview before approval. |
+| Book Characters review | Read-only page showing the generated reusable identity used across the book without regeneration controls. |
 
 ## Dynamic chapter data
 
