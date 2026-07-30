@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'dart:ui' show Size;
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'sprite_layer_processor.dart';
+import 'sprite_rig.dart';
 import 'story_asset_binary_store.dart';
 import 'story_bible_models.dart';
 
@@ -28,6 +30,10 @@ class StoryHumanAssetData {
     this.generationPrompt,
     this.generatedAt,
     this.validationError,
+    this.packageVersion = 2,
+    this.packageValidated = false,
+    this.generationProvider,
+    this.generationModel,
   });
 
   final String bookId;
@@ -47,13 +53,42 @@ class StoryHumanAssetData {
   final String? generationPrompt;
   final String? generatedAt;
   final String? validationError;
+  final int packageVersion;
+  final bool packageValidated;
+  final String? generationProvider;
+  final String? generationModel;
 
   String get masterAssetId => '$rigId.master';
   String get rejoinedAssetId => '$rigId.rejoined';
   Uint8List get masterBytes =>
       StoryAssetBinaryStore.read(masterAssetId) ?? Uint8List(0);
 
+  Map<String, Uint8List> get partBytesById => Map.unmodifiable({
+    for (final id in SpriteLayerProcessor.rigPartIds)
+      id: StoryAssetBinaryStore.read(partAssetIds[id] ?? '') ?? Uint8List(0),
+  });
+
+  SpriteRigDefinition get rigDefinition =>
+      rigMetadata.toRigDefinition(rigId: rigId, partAssetIds: partAssetIds);
+
+  Map<String, SpriteRigPose> get canonicalPoses =>
+      rigMetadata.canonicalPoses(rigId);
+
+  SpriteRigValidation get packageValidation {
+    return const SpriteLayerProcessor().validateRigPackage(
+      source: masterBytes,
+      rejoined: StoryAssetBinaryStore.read(rejoinedAssetId) ?? Uint8List(0),
+      parts: partBytesById,
+      partFrames: rigMetadata.partFrames,
+      width: width ?? rigMetadata.canvasWidth,
+      height: height ?? rigMetadata.canvasHeight,
+    );
+  }
+
   bool get hasReadyBytes =>
+      packageVersion >= 2 &&
+      packageValidated &&
+      rigMetadata.isComplete &&
       masterBytes.isNotEmpty &&
       StoryAssetBinaryStore.contains(rejoinedAssetId) &&
       partAssetIds.values.every(StoryAssetBinaryStore.contains);
@@ -72,6 +107,12 @@ class StoryHumanAssetData {
     String? generatedAt,
     String? validationError,
     bool clearValidationError = false,
+    Map<String, String>? partAssetIds,
+    StoryHumanRigMetadata? rigMetadata,
+    int? packageVersion,
+    bool? packageValidated,
+    String? generationProvider,
+    String? generationModel,
   }) {
     return StoryHumanAssetData(
       bookId: bookId,
@@ -82,8 +123,8 @@ class StoryHumanAssetData {
       actorProfileId: actorProfileId ?? this.actorProfileId,
       faceProfileId: faceProfileId ?? this.faceProfileId,
       rigId: rigId,
-      partAssetIds: partAssetIds,
-      rigMetadata: rigMetadata,
+      partAssetIds: partAssetIds ?? this.partAssetIds,
+      rigMetadata: rigMetadata ?? this.rigMetadata,
       voiceId: voiceId ?? this.voiceId,
       status: status ?? this.status,
       width: width ?? this.width,
@@ -93,6 +134,10 @@ class StoryHumanAssetData {
       validationError: clearValidationError
           ? null
           : validationError ?? this.validationError,
+      packageVersion: packageVersion ?? this.packageVersion,
+      packageValidated: packageValidated ?? this.packageValidated,
+      generationProvider: generationProvider ?? this.generationProvider,
+      generationModel: generationModel ?? this.generationModel,
     );
   }
 
@@ -114,9 +159,16 @@ class StoryHumanAssetData {
     if (generationPrompt != null) 'generationPrompt': generationPrompt,
     if (generatedAt != null) 'generatedAt': generatedAt,
     if (validationError != null) 'validationError': validationError,
+    'packageVersion': packageVersion,
+    'packageValidated': packageValidated,
+    if (generationProvider != null) 'generationProvider': generationProvider,
+    if (generationModel != null) 'generationModel': generationModel,
   };
 
   factory StoryHumanAssetData.fromJson(Map<String, dynamic> json) {
+    final storedPartAssetIds = Map<String, String>.from(
+      json['partAssetIds'] as Map? ?? const {},
+    );
     return StoryHumanAssetData(
       bookId: json['bookId'] as String,
       entityId: json['entityId'] as String,
@@ -126,21 +178,24 @@ class StoryHumanAssetData {
       actorProfileId: json['actorProfileId'] as String? ?? 'default',
       faceProfileId: json['faceProfileId'] as String? ?? 'default',
       rigId: json['rigId'] as String,
-      partAssetIds: Map<String, String>.from(
-        json['partAssetIds'] as Map? ?? const {},
-      ),
+      partAssetIds: {
+        for (final entry in storedPartAssetIds.entries)
+          SpriteLayerProcessor.canonicalPartId(entry.key): entry.value,
+      },
       rigMetadata: StoryHumanRigMetadata.fromJson(
         Map<String, dynamic>.from(json['rigMetadata'] as Map? ?? const {}),
       ),
       voiceId: json['voiceId'] as String?,
-      status: StoryHumanAssetStatus.values.byName(
-        json['status'] as String? ?? 'required',
-      ),
+      status: _status(json['status']),
       width: json['width'] as int?,
       height: json['height'] as int?,
       generationPrompt: json['generationPrompt'] as String?,
       generatedAt: json['generatedAt'] as String?,
       validationError: json['validationError'] as String?,
+      packageVersion: json['packageVersion'] as int? ?? 1,
+      packageValidated: json['packageValidated'] as bool? ?? false,
+      generationProvider: json['generationProvider'] as String?,
+      generationModel: json['generationModel'] as String?,
     );
   }
 
@@ -165,6 +220,7 @@ class StoryHumanAssetData {
       },
       rigMetadata: StoryHumanRigMetadata.standard(),
       voiceId: entity.voiceId,
+      packageVersion: 2,
     );
   }
 
@@ -181,11 +237,22 @@ class StoryHumanAssetData {
       growable: false,
     );
   }
+
+  static StoryHumanAssetStatus _status(dynamic value) {
+    final name = value as String? ?? StoryHumanAssetStatus.required.name;
+    for (final item in StoryHumanAssetStatus.values) {
+      if (item.name == name) return item;
+    }
+    return StoryHumanAssetStatus.required;
+  }
 }
 
 class StoryHumanRigMetadata {
   const StoryHumanRigMetadata({
     required this.version,
+    required this.canvasWidth,
+    required this.canvasHeight,
+    required this.partFrames,
     required this.parentByPart,
     required this.pivotByPart,
     required this.neutralOffsetByPart,
@@ -195,6 +262,9 @@ class StoryHumanRigMetadata {
   });
 
   final int version;
+  final int canvasWidth;
+  final int canvasHeight;
+  final Map<String, SpriteRigPartFrame> partFrames;
   final Map<String, String> parentByPart;
   final Map<String, List<double>> pivotByPart;
   final Map<String, List<double>> neutralOffsetByPart;
@@ -202,47 +272,85 @@ class StoryHumanRigMetadata {
   final List<String> poseIds;
   final List<String> faceSetIds;
 
+  bool get isComplete =>
+      canvasWidth == SpriteLayerProcessor.canonicalCanvasWidth &&
+      canvasHeight == SpriteLayerProcessor.canonicalCanvasHeight &&
+      SpriteLayerProcessor.rigPartIds.every(
+        (id) =>
+            partFrames.containsKey(id) &&
+            parentByPart.containsKey(id) &&
+            pivotByPart.containsKey(id) &&
+            neutralOffsetByPart.containsKey(id) &&
+            layerOrder.contains(id),
+      ) &&
+      const {
+        'neutral',
+        'talking',
+        'pointing',
+        'walking',
+      }.every(poseIds.contains);
+
+  SpriteRigDefinition toRigDefinition({
+    required String rigId,
+    required Map<String, String> partAssetIds,
+  }) {
+    return SpriteRigDefinition(
+      id: rigId,
+      canvasSize: Size(canvasWidth.toDouble(), canvasHeight.toDouble()),
+      parts: [
+        for (final id in SpriteLayerProcessor.rigPartIds)
+          partFrames[id]!.toRigPart(partAssetIds[id] ?? '$rigId.$id'),
+      ],
+    );
+  }
+
+  Map<String, SpriteRigPose> canonicalPoses(String rigId) =>
+      SpriteLayerProcessor.canonicalPosesFor(rigId);
+
   factory StoryHumanRigMetadata.standard() {
     const parts = SpriteLayerProcessor.rigPartIds;
     return StoryHumanRigMetadata(
-      version: 1,
+      version: 2,
+      canvasWidth: SpriteLayerProcessor.canonicalCanvasWidth,
+      canvasHeight: SpriteLayerProcessor.canonicalCanvasHeight,
+      partFrames: SpriteLayerProcessor.canonicalPartFrames,
       parentByPart: const {
         'head': 'torso',
         'torso': '',
-        'left_upper_arm': 'torso',
-        'left_lower_arm': 'left_upper_arm',
-        'right_upper_arm': 'torso',
-        'right_lower_arm': 'right_upper_arm',
-        'left_upper_leg': 'torso',
-        'left_lower_leg': 'left_upper_leg',
-        'right_upper_leg': 'torso',
-        'right_lower_leg': 'right_upper_leg',
+        'upper_arm_left': 'torso',
+        'lower_arm_left': 'upper_arm_left',
+        'upper_arm_right': 'torso',
+        'lower_arm_right': 'upper_arm_right',
+        'upper_leg_left': 'torso',
+        'lower_leg_left': 'upper_leg_left',
+        'upper_leg_right': 'torso',
+        'lower_leg_right': 'upper_leg_right',
       },
       pivotByPart: const {
-        'head': [0.50, 0.46],
-        'torso': [0.50, 0.46],
-        'left_upper_arm': [0.27, 0.50],
-        'left_lower_arm': [0.22, 0.69],
-        'right_upper_arm': [0.73, 0.50],
-        'right_lower_arm': [0.78, 0.69],
-        'left_upper_leg': [0.42, 0.69],
-        'left_lower_leg': [0.42, 0.83],
-        'right_upper_leg': [0.58, 0.69],
-        'right_lower_leg': [0.58, 0.83],
+        'head': [552.88, 544.54],
+        'torso': [558.45, 756.28],
+        'upper_arm_left': [589.09, 578.78],
+        'lower_arm_left': [619.6, 662.56],
+        'upper_arm_right': [497, 588.29],
+        'lower_arm_right': [473.71, 659],
+        'upper_leg_left': [603.29, 760],
+        'lower_leg_left': [599.29, 873],
+        'upper_leg_right': [513.6, 752.56],
+        'lower_leg_right': [509, 862.71],
       },
       neutralOffsetByPart: {
         for (final part in parts) part: const [0, 0],
       },
       layerOrder: const [
-        'left_lower_leg',
-        'left_upper_leg',
-        'left_lower_arm',
-        'left_upper_arm',
+        'lower_leg_left',
+        'upper_leg_left',
+        'lower_arm_left',
+        'upper_arm_left',
         'torso',
-        'right_upper_leg',
-        'right_lower_leg',
-        'right_upper_arm',
-        'right_lower_arm',
+        'upper_leg_right',
+        'lower_leg_right',
+        'upper_arm_right',
+        'lower_arm_right',
         'head',
       ],
       poseIds: const ['neutral', 'talking', 'pointing', 'walking'],
@@ -257,8 +365,31 @@ class StoryHumanRigMetadata {
     );
   }
 
+  factory StoryHumanRigMetadata.fromProcessedLayers(SpriteRigLayers layers) {
+    final standard = StoryHumanRigMetadata.standard();
+    return StoryHumanRigMetadata(
+      version: 2,
+      canvasWidth: layers.width,
+      canvasHeight: layers.height,
+      partFrames: Map.unmodifiable(layers.partFrames),
+      parentByPart: standard.parentByPart,
+      pivotByPart: {
+        for (final entry in layers.partFrames.entries)
+          entry.key: [entry.value.pivotX, entry.value.pivotY],
+      },
+      neutralOffsetByPart: standard.neutralOffsetByPart,
+      layerOrder: standard.layerOrder,
+      poseIds: standard.poseIds,
+      faceSetIds: standard.faceSetIds,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
     'version': version,
+    'canvas': {'width': canvasWidth, 'height': canvasHeight},
+    'partFrames': {
+      for (final entry in partFrames.entries) entry.key: entry.value.toJson(),
+    },
     'parentByPart': parentByPart,
     'pivotByPart': pivotByPart,
     'neutralOffsetByPart': neutralOffsetByPart,
@@ -269,25 +400,96 @@ class StoryHumanRigMetadata {
 
   factory StoryHumanRigMetadata.fromJson(Map<String, dynamic> json) {
     if (json.isEmpty) return StoryHumanRigMetadata.standard();
+    final standard = StoryHumanRigMetadata.standard();
+    final version = json['version'] as int? ?? 1;
+    final canvas = Map<String, dynamic>.from(
+      json['canvas'] as Map? ?? const {},
+    );
+
+    Map<String, String> stringsByPart(dynamic value) => {
+      for (final entry in Map<String, dynamic>.from(
+        value as Map? ?? const {},
+      ).entries)
+        SpriteLayerProcessor.canonicalPartId(entry.key):
+            SpriteLayerProcessor.canonicalPartId(entry.value as String? ?? ''),
+    };
+
     Map<String, List<double>> points(dynamic value) => {
       for (final entry in Map<String, dynamic>.from(
         value as Map? ?? const {},
       ).entries)
-        entry.key: (entry.value as List<dynamic>)
+        SpriteLayerProcessor.canonicalPartId(
+          entry.key,
+        ): (entry.value as List<dynamic>? ?? const [])
             .whereType<num>()
             .map((number) => number.toDouble())
             .toList(growable: false),
     };
+
+    final storedFrames = Map<String, dynamic>.from(
+      json['partFrames'] as Map? ?? const {},
+    );
+    final parsedFrames = <String, SpriteRigPartFrame>{
+      for (final entry in storedFrames.entries)
+        SpriteLayerProcessor.canonicalPartId(
+          entry.key,
+        ): SpriteRigPartFrame.fromJson(
+          Map<String, dynamic>.from(entry.value as Map),
+        ),
+    };
+    final frames = version >= 2 && parsedFrames.isNotEmpty
+        ? {
+            for (final id in SpriteLayerProcessor.rigPartIds)
+              id:
+                  parsedFrames[id] ??
+                  SpriteLayerProcessor.canonicalPartFrames[id]!,
+          }
+        : standard.partFrames;
+
+    final storedParents = stringsByPart(json['parentByPart']);
+    final storedPivots = points(json['pivotByPart']);
+    final storedOffsets = points(json['neutralOffsetByPart']);
+    List<String> canonicalIds(dynamic value, List<String> fallback) {
+      final result = <String>[];
+      for (final id in StoryHumanAssetData._strings(value)) {
+        final canonical = SpriteLayerProcessor.canonicalPartId(id);
+        if (SpriteLayerProcessor.rigPartIds.contains(canonical) &&
+            !result.contains(canonical)) {
+          result.add(canonical);
+        }
+      }
+      return result.isEmpty ? fallback : result;
+    }
+
     return StoryHumanRigMetadata(
-      version: json['version'] as int? ?? 1,
-      parentByPart: Map<String, String>.from(
-        json['parentByPart'] as Map? ?? const {},
-      ),
-      pivotByPart: points(json['pivotByPart']),
-      neutralOffsetByPart: points(json['neutralOffsetByPart']),
-      layerOrder: StoryHumanAssetData._strings(json['layerOrder']),
-      poseIds: StoryHumanAssetData._strings(json['poseIds']),
-      faceSetIds: StoryHumanAssetData._strings(json['faceSetIds']),
+      version: version < 2 ? 2 : version,
+      canvasWidth: (canvas['width'] as num?)?.toInt() ?? standard.canvasWidth,
+      canvasHeight:
+          (canvas['height'] as num?)?.toInt() ?? standard.canvasHeight,
+      partFrames: Map.unmodifiable(frames),
+      parentByPart: {
+        for (final id in SpriteLayerProcessor.rigPartIds)
+          id: storedParents[id] ?? standard.parentByPart[id]!,
+      },
+      pivotByPart: {
+        for (final id in SpriteLayerProcessor.rigPartIds)
+          id: version >= 2 && (storedPivots[id]?.length ?? 0) >= 2
+              ? storedPivots[id]!
+              : standard.pivotByPart[id]!,
+      },
+      neutralOffsetByPart: {
+        for (final id in SpriteLayerProcessor.rigPartIds)
+          id: (storedOffsets[id]?.length ?? 0) >= 2
+              ? storedOffsets[id]!
+              : standard.neutralOffsetByPart[id]!,
+      },
+      layerOrder: canonicalIds(json['layerOrder'], standard.layerOrder),
+      poseIds: StoryHumanAssetData._strings(json['poseIds']).isEmpty
+          ? standard.poseIds
+          : StoryHumanAssetData._strings(json['poseIds']),
+      faceSetIds: StoryHumanAssetData._strings(json['faceSetIds']).isEmpty
+          ? standard.faceSetIds
+          : StoryHumanAssetData._strings(json['faceSetIds']),
     );
   }
 }

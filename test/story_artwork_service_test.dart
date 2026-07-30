@@ -71,8 +71,9 @@ void main() {
       final body = String.fromCharCodes(request.bodyBytes);
       expect(body, contains('young prince with golden hair'));
       expect(body, contains('full-proportion.png'));
-      expect(body, contains('approved-head.png'));
-      expect(body, contains('approved-body.png'));
+      expect(body, contains('head-shape.png'));
+      expect(body, contains('body-shape.png'));
+      expect(body, contains('torso.png'));
       return http.Response.bytes(
         [4, 5, 6],
         200,

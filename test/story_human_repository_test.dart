@@ -58,7 +58,20 @@ void main() {
       );
       final repository = StoryHumanRepository();
       final asset = (await repository.sync(bible)).single;
-      final source = image.Image(10, 10)..setPixelRgba(5, 5, 30, 40, 50, 255);
+      final source = image.Image(
+        SpriteLayerProcessor.canonicalCanvasWidth,
+        SpriteLayerProcessor.canonicalCanvasHeight,
+      );
+      for (final frame in SpriteLayerProcessor.canonicalPartFrames.values) {
+        source.setPixelRgba(
+          frame.x + frame.width ~/ 2,
+          frame.y + frame.height ~/ 2,
+          30,
+          40,
+          50,
+          255,
+        );
+      }
       final rig = const SpriteLayerProcessor().processRig(
         Uint8List.fromList(image.encodePng(source)),
       );
@@ -76,6 +89,8 @@ void main() {
           status: StoryHumanAssetStatus.approved,
           width: rig.width,
           height: rig.height,
+          rigMetadata: StoryHumanRigMetadata.fromProcessedLayers(rig),
+          packageValidated: true,
         ),
       );
 

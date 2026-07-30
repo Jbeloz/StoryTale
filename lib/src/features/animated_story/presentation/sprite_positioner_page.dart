@@ -13,7 +13,18 @@ import 'widgets/sprite_face_view.dart';
 import 'widgets/sprite_rig_view.dart';
 
 class SpritePositionerPage extends StatefulWidget {
-  const SpritePositionerPage({super.key});
+  const SpritePositionerPage({
+    this.initialRig,
+    this.initialPoses,
+    this.initialPartBytes,
+    this.initialTitle,
+    super.key,
+  });
+
+  final SpriteRigDefinition? initialRig;
+  final Map<String, SpriteRigPose>? initialPoses;
+  final Map<String, Uint8List>? initialPartBytes;
+  final String? initialTitle;
 
   @override
   State<SpritePositionerPage> createState() => _SpritePositionerPageState();
@@ -38,6 +49,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
   };
 
   final _poseRepository = PoseRepository();
+  final _injectedPoses = <String, SpriteRigPose>{};
   SpriteRigDefinition? _rig;
   SpriteFaceCatalog? _faceCatalog;
   SpriteFaceOverlayData? _faceOverlay;
@@ -69,6 +81,10 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
   }
 
   Future<void> _load() async {
+    if (_usesInjectedSource) {
+      _loadInjectedSource();
+      return;
+    }
     try {
       final results = await Future.wait([
         SpriteRigDefinition.load(_rigAsset),
@@ -119,25 +135,56 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     }
   }
 
+  void _loadInjectedSource() {
+    final rig = widget.initialRig!;
+    final suppliedPoses = widget.initialPoses;
+    _injectedPoses
+      ..clear()
+      ..addAll(
+        suppliedPoses == null || suppliedPoses.isEmpty
+            ? {
+                'neutral': SpriteRigPose(
+                  id: 'neutral',
+                  name: 'Idle',
+                  rigId: rig.id,
+                ),
+              }
+            : suppliedPoses,
+      );
+    final selectedId = _injectedPoses.containsKey('neutral')
+        ? 'neutral'
+        : _injectedPoses.keys.first;
+    final pose = _normalizePose(_injectedPoses[selectedId]!);
+    _injectedPoses[selectedId] = pose;
+    setState(() {
+      _rig = rig;
+      _faceCatalog = null;
+      _selectedPoseId = selectedId;
+      _pose = pose;
+      _initialPose = pose;
+      _selectedPartId = rig.partsById.containsKey('upper_arm_right')
+          ? 'upper_arm_right'
+          : rig.parts.first.id;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final rig = _rig;
     final pose = _pose;
+    final title = widget.initialTitle ?? 'Sprite Studio';
     if (_error != null) {
-      return StoryTaleInfoPage(title: 'Sprite Studio', description: _error!);
+      return StoryTaleInfoPage(title: title, description: _error!);
     }
-    if (rig == null ||
-        _faceCatalog == null ||
-        pose == null ||
-        _selectedPartId == null) {
-      return const StoryTaleAppShell(
-        title: 'Sprite Studio',
-        body: Center(child: CircularProgressIndicator()),
+    if (rig == null || pose == null || _selectedPartId == null) {
+      return StoryTaleAppShell(
+        title: title,
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return StoryTaleAppShell(
-      title: 'Sprite Studio',
+      title: title,
       actions: [
         IconButton(
           key: const Key('undoButton'),
@@ -259,7 +306,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
 
   Widget _poseSelector({bool compact = false}) {
     final poseItems = <({String id, String name})>[
-      for (final entry in _builtInLabels.entries)
+      for (final entry in _availableBuiltInLabels.entries)
         (id: entry.key, name: entry.value),
       for (final pose in _customPoses) (id: pose.id, name: pose.displayName),
     ];
@@ -338,6 +385,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
                               child: SpriteRigView(
                                 rig: rig,
                                 pose: pose,
+                                partBytes: widget.initialPartBytes,
                                 faceCatalog: _faceCatalog,
                                 faceOverlay: _faceOverlay,
                                 showAnchors: _showAnchors,
@@ -473,7 +521,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _section('Face', [_faceSelector(rig, pose)]),
+        if (_faceCatalog != null) _section('Face', [_faceSelector(rig, pose)]),
         _section('Bones', [
           SwitchListTile(
             key: const Key('showBonesSwitch'),
@@ -871,7 +919,39 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     _update(current.copyWith(layer: back - 1));
   }
 
-  bool get _isBuiltIn => _builtInPoses.containsKey(_selectedPoseId);
+  bool get _usesInjectedSource => widget.initialRig != null;
+
+  Map<String, String> get _availableBuiltInLabels {
+    if (!_usesInjectedSource) return _builtInLabels;
+    return {
+      for (final entry in _injectedPoses.entries)
+        entry.key: entry.value.displayName,
+    };
+  }
+
+  bool _isBuiltInPose(String id) {
+    return _usesInjectedSource
+        ? _injectedPoses.containsKey(id)
+        : _builtInPoses.containsKey(id);
+  }
+
+  bool get _isBuiltIn => _isBuiltInPose(_selectedPoseId);
+
+  String get _neutralPoseId {
+    if (_usesInjectedSource) {
+      return _injectedPoses.containsKey('neutral')
+          ? 'neutral'
+          : _injectedPoses.keys.first;
+    }
+    return 'neutral';
+  }
+
+  Future<SpriteRigPose> _loadBuiltInPose(String id) async {
+    final saved = _savedDefaults[id];
+    if (saved != null) return _normalizePose(saved);
+    if (_usesInjectedSource) return _normalizePose(_injectedPoses[id]!);
+    return _normalizePose(await SpriteRigPose.load(_builtInPoses[id]!));
+  }
 
   bool get _isDirty =>
       _pose != null &&
@@ -879,7 +959,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
       _pose!.toPrettyJson() != _initialPose!.toPrettyJson();
 
   Iterable<String> _poseNames({String? excludeId}) sync* {
-    for (final entry in _builtInLabels.entries) {
+    for (final entry in _availableBuiltInLabels.entries) {
       if (entry.key != excludeId) yield entry.value;
     }
     for (final pose in _customPoses) {
@@ -888,7 +968,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
   }
 
   Iterable<String> get _poseIds sync* {
-    yield* _builtInPoses.keys;
+    yield* _availableBuiltInLabels.keys;
     yield* _customPoses.map((pose) => pose.id);
   }
 
@@ -1016,10 +1096,8 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     if (id == _selectedPoseId || !await _confirmUnsavedChanges()) return;
 
     late final SpriteRigPose storedPose;
-    if (_builtInPoses.containsKey(id)) {
-      storedPose = _normalizePose(
-        _savedDefaults[id] ?? await SpriteRigPose.load(_builtInPoses[id]!),
-      );
+    if (_isBuiltInPose(id)) {
+      storedPose = await _loadBuiltInPose(id);
     } else {
       storedPose = _normalizePose(
         _customPoses.firstWhere((pose) => pose.id == id),
@@ -1042,9 +1120,9 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     final name = await _askPoseName(title: 'New Pose');
     if (name == null || !mounted) return;
     final id = SpritePoseRules.createId(name, _poseIds);
-    final neutral = _normalizePose(
-      await SpriteRigPose.load(_builtInPoses['neutral']!),
-    ).withMetadata(id: id, name: name);
+    final neutral = (await _loadBuiltInPose(
+      _neutralPoseId,
+    )).withMetadata(id: id, name: name);
     if (!mounted) return;
     setState(() {
       _replaceCustom(neutral);
@@ -1140,13 +1218,10 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     _persistedCustomIds.remove(deletedId);
     _projectPoseIds.remove(deletedId);
     _customPoses.removeWhere((pose) => pose.id == deletedId);
-    final neutral = _normalizePose(
-      _savedDefaults['neutral'] ??
-          await SpriteRigPose.load(_builtInPoses['neutral']!),
-    );
+    final neutral = await _loadBuiltInPose(_neutralPoseId);
     if (!mounted) return;
     setState(() {
-      _selectedPoseId = 'neutral';
+      _selectedPoseId = _neutralPoseId;
       _pose = neutral;
       _initialPose = neutral;
       _undoStack.clear();
@@ -1263,9 +1338,12 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
 
   SpriteRigPose _normalizePose(SpriteRigPose pose) {
     final normalized = SpriteLayerPolicy.normalize(pose);
-    return normalized.withFaceExpression(
-      _faceCatalog!.resolveId(normalized.faceExpressionId),
-    );
+    final catalog = _faceCatalog;
+    return catalog == null
+        ? normalized
+        : normalized.withFaceExpression(
+            catalog.resolveId(normalized.faceExpressionId),
+          );
   }
 
   void _message(String text) {

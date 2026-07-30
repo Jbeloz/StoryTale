@@ -1201,10 +1201,11 @@ function spritePrompt(details: string, mode: SpriteMode): string {
       "Show one head only with no neck, shoulders, body, hands, text, labels, border, accessories, or extra character. Keep all hair inside the canvas. Do not use green in the character design. " +
       "Fill only the area outside the head with flat pure chroma green #00FF00 for local background removal.";
   }
-  return `Create one reusable 2D storybook character master for: ${details}. ` +
-    "Use the supplied full-proportion, approved-head, and approved-body images as strict references. " +
-    "Show exactly one complete centered character from head to feet in a neutral front-facing pose. " +
-    "Keep the oversized head and small body proportions, and make a clean narrow neck connection near 46% of the canvas height. " +
+  return `Create one reusable 2D StoryTale character shell for: ${details}. ` +
+    "The supplied images are strict blank geometry references: the assembled proportions, blank head shape, blank body shape, and canonical torso shape. " +
+    "Do not copy a pre-existing character identity. Preserve the exact front-facing silhouette, body scale, limb thickness, joint locations, neutral stance, and large-head small-body proportions from the references. " +
+    "Show exactly one complete centered character from head to feet. Add only the requested hair, skin tone, fitted clothing, palette, and simple accessories. Keep clothing close to the template so shoulders, elbows, hips, and knees remain visible and separable. " +
+    "Leave the facial-feature area blank: no eyes, eyebrows, nose, mouth, blush, wrinkles, or facial markings. StoryTale adds the selected modular face profile locally. " +
     "Use clean dark line art and simple cel shading. Do not use green anywhere in the character design. " +
     "Fill the entire background with one flat pure chroma green #00FF00 for automatic removal. " +
     "Leave a clear green margin around the character, including below both feet. " +
@@ -1311,10 +1312,10 @@ async function generateSprite(
       response_format: {
         type: "image",
         mime_type: "image/jpeg",
-        aspect_ratio: mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "foreground"
+        aspect_ratio: mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "foreground" || mode === "master"
           ? "1:1"
           : mode === "body-pose" ? "9:16" : "3:4",
-        image_size: mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "foreground" ? "1K" : "512",
+        image_size: mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "foreground" || mode === "master" ? "1K" : "512",
       },
       store: false,
     }),

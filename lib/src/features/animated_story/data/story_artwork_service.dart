@@ -32,6 +32,8 @@ class StoryArtworkService {
   final String token;
 
   bool get isConfigured => token.trim().isNotEmpty;
+  String get spriteProvider => 'Google Gemini';
+  String get spriteModel => 'gemini-3.1-flash-image';
 
   Future<GeneratedBackgroundData> generateBackground(
     VisualNovelBackgroundBrief brief,

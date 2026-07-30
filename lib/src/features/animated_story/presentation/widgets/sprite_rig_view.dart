@@ -15,6 +15,7 @@ class SpriteRigView extends StatelessWidget {
   const SpriteRigView({
     required this.rig,
     required this.pose,
+    this.partBytes,
     this.faceCatalog,
     this.faceOverlay,
     this.showAnchors = false,
@@ -30,6 +31,7 @@ class SpriteRigView extends StatelessWidget {
 
   final SpriteRigDefinition rig;
   final SpriteRigPose pose;
+  final Map<String, Uint8List>? partBytes;
   final SpriteFaceCatalog? faceCatalog;
   final SpriteFaceOverlayData? faceOverlay;
   final bool showAnchors;
@@ -66,6 +68,7 @@ class SpriteRigView extends StatelessWidget {
                 bones: bones,
                 showBones: showBones,
                 boneMode: boneMode,
+                partBytes: partBytes,
                 selectedPartId: selectedPartId,
                 onPartSelected: onPartSelected!,
                 onBoneDragStarted: onBoneDragStarted,
@@ -195,12 +198,23 @@ class SpriteRigView extends StatelessWidget {
   }
 
   Widget _image(SpriteRigPart part, {Color? color}) {
+    final bytes = partBytes?[part.id];
+    final blendMode = color == null ? null : BlendMode.srcIn;
+    if (bytes != null) {
+      return Image.memory(
+        bytes,
+        fit: BoxFit.fill,
+        filterQuality: FilterQuality.high,
+        color: color,
+        colorBlendMode: blendMode,
+      );
+    }
     return Image.asset(
       part.asset,
       fit: BoxFit.fill,
       filterQuality: FilterQuality.high,
       color: color,
-      colorBlendMode: color == null ? null : BlendMode.srcIn,
+      colorBlendMode: blendMode,
     );
   }
 
@@ -233,6 +247,7 @@ class _SpriteRigInteractionLayer extends StatefulWidget {
     required this.bones,
     required this.showBones,
     required this.boneMode,
+    required this.partBytes,
     required this.selectedPartId,
     required this.onPartSelected,
     this.onBoneDragStarted,
@@ -245,6 +260,7 @@ class _SpriteRigInteractionLayer extends StatefulWidget {
   final List<SpriteBone> bones;
   final bool showBones;
   final bool boneMode;
+  final Map<String, Uint8List>? partBytes;
   final String? selectedPartId;
   final ValueChanged<String> onPartSelected;
   final VoidCallback? onBoneDragStarted;
@@ -264,14 +280,21 @@ class _SpriteRigInteractionLayerState
   @override
   void didUpdateWidget(covariant _SpriteRigInteractionLayer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.rig.id != widget.rig.id) _masks = null;
+    if (oldWidget.rig.id != widget.rig.id ||
+        oldWidget.partBytes != widget.partBytes) {
+      _masks = null;
+    }
   }
 
   Future<Map<String, _AlphaMask>> _loadMasks() async {
     final entries = await Future.wait(
-      widget.rig.parts.map(
-        (part) async => MapEntry(part.id, await _AlphaMask.load(part.asset)),
-      ),
+      widget.rig.parts.map((part) async {
+        final bytes = widget.partBytes?[part.id];
+        final mask = bytes == null
+            ? await _AlphaMask.load(part.asset)
+            : await _AlphaMask.loadBytes(bytes);
+        return MapEntry(part.id, mask);
+      }),
     );
     return Map.fromEntries(entries);
   }
@@ -532,20 +555,27 @@ class _AlphaMask {
   static Future<_AlphaMask> load(String asset) {
     return _cache.putIfAbsent(asset, () async {
       final data = await rootBundle.load(asset);
-      final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
-      final frame = await codec.getNextFrame();
-      final image = frame.image;
-      final bytes = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
-      if (bytes == null) throw StateError('Could not read $asset pixels.');
-      final mask = _AlphaMask(
-        image.width,
-        image.height,
-        bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
-      );
-      image.dispose();
-      codec.dispose();
-      return mask;
+      return loadBytes(data.buffer.asUint8List(), source: asset);
     });
+  }
+
+  static Future<_AlphaMask> loadBytes(
+    Uint8List bytes, {
+    String source = 'generated sprite part',
+  }) async {
+    final codec = await ui.instantiateImageCodec(bytes);
+    final frame = await codec.getNextFrame();
+    final image = frame.image;
+    final rgba = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+    if (rgba == null) throw StateError('Could not read $source pixels.');
+    final mask = _AlphaMask(
+      image.width,
+      image.height,
+      rgba.buffer.asUint8List(rgba.offsetInBytes, rgba.lengthInBytes),
+    );
+    image.dispose();
+    codec.dispose();
+    return mask;
   }
 
   bool isVisible(Offset position, Size size) {

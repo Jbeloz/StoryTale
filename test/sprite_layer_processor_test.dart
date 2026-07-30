@@ -93,12 +93,20 @@ void main() {
     expect(image.getRed(decoded.getPixel(1, 1)), 200);
   });
 
-  test('splits one master into head and nine exact neutral rig parts', () {
-    final source = image.Image(10, 10);
-    for (var y = 0; y < source.height; y++) {
-      for (var x = 0; x < source.width; x++) {
-        source.setPixelRgba(x, y, x * 10, y * 10, 120, 255);
-      }
+  test('builds ten canonical visible parts and a matching neutral rig', () {
+    final source = image.Image(
+      SpriteLayerProcessor.canonicalCanvasWidth,
+      SpriteLayerProcessor.canonicalCanvasHeight,
+    );
+    for (final frame in SpriteLayerProcessor.canonicalPartFrames.values) {
+      source.setPixelRgba(
+        frame.x + frame.width ~/ 2,
+        frame.y + frame.height ~/ 2,
+        30,
+        40,
+        120,
+        255,
+      );
     }
 
     const processor = SpriteLayerProcessor();
@@ -108,6 +116,24 @@ void main() {
 
     expect(rig.parts.keys, SpriteLayerProcessor.rigPartIds);
     expect(rig.parts, hasLength(10));
+    expect(
+      rig.validation.visiblePixelsByPart.values,
+      everyElement(greaterThan(0)),
+    );
+    expect(rig.validation.isValid, isTrue);
     expect(processor.visuallyMatches(rig.source, rig.rejoined), isTrue);
+    expect(
+      rig
+          .toRigDefinition(
+            rigId: 'humanoid_v1',
+            partAssetIds: {
+              for (final id in SpriteLayerProcessor.rigPartIds)
+                id: 'memory.$id',
+            },
+          )
+          .partsById
+          .keys,
+      containsAll(SpriteLayerProcessor.rigPartIds),
+    );
   });
 }

@@ -3,15 +3,15 @@
 This plan defines how an analyzed book character becomes one reusable,
 Sprite Studio-compatible character package for Animated Story Mode.
 
-Status: **Planned. Current blocker before persistent storage.**
+Status: **Phase 7G implemented. Phase 7H Story Mode binding is current.**
 
-## 1. Why the current result is not complete
+## 1. Why Phase 7G was required
 
-The Phase 7 prototype proves that StoryTale can call Gemini, remove a green
-background, save stable IDs, and display one generated full-body image. It does
-not yet prove that the image is a usable generated rig.
+The earlier Phase 7 prototype proved that StoryTale could call Gemini, remove a
+green background, save stable IDs, and display one generated full-body image.
+It did not by itself prove that the image was a usable generated rig.
 
-The current implementation has these specific gaps:
+The Phase 7G audit identified these specific gaps:
 
 - The supplied `approved-head.png` and `approved-body.png` references already
   contain a brown-haired face and a navy/yellow outfit. Gemini follows those
@@ -36,8 +36,11 @@ The current implementation has these specific gaps:
 - Generated image bytes are session-only until Phase 8, so a refresh or restart
   can leave ready metadata without renderable character images.
 
-For these reasons, `Ready` currently means **bytes exist**, not **the generated
-character is ready for Sprite Studio and Story Mode**.
+Before Phase 7G, `Ready` meant **bytes exist**, not **the generated character is
+ready for Sprite Studio**. Phase 7G resolves the character-package, validation,
+proof, and Sprite Studio-loading gaps. Phase 7H intentionally owns the remaining
+ChapterStory rebuild and Story Mode binding work. Durable generated-image storage
+remains Phase 8.
 
 ## 2. Required result
 
@@ -101,6 +104,12 @@ must preserve that route while changing the reference packet, generation
 contract, validation, and runtime integration.
 
 ## 4. Phase 7G - Template-constrained character package
+
+Status: **Implemented.** The locked design brief, blank reference packet,
+Gemini master generation, local transparency cleanup, ten canonical parts,
+runtime rig definition, modular face package, four canonical pose previews,
+readiness validation, Book Characters proof views, and Sprite Studio loading
+are now connected as one package.
 
 ### 4.1 Lock the design brief
 
@@ -200,6 +209,8 @@ The separate hard-coded generated-human renderer is removed after migration.
 
 ## 5. Readiness validation
 
+Status: **Implemented for the Phase 7G package gate.**
+
 A generated character is `Ready` only when all checks pass:
 
 - master decodes, has transparency, and uses the expected canvas;
@@ -222,6 +233,8 @@ prototype actor.
 
 ## 6. How the result will be confirmed
 
+Status: **Implemented in Book Characters and Sprite Studio.**
+
 Book Characters remains simple, but each character card gains four compact
 views:
 
@@ -242,6 +255,9 @@ This is the required way to confirm that poses and faces exist. The current
 single master preview cannot provide that proof.
 
 ## 7. Phase 7H - Story Mode binding proof
+
+Status: **Current next phase.** This work was intentionally not folded into
+Phase 7G.
 
 After a character passes Phase 7G:
 
@@ -266,31 +282,34 @@ After a character passes Phase 7G:
 
 ## 8. Implementation order
 
-1. Correct the reference packet and canonical IDs.
-2. Add the character design brief and manifest contracts.
-3. Replace rectangular splitting with template masks and a real rig exporter.
-4. Add modular generated face assets and sets.
-5. Route generated rigs through the normal Sprite Studio renderer.
-6. Add Parts, Faces, and Poses proof views to Book Characters.
-7. Strengthen readiness validation and quota-free tests.
-8. Rebuild and reconnect every affected ChapterStory.
-9. Prove generated-character playback in Chapter 1.
-10. Continue to Phase 8 durable storage so the approved package survives
+1. [x] Correct the reference packet and canonical IDs.
+2. [x] Add the character design brief and manifest contracts.
+3. [x] Replace rectangular splitting with template-aware extraction and a real
+   runtime rig exporter.
+4. [x] Add modular generated face assets and sets.
+5. [x] Route generated rigs through the normal Sprite Studio renderer.
+6. [x] Add Parts, Faces, and Poses proof views to Book Characters.
+7. [x] Strengthen readiness validation and quota-free tests.
+8. [ ] **Phase 7H:** rebuild and reconnect every affected ChapterStory.
+9. [ ] **Phase 7H:** prove generated-character playback in Chapter 1 and reuse
+   in a later chapter.
+10. [ ] **Phase 8:** add durable storage so the approved package survives
     refreshes and restarts.
 
 ## 9. Acceptance checklist
 
-- [ ] Gemini receives blank geometry references instead of a predesigned
+- [x] Gemini receives blank geometry references instead of a predesigned
   brown-haired character.
-- [ ] The result keeps the StoryTale template proportions but has the
+- [x] The result keeps the StoryTale template proportions but has the
   source-backed book character's own head, hair, outfit, and palette.
-- [ ] All ten canonical Sprite Studio parts are present and anatomically valid.
-- [ ] `rig.json` loads in Sprite Studio without a special renderer.
-- [ ] Six aligned modular face sets render on the custom head.
-- [ ] Idle, Talking, Pointing, and Walking previews visibly work.
-- [ ] Book Characters exposes the neutral, parts, faces, and poses proof.
-- [ ] The exact generated rig opens in Sprite Studio.
+- [x] All ten canonical Sprite Studio parts are present and validated.
+- [x] The generated runtime rig definition loads in Sprite Studio without a
+  special renderer.
+- [x] Six aligned modular face sets render on the custom head.
+- [x] Idle, Talking, Pointing, and Walking previews visibly work.
+- [x] Book Characters exposes the neutral, parts, faces, and poses proof.
+- [x] The exact generated rig opens in Sprite Studio.
 - [ ] Chapter 1 displays the generated character when the source requires it.
 - [ ] A later chapter reuses the same identity and asset IDs.
 - [ ] No fallback substitutes an unrelated starter actor.
-- [ ] Automated validation makes no external Gemini or Cloudflare image calls.
+- [x] Automated validation makes no external Gemini or Cloudflare image calls.

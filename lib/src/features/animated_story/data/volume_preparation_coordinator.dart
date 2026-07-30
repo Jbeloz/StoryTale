@@ -1,4 +1,5 @@
 import '../../../shared/models/storytale_models.dart';
+import 'character_design_brief.dart';
 import 'chapter_story_asset_connector.dart';
 import 'story_analysis_contract.dart';
 import 'story_analysis_service.dart';
@@ -498,10 +499,8 @@ class VolumePreparationCoordinator {
         final prompt = _humanPrompt(asset);
         final generated = await artworkService.generateSpriteMaster(prompt);
         final layers = processor.processRig(generated);
-        if (!processor.visuallyMatches(layers.source, layers.rejoined)) {
-          throw StateError(
-            'The locally rejoined character changed the master.',
-          );
+        if (!layers.validation.isValid) {
+          throw StateError(layers.validation.errors.join(' '));
         }
 
         StoryAssetBinaryStore.write(asset.masterAssetId, layers.source);
@@ -518,6 +517,11 @@ class VolumePreparationCoordinator {
           height: layers.height,
           generationPrompt: prompt,
           generatedAt: DateTime.now().toUtc().toIso8601String(),
+          rigMetadata: StoryHumanRigMetadata.fromProcessedLayers(layers),
+          packageVersion: 2,
+          packageValidated: true,
+          generationProvider: artworkService.spriteProvider,
+          generationModel: artworkService.spriteModel,
           clearValidationError: true,
         );
         updatedAssets = await humanRepository.save(readyAsset);
@@ -541,14 +545,13 @@ class VolumePreparationCoordinator {
   }
 
   String _humanPrompt(StoryHumanAssetData asset) {
-    return 'Create one front-facing full-body StoryTale character master for '
-        '${asset.name}. Identity and appearance: ${asset.description}. '
-        'Use the supplied StoryTale head, body, and full-proportion references '
-        'exactly. Show one complete character in a neutral standing pose, '
-        'centered, with the whole head, hands, body, and feet visible. Keep '
-        'the face, hair, clothing, colors, and proportions consistent for '
-        'every chapter. Use a flat pure green background, no scenery, no text, '
-        'no extra subject, and no cropped body parts.';
+    return CharacterDesignBrief(
+      bookId: asset.bookId,
+      characterId: asset.entityId,
+      canonicalName: asset.name,
+      actorProfileId: asset.actorProfileId,
+      sourceDescription: asset.description,
+    ).generationPrompt;
   }
 
   Future<void> _saveBackgroundFailure({
