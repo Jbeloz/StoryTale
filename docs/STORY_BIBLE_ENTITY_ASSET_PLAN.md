@@ -249,12 +249,13 @@ does not generate a new image for every scene.
 6. Automatically register a generated asset when its source requirement,
    stable entity/variant ownership, format, dimensions, and transparency pass
    every deterministic check. Normal preparation requires no approval click.
-7. Let the user review only invalid, failed, conflicting, or visibly
-   unsuitable candidates.
+7. Let the user inspect generated results without exposing retry or replacement
+   controls in the normal app.
 8. Reuse an approved asset when one already exists.
 9. Generate only the missing approved masters and required states.
-10. Register deterministic successes in the story bible automatically and
-    retain Regenerate or Replace for optional later review.
+10. Register deterministic successes in the story bible automatically. Retain
+    regeneration and replacement only behind the disabled developer flag for a
+    possible future administration flow.
 11. Run Gemini scene planning with the updated approved catalog.
 12. Validate that every visible layer matches its referenced entity.
 13. Cache the validated chapter plan locally.
@@ -283,8 +284,8 @@ Implemented:
   `locationId::backgroundStateId`
 - Local generated-background records with stable asset IDs
 - Cloudflare background generation for approved specific locations
-- Automatic background validation and registration, with optional replacement
-  review actions
+- Automatic background validation and registration, with a read-only user
+  catalog
 - Approved background asset IDs registered back onto their location entities
 - Required animal, creature, plant, and prop inventory records generated
   through Gemini as reusable transparent PNG candidates
@@ -300,8 +301,10 @@ Implemented:
   backgrounds and at most two source-supported foreground layers
 - Story Mode resolves image bytes by stable ID, renders transparent focus
   layers by placement/depth/movement, and never substitutes an unrelated human
-- Optional asset review shows compact previews and supports Retry, Regenerate,
-  Replace, and Reuse without changing the canonical ID used by prepared stories
+- Asset result catalogs show compact previews while Retry, Regenerate, Replace,
+  Replace PNG, Reuse, and Discard remain hidden behind one disabled developer
+  flag; the preserved management path keeps canonical IDs stable if restored
+  later
 
 Still pending:
 

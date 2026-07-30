@@ -448,24 +448,23 @@ Acceptance checklist before Phase 6F:
 - [ ] Previous/Next crosses shot boundaries without skipping or changing text.
 - [ ] Refresh and missing-asset fallback behave without a frozen screen.
 
-### Phase 6F - Optional review and replacement
+### Phase 6F - Read-only asset results with reserved management
 
-Status: **Completed on 2026-07-29.**
+Status: **Completed on 2026-07-30.**
 
 - [x] Show lightweight previews for automatically accepted assets.
-- [x] Provide Retry, Regenerate, Replace, and Reuse without requiring normal
-  approval.
+- [x] Keep Foreground Assets and Location Backgrounds read-only for users.
+- [x] Hide Retry, Regenerate, Replace, Replace PNG, Reuse, and Discard behind
+  one disabled developer flag so viewing results cannot spend provider quota.
 - [x] Preserve the canonical asset ID when replacing its bytes so existing
-  ChapterStory packages remain connected, then refresh affected previews.
-- [x] Retry only failed or `needsReview` work; do not regenerate valid reused
-  assets or block normal reading.
-- [x] Keep manual attention only for invalid, failed, or visibly unsuitable
-  results.
+  ChapterStory packages remain connected if management is restored later.
+- [x] Automatically accept a valid first result and use the safe fallback for
+  invalid or failed output without exposing a user retry action.
 
-Valid foregrounds now show compact previews and keep their stable IDs when a
-generated or user-selected PNG replaces their bytes. Background replacement
-uses the same candidate-first behavior. A failed replacement never removes a
-working asset, and Reuse discards only the candidate.
+Valid foregrounds and backgrounds now appear as compact read-only results.
+The candidate-first replacement implementation remains available internally,
+but `showStoryAssetManagementTools` is disabled and has no user-facing
+setting.
 
 ### Phase 7 - Shared book-specific humans
 

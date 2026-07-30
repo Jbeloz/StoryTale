@@ -6,6 +6,7 @@ import 'package:image/image.dart' as image;
 
 import '../../../core/state/storytale_scope.dart';
 import '../../../shared/widgets/storytale_components.dart';
+import '../config/story_asset_review_config.dart';
 import '../data/story_artwork_service.dart';
 import '../data/story_asset_binary_store.dart';
 import '../data/story_asset_validator.dart';
@@ -130,8 +131,8 @@ class _StoryForegroundInventoryPageState
         Text(bookTitle, style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 6),
         const Text(
-          'Volume preparation accepts valid assets automatically. Review is '
-          'optional unless an item failed or needs attention.',
+          'Volume preparation accepts valid assets automatically. This page '
+          'shows the reusable results used by Animated Story Mode.',
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -201,10 +202,12 @@ class _StoryForegroundInventoryPageState
             const Text(
               'A safe placeholder remains active until this is ready.',
             ),
-          if (replacement != null)
+          if (showStoryAssetManagementTools && replacement != null)
             _assetPreview('Replacement preview', replacement.bytes),
-          const SizedBox(height: 10),
-          _assetActions(asset, replacement, ready),
+          if (showStoryAssetManagementTools) ...[
+            const SizedBox(height: 10),
+            _assetActions(asset, replacement, ready),
+          ],
         ],
       ),
     );

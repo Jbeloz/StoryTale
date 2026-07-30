@@ -50,7 +50,7 @@ void main() {
     expect(StoryAssetBinaryStore.contains(candidateId), isFalse);
   });
 
-  testWidgets('ready foreground shows preview and optional review actions', (
+  testWidgets('ready foreground shows a read-only result preview', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(900, 1200));
@@ -120,8 +120,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Current asset'), findsOneWidget);
-    expect(find.text('Regenerate'), findsOneWidget);
-    expect(find.text('Replace PNG'), findsOneWidget);
+    expect(find.text('Regenerate'), findsNothing);
+    expect(find.text('Replace PNG'), findsNothing);
+    expect(find.text('Replace'), findsNothing);
   });
 }
 

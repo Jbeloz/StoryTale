@@ -12,7 +12,7 @@ void main() {
 
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  testWidgets('allows the built-in preview location to generate', (
+  testWidgets('shows built-in background status without generation actions', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(900, 1400));
@@ -34,12 +34,8 @@ void main() {
 
     expect(find.text('Moonlit rose garden'), findsOneWidget);
     expect(find.text('Built-in preview location'), findsOneWidget);
-    expect(find.text('Generate'), findsOneWidget);
-    final button = tester.widget<FilledButton>(
-      find.byKey(
-        const Key('generate-background-moonlit_rose_garden::unspecified'),
-      ),
-    );
-    expect(button.onPressed, isNotNull);
+    expect(find.text('Generate'), findsNothing);
+    expect(find.text('Regenerate'), findsNothing);
+    expect(find.text('Replace'), findsNothing);
   });
 }

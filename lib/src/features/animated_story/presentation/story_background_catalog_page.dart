@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/state/storytale_scope.dart';
 import '../../../shared/models/storytale_models.dart';
 import '../../../shared/widgets/storytale_components.dart';
+import '../config/story_asset_review_config.dart';
 import '../data/story_artwork_service.dart';
 import '../data/story_asset_binary_store.dart';
 import '../data/story_asset_validator.dart';
@@ -133,7 +134,8 @@ class _StoryBackgroundCatalogPageState
         const SizedBox(height: 6),
         const Text(
           'Volume preparation creates and validates each required background '
-          'automatically. This page is for review and optional replacements.',
+          'automatically. This page shows the results used by Animated Story '
+          'Mode.',
         ),
         const SizedBox(height: 12),
         Card(
@@ -194,7 +196,7 @@ class _StoryBackgroundCatalogPageState
             ],
             if (approvedAsset != null)
               _assetPreview('Approved background', approvedAsset),
-            if (candidate != null)
+            if (showStoryAssetManagementTools && candidate != null)
               _assetPreview('Replacement candidate', candidate),
             if (!canGenerate) ...[
               const SizedBox(height: 8),
@@ -203,53 +205,55 @@ class _StoryBackgroundCatalogPageState
                 'before an image can be generated.',
               ),
             ],
-            const SizedBox(height: 12),
-            if (working)
-              const LinearProgressIndicator()
-            else
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  FilledButton.icon(
-                    key: Key('generate-background-${requirement.key}'),
-                    onPressed: canGenerate
-                        ? () => _generate(requirement, location)
-                        : null,
-                    icon: Icon(
-                      candidate?.validationError != null
-                          ? Icons.replay
-                          : approvedAsset == null
-                          ? Icons.auto_awesome_outlined
-                          : Icons.refresh,
-                    ),
-                    label: Text(
-                      candidate?.validationError != null
-                          ? 'Retry'
-                          : approvedAsset == null
-                          ? 'Generate'
-                          : 'Regenerate',
-                    ),
-                  ),
-                  if (candidate != null) ...[
-                    if (candidate.validationError == null)
-                      OutlinedButton.icon(
-                        key: Key('replace-background-${requirement.key}'),
-                        onPressed: () => _replaceCandidate(candidate),
-                        icon: const Icon(Icons.swap_horiz),
-                        label: const Text('Replace'),
+            if (showStoryAssetManagementTools) ...[
+              const SizedBox(height: 12),
+              if (working)
+                const LinearProgressIndicator()
+              else
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilledButton.icon(
+                      key: Key('generate-background-${requirement.key}'),
+                      onPressed: canGenerate
+                          ? () => _generate(requirement, location)
+                          : null,
+                      icon: Icon(
+                        candidate?.validationError != null
+                            ? Icons.replay
+                            : approvedAsset == null
+                            ? Icons.auto_awesome_outlined
+                            : Icons.refresh,
                       ),
-                    TextButton.icon(
-                      key: Key('reuse-background-${requirement.key}'),
-                      onPressed: () => _reuseApproved(candidate),
-                      icon: const Icon(Icons.undo),
                       label: Text(
-                        approvedAsset == null ? 'Discard' : 'Reuse current',
+                        candidate?.validationError != null
+                            ? 'Retry'
+                            : approvedAsset == null
+                            ? 'Generate'
+                            : 'Regenerate',
                       ),
                     ),
+                    if (candidate != null) ...[
+                      if (candidate.validationError == null)
+                        OutlinedButton.icon(
+                          key: Key('replace-background-${requirement.key}'),
+                          onPressed: () => _replaceCandidate(candidate),
+                          icon: const Icon(Icons.swap_horiz),
+                          label: const Text('Replace'),
+                        ),
+                      TextButton.icon(
+                        key: Key('reuse-background-${requirement.key}'),
+                        onPressed: () => _reuseApproved(candidate),
+                        icon: const Icon(Icons.undo),
+                        label: Text(
+                          approvedAsset == null ? 'Discard' : 'Reuse current',
+                        ),
+                      ),
+                    ],
                   ],
-                ],
-              ),
+                ),
+            ],
           ],
         ),
       ),

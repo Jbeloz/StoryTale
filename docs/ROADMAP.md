@@ -4,7 +4,7 @@ This is the single source of truth for StoryTale development order and status.
 The architecture and feature plans explain how individual systems work, but
 only this file decides what is completed, what is current, and what comes next.
 
-Last reviewed: 2026-07-27
+Last reviewed: 2026-07-30
 
 ## Status meanings
 
@@ -333,13 +333,15 @@ Implementation order:
     - do not start Phase 6F until the generated background, Chair, Flower,
       source order, shot cadence, refresh behavior, and missing-byte fallback
       pass the Chapter 1 manual check.
-11. **Done - Phase 6F: optional review and replacement:**
+11. **Done - Phase 6F: read-only asset results with reserved management:**
     - show lightweight previews of automatically accepted assets;
-    - provide Retry, Regenerate, Replace, and Reuse while preserving the stable
-      canonical asset ID used by prepared chapters; and
-    - keep manual review optional and non-blocking except for invalid, failed,
-      or visibly unsuitable output. Manual approval is not part of the normal
-      flow.
+    - keep the normal Foreground Assets and Location Backgrounds pages
+      read-only so viewing results never starts another provider request;
+    - hide Retry, Regenerate, Replace, Replace PNG, Reuse, and Discard behind
+      one disabled developer flag while preserving their implementation for a
+      future administration flow; and
+    - automatically accept valid first-generation assets. Invalid or failed
+      results use the safe fallback and are not retried from the user catalog.
 
 Minimum first-version assets:
 
