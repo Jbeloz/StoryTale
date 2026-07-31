@@ -111,6 +111,18 @@
       "size": {"width": 357, "height": 367},
       "rotationRange": {"min": -45, "max": 45},
       "z": 40
+    },
+    {
+      "id": "front_hair",
+      "label": "Front hair",
+      "asset": "assets/images/characters/rigs/humanoid_v1/hair/front_default.png",
+      "parent": "head",
+      "position": {"x": 355, "y": 145},
+      "pivot": {"x": 552.88, "y": 544.54},
+      "size": {"width": 396, "height": 404},
+      "rotationRange": {"min": -45, "max": 45},
+      "bone": false,
+      "z": 50
     }
   ]
 }

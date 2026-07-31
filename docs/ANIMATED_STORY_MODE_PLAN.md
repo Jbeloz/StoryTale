@@ -58,32 +58,35 @@ books/<book-id>/
 |   |-- characters/
 |   |   `-- <character-id>/
 |   |       |-- profile.json
-|   |       |-- design/
-|   |       |   |-- master-source.jpg
-|   |       |   `-- prompt.json
-|   |       `-- sprites/
-|   |           |-- anchors.json
-|   |           |-- master-transparent.png
-|   |           |-- rig.json
-|   |           |-- base-parts/
-|   |           |   |-- torso.png
-|   |           |   `-- <limb-part>.png
-|   |           |-- outfits/
-|   |           |   `-- <outfit-id>/parts/*.png
-|   |           |-- poses/
-|   |           |   |-- neutral.json
-|   |           |   |-- talking.json
-|   |           |   `-- <pose-id>.json
-|   |           |-- heads/
-|   |           |   |-- base.png
-|   |           |   `-- expressions/
-|   |           |       |-- neutral.png
-|   |           |       |-- talking.png
-|   |           |       |-- happy.png
-|   |           |       |-- sad.png
-|   |           |       `-- angry.png
-|   |           `-- composites/
-|   |               `-- full-neutral.png
+|   |       |-- character-design.json
+|   |       |-- appearance-manifest.json
+|   |       |-- generation-trace.json
+|   |       |-- face/
+|   |       |   |-- eyes/
+|   |       |   |-- noses/
+|   |       |   |-- mouths/
+|   |       |   |-- details/
+|   |       |   `-- sets.json
+|   |       |-- hair/
+|   |       |   |-- back.png
+|   |       |   `-- front.png
+|   |       |-- outfits/<outfit-id>/
+|   |       |   |-- parts/*.png
+|   |       |   |-- outfit-back.png
+|   |       |   |-- outfit-front.png
+|   |       |   `-- body-front.png
+|   |       |-- accessories/
+|   |       |   |-- head/
+|   |       |   |-- face/
+|   |       |   |-- body-back/
+|   |       |   |-- body-front/
+|   |       |   |-- held/
+|   |       |   `-- attachments.json
+|   |       `-- previews/
+|   |           |-- neutral.png
+|   |           |-- talking.png
+|   |           |-- pointing.png
+|   |           `-- walking.png
 |   |-- animals/
 |   |   `-- <animal-id>/
 |   |       |-- profile.json
@@ -133,12 +136,14 @@ The story bible is shared across all volumes. A character such as the Little
 Prince keeps the same `characterId`, appearance, sprite set, and voice mapping
 instead of being generated again for every chapter.
 
-The transparent head and nine body parts are connected using the hierarchy and
-pivots in `rig.json`. The approved full-body proportion uses a large chibi head
-and short body, with the head wider than the shoulders.
-`composites/full-neutral.png` is a reviewed preview and fallback. Clothing is
-split into overlays matching the same body parts and pivots. Pose JSON changes
-joint transforms without generating another picture or character ID.
+The transparent head and nine body parts are immutable shared assets under
+`assets/images/characters/rigs/humanoid_v1/`. A book character never stores
+generated replacement anatomy. Its `appearance-manifest.json` references the
+locked rig ID, template version, geometry hash, aligned face parts, front/back
+hair, clothing overlays, accessories, held-item attachments, and reusable pose
+IDs. Preview composites are derived locally and are never the runtime source.
+Pose JSON changes joint transforms without generating another picture or
+character ID.
 
 ## 3. Story bible
 
@@ -153,8 +158,9 @@ BookStoryBible
 - characters: IDs, names, aliases, locked appearance, relationships, voice IDs
 - animals and creatures: IDs, aliases, speaking role, approved sprites, voices
 - plants and props: IDs, aliases, importance, approved states and focus assets
-- sprite design: master sheet, design fingerprint, body variants, head
-  expressions, and head anchor
+- character appearance: locked rig ID/version/geometry hash, design hash,
+  aligned face-part and face-set IDs, front/back hair IDs, clothing-by-part
+  IDs, accessory IDs, held-item attachment IDs, and reusable pose IDs
 - locations: IDs, specific place names, parent settings, source-backed
   background briefs, and time/weather variants
 - timeline: important events ordered by volume and chapter
@@ -228,10 +234,12 @@ analysis format changes or the user requests a rebuild.
 
 Gemini is implemented behind a `StoryAnalysisProvider` adapter so the rest of
 the app depends only on validated `ChapterAnalysis` data. DeepL remains only
-for English-to-Filipino translation. Gemini 3.1 Flash Image creates reviewed
-character sprites, while Cloudflare Workers AI creates backgrounds only. Both
-image routes pass through the private rate-limited Worker. A manually prepared
-JSON fixture should still exist for deterministic offline tests.
+for English-to-Filipino translation. Gemini image generation creates reviewed
+face, hair, clothing, and optional accessory component sheets that fit the
+locked local rig; it never creates replacement head or body geometry.
+Cloudflare Workers AI creates backgrounds only. Both image routes pass through
+the private Worker. A manually prepared JSON fixture should still exist for
+deterministic offline tests.
 
 ## 5. Chapter boundaries and full text coverage
 
@@ -350,12 +358,19 @@ StoryScene
 - sceneId and sortOrder
 - sourceStartBlock and sourceEndBlock
 - locationId and backgroundAssetId
-- characterLayers: characterId, rigId, poseId, faceProfileId, faceSetId,
-  outfitId, position, movement; legacy faceExpressionId remains readable
+- characterLayers: characterId, characterPackageId, rigTemplateId,
+  geometryHash, poseId, faceProfileId, faceSetId, hairBackId, hairFrontId,
+  clothingByPart IDs, accessoryIds, optional heldItemId and attachmentId,
+  stagePositionId, facingId, scaleId, depthId, and movementId; legacy
+  faceExpressionId remains readable
 - lines: lineId, type, speakerId, English/Filipino text, audioAssetId
 - transition: none, fade, or slide
 - soundEffectIds
 ```
+
+Gemini chooses only IDs present in the approved chapter catalog. Flutter and
+the locked rig own coordinates, joint transforms, anatomical layer order,
+attachment offsets, grip pivots, scale values, depth values, and timing.
 
 Allowed MVP movements stay small and reusable:
 
@@ -372,46 +387,50 @@ short beat at a time instead of placing several paragraphs in one subtitle box.
 The player renders these instructions dynamically. It does not create a
 different Flutter page for each chapter.
 
-## 8. Consistent transparent sprite workflow
+## 8. Locked-template layered character workflow
 
-1. Gemini story analysis identifies a new character and creates a descriptive
-   candidate; it does not silently replace approved artwork.
-2. The user reviews the description, palette, clothing, proportions, and style.
-3. Use `gemini-3.1-flash-image` once to generate one front-facing full-body
-   master on flat green. Attach the blank assembled Sprite Studio geometry,
-   aligned head, separated-part/anchor, and style references through the
-   private Worker. Do not attach another character's finished face or outfit.
-4. Keep that approved master sheet for every later volume. Do not generate the
-   same character again per chapter.
-5. Remove the green background locally and save `master-transparent.png`.
-6. Keep the neutral master as the alignment reference, then use the authored
-   anatomical masks and seam overlaps to extract the head and nine body parts.
-   Save each cropped part's original position, parent, pivot, size, rotation
-   range, and layer order in a real Sprite Studio `rig.json`.
-7. Create the aligned character-specific head base, eyes, nose, mouth, details,
-   and face sets. Rejoin the body parts locally as
-   `composites/full-neutral.png` and reject the rig if its anatomy, outfit
-   seams, anchors, or face alignment fail validation. A new outfit adds
-   overlays for those same parts and pivots; ordinary emotions change only the
-   face layers.
-8. Save the prompt, seed when available, model, hash, version, review state,
-   and source/license note.
+1. Gemini story analysis identifies a new character and creates a
+   source-backed design candidate; it cannot change an approved character
+   identity.
+2. StoryTale selects an approved local rig template and locks its rig ID,
+   template version, geometry hash, canonical masks, pivots, anchors, and
+   anatomical layer policy.
+3. Compute one character design hash from the approved brief, template version,
+   palette, face family, hair brief, outfit brief, and required accessories.
+4. Reuse an existing ready package when that design hash already exists,
+   including in a later chapter or volume.
+5. Request only missing aligned component sheets from Gemini: paired
+   eyes/brows, noses, mouths/details, front/back hair, clothing overlays for
+   the torso and eight limbs, optional garment extensions, and
+   source-supported accessories or held items.
+6. Split, hard-mask, and validate each component locally. Reject any result
+   that includes or changes the fixed skull, ear, head fill, torso, or limb
+   geometry.
+7. Build approved face sets from semantic part IDs. Neutral, Talking, Happy,
+   Sad, Angry, and Surprised reuse aligned components instead of generated
+   whole heads.
+8. Attach clothing to its matching body-part transform. Attach hair and
+   accessories to named anchors. Held items use a stable attachment ID, hand
+   anchor, grip pivot, and approved named layer mode such as
+   `behind_gripping_chain` or `front_of_hand`.
+9. Compose Neutral, Talking, Pointing, and Walking previews using the normal
+   Sprite Studio renderer and reusable transform JSON. Do not generate a new
+   pose image.
+10. Save the appearance manifest, prompt/model trace, source/license note,
+    component hashes, validation state, and final stable IDs.
 
-Gemini supplies the locked character artwork and character-specific face
-layers. StoryTale removes the requested flat green locally, extracts the
-approved master with deterministic template masks, and applies all pose
-transforms locally without generating separate Talking, Pointing, or Walking
-body images. The Cloudflare Worker is a secure gateway for Gemini sprite
-calls, while its Cloudflare Workers AI SDXL binding creates chapter backgrounds
-only.
+Gemini supplies appearance layers only. StoryTale owns the exact runtime head
+and body geometry, composition, anchors, layer order, poses, and validation.
+The Cloudflare Worker is a secure gateway for Gemini component-sheet calls,
+while Cloudflare Workers AI creates chapter backgrounds only.
 
 The complete readiness, proof UI, and Story Mode reconnection gate is in the
 [Generated Character Pipeline Plan](GENERATED_CHARACTER_PIPELINE_PLAN.md).
 
-Reference-guided generation improves shape and style consistency but does not
-guarantee it. Consistency still comes from approving one master sheet, locking
-its design fingerprint, splitting it into reusable body/head layers, and never
-regenerating that character for a later volume.
+Reference-guided generation improves style consistency but does not own
+geometry. Consistency comes from the immutable local rig, deterministic masks,
+stable semantic IDs, and one validated appearance package per design hash.
+The same package is reused without another character-generation call.
 
 ## 9. Audio, subtitles, and moral
 
@@ -520,19 +539,21 @@ generation begins. See
 
 - Build entity/alias, speaker, location, and art-style review screens.
 - Lock one source-backed design brief per character.
-- Generate and approve one neutral Gemini master per character from blank
-  Sprite Studio geometry, anchor, and style references.
+- Freeze the shared Sprite Studio rig, geometry hash, masks, anchors, and
+  anatomical layer policy before generating a character appearance.
+- Generate only aligned Gemini face, hair, clothing, and optional accessory
+  component sheets; never generate a replacement head or body.
 - Generate only narratively important animal, creature, plant, and prop assets;
   do not generate an image for every noun.
 - Never attach another finished character's face or outfit as a geometry
   reference.
-- Add local transparent sprite cleanup and validation.
-- Extract the approved master into the ten canonical transparent parts with
-  authored anatomical masks and seam overlaps.
-- Record hierarchy, pivots, neutral placement, rotation ranges, and layer order
-  in a real Sprite Studio `rig.json`.
-- Create the custom head base plus aligned eyes, nose, mouth, details, and
-  reusable face sets.
+- Add local transparent-component cleanup, hard masking, landmark checks, and
+  clothing seam validation.
+- Store the character's template version, geometry hash, design hash, face,
+  hair, clothing, accessory, held-item, and attachment IDs in one appearance
+  manifest.
+- Create aligned paired eyes/brows, nose, mouth, details, and reusable face
+  sets over the fixed local head base.
 - Complete Sprite Studio with consistent pointer selection, fixed layer rules,
   a non-scrolling canvas/inspector layout, direct bone controls, a five-face
   default catalog, and named app-local poses.
@@ -551,6 +572,9 @@ generation begins. See
 - Prove every generated character through Character, Parts, Faces, and Poses
   previews before connecting it to all affected chapters. See the
   [Generated Character Pipeline Plan](GENERATED_CHARACTER_PIPELINE_PLAN.md).
+- Treat Phase 7G as a structural prototype whose whole-character visual gate
+  failed. Phase 7G.1 must prove the locked-template layered composer before
+  Phase 7H may bind book characters into Story Mode.
 
 ### Phase 5 - Audio and package builder
 

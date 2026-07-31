@@ -5,6 +5,8 @@ face parts. Parts 7A through 7D now provide the asset contract, loader, profile
 selector, reusable Sets view, Set Maker, and local part importer. Separate
 face-part production is complete for all five starter actors. Story Mode now
 loads the selected actor profile and face set through the same sprite renderer.
+Phase 7G.1 applies the same contract to book characters while keeping the
+canonical local head base immutable.
 
 ## Implementation status
 
@@ -250,13 +252,15 @@ it remains visible while adjusting a pose.
 
 ## 7. Generation workflow
 
-Generate one approved neutral identity for a profile before generating its
-parts. Every later prompt must edit that same approved reference rather than
-inventing the character again.
+Select one approved neutral identity/style for a profile before generating its
+parts. Every later request must use the immutable compatible head as its
+geometry guide and may output only the requested facial pixels. It must not
+generate another head, ear, skin fill, hair, neck, or body.
 
 Recommended order for each profile:
 
-1. Approve one neutral full-face reference.
+1. Approve one neutral identity/style reference and its compatible fixed head
+   template.
 2. Extract or generate neutral eyes, default nose, and neutral mouth.
 3. Generate four eye variations without changing position or identity.
 4. Generate four mouth variations without changing position or identity.
@@ -437,14 +441,14 @@ separated.
 - Removing custom content never leaves a broken pose or story scene.
 - Old `faceExpressionId` files still display the same Default faces.
 - A generated book character can use its own profile and sets without changing
-  the Story Mode player. This remains a Phase 7G acceptance requirement; the
-  current generated-human prototype has one baked face and does not yet load
-  character-specific modular face parts.
+  the Story Mode player. Phase 7G proved the data path, but Phase 7G.1 must
+  prove that the features align to the unchanged local head instead of a
+  generated replacement head.
 
 ## 11. Recommended immediate next step
 
-For the modular-face subsystem, the current dependent task is Phase 7G:
-generate a custom head base and aligned character-specific eyes, nose, mouth,
-details, and face sets, then validate them on the exact generated rig. The
-complete order and acceptance gate are in the
+For the modular-face subsystem, the current dependent task is Phase 7G.1:
+retain the fixed compatible head base, generate or reuse only aligned
+character-specific eyes, nose, mouth, and details, then validate all six sets
+on the locked shared rig. The complete order and acceptance gate are in the
 [Generated Character Pipeline Plan](GENERATED_CHARACTER_PIPELINE_PLAN.md).

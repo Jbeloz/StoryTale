@@ -6,7 +6,9 @@ separate below. See the [Master Roadmap](ROADMAP.md) for the current phase.
 ## Provider decision
 
 - Gemini analyzes cleaned chapter text into structured story data.
-- Gemini 3.1 Flash Image creates one reviewed full-body character master.
+- Gemini 3.1 Flash Image creates only missing face, front/back hair,
+  per-body-part clothing, loose-garment, and accessory component sheets for an
+  immutable local Sprite Studio rig.
 - Cloudflare Workers AI creates chapter backgrounds only.
 
 ## Simple flow
@@ -15,11 +17,11 @@ separate below. See the [Master Roadmap](ROADMAP.md) for the current phase.
 ChapterStory artwork request
 -> private StoryTale Cloudflare Worker
 -> /analyze -> Gemini structured chapter plan
--> kind=sprite -> one Gemini full-body master image
+-> kind=sprite -> Gemini character component sheets
 -> kind=background -> current FLUX.1 square smoke-test route
 -> planned visual-novel background -> landscape SDXL
--> generated image
--> local review and storage
+-> generated component sheet
+-> local split, hard masks, locked-rig composition, review, and storage
 -> Story Mode scene
 ```
 
@@ -33,7 +35,9 @@ Endpoint: `https://storytale-image-worker.jbalejoshift0928.workers.dev`
 - `POST /analyze` accepts one cleaned chapter plus its approved story catalog
   and returns a schema-validated `ChapterStoryData` plan.
 - `POST /generate?kind=background` accepts multipart form data.
-- `POST /generate?kind=sprite` sends the prompt and three reference images to Gemini.
+- `POST /generate?kind=sprite` currently sends the prompt and references to
+  Gemini. Phase 7G.1 replaces its complete-character `master` request with
+  face, hair, clothing, and accessory component requests.
 - `prompt` is required and must contain 3-500 characters.
 - Up to four small reference images may lock a recurring character or location style.
 - Successful generation returns raw image bytes.
@@ -50,17 +54,50 @@ planned route uses SDXL at `1024 x 576` and follows the
 2. Prepare the chapter.
 3. Open `Review Sprites & Backgrounds`.
 4. Choose Sprite or Background.
-5. Enter the description and generate the master. Compare the source, locally
-   split head/body layers, and rejoined transparent preview.
+5. Prepare the missing character layers. Compare the fixed local head/body
+   against the locally composed face, hair, clothing, and accessory result.
 
 The Flutter client is
 `lib/src/features/animated_story/data/story_artwork_service.dart`.
 
 The health response reports the analysis, sprite, and background providers and
 whether Gemini is configured.
-The Flutter review page attaches the bundled proportion, approved-head, and
-approved-body references automatically. Gemini is called once; Flutter removes
-green and produces the matching head/body layers locally.
+The current Flutter prototype attaches geometry references and asks Gemini for
+one finished character, then removes green and divides that image locally.
+That flow proved connectivity but cannot enforce the fixed Sprite Studio
+silhouette. Phase 7G.1 keeps the local head/body unchanged and uses the Worker
+only for missing appearance component sheets.
+
+## Sprite request throughput
+
+The Worker is not a Cloudflare Tunnel and does not edit Gemini sprite bytes. It
+is a small authenticated backend proxy that protects the server-side Gemini
+key. Google recommends a backend proxy because keys embedded in Flutter web or
+mobile applications can be extracted.
+
+The current repository adds two StoryTale-specific limits:
+
+- the Worker `IMAGE_RATE_LIMIT` allows three generation calls per 60 seconds
+  using one shared prototype key; and
+- the Flutter volume-preparation coordinator also allows three artwork calls
+  per 60 seconds.
+
+These are project choices, not required Cloudflare or Gemini settings. Phase
+7G.1 removes or disables both small private sprite-component bottlenecks while
+keeping one in-flight call, sequential queuing, design-hash deduplication,
+resume from the first missing component, and no automatic paid regeneration.
+
+External capacity is still not unlimited. Cloudflare enforces the account's
+Workers plan limits, while Gemini enforces model/project RPM, image-per-minute,
+daily, billing-tier, and spend-based limits. The app must show the real provider
+error when one is reached.
+
+Official current references:
+
+- https://developers.cloudflare.com/workers/platform/limits/
+- https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/
+- https://ai.google.dev/gemini-api/docs/rate-limits
+- https://ai.google.dev/gemini-api/docs/api-key
 
 ## Deployment
 

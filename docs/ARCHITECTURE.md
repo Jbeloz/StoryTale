@@ -24,11 +24,12 @@ flowchart LR
     G --> H["Story Mode Player"]
     O --> H
     H --> I["Sprites + Movement + Voices + Moral"]
-    Q --> T["One Template-Constrained Gemini Character Master"]
-    T --> S["Local Green Removal + Masked Rig Extraction"]
-    S --> U["Real Rig + 10 Parts + Modular Faces + Pose JSON"]
+    Q --> T["Locked Character Brief + Catalog Selection"]
+    T --> S["Gemini Missing Face, Hair, Clothing, Accessory Sheets"]
+    S --> U["Local Split + Hard Masks + Locked Rig Composition"]
+    V["Immutable Head + 10 Body Parts + Pose JSON"] --> U
     U --> G
-    J["Private Image Worker"] --> T
+    J["Private Image Worker"] --> S
     J --> L["Workers AI - landscape SDXL at 1024 x 576"]
     L --> R["Reviewed Visual-Novel Background"]
     R --> K["Saved Local Backgrounds"]
@@ -53,12 +54,13 @@ flowchart LR
 | Visual entity catalog | Maps each story subject to its own approved sprite, state, rig, focus asset, or background ID and prevents unrelated substitutions. |
 | ChapterStory data | Stores the sprites, dialogue, movements, sounds, and moral for one chapter. |
 | Story Mode player | Moves sprites over backgrounds while playing voices, subtitles, and sound effects. |
-| Gemini image model | Uses `gemini-3.1-flash-image` with blank Sprite Studio geometry, anchor, and style references to create one character-specific neutral master. |
-| Cloudflare Image Worker | Private, rate-limited gateway. It routes sprite requests to Gemini and background requests to Workers AI. |
+| Gemini image model | Uses `gemini-3.1-flash-image` to create only aligned face, front/back hair, fitted-clothing, loose-garment, and accessory component sheets for a locked local rig. It never creates the runtime head or body geometry. |
+| Cloudflare Image Worker | Private gateway that keeps the Gemini key server-side, validates sprite-component requests, and routes backgrounds to Workers AI. The current shared three-per-minute sprite throttle is an app setting to remove or disable in Phase 7G.1. |
 | Workers AI | The visual-novel route uses `@cf/stabilityai/stable-diffusion-xl-base-1.0` with explicit `1024 x 576` dimensions. |
 | Location background catalog | Saves one generated image per required location/state pair, keeps it pending during review, and registers its stable asset ID only after approval. |
-| Local sprite processor | Removes edge-connected green, extracts ten canonical parts with template masks and seam overlaps, exports a real rig, and validates neutral/pose composites. |
-| Book human catalog | Stores one stable design brief, rig, modular face profile, existing voice mapping, locked appearance, master, canonical part IDs, pose proof, and validation status for every approved human. |
+| Local sprite processor | Removes edge-connected green, splits fixed-layout component sheets, hard-masks generated layers, and validates alignment without altering the locked local head, body parts, anchors, or poses. |
+| Layered character composer | Combines the shared rig with skin tint, modular face parts, back/front hair, per-part clothing, garment extensions, and anchored accessories using named layer slots. |
+| Book human catalog | Stores one stable design brief, shared rig-template ID/version/hash, modular face profile, hair, outfit overlays, accessory attachments, existing voice mapping, pose proof, and validation status for every approved human. |
 | Sprite Studio | Edits compatible rigs and named poses with precise joint transforms, validated layer rules, and local pose storage. |
 | Book Characters review | Read-only proof page showing the neutral character, ten parts, six faces, and four pose composites without regeneration controls. |
 
@@ -84,11 +86,15 @@ ChapterStory
 
 The UI reads this data, so we do not create a separate Flutter screen for every book or chapter.
 
-`humanoid_v1` is only the bundled demo rig. Each approved generated character
-can have its own rig folder and `rigId`, containing its designed body parts,
-hair/clothing overlays, face catalog, and compatible poses. Story Mode resolves
-those IDs dynamically and falls back to Neutral when a pose or face is missing;
-an incompatible rig is hidden while subtitles continue.
+`humanoid_v1` is the approved V1 geometry template. Each book character keeps
+the ten total local rig parts (one head plus nine body pieces), anchors, and
+pose contract unchanged, then adds its own face, front/back hair, clothing,
+loose-garment, and accessory layers.
+A future body proportion requires another manually approved template/version;
+Gemini never invents a runtime rig. Story Mode resolves the appearance IDs
+dynamically and falls back to that same character's Neutral face/pose when an
+optional selection is missing. An incompatible package is hidden while
+subtitles continue.
 
 The production contract for creating and proving those generated rigs is in
 [Generated Character Pipeline Plan](GENERATED_CHARACTER_PIPELINE_PLAN.md).
@@ -119,17 +125,18 @@ subjects and important objects follow the
 | Character voices | Five selected RVC `.pth` models converted to `.onnx` voice packs |
 | Voice processing | On-device, generated before playback, then cached locally |
 | Story Mode | Sprites and simple movements |
-| Sprite creation | One Gemini `gemini-3.1-flash-image` master using the locked design brief and four references: assembled geometry, head base, separated-part/anchor guide, and style guide |
+| Sprite creation | Catalog-first local composition plus about three Gemini `gemini-3.1-flash-image` component-sheet calls per missing human: face, front/back hair, and nine-part clothing; one optional accessory call only when source-supported |
 | Background creation | Cloudflare SDXL visual-novel stages at `1024 x 576`, validated before local approval |
-| Sprite transparency | Local green removal; transparent cropped parts use saved positions and joint pivots |
+| Sprite transparency | Local green removal and hard masks; generated overlays use the locked template canvas, positions, anchors, and joint pivots |
 | Image storage | Save accepted sprites and backgrounds on the device |
 
-Gemini API image generation currently requires paid API billing; its free tier
-does not include the image models. The project owner pays for generation when
-all users share the server-side key, so a public release also needs per-user
-quotas and a spending limit. `gemini-3.1-flash-lite-image` is cheaper but is not
-the default because the full Flash Image model handles multiple references and
-character consistency better.
+Gemini API image generation uses the project owner's billed server-side key.
+A public release therefore needs user authentication, deduplication, provider
+quota handling, billing alerts, and a spending policy. Private development
+must not keep the current shared three-per-minute StoryTale sprite bottleneck,
+but no architecture can promise unlimited Cloudflare or Gemini capacity.
+`gemini-3.1-flash-lite-image` is cheaper but is not the default because the full
+Flash Image model handles multiple references and character consistency better.
 
 ## On-device voice flow
 
@@ -227,11 +234,13 @@ docs/                short project decisions
 ```
 
 DeepL remains the only translation provider. Gemini analyzes stories and
-creates sprites; Cloudflare Workers AI creates backgrounds. The private Worker
-keeps the Gemini API key server-side and selects the provider from the request
-kind. Do not commit API keys or image Worker tokens. The run script passes only
-the Worker URL and prototype client token into Flutter. A distributed app needs
-real user authentication and per-user quotas instead of a shared client token.
+creates missing character appearance layers; Cloudflare Workers AI creates
+backgrounds. The private Worker does not redraw Gemini sprite results: it keeps
+the Gemini API key server-side, validates requests, and selects the provider
+from the request kind. Do not commit API keys or image Worker tokens. The run
+script passes only the Worker URL and prototype client token into Flutter. A
+distributed app needs real user authentication and a deliberate quota/spending
+policy instead of a shared client token.
 
 See [Cloudflare image generator](CLOUDFLARE_IMAGE_GENERATOR.md) for the setup and test flow.
 See [Visual-Novel Background Plan](VISUAL_NOVEL_BACKGROUND_PLAN.md) for the

@@ -3,8 +3,10 @@
 **Status: Story Bible extraction, automatic approval, final landscape
 backgrounds, shared foreground requirements, automatic validated asset
 preparation, ChapterStory connection, and optional asset replacement are
-implemented. Book-specific human generation follows next. See the
-[Master Roadmap](ROADMAP.md).**
+implemented. The provisional whole-character human prototype exists, but its
+visual-fidelity gate failed. Phase 7G.1 now replaces it with a locked-template
+layered character package; Phase 7H Story Mode binding is blocked until that
+gate passes. See the [Master Roadmap](ROADMAP.md).**
 
 ## Purpose
 
@@ -59,6 +61,13 @@ StoryEntity
 - approvalReason
 - lockedAppearance
 - assetIds
+- characterPackageId (humans only)
+- rigTemplateId, rigTemplateVersion, and geometryHash (humans only)
+- designHash (humans only)
+- facePartIds and faceSetIds (humans only)
+- hairBackId and hairFrontId (humans only)
+- clothingByPart and extensionLayerIds (humans only)
+- accessoryIds and heldItemAttachmentIds (humans only)
 - unresolvedNotes
 - parentSetting (locations only)
 - backgroundBrief (locations only)
@@ -168,10 +177,50 @@ chapter that visits several places must represent all supported transitions.
 
 Keep the current `characterLayers` for speaking or acting subjects:
 
-- Human characters use their approved modular rig.
+- Human characters use their approved locked-template appearance package.
 - Important animals and creatures may also be character layers, but use their
   own compatible rig or transparent whole-sprite asset.
 - A non-humanoid entity never uses `humanoid_v1`.
+
+```text
+HumanCharacterLayer
+- characterId
+- characterPackageId
+- rigTemplateId
+- geometryHash
+- poseId
+- faceProfileId and faceSetId
+- hairBackId and hairFrontId
+- clothingByPart IDs
+- accessoryIds
+- optional heldItemId and attachmentId
+- stagePositionId, facingId, scaleId, depthId, and movementId
+```
+
+Each approved held-item attachment is a StoryTale-owned record:
+
+```text
+HeldItemAttachment
+- attachmentId
+- heldItemAssetId
+- handAnchorId: hand_left or hand_right
+- gripPivot
+- offset
+- scale and rotationOffset
+- named layerMode
+- optional gripOverlayAssetId
+- optional poseTransformOverrides
+```
+
+Approved named layer modes include `behind_character`,
+`behind_gripping_chain`, `behind_hand`, `front_of_hand`, and `front_overlay`.
+The record may place a sword behind the selected upper/lower arm while drawing
+a small grip overlay above the hand. Gemini selects the `attachmentId`; it does
+not author this metadata.
+
+Gemini may select only approved semantic IDs from this catalog. Flutter and the
+locked rig own raw coordinates, joint transforms, anatomical layer order,
+attachment offsets, grip pivots, scale values, depth values, and timing.
 
 Add a small `focusAssetLayers` collection for non-speaking plants and props:
 
@@ -197,21 +246,27 @@ focus.
 
 | Entity | Minimum first-version assets |
 | --- | --- |
-| Human | One approved master, modular parts, Neutral face, and compatible fallback pose |
+| Human | One locked rig reference plus a validated appearance package: face parts/sets, front/back hair, clothing-by-part, optional accessories/held attachments, and compatible fallback pose |
 | Speaking animal/creature | One transparent full-body neutral sprite and one talking state |
 | Important silent animal | One transparent full-body neutral sprite |
 | Plant | One transparent normal state plus only plot-required states |
 | Prop | One transparent normal state plus only plot-required states |
 | Location | One approved background for each source-required place state |
 
-All approved assets are cached and reused across chapters and volumes. StoryTale
-does not generate a new image for every scene.
+All approved assets are cached and reused across chapters and volumes. A human
+appearance package is prepared once per character design hash and rig-template
+version, then reused by every matching chapter and later volume. StoryTale does
+not generate a new image for every scene.
 
 ## Generation ownership
 
 - Gemini story analysis extracts and classifies entities.
-- Gemini image generation creates reusable foreground assets: humans, animals,
-  creatures, plants, and props.
+- Gemini image generation creates reusable human appearance component sheets
+  for aligned face parts, front/back hair, clothing overlays, and optional
+  accessories or held items. It never creates replacement human head or body
+  geometry.
+- Gemini image generation also creates reusable whole foreground assets for
+  animals, creatures, plants, and props.
 - Cloudflare Workers AI creates location backgrounds.
 - StoryTale removes flat backgrounds locally when needed, validates
   transparency and dimensions, then assigns the final stable asset ID.
@@ -237,6 +292,11 @@ does not generate a new image for every scene.
     `backgroundStateId`.
 12. Represent every explicit place transition, but never invent a transition
     just to increase the number of backgrounds.
+13. For humans, select only approved character-package, face-set, hair,
+    clothing, accessory, held-item, attachment, and pose IDs.
+14. Never return raw body-part coordinates, joint rotations, layer numbers,
+    grip offsets, or attachment pivots. Flutter resolves those from the locked
+    rig and attachment records.
 
 ## Preparation workflow
 
@@ -252,7 +312,9 @@ does not generate a new image for every scene.
 7. Let the user inspect generated results without exposing retry or replacement
    controls in the normal app.
 8. Reuse an approved asset when one already exists.
-9. Generate only the missing approved masters and required states.
+9. For humans, prepare only missing approved face, hair, clothing, accessory,
+   and held-item components for the locked rig. For non-humans, prepare only
+   the missing required whole-sprite states.
 10. Register deterministic successes in the story bible automatically. Retain
     regeneration and replacement only behind the disabled developer flag for a
     possible future administration flow.
@@ -308,7 +370,11 @@ Implemented:
 
 Still pending:
 
-- **Phase 7:** generate reusable book-specific human masters and modular rigs
+- **Phase 7G.1:** replace the failed whole-character master approach with a
+  locked-template layered package, validate one package through all required
+  faces and poses, and cache it by design hash
+- **Phase 7H:** bind ready human package IDs into every affected ChapterStory;
+  this cannot start until Phase 7G.1 passes
 - **Phase 8:** replace the session binary store with durable asset files,
   integrity metadata, restart recovery, and orphan-safe cleanup
 

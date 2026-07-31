@@ -17,8 +17,7 @@ const generatedVoicePitches = <String, int>{
 
 const generatedVoiceAudio = <String, Map<String, String>>{
   "little-prince-chapter-1": <String, String>{
-    "narrator":
-        "audio/narration/little-prince/chapter-1-narrator-ded1a74e48.wav",
+    "narrator": "audio/narration/little-prince/chapter-1-narrator-ded1a74e48.wav",
     "heroine": "audio/narration/little-prince/chapter-1-heroine-c5eca1f77f.wav",
     "hero": "audio/narration/little-prince/chapter-1-hero-fcfcf99a03.wav",
     "deep": "audio/narration/little-prince/chapter-1-deep-de7dd3fe45.wav",

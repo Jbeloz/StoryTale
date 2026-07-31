@@ -1,83 +1,423 @@
-# StoryTale Generated Character Pipeline Plan
+# StoryTale Locked-Template Character Pipeline Plan
 
-This plan defines how an analyzed book character becomes one reusable,
-Sprite Studio-compatible character package for Animated Story Mode.
+This is the authoritative plan for turning one approved book character into a
+reusable Sprite Studio package for Animated Story Mode.
 
-Status: **Phase 7G implemented. Phase 7H Story Mode binding is current.**
+Status: **Planning correction complete. Phase 7G proved the package structure,
+but its visual-fidelity gate failed. Phase 7G.1, the locked-template layered
+composer, is current. Phase 7H Story Mode binding must wait for this gate.**
 
-## 1. Why Phase 7G was required
+## 1. Decision
 
-The earlier Phase 7 prototype proved that StoryTale could call Gemini, remove a
-green background, save stable IDs, and display one generated full-body image.
-It did not by itself prove that the image was a usable generated rig.
+StoryTale will no longer ask Gemini to redraw a complete head and body.
 
-The Phase 7G audit identified these specific gaps:
+The existing `humanoid_v1` head shape, body parts, joints, proportions, and
+poses are immutable local assets. Gemini may create only transparent visual
+layers that fit those assets:
 
-- The supplied `approved-head.png` and `approved-body.png` references already
-  contain a brown-haired face and a navy/yellow outfit. Gemini follows those
-  designs instead of receiving a blank Sprite Studio geometry template.
-- Gemini creates one complete character image. It does not create the separate
-  Sprite Studio head, torso, upper/lower arms, and upper/lower legs.
-- The local splitter assigns pixels through broad rectangular X/Y regions.
-  Pixel-perfect rejoining succeeds by construction, but it does not prove that
-  each file contains the correct anatomical part.
-- Generated part IDs and metadata do not yet use the exact runtime
-  `SpriteRigDefinition` contract loaded by Sprite Studio.
-- The generated head has one baked face. Character-specific eyes, nose, mouth,
-  details, and reusable face sets are not produced.
-- Talking, Pointing, and Walking are advertised in metadata but rendered by a
-  separate hard-coded preview widget rather than the same pose JSON used by
-  Sprite Studio.
-- Book Characters shows only the master image. It cannot prove the separate
-  parts, face changes, or pose changes.
-- Chapter analysis happens before human generation, and only Chapter 1 receives
-  a later connection pass. A fallback or stale story with no matching
-  character layer therefore remains empty in Story Mode.
-- Generated image bytes are session-only until Phase 8, so a refresh or restart
-  can leave ready metadata without renderable character images.
+- paired eyes and eyebrows;
+- one nose;
+- mouths and optional face details;
+- front hair and back hair;
+- clothing overlays attached to the matching body parts;
+- optional garment extension layers;
+- head, face, front, back, and held accessories; and
+- story-supported weapons, tools, books, flowers, and other held props.
 
-Before Phase 7G, `Ready` meant **bytes exist**, not **the generated character is
-ready for Sprite Studio**. Phase 7G resolves the character-package, validation,
-proof, and Sprite Studio-loading gaps. Phase 7H intentionally owns the remaining
-ChapterStory rebuild and Story Mode binding work. Durable generated-image storage
-remains Phase 8.
+The result is a Gacha-style character assembled locally. It is not a generated
+full-body picture that StoryTale tries to cut apart afterward.
 
-## 2. Required result
+## 2. What the current Phase 7G result actually does
 
-Every important approved human receives one locked character package:
+The current implementation:
+
+1. creates a source-backed design brief;
+2. sends blank geometry references through the private Cloudflare Worker;
+3. asks Gemini for one finished full-body character master;
+4. removes the flat background locally;
+5. normalizes that master to the canonical canvas;
+6. divides the generated pixels into ten template-shaped regions;
+7. overlays the selected modular face locally; and
+8. renders the resulting regions with Sprite Studio pose transforms.
+
+The ten output files are derived from one generated picture. They are not ten
+independently designed parts, and the AI is still free to invent a different
+skull, face area, torso silhouette, limbs, hair, and outfit before the local
+split happens.
+
+This explains why the current Little Prince preview looks like a separate
+chibi illustration rather than the supplied Sprite Studio base. Local cropping
+cannot restore the original geometry after Gemini has already redrawn it.
+
+Phase 7G therefore proved that generation, local processing, package loading,
+proof views, and poses can be connected. It did **not** prove exact visual
+compatibility with the locked template.
+
+## 3. Non-negotiable result
+
+A generated human is ready only when:
+
+- the canonical local head silhouette is unchanged;
+- the canonical ten total rig-part silhouettes (one head plus nine body
+  pieces) and joint pivots are unchanged;
+- poses are reusable transform JSON, not generated pose pictures;
+- expressions replace only aligned eyes, nose, mouth, and detail layers;
+- hair, clothing, and accessories are separate assets;
+- the same package is reused in every chapter and later volume;
+- Story Mode can change expression, pose, facing, scale, and movement without
+  another image-generation call; and
+- no unrelated starter actor is substituted when a package is missing.
+
+V1 supports the approved `humanoid_v1` chibi template. A future child, adult,
+elder, or other body template must be a separately approved local rig with its
+own geometry hash. Gemini must never invent a new runtime body template.
+
+## 4. Locked local geometry
+
+The following assets are owned by StoryTale and are never generated:
 
 ```text
-books/<book-id>/characters/<character-id>/
+humanoid_v1
+|-- head
+|-- torso
+|-- upper_arm_left
+|-- lower_arm_left
+|-- upper_arm_right
+|-- lower_arm_right
+|-- upper_leg_left
+|-- lower_leg_left
+|-- upper_leg_right
+`-- lower_leg_right
+```
+
+The visual alignment reference is
+`docs/ui-concepts/ui/character_full_body_perfect_placement.png`. The actual
+runtime authority is the extracted `humanoid_v1/base/` rig plus its masks,
+anchors, and geometry hash. Gemini may receive fixed guides made from those
+assets, but it must never reinterpret, enlarge, shrink, replace, or redraw
+their silhouettes.
+
+Each part keeps:
+
+- its canonical alpha silhouette;
+- original canvas position;
+- parent part;
+- pivot and attachment anchors;
+- allowed rotation range;
+- neutral transform;
+- fixed anatomical layer policy; and
+- a versioned geometry hash.
+
+Skin tone is applied locally through the approved skin mask or color layer. It
+does not require Gemini to redraw the body.
+
+## 5. Character-specific visual layers
+
+One character package combines the locked rig with these replaceable layers.
+
+### 5.1 Face
+
+The fixed head base remains visible. A character-specific face contains:
+
+```text
+paired eyes and eyebrows
++ one nose
++ one mouth
++ optional details
+```
+
+Required first-version assets:
+
+- eyes/brows: Neutral, Happy, Sad, Angry, Surprised;
+- nose: Default;
+- mouths: Neutral, Talking, Smile, Sad, Angry Teeth; and
+- optional reusable details: blush, wrinkles, scar, facial hair, freckles, or
+  makeup only when supported by the story.
+
+The six composed face sets are Neutral, Talking, Happy, Sad, Angry, and
+Surprised. Talking reuses Neutral eyes and changes only the mouth unless a
+strong emotion is active.
+
+Paired eyes remain one image so spacing, gaze, white eye areas, pupils, and
+highlights cannot drift independently. Face PNGs never include the head fill,
+ear, hair, neck, or body.
+
+### 5.2 Hair
+
+Every hairstyle starts with two layers:
+
+- `hair_back`: behind the head and body; long hair may extend down behind the
+  torso; and
+- `hair_front`: fringe, bangs, and front side locks above the face.
+
+Both layers share the same head anchor and locked canvas. Optional
+`hair_side` or `hair_tail` layers may be added later only when one back layer
+cannot move correctly.
+
+### 5.3 Clothing
+
+Fitted clothing is generated as an overlay for each matching body part:
+
+```text
+torso
+upper_arm_left
+lower_arm_left
+upper_arm_right
+lower_arm_right
+upper_leg_left
+lower_leg_left
+upper_leg_right
+lower_leg_right
+```
+
+Every overlay inherits its body part's transform and pivot. Rotating an arm
+therefore rotates its sleeve and glove with it. Boots belong to the matching
+lower-leg overlays.
+
+Clothes may not replace the body silhouette. StoryTale clips fitted overlays
+to the approved part mask plus a small documented seam allowance.
+
+Loose silhouettes that cannot follow one limb use optional torso- or hip-
+anchored extensions:
+
+- `outfit_back`: cape, coat tails, long skirt back, or robe back;
+- `outfit_front`: long skirt front, coat front, sash, or apron; and
+- `body_front`: belt, badge, necklace, or chest decoration.
+
+This prevents a cape or skirt from being incorrectly baked into an arm or leg.
+
+### 5.4 Accessories and held items
+
+Supported accessory groups:
+
+- head: clips, headbands, hats, crowns, helmets;
+- face: glasses, masks, eye patches;
+- body back: cape, sheath, backpack, wings;
+- body front: badge, necklace, belt detail, pouch;
+- held item: sword, staff, gun, book, flower, shield, tool, or other
+  source-supported prop; and
+- optional effect: glow or simple impact mark, handled separately from the
+  permanent character identity.
+
+An accessory is generated only when the book supports it. It is not baked into
+the head, body, hair, or pose.
+
+## 6. Stable layer stack
+
+Sprite Studio keeps anatomical ordering locked and exposes only approved
+accessory slots. Back-to-front rendering is:
+
+1. rear body accessory;
+2. back hair;
+3. back-side legs with their clothing overlays;
+4. back-side arms with their clothing overlays;
+5. torso base, torso clothing, and outfit-back/front extensions;
+6. front-side legs with their clothing overlays;
+7. held item in a behind-body or behind-gripping-arm slot;
+8. front-side arms with their clothing overlays;
+9. fixed head base;
+10. face details, paired eyes/brows, nose, and mouth;
+11. face accessory;
+12. front hair;
+13. head accessory;
+14. held-item front or grip overlay; and
+15. temporary effects.
+
+The existing rule remains: right limbs render in front of matching left limbs
+and upper arms render in front of lower legs. Mirroring flips the complete
+character, not the semantic part IDs.
+
+Clothing is a child visual of its body part, not a freely reordered rig part.
+This keeps the sleeve, pants leg, glove, and boot attached during every pose.
+
+## 7. Held-item attachment contract
+
+Every held item stores:
+
+- stable accessory and asset IDs;
+- `hand_left` or `hand_right` anchor;
+- grip pivot;
+- X/Y offset;
+- scale and rotation offset;
+- optional pose-specific transform;
+- named layer mode; and
+- optional `grip_overlay` for fingers drawn above the handle.
+
+Approved V1 layer modes:
+
+- `behind_character`;
+- `behind_gripping_chain` - behind the selected upper arm, lower arm, and
+  hand, useful for a sword or staff;
+- `behind_hand`;
+- `front_of_hand`; and
+- `front_overlay`.
+
+Named modes are used instead of arbitrary global layer numbers. A sword can be
+behind the right upper/lower arm while a small grip overlay appears above the
+hand, making it look held. Two-handed grips are a later optional extension.
+
+## 8. Catalog-first generation
+
+StoryTale first searches an approved local catalog, then generates only a
+missing visual layer.
+
+The starter catalog should contain a small set of approved examples:
+
+- face styles for Default, Hero, Heroine, Elder, and Adult;
+- three to five front/back hairstyle examples per broad style;
+- three to five clothing overlay sheets for common story roles;
+- common head and face accessories; and
+- common held props such as a book, flower, sword, staff, and shield.
+
+The analyzer may select, recolor, or combine compatible approved layers.
+Gemini is used when the Story Bible requires a design that the catalog cannot
+represent.
+
+Many uncontrolled sample images are not required. A curated set of three to
+five approved examples per asset category is more useful because every sample
+has already passed the same canvas, anchor, alpha, and layer rules.
+
+## 9. Gemini asset requests
+
+Gemini receives:
+
+1. the locked character design brief;
+2. the exact blank component guide or mask;
+3. the closest approved style sample; and
+4. only the story-supported details for that component.
+
+It never receives permission to redesign the base head or body.
+
+To control cost and alignment, V1 uses fixed-layout component sheets:
+
+1. face-expression sheet for five eyes/brows, five mouths, and one nose;
+2. hair sheet with one back-hair and one front-hair slot;
+3. nine-part fitted-clothing sheet plus optional outfit extension slots; and
+4. accessory sheet only when the story requires accessories.
+
+StoryTale splits each accepted sheet locally by known cells, then applies the
+canonical masks. This uses about three core Gemini image calls per human, plus
+one optional accessory call, rather than generating dozens of independent
+images.
+
+If a sheet format proves less consistent than separate edits, the same
+contract may use one call per component group. It may not fall back to a
+complete generated head or body.
+
+There is:
+
+- no automatic regeneration loop;
+- no regeneration after refresh;
+- no per-chapter human generation;
+- no image call merely to change pose or expression; and
+- no hidden replacement of one character with another.
+
+An invalid paid result is marked `Needs attention`. Review remains read-only
+for normal users. A future project-owner repair action may be hidden behind the
+existing development/admin flag.
+
+## 10. Cloudflare and Gemini boundary
+
+For character assets:
+
+```text
+Flutter
+-> private Cloudflare Worker
+-> Gemini image API
+-> raw generated component sheet
+-> local split, mask, validation, composition, and storage
+```
+
+Cloudflare does not design or redraw the character. It is the secure server-side
+gateway that keeps the Gemini key out of the Flutter application, validates the
+request, and forwards it to Gemini. Google recommends a backend proxy for
+client applications because an API key embedded in web or mobile code can be
+extracted.
+
+Cloudflare Workers AI remains the generator for location backgrounds. Gemini
+remains the generator for character component sheets.
+
+The current Worker's shared `IMAGE_RATE_LIMIT` is configured by StoryTale at
+three requests per 60 seconds, and the Flutter volume-preparation coordinator
+adds another local three-artwork-requests-per-60-seconds gate. These are
+application-defined limits, not required Gemini or Cloudflare image limits.
+Phase 7G.1 will:
+
+- remove or disable both small private sprite-component gates;
+- allow one in-flight request per preparation job;
+- queue remaining components sequentially;
+- deduplicate by character design hash, template version, and component type;
+- resume at the first missing component without repaying for completed work;
+  and
+- surface the real Gemini quota or billing error instead of replacing it with
+  a generic Cloudflare message.
+
+One-at-a-time generation is a reliability and duplicate-cost rule, not an
+artificial per-minute quota.
+
+No hosted route is literally unlimited. The Cloudflare account still has its
+plan quotas, and Gemini enforces project/model RPM, IPM, daily, and spend-based
+limits. StoryTale will not add another small shared bottleneck on top of those
+provider limits.
+
+Current official references:
+
+- Cloudflare Workers limits:
+  https://developers.cloudflare.com/workers/platform/limits/
+- Cloudflare Rate Limiting binding:
+  https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/
+- Gemini API rate limits:
+  https://ai.google.dev/gemini-api/docs/rate-limits
+- Gemini API key security:
+  https://ai.google.dev/gemini-api/docs/api-key
+
+## 11. Folder contract
+
+The locked geometry stays shared. A book character stores only its appearance
+layers and metadata:
+
+```text
+assets/images/characters/rigs/humanoid_v1/
+|-- rig.json
+|-- base/
+|   |-- head.png
+|   |-- torso.png
+|   `-- <eight canonical limb PNGs>
+|-- masks/
+|-- anchors.json
+`-- poses/
+    |-- idle.json
+    |-- talking.json
+    |-- pointing.json
+    `-- walking.json
+
+books/<book-id>/story-bible/characters/<character-id>/
 |-- character-design.json
-|-- manifest.json
-|-- master/
-|   `-- neutral-transparent.png
-|-- rig/
-|   |-- rig.json
-|   `-- parts/
-|       |-- head.png
-|       |-- torso.png
-|       |-- upper_arm_left.png
-|       |-- lower_arm_left.png
-|       |-- upper_arm_right.png
-|       |-- lower_arm_right.png
-|       |-- upper_leg_left.png
-|       |-- lower_leg_left.png
-|       |-- upper_leg_right.png
-|       `-- lower_leg_right.png
-|-- faces/
-|   |-- profile.json
-|   |-- head_base.png
+|-- appearance-manifest.json
+|-- generation-trace.json
+|-- face/
 |   |-- eyes/
 |   |-- noses/
 |   |-- mouths/
 |   |-- details/
 |   `-- sets.json
-|-- poses/
-|   |-- neutral.json
-|   |-- talking.json
-|   |-- pointing.json
-|   `-- walking.json
+|-- hair/
+|   |-- back.png
+|   `-- front.png
+|-- outfits/<outfit-id>/
+|   |-- parts/
+|   |   |-- torso.png
+|   |   `-- <eight canonical limb overlays>
+|   |-- outfit-back.png
+|   |-- outfit-front.png
+|   `-- body-front.png
+|-- accessories/
+|   |-- head/
+|   |-- face/
+|   |-- body-back/
+|   |-- body-front/
+|   |-- held/
+|   `-- attachments.json
 `-- previews/
     |-- neutral.png
     |-- talking.png
@@ -85,231 +425,182 @@ books/<book-id>/characters/<character-id>/
     `-- walking.png
 ```
 
-The same package is reused in every chapter and later volume. Poses are local
-joint transforms; Gemini is never called again merely to make the character
-talk, point, or walk.
+There is no generated `head.png`, `torso.png`, or generated base-limb folder in
+the character package. Those IDs always resolve to the locked shared rig.
 
-## 3. Provider boundary
+## 12. Small data contract
 
-- Gemini `gemini-3.1-flash-image` creates character artwork.
-- The private Cloudflare Worker is only the secure gateway that keeps the
-  Gemini key out of Flutter.
-- Cloudflare Workers AI continues to create landscape backgrounds, not human
-  sprites.
-- Automated tests use fake image responses and never spend Gemini quota.
-- A valid first result is accepted once. There is no automatic retry loop.
-
-The current code already routes `kind=sprite` to Gemini. The implementation
-must preserve that route while changing the reference packet, generation
-contract, validation, and runtime integration.
-
-## 4. Phase 7G - Template-constrained character package
-
-Status: **Implemented.** The locked design brief, blank reference packet,
-Gemini master generation, local transparency cleanup, ten canonical parts,
-runtime rig definition, modular face package, four canonical pose previews,
-readiness validation, Book Characters proof views, and Sprite Studio loading
-are now connected as one package.
-
-### 4.1 Lock the design brief
-
-Create one `CharacterDesignBrief` from the approved Story Bible entry:
-
-- stable book and character IDs;
-- age group, presentation, role, and selected actor profile;
-- source-backed face, hair, skin, body, outfit, palette, and accessories;
-- details that must remain consistent across chapters and volumes;
-- forbidden details that Gemini must not invent; and
-- selected voice ID, stored separately from visual appearance.
-
-The brief is locked after successful generation. A later chapter may add an
-alias or relationship, but it cannot silently redesign the character.
-
-### 4.2 Replace the styled references
-
-Create a geometry-only reference packet from the real Sprite Studio template:
-
-1. blank assembled neutral humanoid;
-2. blank aligned head base;
-3. separated part/anchor guide;
-4. simple StoryTale line and shading style guide.
-
-Do not use a reference that already contains another character's hair, face,
-or outfit. Gemini may change identity, hair, colors, clothes, and required
-accessories while preserving the exact front-facing body proportions, canvas,
-joint locations, and neutral stance.
-
-### 4.3 Generate one neutral design master
-
-Gemini receives the locked design brief and geometry-only references. It
-returns exactly one complete front-facing neutral character on flat chroma
-green with:
-
-- the custom head, hair, skin, and identity;
-- the complete outfit applied consistently across torso and limbs;
-- both hands and feet visible;
-- no scenery, shadow, text, extra subject, crop, or alternate pose; and
-- the required Sprite Studio proportions and neutral joint alignment.
-
-StoryTale removes only edge-connected green pixels locally.
-
-### 4.4 Extract real rig parts
-
-Replace broad rectangular splitting with template-aware masks and overlap
-zones. The processor must:
-
-- use the exact canonical part IDs listed in section 2;
-- extract the correct anatomy and clothing for every part;
-- preserve small hidden overlaps at shoulders, elbows, hips, and knees so
-  rotation does not reveal holes;
-- tightly crop each PNG while recording its original canvas position;
-- store parent, pivot, size, rotation range, and fixed layer order in a real
-  `rig.json`; and
-- create the neutral composite through the normal Sprite Studio renderer.
-
-The approved neutral composite must match the approved master within the
-documented seam tolerance. Pixel-perfect equality alone is not enough.
-
-### 4.5 Create the modular face package
-
-The custom head must use the same face-layer contract as Sprite Studio:
-
-```text
-head base + eyes/eyebrows + nose + mouth + optional details
+```json
+{
+  "characterId": "little_prince",
+  "template": {
+    "rigId": "humanoid_v1",
+    "version": 2,
+    "geometryHash": "locked"
+  },
+  "appearance": {
+    "skinTone": "#F2D2B6",
+    "faceProfileId": "face.little_prince",
+    "hairBackId": "hair.little_prince.back",
+    "hairFrontId": "hair.little_prince.front",
+    "clothingByPart": {
+      "torso": "outfit.little_prince.torso"
+    },
+    "extensionLayerIds": [],
+    "accessoryIds": []
+  },
+  "poseIds": ["idle", "talking", "pointing", "walking"],
+  "validationStatus": "ready"
+}
 ```
 
-Required first-version sets:
+One attachment example:
 
-- Neutral
-- Talking
-- Happy
-- Sad
-- Angry
-- Surprised
+```json
+{
+  "id": "sword",
+  "anchorPartId": "lower_arm_right",
+  "gripPivot": [0.45, 0.25],
+  "rotationOffset": 0,
+  "scale": 1,
+  "layerMode": "behind_gripping_chain",
+  "gripOverlayId": "sword.right_hand_grip"
+}
+```
 
-Every generated face part keeps the exact character head canvas, eye spacing,
-feature positions, line thickness, and transparent alignment. Talking changes
-the mouth without replacing strong emotional eyes. A chosen starter actor
-profile may guide the style, but the saved face assets belong to the book
-character and must not show the starter actor's identity.
+## 13. Preparation progress and reuse
 
-### 4.6 Reuse approved poses
+The existing volume-preparation screen remains minimal. Character preparation
+reports these steps:
 
-The generated rig loads the same semantic pose contract as Sprite Studio:
+1. Lock character brief.
+2. Select compatible base rig and catalog layers.
+3. Prepare face components.
+4. Prepare front/back hair.
+5. Prepare clothing overlays.
+6. Prepare required accessories.
+7. Split and mask generated sheets.
+8. Validate six faces and four poses.
+9. Save the locked character package.
+10. Register the stable IDs for later chapter binding.
 
-- Idle/Neutral
-- Talking
-- Pointing
-- Walking
+Each completed step is cached by design hash. Closing the screen or losing the
+connection resumes from the first unfinished step. The same assets are reused
+throughout the book and later volumes.
 
-The pose files contain transforms only. They do not contain generated images.
-Generated characters must render through `SpriteRigView`, the normal rig
-loader, the normal pose repository, and the normal modular-face compositor.
-The separate hard-coded generated-human renderer is removed after migration.
+## 14. Validation gate
 
-## 5. Readiness validation
+A package is `Ready` only when:
 
-Status: **Implemented for the Phase 7G package gate.**
+- the expected rig ID, template version, and geometry hash match;
+- the canonical head and body alpha masks are unchanged;
+- generated face files contain no replacement skull, ear, head fill, hair, or
+  body;
+- face landmarks stay inside the approved position tolerance;
+- eye whites and pupil highlights remain opaque;
+- front/back hair align with the fixed head and do not cover forbidden face
+  zones;
+- every fitted clothing overlay matches its body-part mask and seam allowance;
+- loose garments use approved extension layers rather than malformed limbs;
+- all accessory anchors and named layer modes resolve;
+- held items remain attached in Idle, Talking, Pointing, and Walking;
+- all six face sets compose without shifting;
+- all four pose previews remain inside bounds without exposed seams;
+- no output contains scenery, text, extra people, duplicate limbs, or a
+  generated replacement body; and
+- every stable asset ID resolves to bytes.
 
-A generated character is `Ready` only when all checks pass:
+If any check fails, StoryTale keeps the character out of Story Mode and uses
+subtitles/audio or a source-appropriate no-character shot. It does not
+automatically spend another API call.
 
-- master decodes, has transparency, and uses the expected canvas;
-- all ten canonical part files decode and contain visible pixels;
-- every part overlaps its expected anatomical mask;
-- no part is empty, swapped, clipped, or mostly occupied by another part;
-- pivots and parent joints fall inside the allowed visible/overlap area;
-- neutral reassembly has no missing clothing, exposed seams, or shifted parts;
-- face layers use the correct canvas and preserve opaque eye whites and pupil
-  highlights;
-- all six face sets visibly differ where expected and remain aligned;
-- all four pose composites render inside bounds and visibly differ from the
-  neutral pose where expected;
-- generated rig and pose JSON pass the existing Sprite Studio validators; and
-- all stable asset IDs resolve to real bytes.
+## 15. Proof view
 
-If any check fails, the character is `Needs attention` and StoryTale keeps the
-safe no-character/subtitle fallback. It must never substitute an unrelated
-prototype actor.
+Book Characters remains read-only and gains these compact proof groups:
 
-## 6. How the result will be confirmed
+1. **Character** - locally composed Neutral preview;
+2. **Layers** - face, hair, clothing, and accessories grouped by type;
+3. **Faces** - six composed expressions;
+4. **Poses** - Idle, Talking, Pointing, and Walking; and
+5. **Details** - template ID/version/hash, Gemini model, generation trace,
+   source-backed design brief, and validation result.
 
-Status: **Implemented in Book Characters and Sprite Studio.**
+`Open in Sprite Studio` loads the same composed package. The preview must not
+show a separate AI-created full-body master as the runtime character.
 
-Book Characters remains simple, but each character card gains four compact
-views:
+## 16. Roadmap order
 
-1. **Character** - approved neutral composite;
-2. **Parts** - ten labeled transparent part thumbnails;
-3. **Faces** - six composed face-set previews;
-4. **Poses** - Idle, Talking, Pointing, and Walking composites.
+### Phase 7G - Structural prototype
 
-It also shows:
+Status: **Implemented, but visual-fidelity gate failed.**
 
-- Gemini model/provider;
-- rig ID and character ID;
-- validation status;
-- one `Open in Sprite Studio` action; and
-- a short failure reason when a required part is invalid.
+It proved one Gemini call, local transparency processing, canonical package
+IDs, proof pages, Sprite Studio loading, and pose rendering. Its whole-character
+master and post-generation splitting are now superseded.
 
-This is the required way to confirm that poses and faces exist. The current
-single master preview cannot provide that proof.
+### Phase 7G.1 - Locked-template layered composer
 
-## 7. Phase 7H - Story Mode binding proof
+Status: **Current.**
 
-Status: **Current next phase.** This work was intentionally not folded into
-Phase 7G.
+Implementation order:
 
-After a character passes Phase 7G:
+1. Freeze and version the canonical rig, alpha masks, anchors, and geometry
+   hash.
+2. Add the appearance-manifest and named layer/attachment contracts.
+3. Change sprite generation from `master` to face, hair, clothing, and optional
+   accessory component sheets.
+4. Split and hard-mask every component locally.
+5. Compose the fixed base plus appearance layers in the normal Sprite Studio
+   renderer.
+6. Add the held-item anchor and approved relative layer modes.
+7. Add preparation progress, design-hash reuse, and no-duplicate generation.
+8. Remove or disable the private sprite route's shared three-per-minute
+   StoryTale limiter while retaining sequential requests and provider errors.
+9. Prove one Little Prince package matches the exact StoryTale head/body
+   template in all six faces and four poses.
+10. Mark the package ready only after every validation check passes.
 
-1. Register its real `characterId`, `rigId`, face profile/set IDs, pose IDs,
-   outfit ID, asset IDs, and appearance lock in the Story Bible.
-2. Invalidate any cached ChapterStory made before that character became ready.
-3. Run the final catalog-constrained scene analysis and asset connection for
-   every chapter, not only Chapter 1.
-4. Map source-supported humans to their real generated IDs. Do not keep
-   `default_actor`, `hero_actor`, or another unrelated starter actor.
-5. Require a character layer when a ready human is the speaker or is performing
-   a source-backed action. Environment-only and object-detail shots may
-   intentionally contain no human.
-6. Resolve the requested pose and face set through the same Sprite Studio
-   repositories.
-7. On each beat, apply the talking mouth to the active speaker while retaining
-   strong emotional eyes.
-8. If a requested pose or face is missing, use that same character's Neutral
-   fallback. Hide only an invalid character.
-9. Prove Chapter 1 renders the generated character, then prove a later chapter
-   reuses the same locked identity without another Gemini character call.
+### Phase 7H - Story Mode binding
 
-## 8. Implementation order
+Status: **Blocked by Phase 7G.1.**
 
-1. [x] Correct the reference packet and canonical IDs.
-2. [x] Add the character design brief and manifest contracts.
-3. [x] Replace rectangular splitting with template-aware extraction and a real
-   runtime rig exporter.
-4. [x] Add modular generated face assets and sets.
-5. [x] Route generated rigs through the normal Sprite Studio renderer.
-6. [x] Add Parts, Faces, and Poses proof views to Book Characters.
-7. [x] Strengthen readiness validation and quota-free tests.
-8. [ ] **Phase 7H:** rebuild and reconnect every affected ChapterStory.
-9. [ ] **Phase 7H:** prove generated-character playback in Chapter 1 and reuse
-   in a later chapter.
-10. [ ] **Phase 8:** add durable storage so the approved package survives
-    refreshes and restarts.
+After a package is ready:
 
-## 9. Acceptance checklist
+1. register its character, rig-template, face-set, outfit, hair, accessory,
+   attachment, pose, and asset IDs in the Story Bible;
+2. invalidate ChapterStory data made before those IDs became ready;
+3. rebuild every affected chapter, not only Chapter 1;
+4. require the correct ready human when that human speaks or acts;
+5. resolve face, pose, held item, facing, scale, and movement per beat;
+6. use the same character's Neutral fallback when an optional face or pose is
+   missing; and
+7. prove a later chapter reuses the same appearance without another Gemini
+   character call.
 
-- [x] Gemini receives blank geometry references instead of a predesigned
-  brown-haired character.
-- [x] The result keeps the StoryTale template proportions but has the
-  source-backed book character's own head, hair, outfit, and palette.
-- [x] All ten canonical Sprite Studio parts are present and validated.
-- [x] The generated runtime rig definition loads in Sprite Studio without a
-  special renderer.
-- [x] Six aligned modular face sets render on the custom head.
-- [x] Idle, Talking, Pointing, and Walking previews visibly work.
-- [x] Book Characters exposes the neutral, parts, faces, and poses proof.
-- [x] The exact generated rig opens in Sprite Studio.
-- [ ] Chapter 1 displays the generated character when the source requires it.
-- [ ] A later chapter reuses the same identity and asset IDs.
-- [ ] No fallback substitutes an unrelated starter actor.
-- [x] Automated validation makes no external Gemini or Cloudflare image calls.
+Durable files across full app restarts remain Phase 8.
+
+## 17. Acceptance checklist
+
+- [ ] Gemini is never asked for a replacement head or body.
+- [ ] The original ten StoryTale rig geometries (one head plus nine body
+  pieces) are byte/hash locked.
+- [ ] A character changes through face, hair, clothing, tint, and accessory
+  layers only.
+- [ ] Front and back hair are separate and long back hair can extend behind the
+  torso.
+- [ ] Eyes/brows, nose, mouths, and details remain separately selectable.
+- [ ] Clothing follows every rotated body part.
+- [ ] Loose garments use extension layers.
+- [ ] Head, face, front, back, and held accessories have explicit anchors.
+- [ ] A held sword can render behind the right arm with a grip overlay above
+  the hand.
+- [ ] Idle, Talking, Pointing, and Walking use transform JSON only.
+- [ ] The app resumes missing components without generating completed ones
+  again.
+- [ ] Normal users see read-only results with no regenerate/replace controls.
+- [ ] The private Worker does not impose the current shared three-per-minute
+  sprite bottleneck.
+- [ ] Provider quota and billing errors remain visible and no system claims
+  unlimited external capacity.
+- [ ] Book Characters proves Layers, Faces, and Poses on the locked template.
+- [ ] Phase 7H does not start until the Little Prince proof passes.

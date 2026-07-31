@@ -43,6 +43,7 @@ class SpriteRigPart {
     required this.pivot,
     required this.size,
     required this.z,
+    this.hasBone = true,
     this.rotationRange,
   });
 
@@ -54,6 +55,7 @@ class SpriteRigPart {
   final Offset pivot;
   final Size size;
   final int z;
+  final bool hasBone;
   final SpriteRotationRange? rotationRange;
 
   Offset get imagePivot => pivot - position;
@@ -68,6 +70,7 @@ class SpriteRigPart {
       pivot: _offset(json['pivot'] as Map<String, dynamic>),
       size: _size(json['size'] as Map<String, dynamic>),
       z: (json['z'] as num).toInt(),
+      hasBone: json['bone'] as bool? ?? true,
       rotationRange: json['rotationRange'] == null
           ? null
           : SpriteRotationRange.fromJson(
@@ -224,12 +227,14 @@ class SpritePartTransform {
     this.rotation = 0,
     this.offsetX = 0,
     this.offsetY = 0,
+    this.scale = 1,
     this.layer,
   });
 
   final double rotation;
   final double offsetX;
   final double offsetY;
+  final double scale;
   final int? layer;
 
   factory SpritePartTransform.fromJson(Map<String, dynamic> json) {
@@ -237,6 +242,7 @@ class SpritePartTransform {
       rotation: (json['rotation'] as num?)?.toDouble() ?? 0,
       offsetX: (json['x'] as num?)?.toDouble() ?? 0,
       offsetY: (json['y'] as num?)?.toDouble() ?? 0,
+      scale: (json['scale'] as num?)?.toDouble() ?? 1,
       layer: (json['layer'] as num?)?.toInt(),
     );
   }
@@ -245,12 +251,14 @@ class SpritePartTransform {
     double? rotation,
     double? offsetX,
     double? offsetY,
+    double? scale,
     int? layer,
   }) {
     return SpritePartTransform(
       rotation: rotation ?? this.rotation,
       offsetX: offsetX ?? this.offsetX,
       offsetY: offsetY ?? this.offsetY,
+      scale: scale ?? this.scale,
       layer: layer ?? this.layer,
     );
   }
@@ -259,6 +267,7 @@ class SpritePartTransform {
     'rotation': rotation,
     'x': offsetX,
     'y': offsetY,
+    if (scale != 1) 'scale': scale,
     if (layer != null) 'layer': layer,
   };
 
@@ -267,6 +276,7 @@ class SpritePartTransform {
       rotation: rotation,
       offsetX: offsetX,
       offsetY: offsetY,
+      scale: scale,
     );
   }
 }
@@ -399,13 +409,15 @@ class SpriteBoneCalculator {
   ) {
     final transforms = SpriteRigCalculator.calculate(rig, pose);
     final firstChild = <String, SpriteRigPart>{};
-    for (final part in rig.parts) {
+    for (final part in rig.parts.where((part) => part.hasBone)) {
       final parentId = part.parentId;
-      if (parentId != null) firstChild.putIfAbsent(parentId, () => part);
+      if (parentId != null && rig.partsById[parentId]?.hasBone == true) {
+        firstChild.putIfAbsent(parentId, () => part);
+      }
     }
 
     return [
-      for (final part in rig.parts)
+      for (final part in rig.parts.where((part) => part.hasBone))
         _boneFor(part, firstChild[part.id], transforms),
     ];
   }

@@ -39,7 +39,7 @@ class SpriteRigView extends StatelessWidget {
   final bool showBones;
   final bool boneMode;
   final String? selectedPartId;
-  final ValueChanged<String>? onPartSelected;
+  final ValueChanged<String?>? onPartSelected;
   final VoidCallback? onBoneDragStarted;
   final SpritePartTransformChanged? onPartTransformChanged;
 
@@ -58,7 +58,12 @@ class SpriteRigView extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           for (final part in parts)
-            _visualPart(context, part, transforms[part.id]!),
+            _visualPart(
+              context,
+              part,
+              transforms[part.id]!,
+              pose.transformFor(part.id).scale,
+            ),
           if (onPartSelected != null)
             Positioned.fill(
               child: _SpriteRigInteractionLayer(
@@ -102,6 +107,7 @@ class SpriteRigView extends StatelessWidget {
     BuildContext context,
     SpriteRigPart part,
     SpritePartWorldTransform transform,
+    double scale,
   ) {
     final imagePivot = part.imagePivot;
     final alignment = Alignment(
@@ -117,23 +123,27 @@ class SpriteRigView extends StatelessWidget {
       child: Transform.rotate(
         angle: transform.rotation,
         alignment: alignment,
-        child: IgnorePointer(
-          child: ExcludeSemantics(
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                _partArtwork(context, part, selectedPartId == part.id),
-                if (showHitboxes)
-                  Opacity(
-                    opacity: selectedPartId == part.id ? 0.34 : 0.18,
-                    child: _image(
-                      part,
-                      color: selectedPartId == part.id
-                          ? Theme.of(context).colorScheme.primary
-                          : Colors.cyan,
+        child: Transform.scale(
+          scale: scale,
+          alignment: alignment,
+          child: IgnorePointer(
+            child: ExcludeSemantics(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _partArtwork(context, part, selectedPartId == part.id),
+                  if (showHitboxes)
+                    Opacity(
+                      opacity: selectedPartId == part.id ? 0.34 : 0.18,
+                      child: _image(
+                        part,
+                        color: selectedPartId == part.id
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.cyan,
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -262,7 +272,7 @@ class _SpriteRigInteractionLayer extends StatefulWidget {
   final bool boneMode;
   final Map<String, Uint8List>? partBytes;
   final String? selectedPartId;
-  final ValueChanged<String> onPartSelected;
+  final ValueChanged<String?> onPartSelected;
   final VoidCallback? onBoneDragStarted;
   final SpritePartTransformChanged? onPartTransformChanged;
 
@@ -314,7 +324,7 @@ class _SpriteRigInteractionLayerState
   }
 
   void _pointerDown(PointerDownEvent event) {
-    if (widget.showBones || widget.boneMode) {
+    if (widget.boneMode) {
       final bone = _hitBone(event.localPosition);
       if (bone != null) {
         widget.onPartSelected(bone.partId);
@@ -423,6 +433,7 @@ class _SpriteRigInteractionLayerState
         }
       }
     }
+    widget.onPartSelected(null);
   }
 
   Offset _toPartSpace(
@@ -433,10 +444,11 @@ class _SpriteRigInteractionLayerState
     final delta = point - transform.pivot;
     final cosine = math.cos(-transform.rotation);
     final sine = math.sin(-transform.rotation);
+    final scale = widget.pose.transformFor(part.id).scale;
     return part.imagePivot +
         Offset(
-          delta.dx * cosine - delta.dy * sine,
-          delta.dx * sine + delta.dy * cosine,
+          (delta.dx * cosine - delta.dy * sine) / scale,
+          (delta.dx * sine + delta.dy * cosine) / scale,
         );
   }
 

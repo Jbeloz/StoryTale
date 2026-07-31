@@ -62,11 +62,52 @@ void main() {
     final transforms = SpriteRigCalculator.calculate(rig, pose);
 
     expect(bones, hasLength(10));
+    expect(rig.partsById['front_hair']?.label, 'Front hair');
+    expect(rig.partsById['front_hair']?.parentId, 'head');
+    expect(rig.partsById['front_hair']?.hasBone, isFalse);
+    expect(bones.where((bone) => bone.partId == 'front_hair'), isEmpty);
     expect(bones.singleWhere((bone) => bone.isRoot).partId, 'torso');
     final upperArm = bones.singleWhere(
       (bone) => bone.partId == 'upper_arm_right',
     );
     expect(upperArm.end, transforms['lower_arm_right']!.pivot);
+  });
+
+  testWidgets('front hair follows the head but keeps its own adjustment', (
+    tester,
+  ) async {
+    final rig = await tester.runAsync(
+      () => SpriteRigDefinition.load(
+        'assets/images/characters/rigs/humanoid_v1/rig.json',
+      ),
+    );
+    expect(rig, isNotNull);
+
+    const base = SpriteRigPose(id: 'neutral');
+    final original = SpriteRigCalculator.calculate(rig!, base);
+    final movedHead = base.update(
+      'head',
+      const SpritePartTransform(offsetX: 24, offsetY: -12),
+    );
+    final withMovedHead = SpriteRigCalculator.calculate(rig, movedHead);
+
+    expect(
+      withMovedHead['front_hair']!.pivot - original['front_hair']!.pivot,
+      const Offset(24, -12),
+    );
+
+    final adjustedHair = movedHead.update(
+      'front_hair',
+      const SpritePartTransform(offsetX: 8, offsetY: 6),
+    );
+    final withAdjustedHair = SpriteRigCalculator.calculate(rig, adjustedHair);
+
+    expect(withAdjustedHair['head']!.pivot, withMovedHead['head']!.pivot);
+    expect(
+      withAdjustedHair['front_hair']!.pivot -
+          withMovedHead['front_hair']!.pivot,
+      const Offset(8, 6),
+    );
   });
 
   test('bone dragging rotates around its joint and respects its limit', () {
@@ -123,6 +164,24 @@ void main() {
       pose.update('head', const SpritePartTransform()).faceExpressionId,
       'happy',
     );
+  });
+
+  test('an attachment pose saves and restores its size', () {
+    final pose = SpriteRigPose.fromJson({
+      'id': 'test',
+      'name': 'Test Pose',
+      'rigId': 'humanoid_v1',
+      'faceExpressionId': 'neutral',
+      'parts': {
+        'front_hair': {'rotation': 0, 'x': 12, 'y': -8, 'scale': 1.25},
+      },
+    });
+
+    final hair = pose.transformFor('front_hair');
+    expect(hair.offsetX, 12);
+    expect(hair.offsetY, -8);
+    expect(hair.scale, 1.25);
+    expect((pose.toJson()['parts'] as Map)['front_hair']['scale'], 1.25);
   });
 
   testWidgets('the arm layers use the approved overlap order', (tester) async {

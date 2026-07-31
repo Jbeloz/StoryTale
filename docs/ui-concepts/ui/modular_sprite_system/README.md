@@ -25,23 +25,27 @@ modular_sprite_system/
 
 ## Main design rule
 
-Create and approve one complete neutral full-body character first. After approval, split that exact image into reusable parts. Do not ask Gemini to design every limb independently because the clothes, line thickness, colors, and proportions can drift.
+Keep all ten approved rig-part geometries (one neutral head plus nine body
+pieces) as immutable local assets. Do not ask Gemini for a replacement
+full-body character and do not split a newly invented silhouette into runtime
+pieces. Gemini may design only aligned face, front/back hair, clothing,
+garment-extension, and accessory overlays.
 
-Keep one transparent full-body master as the alignment reference. Runtime body
-parts may be tightly cropped, but `rig.json` must store each part's original
-position, size, parent, pivot, and layer order so the neutral pose can reproduce
-the approved master exactly.
+Keep one transparent full-body composite as a review reference, but build it
+locally from the shared rig plus approved appearance layers. `rig.json` stores
+each base part's position, size, parent, pivot, geometry hash, and fixed layer
+order. Poses change transforms only.
 
 ## Runtime idea
 
 The app stacks transparent PNG parts and rotates them around saved joints:
 
-1. Back hair and rear limbs
-2. Torso and outfit
-3. Front limbs
-4. Head base
-5. Face expression
-6. Front hair and accessories
+1. Rear accessory, back hair, and rear limbs with clothing
+2. Torso, fitted outfit, and loose-garment extensions
+3. Front limbs with clothing and held-item rear layer
+4. Immutable head base
+5. Eyes/brows, nose, mouth, details, and face accessory
+6. Front hair, head accessory, held-item front/grip layer, and effects
 
 Poses and movements are saved as joint angles and positions, not as newly generated full-body pictures. This lets the same character walk, talk, point, react, and idle without regenerating their clothes or body.
 
@@ -61,8 +65,8 @@ inherited, so rotating an upper arm also moves its connected lower arm. Parts
 1-6 provide alpha-aware selection, permanent body-layer rules, a responsive
 pinned canvas, precise transform controls, Undo/Redo, bone controls derived
 from the existing pivots, the modular face catalog, named custom poses, local
-storage, and Story Mode pose/face resolution. Generated book-specific rig
-creation/import is the current Phase 7G correction. See the
+storage, and Story Mode pose/face resolution. Locked-template book-character
+appearance composition is the current Phase 7G.1 correction. See the
 [Sprite Studio plan](../../../SPRITE_STUDIO_PLAN.md) for editor behavior and the
 [Generated Character Pipeline plan](../../../GENERATED_CHARACTER_PIPELINE_PLAN.md)
 for the production rig gate, plus the

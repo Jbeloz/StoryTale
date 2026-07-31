@@ -196,11 +196,14 @@ Rules:
 
 StoryTale plans assets after all chapter analyses have been merged.
 
-- A recurring main or side character is generated once for the volume.
-- The same approved head, rig, face catalog, outfit, and voice mapping are
-  reused in every chapter.
+- A recurring main or side character appearance package is prepared once per
+  character design hash and rig-template version, not once per chapter.
+- The same locked rig, face parts/sets, front/back hair, clothing-by-part,
+  accessories, held-item attachments, poses, and voice mapping are reused in
+  every matching chapter and later volume.
 - A later chapter may add an outfit, injury, age, or story-required state, but
-  it does not replace the locked base identity.
+  it creates a new source-backed design hash or optional layer variant; it does
+  not replace the locked base identity or local body geometry.
 - Pose changes use Sprite Studio transform JSON; they do not generate another
   full character picture.
 - Face changes use reusable eyes, nose, mouth, and detail parts.
@@ -223,15 +226,18 @@ regenerating its cast:
 2. Group continuous events into cutscenes.
 3. Select the approved location/state background.
 4. Select zero to three approved character layers.
-5. Select an approved pose, face set, facing, scale, depth, and movement.
+5. Select approved package, pose, face-set, hair, clothing, accessory,
+   optional held-item/attachment, facing, scale, depth, and movement IDs.
 6. Select a camera preset, transition, and short subtitle beat.
 7. Add at most two important focus assets.
 8. Save the moral separately from the original chapter text.
 9. Apply safe no-character/background fallbacks for missing visual assets.
 10. Validate and save a versioned `ChapterStory` package.
 
-Camera, pose, movement, and layout choices come from the approved catalogs.
-Gemini chooses IDs; it does not invent unsupported runtime behavior.
+Camera, pose, movement, layout, character appearance, and held-item choices
+come from approved catalogs. Gemini chooses semantic IDs; it does not return
+body-part coordinates, joint rotations, anatomical layer order, attachment
+offsets, grip pivots, or unsupported runtime behavior.
 
 ## Readiness rules
 
@@ -242,6 +248,8 @@ A chapter is **Story Mode Ready** when:
 - referenced IDs belong to the same book and entity;
 - required backgrounds are approved or have the documented fallback;
 - character/focus layers use approved compatible assets or are safely hidden;
+- every human package matches its locked rig-template version, geometry hash,
+  and character design hash;
 - every shot uses supported layout, pose, movement, camera, and transition IDs;
 - subtitles and the chapter moral exist;
 - the saved package passes schema and file validation.
@@ -468,6 +476,8 @@ setting.
 
 ### Phase 7 - Shared book-specific humans
 
+Historical structural prototype:
+
 - [x] Generate and approve one provisional locked human master per approved
   Story Bible roster entry.
 - [x] Remove the flat green background locally and split the exact master into
@@ -486,11 +496,38 @@ setting.
   talking, pointing, and walking transforms.
 - [x] Provide a compact read-only Book Characters result page.
 
-Phase 7 is not yet complete. Phase 7G must replace styled references and broad
-rectangular splitting with a blank template-constrained master, real
-Sprite Studio parts/rig JSON, character-specific modular faces, normal pose
-loading, and visible Parts/Faces/Poses proof. Phase 7H must rebuild and connect
-every affected chapter so ready humans appear in Story Mode. See
+The historical master-and-split path proved generation, package loading, and
+preview rendering, but its visual-fidelity gate failed because Gemini still
+redrew the skull and body before local splitting.
+
+#### Phase 7G.1 - Locked-template layered composer
+
+Status: **Current and blocking.**
+
+- [ ] Keep the shared local head and nine body-part silhouettes, masks, pivots,
+  anchors, anatomical layer policy, template version, and geometry hash
+  immutable.
+- [ ] Replace whole-character generation with aligned face, front/back hair,
+  clothing-by-part, optional garment-extension, accessory, and held-item
+  component sheets.
+- [ ] Store one appearance manifest with stable package, face, hair, clothing,
+  accessory, held-item, attachment, and pose IDs.
+- [ ] Validate hard masks, face landmarks, clothing seams, anchors, named
+  held-item layer modes, all six face sets, and Idle/Talking/Pointing/Walking.
+- [ ] Cache and resume by character design hash plus rig-template version so
+  every chapter and later volume reuses the same package.
+- [ ] Prove the Little Prince preview preserves the exact StoryTale head/body
+  template before marking the package ready.
+
+#### Phase 7H - Story Mode human binding
+
+Status: **Blocked by Phase 7G.1.**
+
+After Phase 7G.1 passes, register the ready character package in the approved
+Gemini catalog, invalidate older ChapterStory plans, and rebuild every affected
+chapter so Gemini selects the approved semantic face, pose, hair, clothing,
+accessory, held-item, and attachment IDs. Flutter remains the sole owner of
+coordinates, transforms, and layer order. See the
 [Generated Character Pipeline Plan](GENERATED_CHARACTER_PIPELINE_PLAN.md).
 
 The identity metadata is durable, but generated bytes still use the session

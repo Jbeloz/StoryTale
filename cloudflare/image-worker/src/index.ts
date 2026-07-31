@@ -17,6 +17,7 @@ type SpriteMode =
   | "head-design"
   | "head-expression"
   | "face-layer"
+  | "front-hair"
   | "body-pose"
   | "foreground";
 type TimingSafeSubtleCrypto = SubtleCrypto & {
@@ -1182,6 +1183,14 @@ function spritePrompt(details: string, mode: SpriteMode): string {
       "Keep every unchanged feature identical. Do not draw skin, a face fill, head silhouette, ear, hair, neck, body, accessories, text, border, or extra features. Keep the entire 1:1 canvas and do not crop, rotate, resize, or recenter anything. " +
       "Do not use green in the facial features. Fill every pixel outside the isolated facial features with flat pure chroma green #00FF00 for local transparency removal.";
   }
+  if (mode === "front-hair") {
+    return `Create only one modular front-hair layer for the supplied StoryTale head template: ${details}. ` +
+      "The first reference is locked geometry: preserve its exact square canvas, head size, front-facing angle, forehead curve, face position, and framing. The second reference is hairstyle inspiration only. " +
+      "Draw only the hair that sits in front of or directly on top of the head: crown hair, fringe, bangs, and short front side locks. Make it fit the first reference precisely and cover the forehead naturally without moving, shrinking, redrawing, or including the head. " +
+      "Do not draw a face, eyes, eyebrows, nose, mouth, skin, ear, head fill, neck, body, back hair, ponytail, long hair behind the head, accessories, text, border, shadow, or extra objects. " +
+      "Keep the eyes and lower face area unobstructed. Use clean dark line art, simple cel shading, and the requested hair colors. Keep all hair inside the canvas. " +
+      "Do not use green in the hair. Fill every pixel outside the isolated front-hair layer with flat pure chroma green #00FF00 for local transparency removal.";
+  }
   if (mode === "head-expression") {
     return `Edit only the expression of the supplied head reference: ${details}. ` +
       "Treat the supplied image as locked geometry. Preserve the exact outer head silhouette, canvas framing, head size, ear, skin shading, line thickness, facial-feature style, and the position of every unchanged feature. " +
@@ -1312,10 +1321,10 @@ async function generateSprite(
       response_format: {
         type: "image",
         mime_type: "image/jpeg",
-        aspect_ratio: mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "foreground" || mode === "master"
+        aspect_ratio: mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "front-hair" || mode === "foreground" || mode === "master"
           ? "1:1"
           : mode === "body-pose" ? "9:16" : "3:4",
-        image_size: mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "foreground" || mode === "master" ? "1K" : "512",
+        image_size: mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "front-hair" || mode === "foreground" || mode === "master" ? "1K" : "512",
       },
       store: false,
     }),
@@ -1389,16 +1398,21 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
       modeValue !== "head-design" &&
       modeValue !== "head-expression" &&
       modeValue !== "face-layer" &&
+      modeValue !== "front-hair" &&
       modeValue !== "body-pose" &&
       modeValue !== "foreground"
     ) {
       return json({
-        error: "mode must be master, head-design, head-expression, face-layer, body-pose, or foreground",
+        error: "mode must be master, head-design, head-expression, face-layer, front-hair, body-pose, or foreground",
       }, 400);
+    }
+    if (modeValue === "front-hair" && body.references.length !== 2) {
+      return json({ error: "front-hair requires the head template and one hairstyle reference" }, 400);
     }
     if (
       modeValue !== "master" &&
       modeValue !== "foreground" &&
+      modeValue !== "front-hair" &&
       body.references.length !== 1
     ) {
       return json({ error: `${modeValue} requires exactly one image reference` }, 400);

@@ -16,6 +16,7 @@ const _partNames = {
   'lower_leg_right',
   'upper_leg_left',
   'lower_leg_left',
+  'front_hair',
 };
 const _origins = {
   'http://127.0.0.1:52827',
@@ -120,6 +121,11 @@ bool _validPose(Map<String, dynamic> pose, String name) {
     }
     final layer = transform['layer'];
     if (layer != null && (layer is! int || !layer.isFinite)) {
+      return false;
+    }
+    final scale = transform['scale'];
+    if (scale != null &&
+        (scale is! num || !scale.isFinite || scale < 0.5 || scale > 1.8)) {
       return false;
     }
   }

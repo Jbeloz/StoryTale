@@ -107,10 +107,15 @@ The complete final-editor plan is in
 
 ## 6. Sprite and Background Creation
 
-- Use Gemini 3.1 Flash Image for one reviewed full-body master per character
+- Keep the ten approved local rig geometries (one head plus nine body pieces)
+  immutable
+- Use Gemini 3.1 Flash Image only for missing face, front/back hair,
+  per-body-part clothing, loose-garment, and accessory component sheets
 - Keep the Gemini key in the private Worker, never in Flutter
-- Send the locked description and approved references to preserve identity
-- Remove green and split the same master into shared-canvas head/body layers
+- Send the locked description, exact component guide, and approved style
+  references to preserve identity and alignment
+- Remove green, split known component cells, hard-mask them locally, and
+  compose them over the shared rig
 - Never regenerate a locked character for every chapter or volume
 - Route sprites to Gemini and backgrounds to Workers AI through the private Worker
 - Store accepted sprites and backgrounds locally

@@ -23,14 +23,18 @@ safe fallbacks.
 The full Story Mode review chapter now preserves every source block while
 testing all five starter face profiles and all four approved poses.
 
-## Current prototype gap
+## Current generated-character gap
 
-- Generated book characters are not yet real Sprite Studio rigs. The current
-  prototype uses different part IDs, broad rectangular image regions,
-  provisional metadata, baked faces, and a separate renderer.
-- Phase 7G must export canonical part assets plus a real `rig.json`, modular
-  face catalog, and compatible pose files. Book Characters must then open that
-  exact generated package in Sprite Studio.
+- Phase 7G proved that a generated package can load in Sprite Studio and use
+  the normal pose/face renderer.
+- Its complete Gemini master still redraws the head and body before local
+  splitting. The parts can load correctly while visually failing to match the
+  approved Sprite Studio template.
+- Phase 7G.1 therefore freezes the ten total shared rig geometries (one head
+  plus nine body pieces) and supplies only face, hair, clothing,
+  garment-extension, and accessory layers.
+- Sprite Studio previews and poses those prepared layers. It does not ask
+  Gemini to create or redesign the character.
 
 See the
 [Generated Character Pipeline Plan](GENERATED_CHARACTER_PIPELINE_PLAN.md).
@@ -46,14 +50,18 @@ Sprite Studio will support:
 - drag mode, rotation, X/Y position, Undo, and Redo;
 - safe front/back layer adjustments;
 - a reusable five-expression default face catalog;
+- aligned front/back hair, per-part clothing, loose-garment, and accessory
+  layers from an approved appearance package;
+- anchored held items with approved relative layer modes;
 - creating, naming, saving, renaming, and deleting custom poses;
 - built-in neutral, talking, pointing, and walking poses;
 - session drafts and permanent local pose files; and
 - pose IDs that Animated Story Mode can reference dynamically.
 
-Outfits, hair, animals, and full character creation remain separate work.
-Sprite Studio edits an already prepared compatible rig and can swap approved
-face-expression layers without redesigning the character.
+Animals and non-humanoid creation remain separate work. Sprite Studio edits an
+already prepared compatible rig, can swap approved face/hair/outfit/accessory
+layers, and can pose anchored held items without redesigning the base character.
+Image generation and component-sheet validation remain outside the editor.
 
 ## 2. Required fixed layer rules
 
@@ -86,6 +94,32 @@ The base humanoid body parts use locked layers, so their `Bring to front` and
 `Send to back` controls are disabled. Future accessories may still use those
 controls without changing the permanent anatomical order. The inspector shows
 the selected part's effective layer and explains the lock.
+
+Generated clothing is attached to its matching body part and renders directly
+above that part. It inherits the same pivot and transform, so moving an arm or
+leg cannot leave its sleeve, glove, pants, or boot behind.
+
+Appearance layers use named slots instead of unrestricted z-index values:
+
+```text
+rear body accessory
+back hair
+back limbs + matching clothing
+torso + matching clothing + outfit extensions
+front limbs + matching clothing
+held item behind gripping chain
+head base
+face parts and face accessory
+front hair
+head accessory
+held item front/grip overlay
+effects
+```
+
+Held items store a hand anchor, grip pivot, transform offset, and a relative
+mode such as `behind_gripping_chain`, `behind_hand`, or `front_of_hand`.
+Sprite Studio may adjust the attachment transform per pose, but it may not
+unlock or reorder the anatomical body stack.
 
 Walking now uses the same fixed policy as every other pose; its temporary
 layer `41` override has been removed.
@@ -469,12 +503,14 @@ controls its joints.
 - Exercise Neutral, Talking, Pointing, and Walking in one review chapter.
 - Validate speaking and strong-emotion fallbacks with project assets.
 
-The default `humanoid_v1` rig is only the test character. A generated book
-character gets its own stable `rigId`, body-part assets, `rig.json`, face
-catalog, outfit layers, and compatible pose files. Story scenes use the
-`characterId + rigId + poseId + faceProfileId + faceSetId` contract while still
-reading legacy `faceExpressionId`, so adding new faces or a fully designed body
-does not require changing the player.
+The default `humanoid_v1` rig is the approved V1 geometry template. A generated
+book character references that stable template ID/version/hash and adds its own
+face catalog, front/back hair, outfit overlays, accessory attachments, and
+compatible pose files. Story scenes use the
+`characterId + rigId + poseId + faceProfileId + faceSetId + appearanceId`
+contract while still reading legacy `faceExpressionId`, so adding new
+appearance layers does not require changing the player. A new body proportion
+requires another manually approved rig template, not a free-form Gemini body.
 
 ## 12. Final acceptance checklist
 
@@ -492,8 +528,14 @@ Sprite Studio is complete when:
 - neutral speech changes to Talking while stronger emotions remain unchanged;
 - a named pose starts from Neutral and survives an app restart;
 - session and project-default saves preserve layer order;
-- invalid names and incompatible pose files are rejected safely; and
+- invalid names and incompatible pose files are rejected safely;
 - Animated Story Mode can load a saved `poseId`, `faceProfileId`, and
-  `faceSetId` with Default/Neutral fallbacks.
+  `faceSetId` with Default/Neutral fallbacks;
+- prepared front/back hair and every clothing overlay stay attached in all
+  four built-in poses;
+- a held item follows its hand anchor and respects its approved behind/front
+  layer mode; and
+- loading a book character cannot replace or deform the locked head/body
+  geometry; and
 - one complete review chapter preserves all source blocks and resolves every
   starter actor.

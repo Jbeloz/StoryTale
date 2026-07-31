@@ -176,7 +176,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     if (_error != null) {
       return StoryTaleInfoPage(title: title, description: _error!);
     }
-    if (rig == null || pose == null || _selectedPartId == null) {
+    if (rig == null || pose == null) {
       return StoryTaleAppShell(
         title: title,
         body: const Center(child: CircularProgressIndicator()),
@@ -285,15 +285,19 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  _selectionSummary(rig, pose),
-                  const Divider(height: 1),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      controller: controller,
-                      padding: const EdgeInsets.all(12),
-                      child: _inspectorSections(rig, pose),
+                  if (_selectedPartId == null) ...[
+                    Expanded(child: _noSelectionMessage()),
+                  ] else ...[
+                    _selectionSummary(rig, pose),
+                    const Divider(height: 1),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        controller: controller,
+                        padding: const EdgeInsets.all(12),
+                        child: _inspectorSections(rig, pose),
+                      ),
                     ),
-                  ),
+                  ],
                   _saveBar(),
                 ],
               ),
@@ -346,6 +350,9 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
   }
 
   Widget _canvasPanel(SpriteRigDefinition rig, SpriteRigPose pose) {
+    final selected = rig.partsById[_selectedPartId];
+    final canDragSelected =
+        selected != null && !_boneMode && (_dragEnabled || !selected.hasBone);
     return DecoratedBox(
       key: const Key('spriteCanvas'),
       decoration: BoxDecoration(
@@ -374,10 +381,10 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
                           width: rig.canvasSize.width * scale,
                           height: rig.canvasSize.height * scale,
                           child: GestureDetector(
-                            onPanStart: _dragEnabled && !_boneMode
+                            onPanStart: canDragSelected
                                 ? (_) => _dragHistoryRecorded = false
                                 : null,
-                            onPanUpdate: _dragEnabled && !_boneMode
+                            onPanUpdate: canDragSelected
                                 ? (details) => _dragSelected(details, scale)
                                 : null,
                             child: FittedBox(
@@ -458,16 +465,32 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
       ),
       child: Column(
         children: [
-          _selectionSummary(rig, pose),
-          const Divider(height: 1),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(12),
-              child: _inspectorSections(rig, pose),
+          if (_selectedPartId == null) ...[
+            Expanded(child: _noSelectionMessage()),
+          ] else ...[
+            _selectionSummary(rig, pose),
+            const Divider(height: 1),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(12),
+                child: _inspectorSections(rig, pose),
+              ),
             ),
-          ),
+          ],
           _saveBar(),
         ],
+      ),
+    );
+  }
+
+  Widget _noSelectionMessage() {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Text(
+          'No body part selected.\nClick a visible part to select it.',
+          textAlign: TextAlign.center,
+        ),
       ),
     );
   }
@@ -501,7 +524,8 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
           const SizedBox(height: 7),
           Text(
             'Rotation ${transform.rotation.round()}°  •  '
-            'X ${transform.offsetX.round()}  •  Y ${transform.offsetY.round()}',
+            'X ${transform.offsetX.round()}  •  Y ${transform.offsetY.round()}'
+            '${selected.hasBone ? '' : '  •  Size ${(transform.scale * 100).round()}%'}',
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
@@ -588,6 +612,23 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
             onSliderStart: _rememberPose,
             onChanged: (value) => _setVerticalOffset(value),
           ),
+          if (!selected.hasBone)
+            _transformControl(
+              id: 'scale',
+              label: 'Size',
+              value: transform.scale * 100,
+              min: 50,
+              max: 180,
+              suffix: '%',
+              onSliderStart: _rememberPose,
+              onChanged: (value) => _setScale(value / 100),
+            ),
+          if (!selected.hasBone)
+            Text(
+              '${selected.parentId == null ? '' : 'Attached to ${rig.partsById[selected.parentId]?.label ?? selected.parentId}. '}'
+              'Drag it directly to adjust only this attachment, then use '
+              'Save project default to keep its position and size.',
+            ),
         ]),
         _section('Layers', [
           SwitchListTile(
@@ -833,7 +874,9 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
   }
 
   void _update(SpritePartTransform transform) {
-    setState(() => _pose = _pose!.update(_selectedPartId!, transform));
+    final partId = _selectedPartId;
+    if (partId == null) return;
+    setState(() => _pose = _pose!.update(partId, transform));
   }
 
   void _updatePart(String partId, SpritePartTransform transform) {
@@ -842,6 +885,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
       rotation: part.clampRotation(transform.rotation),
       offsetX: transform.offsetX.clamp(-80, 80),
       offsetY: transform.offsetY.clamp(-80, 80),
+      scale: transform.scale.clamp(0.5, 1.8),
     );
     setState(() => _pose = _pose!.update(partId, safe));
   }
@@ -863,6 +907,14 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     _update(_pose!.transformFor(_selectedPartId!).copyWith(offsetY: value));
   }
 
+  void _setScale(double value) {
+    _update(
+      _pose!
+          .transformFor(_selectedPartId!)
+          .copyWith(scale: value.clamp(0.5, 1.8)),
+    );
+  }
+
   void _setFaceSelection(String profileId, String setId) {
     if (_pose!.faceProfileId == profileId && _pose!.faceSetId == setId) return;
     _rememberPose();
@@ -874,13 +926,15 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     setState(() => _pose = pose);
   }
 
-  void _selectPart(String partId) {
+  void _selectPart(String? partId) {
     if (_selectedPartId == partId) return;
     setState(() => _selectedPartId = partId);
   }
 
   void _moveSelected(double dx, double dy) {
-    final current = _pose!.transformFor(_selectedPartId!);
+    final partId = _selectedPartId;
+    if (partId == null) return;
+    final current = _pose!.transformFor(partId);
     _update(
       current.copyWith(
         offsetX: (current.offsetX + dx).clamp(-80, 80),
@@ -890,6 +944,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
   }
 
   void _dragSelected(DragUpdateDetails details, double scale) {
+    if (_selectedPartId == null) return;
     if (!_dragHistoryRecorded) {
       _rememberPose();
       _dragHistoryRecorded = true;
@@ -1310,12 +1365,33 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     setState(() => _savingDefault = true);
     try {
       final normalizedPose = _normalizePose(_pose!);
-      final response = await http.post(
-        Uri.parse('$_adminUrl/poses/${normalizedPose.id}'),
-        headers: {'Content-Type': 'application/json'},
-        body: normalizedPose.toPrettyJson(),
-      );
-      if (response.statusCode != 200) throw Exception('Save failed');
+      final selected = _rig!.partsById[_selectedPartId!]!;
+
+      if (_isBuiltIn && !_usesInjectedSource && !selected.hasBone) {
+        final attachment = normalizedPose.transformFor(selected.id);
+        final updatedDefaults = <String, SpriteRigPose>{};
+        for (final entry in _builtInPoses.entries) {
+          final base = entry.key == _selectedPoseId
+              ? normalizedPose
+              : await SpriteRigPose.load(entry.value);
+          final updated = _normalizePose(base.update(selected.id, attachment));
+          await _postProjectDefault(updated);
+          updatedDefaults[entry.key] = updated;
+        }
+        if (!mounted) return;
+        setState(() {
+          _savedDefaults.addAll(updatedDefaults);
+          _pose = updatedDefaults[_selectedPoseId];
+          _initialPose = _pose;
+        });
+        _message(
+          '${selected.label} is now the default attachment for every '
+          'built-in pose.',
+        );
+        return;
+      }
+
+      await _postProjectDefault(normalizedPose);
       if (!mounted) return;
       setState(() {
         _pose = normalizedPose;
@@ -1334,6 +1410,15 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     } finally {
       if (mounted) setState(() => _savingDefault = false);
     }
+  }
+
+  Future<void> _postProjectDefault(SpriteRigPose pose) async {
+    final response = await http.post(
+      Uri.parse('$_adminUrl/poses/${pose.id}'),
+      headers: {'Content-Type': 'application/json'},
+      body: pose.toPrettyJson(),
+    );
+    if (response.statusCode != 200) throw Exception('Save failed');
   }
 
   SpriteRigPose _normalizePose(SpriteRigPose pose) {

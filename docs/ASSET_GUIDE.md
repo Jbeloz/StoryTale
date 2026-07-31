@@ -33,15 +33,26 @@ the later book/volume storage phase:
 ```text
 books/<book-id>/book.json
 books/<book-id>/cover.webp
-books/<book-id>/story-bible/characters/<character-id>/design/master-source.jpg
-books/<book-id>/story-bible/characters/<character-id>/sprites/anchors.json
-books/<book-id>/story-bible/characters/<character-id>/sprites/master-transparent.png
-books/<book-id>/story-bible/characters/<character-id>/sprites/rig.json
-books/<book-id>/story-bible/characters/<character-id>/sprites/base-parts/*.png
-books/<book-id>/story-bible/characters/<character-id>/sprites/outfits/<outfit-id>/parts/*.png
-books/<book-id>/story-bible/characters/<character-id>/sprites/poses/*.json
-books/<book-id>/story-bible/characters/<character-id>/sprites/faces/*.png
-books/<book-id>/story-bible/characters/<character-id>/sprites/composites/*.png
+books/<book-id>/story-bible/characters/<character-id>/character-design.json
+books/<book-id>/story-bible/characters/<character-id>/appearance-manifest.json
+books/<book-id>/story-bible/characters/<character-id>/generation-trace.json
+books/<book-id>/story-bible/characters/<character-id>/face/eyes/*.png
+books/<book-id>/story-bible/characters/<character-id>/face/noses/*.png
+books/<book-id>/story-bible/characters/<character-id>/face/mouths/*.png
+books/<book-id>/story-bible/characters/<character-id>/face/details/*.png
+books/<book-id>/story-bible/characters/<character-id>/face/sets.json
+books/<book-id>/story-bible/characters/<character-id>/hair/back.png
+books/<book-id>/story-bible/characters/<character-id>/hair/front.png
+books/<book-id>/story-bible/characters/<character-id>/outfits/<outfit-id>/parts/*.png
+books/<book-id>/story-bible/characters/<character-id>/outfits/<outfit-id>/outfit-back.png
+books/<book-id>/story-bible/characters/<character-id>/outfits/<outfit-id>/outfit-front.png
+books/<book-id>/story-bible/characters/<character-id>/accessories/head/*.png
+books/<book-id>/story-bible/characters/<character-id>/accessories/face/*.png
+books/<book-id>/story-bible/characters/<character-id>/accessories/body-back/*.png
+books/<book-id>/story-bible/characters/<character-id>/accessories/body-front/*.png
+books/<book-id>/story-bible/characters/<character-id>/accessories/held/*.png
+books/<book-id>/story-bible/characters/<character-id>/accessories/attachments.json
+books/<book-id>/story-bible/characters/<character-id>/previews/*.png
 books/<book-id>/story-bible/animals/<animal-id>/sprites/*.png
 books/<book-id>/story-bible/creatures/<creature-id>/sprites/*.png
 books/<book-id>/story-bible/plants/<plant-id>/states/*.png
@@ -60,16 +71,30 @@ subtitles, audio, and references needed by that chapter. The complete layout
 and lifecycle are defined in [Animated Story Mode plan](ANIMATED_STORY_MODE_PLAN.md)
 and [Story Bible Entity and Asset Plan](STORY_BIBLE_ENTITY_ASSET_PLAN.md).
 
-Character layers use transparent PNGs. The cropped head, torso, upper/lower
-arms, and upper/lower legs are connected by the joints in `rig.json`. Face
-expressions remain separate layers. The neutral composite is kept as a review
-image and fallback. New outfits use overlays with the same dimensions and
-pivots as their matching body parts. Poses such as idle, talking, pointing, and
-walking are JSON transforms, so they do not require new body pictures. Named
-custom poses are created in Sprite Studio and saved in app-local storage.
-Built-in project poses remain under the matching bundled rig folder. Fixed
-layer rules keep right limbs in front of left limbs and upper arms in front of
-lower legs. See [Sprite Studio plan](SPRITE_STUDIO_PLAN.md).
+Character appearance layers use transparent PNGs. The canonical head, torso,
+upper/lower arms, and upper/lower legs remain shared, immutable assets under
+`assets/images/characters/rigs/humanoid_v1/`; generated character folders do
+not contain replacement base geometry. Face features, front/back hair,
+per-body-part clothing, garment extensions, and accessories are composed over
+that rig.
+
+Each clothing overlay uses the exact matching body-part canvas and pivot, so it
+moves with that limb. Long hair uses `hair/back.png` behind the head and torso,
+while bangs and front locks use `hair/front.png` above the face. Loose skirts,
+robes, capes, and coat tails use torso/hip-anchored extension layers rather
+than malformed leg images.
+
+Poses such as idle, talking, pointing, and walking are JSON transforms, so they
+do not require new body pictures. Named custom poses are created in Sprite
+Studio and saved in app-local storage. Built-in project poses remain under the
+matching bundled rig folder. Fixed layer rules keep right limbs in front of
+left limbs and upper arms in front of lower legs.
+
+Held props store a hand anchor, grip pivot, scale, rotation offset, named layer
+mode, and optional grip overlay. This lets a sword sit behind the gripping arm
+while fingers or a guard render above it. See
+[Generated Character Pipeline Plan](GENERATED_CHARACTER_PIPELINE_PLAN.md) and
+[Sprite Studio plan](SPRITE_STUDIO_PLAN.md).
 
 The bundled working rig is in
 `assets/images/characters/rigs/humanoid_v1/`. Its approved neutral reference
@@ -77,12 +102,12 @@ uses an oversized chibi head and short body. The original full-body placement
 remains the alignment reference; runtime parts are cropped and reconstructed
 using their saved positions and pivots.
 
-Gemini 3.1 Flash Image creates one full-body master from the locked description,
-full-proportion, approved-head, and approved-body references. StoryTale removes
-the flat green background locally, splits that exact master into same-canvas
-head/body PNGs, and builds the full-body review preview by rejoining them. It
-does not pay for three separately generated parts. Reuse the approved layers
-across every chapter and volume. Cloudflare Workers AI remains the location and
+Gemini 3.1 Flash Image creates only missing fixed-layout component sheets for
+face parts, front/back hair, nine fitted clothing overlays, and optional
+accessories. StoryTale removes the flat green background, splits known cells,
+hard-masks each generated layer, and composes it over the shared rig locally.
+Gemini never creates the runtime head or body. Reuse the accepted layers across
+every chapter and volume. Cloudflare Workers AI remains the location and
 chapter-background source.
 
 Speaking animals and creatures start with a transparent neutral sprite plus one

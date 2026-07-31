@@ -21,14 +21,41 @@ One request contains:
 
 - one chapter ID and title;
 - stable, ordered source blocks;
-- approved characters and their rig, pose, face-profile, and face-set IDs;
+- approved characters and their character-package, rig-template, pose,
+  face-profile, face-set, front/back hair, clothing-by-part, accessory,
+  held-item, and attachment IDs;
 - approved animals, creatures, plants, and prop assets in the next contract
   revision;
 - approved location IDs and their available background-state IDs;
 - the fixed StoryTale layout, camera, transition, staging, and movement IDs.
 
 Gemini never receives permission to invent an asset ID or control raw pixels,
-joint coordinates, timing, easing, zoom, or movement distance.
+joint coordinates, anatomical layer order, attachment offsets, grip pivots,
+timing, easing, zoom, scale values, depth values, or movement distance.
+
+For a human layer, Gemini returns approved semantic IDs only:
+
+```text
+characterId
+characterPackageId
+rigTemplateId
+poseId
+faceProfileId
+faceSetId
+hairBackId
+hairFrontId
+clothingByPart IDs
+accessoryIds
+optional heldItemId and attachmentId
+stagePositionId
+facingId
+scaleId
+depthId
+movementId
+```
+
+Flutter resolves all coordinates, transforms, relative layer modes, and
+attachment data from the locked rig and approved package records.
 
 ## Output rules
 
@@ -43,6 +70,10 @@ joint coordinates, timing, easing, zoom, or movement distance.
 - Do not repeat identical framing more than twice in a row.
 - Use an empty background or detail cutaway when the catalog has no safe pose.
 - Never substitute an unrelated human for an animal, creature, plant, or prop.
+- Use only compatible IDs owned by the same approved character package and
+  locked rig template.
+- A held item must use an approved attachment ID and named layer mode; Gemini
+  must not describe a custom Z-order or hand offset.
 - Assign each cutscene a specific source-backed location and background state.
 - Include every explicit place transition in source order.
 - Reuse the same background when consecutive shots stay in the same place and
@@ -57,6 +88,21 @@ StoryTale rejects the plan if either validator finds changed text, an unknown
 ID, an invisible camera target, an invalid trigger beat, too many characters,
 or missing source coverage. The chapter still opens with the safe local
 preview plan and the preparation screen explains that fallback.
+
+## Character-package reuse and current gate
+
+A ready human package is prepared once per character design hash and
+rig-template version. Every matching chapter and later volume receives the same
+stable package, face, hair, clothing, accessory, attachment, and pose IDs.
+Chapter analysis never requests a new image merely because a character appears
+again.
+
+Phase 7G proved the package-loading path, but its full-body generated master did
+not preserve the StoryTale template closely enough. Phase 7G.1 replaces that
+approach with fixed local head/body geometry plus generated face, hair,
+clothing, and optional accessory layers. Phase 7H, which binds book humans into
+all affected ChapterStory packages, is blocked until the Phase 7G.1 visual and
+structural gate passes.
 
 ## Current limitation
 

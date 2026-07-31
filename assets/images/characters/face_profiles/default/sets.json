@@ -7,6 +7,7 @@
     { "id": "talking", "label": "Talking", "eyes": "neutral", "nose": "default", "mouth": "talking", "details": ["soft_cheeks"] },
     { "id": "happy", "label": "Happy", "eyes": "happy", "nose": "default", "mouth": "smile", "details": ["soft_cheeks"] },
     { "id": "sad", "label": "Sad", "eyes": "sad", "nose": "default", "mouth": "sad", "details": ["soft_cheeks"] },
+    { "id": "crying", "label": "Crying", "eyes": "crying", "nose": "default", "mouth": "crying", "details": ["soft_cheeks"] },
     { "id": "angry", "label": "Angry", "eyes": "angry", "nose": "default", "mouth": "angry_teeth", "details": ["soft_cheeks"] },
     { "id": "surprised", "label": "Surprised", "eyes": "surprised", "nose": "default", "mouth": "talking", "details": ["soft_cheeks"] }
   ]
