@@ -47,6 +47,11 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     'pointing': 'Pointing',
     'walking': 'Walking',
   };
+  static const _backHairVariants = {
+    'Short': 'assets/images/characters/rigs/humanoid_v1/hair/back_short.png',
+    'Medium': 'assets/images/characters/rigs/humanoid_v1/hair/back_default.png',
+    'Long': 'assets/images/characters/rigs/humanoid_v1/hair/back_long.png',
+  };
 
   final _poseRepository = PoseRepository();
   final _injectedPoses = <String, SpriteRigPose>{};
@@ -498,6 +503,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
   Widget _selectionSummary(SpriteRigDefinition rig, SpriteRigPose pose) {
     final selected = rig.partsById[_selectedPartId]!;
     final transform = pose.transformFor(selected.id);
+    final fixedHair = _isFixedHairSlot(selected.id);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       child: Column(
@@ -525,7 +531,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
           Text(
             'Rotation ${transform.rotation.round()}°  •  '
             'X ${transform.offsetX.round()}  •  Y ${transform.offsetY.round()}'
-            '${selected.hasBone ? '' : '  •  Size ${(transform.scale * 100).round()}%'}',
+            '${selected.hasBone || fixedHair ? '' : '  •  Size ${(transform.scale * 100).round()}%'}',
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
@@ -545,7 +551,16 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (_faceCatalog != null) _section('Face', [_faceSelector(rig, pose)]),
+        if (selected.id == 'back_hair')
+          _section('Back hair parts', [
+            _backHairSelector(selected, pose),
+            const SizedBox(height: 8),
+            const Text(
+              'These fitted parts keep the same position and size when switched.',
+            ),
+          ]),
+        if (_faceCatalog != null && !_isFixedHairSlot(selected.id))
+          _section('Face', [_faceSelector(rig, pose)]),
         _section('Bones', [
           SwitchListTile(
             key: const Key('showBonesSwitch'),
@@ -612,7 +627,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
             onSliderStart: _rememberPose,
             onChanged: (value) => _setVerticalOffset(value),
           ),
-          if (!selected.hasBone)
+          if (!selected.hasBone && !_isFixedHairSlot(selected.id))
             _transformControl(
               id: 'scale',
               label: 'Size',
@@ -626,8 +641,9 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
           if (!selected.hasBone)
             Text(
               '${selected.parentId == null ? '' : 'Attached to ${rig.partsById[selected.parentId]?.label ?? selected.parentId}. '}'
-              'Drag it directly to adjust only this attachment, then use '
-              'Save project default to keep its position and size.',
+              '${_isFixedHairSlot(selected.id) ? 'Hair uses the permanent fitted size. Drag it to adjust only its position, then use ' : 'Drag it directly to adjust only this attachment, then use '}'
+              'Save project default to keep its '
+              '${_isFixedHairSlot(selected.id) ? 'position.' : 'position and size.'}',
             ),
         ]),
         _section('Layers', [
@@ -761,6 +777,55 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     );
   }
 
+  Widget _backHairSelector(SpriteRigPart part, SpriteRigPose pose) {
+    final selectedAsset = pose.assetFor(part);
+    String? selectedLabel;
+    for (final entry in _backHairVariants.entries) {
+      if (entry.value == selectedAsset) {
+        selectedLabel = entry.key;
+        break;
+      }
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final entry in _backHairVariants.entries)
+          ChoiceChip(
+            key: Key('backHair${entry.key}'),
+            showCheckmark: false,
+            label: SizedBox(
+              width: 62,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    entry.value,
+                    width: 54,
+                    height: 54,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(entry.key),
+                ],
+              ),
+            ),
+            selected:
+                selectedLabel == entry.key ||
+                (selectedLabel == null && entry.key == 'Medium'),
+            onSelected: (_) {
+              if (selectedAsset == entry.value) return;
+              _rememberPose();
+              setState(() {
+                _pose = _pose!.withPartAsset(part.id, entry.value);
+              });
+            },
+          ),
+      ],
+    );
+  }
+
   Widget _section(String title, List<Widget> children) {
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
@@ -885,7 +950,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
       rotation: part.clampRotation(transform.rotation),
       offsetX: transform.offsetX.clamp(-80, 80),
       offsetY: transform.offsetY.clamp(-80, 80),
-      scale: transform.scale.clamp(0.5, 1.8),
+      scale: _isFixedHairSlot(partId) ? 1 : transform.scale.clamp(0.5, 1.8),
     );
     setState(() => _pose = _pose!.update(partId, safe));
   }
@@ -908,6 +973,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
   }
 
   void _setScale(double value) {
+    if (_isFixedHairSlot(_selectedPartId!)) return;
     _update(
       _pose!
           .transformFor(_selectedPartId!)
@@ -1374,7 +1440,12 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
           final base = entry.key == _selectedPoseId
               ? normalizedPose
               : await SpriteRigPose.load(entry.value);
-          final updated = _normalizePose(base.update(selected.id, attachment));
+          var updated = base.update(selected.id, attachment);
+          final selectedAsset = normalizedPose.partAssets[selected.id];
+          if (selectedAsset != null) {
+            updated = updated.withPartAsset(selected.id, selectedAsset);
+          }
+          updated = _normalizePose(updated);
           await _postProjectDefault(updated);
           updatedDefaults[entry.key] = updated;
         }
@@ -1422,7 +1493,14 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
   }
 
   SpriteRigPose _normalizePose(SpriteRigPose pose) {
-    final normalized = SpriteLayerPolicy.normalize(pose);
+    var normalized = SpriteLayerPolicy.normalize(pose);
+    for (final partId in const ['front_hair', 'back_hair']) {
+      if (_rig?.partsById.containsKey(partId) != true) continue;
+      normalized = normalized.update(
+        partId,
+        normalized.transformFor(partId).copyWith(scale: 1),
+      );
+    }
     final catalog = _faceCatalog;
     return catalog == null
         ? normalized
@@ -1433,6 +1511,10 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
 
   void _message(String text) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  bool _isFixedHairSlot(String partId) {
+    return partId == 'front_hair' || partId == 'back_hair';
   }
 }
 

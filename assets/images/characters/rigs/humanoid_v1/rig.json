@@ -102,6 +102,18 @@
       "z": 9
     },
     {
+      "id": "back_hair",
+      "label": "Back hair",
+      "asset": "assets/images/characters/rigs/humanoid_v1/hair/back_default.png",
+      "parent": "head",
+      "position": {"x": 332.31, "y": 107.26},
+      "pivot": {"x": 546.9, "y": 540.55},
+      "size": {"width": 429.45, "height": 800},
+      "rotationRange": {"min": -45, "max": 45},
+      "bone": false,
+      "z": 4
+    },
+    {
       "id": "head",
       "label": "Head",
       "asset": "assets/images/characters/rigs/humanoid_v1/faces/head_base.png",
@@ -117,9 +129,9 @@
       "label": "Front hair",
       "asset": "assets/images/characters/rigs/humanoid_v1/hair/front_default.png",
       "parent": "head",
-      "position": {"x": 355, "y": 145},
-      "pivot": {"x": 552.88, "y": 544.54},
-      "size": {"width": 396, "height": 404},
+      "position": {"x": 332.31, "y": 107.26},
+      "pivot": {"x": 546.9, "y": 540.55},
+      "size": {"width": 429.45, "height": 438.13},
       "rotationRange": {"min": -45, "max": 45},
       "bone": false,
       "z": 50

@@ -5,7 +5,9 @@ reusable Sprite Studio package for Animated Story Mode.
 
 Status: **Planning correction complete. Phase 7G proved the package structure,
 but its visual-fidelity gate failed. Phase 7G.1, the locked-template layered
-composer, is current. Phase 7H Story Mode binding must wait for this gate.**
+composer, is current. Phase 7G.1A adds the actor hair and local skin-tone
+foundation before generated clothing and accessories. Phase 7H Story Mode
+binding must wait for the complete Phase 7G.1 gate.**
 
 ## 1. Decision
 
@@ -108,8 +110,21 @@ Each part keeps:
 - fixed anatomical layer policy; and
 - a versioned geometry hash.
 
-Skin tone is applied locally through the approved skin mask or color layer. It
-does not require Gemini to redraw the body.
+Skin tone is applied locally through rig-owned skin masks. It does not require
+Gemini to redraw the body and does not spend a Gemini or Cloudflare request.
+
+The first version provides a dropper-style color picker with a
+saturation/value area, hue control, current-color swatch, hex field, and
+Reset. Presets are shortcuts only: any valid opaque `#RRGGBB` color is allowed.
+The chosen color is composited only through the head and nine body-part skin
+masks. Original alpha, black outlines, soft shading, and joint edges remain
+visible. Hair, face details, eye whites, pupil highlights, clothing, and
+accessories are outside the skin masks and are never recolored by this control.
+
+Skin tone belongs to the character appearance, not to a pose. Idle, Talking,
+Pointing, Walking, every custom pose, and every chapter therefore share one
+saved value. An invalid or missing value uses the selected actor's default
+tone.
 
 ## 5. Character-specific visual layers
 
@@ -153,6 +168,27 @@ Every hairstyle starts with two layers:
 Both layers share the same head anchor and locked canvas. Optional
 `hair_side` or `hair_tail` layers may be added later only when one back layer
 cannot move correctly.
+
+The five starter actor profiles each receive one complete default hairstyle:
+
+- `default`;
+- `hero`;
+- `heroine`;
+- `elder`; and
+- `adult`.
+
+An actor hairstyle is one catalog item containing both its fitted
+`hair_front` and `hair_back` IDs. Selecting a hairstyle always switches the
+pair together so a front from one design cannot accidentally use the back from
+another. The current Short, Medium, and Long back-hair parts remain shared
+alignment references and optional reusable choices; they are not substitutes
+for the five complete actor hairstyle pairs.
+
+Actor profiles do not create new body geometry. They provide a default face
+profile, default hairstyle ID, and default skin tone for the same locked
+`humanoid_v1` rig. A book character may start from one actor profile and then
+store its own approved hairstyle and skin tone without changing that actor's
+catalog.
 
 ### 5.3 Clothing
 
@@ -391,6 +427,24 @@ assets/images/characters/rigs/humanoid_v1/
     |-- pointing.json
     `-- walking.json
 
+assets/images/characters/actor_appearances/
+|-- catalog.json
+|-- default/
+|   |-- appearance.json
+|   `-- hair/<style-id>/{front.png,back.png}
+|-- hero/
+|   |-- appearance.json
+|   `-- hair/<style-id>/{front.png,back.png}
+|-- heroine/
+|   |-- appearance.json
+|   `-- hair/<style-id>/{front.png,back.png}
+|-- elder/
+|   |-- appearance.json
+|   `-- hair/<style-id>/{front.png,back.png}
+`-- adult/
+    |-- appearance.json
+    `-- hair/<style-id>/{front.png,back.png}
+
 books/<book-id>/story-bible/characters/<character-id>/
 |-- character-design.json
 |-- appearance-manifest.json
@@ -440,6 +494,8 @@ the character package. Those IDs always resolve to the locked shared rig.
   },
   "appearance": {
     "skinTone": "#F2D2B6",
+    "actorProfileId": "hero",
+    "hairStyleId": "hair.hero.default",
     "faceProfileId": "face.little_prince",
     "hairBackId": "hair.little_prince.back",
     "hairFrontId": "hair.little_prince.front",
@@ -546,19 +602,25 @@ Implementation order:
 
 1. Freeze and version the canonical rig, alpha masks, anchors, and geometry
    hash.
-2. Add the appearance-manifest and named layer/attachment contracts.
-3. Change sprite generation from `master` to face, hair, clothing, and optional
+2. **Phase 7G.1A:** add the five actor appearance records and one fitted
+   front/back default hairstyle pair for Default, Hero, Heroine, Elder, and
+   Adult.
+3. **Phase 7G.1A:** add per-part skin masks, local RGB/hex tint composition,
+   compact Actor/Hair/Skin controls, appearance persistence, and neutral
+   fallbacks.
+4. Add the appearance-manifest and named layer/attachment contracts.
+5. Change sprite generation from `master` to face, hair, clothing, and optional
    accessory component sheets.
-4. Split and hard-mask every component locally.
-5. Compose the fixed base plus appearance layers in the normal Sprite Studio
+6. Split and hard-mask every component locally.
+7. Compose the fixed base plus appearance layers in the normal Sprite Studio
    renderer.
-6. Add the held-item anchor and approved relative layer modes.
-7. Add preparation progress, design-hash reuse, and no-duplicate generation.
-8. Remove or disable the private sprite route's shared three-per-minute
+8. Add the held-item anchor and approved relative layer modes.
+9. Add preparation progress, design-hash reuse, and no-duplicate generation.
+10. Remove or disable the private sprite route's shared three-per-minute
    StoryTale limiter while retaining sequential requests and provider errors.
-9. Prove one Little Prince package matches the exact StoryTale head/body
+11. Prove one Little Prince package matches the exact StoryTale head/body
    template in all six faces and four poses.
-10. Mark the package ready only after every validation check passes.
+12. Mark the package ready only after every validation check passes.
 
 ### Phase 7H - Story Mode binding
 
@@ -586,6 +648,12 @@ Durable files across full app restarts remain Phase 8.
   pieces) are byte/hash locked.
 - [ ] A character changes through face, hair, clothing, tint, and accessory
   layers only.
+- [ ] Default, Hero, Heroine, Elder, and Adult each have a stable default
+  front/back hairstyle pair and default skin tone.
+- [ ] The skin picker accepts any valid opaque RGB/hex color and recolors only
+  approved skin-mask pixels without an image-generation request.
+- [ ] Hair style and skin tone are appearance data shared by every pose,
+  chapter, and later volume rather than duplicated pose data.
 - [ ] Front and back hair are separate and long back hair can extend behind the
   torso.
 - [ ] Eyes/brows, nose, mouths, and details remain separately selectable.

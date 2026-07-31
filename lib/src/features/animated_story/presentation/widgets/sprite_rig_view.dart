@@ -220,7 +220,7 @@ class SpriteRigView extends StatelessWidget {
       );
     }
     return Image.asset(
-      part.asset,
+      pose.assetFor(part),
       fit: BoxFit.fill,
       filterQuality: FilterQuality.high,
       color: color,
@@ -291,7 +291,8 @@ class _SpriteRigInteractionLayerState
   void didUpdateWidget(covariant _SpriteRigInteractionLayer oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.rig.id != widget.rig.id ||
-        oldWidget.partBytes != widget.partBytes) {
+        oldWidget.partBytes != widget.partBytes ||
+        !identical(oldWidget.pose.partAssets, widget.pose.partAssets)) {
       _masks = null;
     }
   }
@@ -301,7 +302,7 @@ class _SpriteRigInteractionLayerState
       widget.rig.parts.map((part) async {
         final bytes = widget.partBytes?[part.id];
         final mask = bytes == null
-            ? await _AlphaMask.load(part.asset)
+            ? await _AlphaMask.load(widget.pose.assetFor(part))
             : await _AlphaMask.loadBytes(bytes);
         return MapEntry(part.id, mask);
       }),

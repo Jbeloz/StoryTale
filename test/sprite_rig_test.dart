@@ -65,7 +65,11 @@ void main() {
     expect(rig.partsById['front_hair']?.label, 'Front hair');
     expect(rig.partsById['front_hair']?.parentId, 'head');
     expect(rig.partsById['front_hair']?.hasBone, isFalse);
+    expect(rig.partsById['back_hair']?.label, 'Back hair');
+    expect(rig.partsById['back_hair']?.parentId, 'head');
+    expect(rig.partsById['back_hair']?.hasBone, isFalse);
     expect(bones.where((bone) => bone.partId == 'front_hair'), isEmpty);
+    expect(bones.where((bone) => bone.partId == 'back_hair'), isEmpty);
     expect(bones.singleWhere((bone) => bone.isRoot).partId, 'torso');
     final upperArm = bones.singleWhere(
       (bone) => bone.partId == 'upper_arm_right',
@@ -95,6 +99,10 @@ void main() {
       withMovedHead['front_hair']!.pivot - original['front_hair']!.pivot,
       const Offset(24, -12),
     );
+    expect(
+      withMovedHead['back_hair']!.pivot - original['back_hair']!.pivot,
+      const Offset(24, -12),
+    );
 
     final adjustedHair = movedHead.update(
       'front_hair',
@@ -107,6 +115,10 @@ void main() {
       withAdjustedHair['front_hair']!.pivot -
           withMovedHead['front_hair']!.pivot,
       const Offset(8, 6),
+    );
+    expect(
+      withAdjustedHair['back_hair']!.pivot,
+      withMovedHead['back_hair']!.pivot,
     );
   });
 

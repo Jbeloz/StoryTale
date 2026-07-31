@@ -4,7 +4,7 @@ This is the single source of truth for StoryTale development order and status.
 The architecture and feature plans explain how individual systems work, but
 only this file decides what is completed, what is current, and what comes next.
 
-Last reviewed: 2026-07-30
+Last reviewed: 2026-07-31
 
 ## Status meanings
 
@@ -61,7 +61,7 @@ animation limits, validation, storage, and safe fallbacks.
 | 4. Story Bible and location requirements | **Partial** | Entity extraction, review, automatic approval, specific locations, required background pairs, and the local background catalog work |
 | 5. Final visual-novel backgrounds | **Done** | Generate, review, approve, persist, resolve, refresh, and render exact location/state backgrounds in Story Mode |
 | 6. Volume analysis and foreground inventory | **Done** | Analyze all chapters through one resumable job, prepare reusable non-human assets, connect them to stories, and provide optional review/replacement |
-| 7. Generated book-specific humans | **Current** | Phase 7G proved the package structure but failed exact visual fidelity; Phase 7G.1 now replaces whole-character generation with locked base geometry and generated face, hair, clothing, and accessory layers |
+| 7. Generated book-specific humans | **Current** | Phase 7G proved the package structure but failed exact visual fidelity; Phase 7G.1 now builds actor hair catalogs, local skin-tone tinting, and generated face, clothing, and accessory layers on locked base geometry |
 | 8. Persistent books and volumes | **Planned** | Save EPUBs, books, progress, story bibles, assets, jobs, and `Book -> Volume -> Chapter` data across restarts after the generated-character gate passes |
 | 9. Complete ChapterStory builder | **Planned** | Assemble approved assets, exact text coverage, subtitles, moral, movement, and manifests for any imported chapter |
 | 10. DeepL and offline audio | **Planned** | Real DeepL caching, Tagalog ONNX TTS, five tested voice packs, prepared line audio, and playback synchronization |
@@ -361,8 +361,9 @@ novel EPUB remains deferred; Phase 6 uses the Little Prince fixture first.
 
 Status: **Current.** Phase 7G is a completed structural prototype, but the live
 Little Prince result failed the exact-template visual-fidelity gate. Phase
-7G.1, the locked-template layered composer, is the immediate blocker. Phase 7H
-Story Mode binding waits for it.
+7G.1, the locked-template layered composer, is the immediate blocker. Its next
+slice is Phase 7G.1A, the actor hair and local skin-tone foundation. Phase 7H
+Story Mode binding waits for the complete Phase 7G.1 gate.
 
 Implementation order:
 
@@ -375,16 +376,25 @@ Implementation order:
 3. **Current Phase 7G.1:** freeze the ten total local rig parts (one head plus
    nine body pieces), masks, anchors, and geometry hash. Gemini must not
    generate replacement geometry.
-4. **Current Phase 7G.1:** generate only aligned face, front/back hair,
+4. **Next Phase 7G.1A:** give Default, Hero, Heroine, Elder, and Adult one
+   stable actor appearance catalog containing a fitted front/back hair pair,
+   a default hair-style ID, and a default skin-tone value. The current
+   Short/Medium/Long back-hair choices remain shared test parts until each
+   actor catalog is complete.
+5. **Next Phase 7G.1A:** add one local skin-tone picker for the locked head and
+   nine body pieces. It accepts any opaque RGB/hex color, preserves alpha,
+   black line art, and shading through rig-owned skin masks, and never calls an
+   image provider.
+6. **Phase 7G.1B:** generate only aligned face, front/back hair,
    per-body-part clothing, loose-garment extension, and accessory layers.
-5. **Current Phase 7G.1:** attach held items to a hand anchor with approved
+7. **Phase 7G.1B:** attach held items to a hand anchor with approved
    behind-arm, behind-hand, and front-of-hand layer modes.
-6. **Current Phase 7G.1:** compose and validate six faces and four poses on the
+8. **Phase 7G.1C:** compose and validate six faces and four poses on the
    locked rig, then expose Character, Layers, Faces, Poses, and Details proof.
-7. **Current Phase 7G.1:** reuse completed components by design hash, remove the
+9. **Phase 7G.1C:** reuse completed components by design hash, remove the
    private sprite route's shared three-per-minute app bottleneck, and keep one
    sequential request active without automatic paid regeneration.
-8. **Blocked Phase 7H:** register the validated layered package and rebuild
+10. **Blocked Phase 7H:** register the validated layered package and rebuild
    every affected ChapterStory so Story Mode uses it across chapters and
    volumes.
 
@@ -425,6 +435,16 @@ Current Phase 7G.1 work:
 
 - [ ] Never send a generated head or body to the runtime package.
 - [ ] Keep the shared `humanoid_v1` base geometry immutable and versioned.
+- [ ] **Phase 7G.1A:** add one fitted front/back default hairstyle for each
+  Default, Hero, Heroine, Elder, and Adult actor profile.
+- [ ] **Phase 7G.1A:** keep actor identity, hairstyle selection, and skin tone
+  in an appearance record shared by every pose, chapter, and later volume.
+- [ ] **Phase 7G.1A:** add rig-owned skin masks and a free RGB/hex color picker
+  that recolors all exposed template skin locally without recoloring hair,
+  face marks, clothing, white eyes, highlights, or black outlines.
+- [ ] **Phase 7G.1A:** show compact Actor, Hair, and Skin controls in Sprite
+  Studio, with thumbnail selection, current-color swatch, Reset, and a
+  neutral fallback when an asset or saved color is invalid.
 - [ ] Produce a component-sheet pipeline for modular faces, front/back hair,
   nine fitted clothing overlays, optional loose garments, and accessories.
 - [ ] Add named held-item anchors and relative layer modes.
@@ -434,6 +454,20 @@ Current Phase 7G.1 work:
 - [ ] Remove or disable the private sprite route's shared three-per-minute
   StoryTale limiter while keeping sequential requests, deduplication, and real
   provider quota errors.
+
+Phase 7G.1A acceptance gate:
+
+- switching actors loads that actor's default face, fitted front/back hair
+  pair, and default skin tone without changing the locked rig geometry;
+- changing skin tone updates the head and every body part immediately and
+  consistently in Idle, Talking, Pointing, and Walking;
+- the selected hair pair and skin tone survive pose changes and are stored
+  once in the appearance manifest rather than copied into every pose;
+- any valid opaque `#RRGGBB` color is accepted, while invalid saved values fall
+  back safely;
+- tinting is local and consumes no Gemini or Cloudflare request; and
+- Story Mode can later resolve the same `appearanceId` without rebuilding the
+  character.
 
 Blocked Phase 7H work:
 

@@ -107,6 +107,7 @@ class SpriteRigPose {
     this.faceProfileId,
     this.faceSetId,
     this.layerPolicyVersion = 1,
+    this.partAssets = const {},
     this.parts = const {},
   });
 
@@ -117,6 +118,7 @@ class SpriteRigPose {
   final String? faceProfileId;
   final String? faceSetId;
   final int layerPolicyVersion;
+  final Map<String, String> partAssets;
   final Map<String, SpritePartTransform> parts;
 
   String get displayName {
@@ -143,6 +145,9 @@ class SpriteRigPose {
       faceProfileId: json['faceProfileId'] as String?,
       faceSetId: json['faceSetId'] as String?,
       layerPolicyVersion: (json['layerPolicyVersion'] as num?)?.toInt() ?? 1,
+      partAssets: (json['partAssets'] as Map<String, dynamic>? ?? const {}).map(
+        (id, asset) => MapEntry(id, asset as String),
+      ),
       parts: values.map(
         (id, value) => MapEntry(
           id,
@@ -156,6 +161,8 @@ class SpriteRigPose {
     return parts[partId] ?? const SpritePartTransform();
   }
 
+  String assetFor(SpriteRigPart part) => partAssets[part.id] ?? part.asset;
+
   SpriteRigPose update(String partId, SpritePartTransform transform) {
     return SpriteRigPose(
       id: id,
@@ -165,7 +172,22 @@ class SpriteRigPose {
       faceProfileId: faceProfileId,
       faceSetId: faceSetId,
       layerPolicyVersion: layerPolicyVersion,
+      partAssets: partAssets,
       parts: {...parts, partId: transform},
+    );
+  }
+
+  SpriteRigPose withPartAsset(String partId, String asset) {
+    return SpriteRigPose(
+      id: id,
+      name: name,
+      rigId: rigId,
+      faceExpressionId: faceExpressionId,
+      faceProfileId: faceProfileId,
+      faceSetId: faceSetId,
+      layerPolicyVersion: layerPolicyVersion,
+      partAssets: {...partAssets, partId: asset},
+      parts: parts,
     );
   }
 
@@ -178,6 +200,7 @@ class SpriteRigPose {
       faceProfileId: faceProfileId,
       faceSetId: faceSetId,
       layerPolicyVersion: layerPolicyVersion,
+      partAssets: partAssets,
       parts: parts,
     );
   }
@@ -191,6 +214,7 @@ class SpriteRigPose {
       faceProfileId: profileId,
       faceSetId: setId,
       layerPolicyVersion: layerPolicyVersion,
+      partAssets: partAssets,
       parts: parts,
     );
   }
@@ -204,6 +228,7 @@ class SpriteRigPose {
       faceProfileId: faceProfileId,
       faceSetId: faceSetId,
       layerPolicyVersion: layerPolicyVersion,
+      partAssets: partAssets,
       parts: parts,
     );
   }
@@ -216,6 +241,7 @@ class SpriteRigPose {
     if (faceProfileId != null) 'faceProfileId': faceProfileId,
     if (faceSetId != null) 'faceSetId': faceSetId,
     'layerPolicyVersion': layerPolicyVersion,
+    if (partAssets.isNotEmpty) 'partAssets': partAssets,
     'parts': parts.map((id, transform) => MapEntry(id, transform.toJson())),
   };
 
@@ -312,6 +338,7 @@ class SpriteLayerPolicy {
       faceProfileId: pose.faceProfileId,
       faceSetId: pose.faceSetId,
       layerPolicyVersion: pose.layerPolicyVersion,
+      partAssets: pose.partAssets,
       parts: pose.parts.map(
         (id, transform) =>
             MapEntry(id, isLocked(id) ? transform.withoutLayer() : transform),

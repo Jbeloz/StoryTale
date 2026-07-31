@@ -50,8 +50,12 @@ Sprite Studio will support:
 - drag mode, rotation, X/Y position, Undo, and Redo;
 - safe front/back layer adjustments;
 - a reusable five-expression default face catalog;
+- a compact Appearance section for actor profile, paired hairstyle, and local
+  skin-tone color;
 - aligned front/back hair, per-part clothing, loose-garment, and accessory
   layers from an approved appearance package;
+- permanent front/back hair slots that follow the head and use the fixed
+  canvas, pivot, and scale contract in `FIXED_HAIR_SLOT_PLAN.md`;
 - anchored held items with approved relative layer modes;
 - creating, naming, saving, renaming, and deleting custom poses;
 - built-in neutral, talking, pointing, and walking poses;
@@ -316,6 +320,49 @@ books/<book-id>/story-bible/characters/<character-id>/sprites/faces/
 
 Unknown or missing expressions always fall back to `neutral`.
 
+## 6A. Actor appearance, hair, and skin tone
+
+**Status: planned as Phase 7G.1A, the next current roadmap slice.**
+
+The five starter actors remain reusable appearance starting points:
+
+1. Default
+2. Hero
+3. Heroine
+4. Elder
+5. Adult
+
+Each actor provides a default face profile, one fitted front/back hairstyle
+pair, and one default skin tone. All five use the same immutable
+`humanoid_v1` head and body geometry.
+
+Sprite Studio adds one compact **Appearance** section:
+
+```text
+Actor      [Default v]
+Hair       [thumbnail catalog]
+Skin       [swatch] [color picker] [#RRGGBB] [Reset]
+```
+
+- Actor changes load that actor's default face, complete hairstyle pair, and
+  default skin tone.
+- Hair changes switch the fitted front and back files together.
+- Skin opens a dropper-style picker with saturation/value, hue, and hex entry.
+- Any opaque RGB color is allowed; suggested human-tone swatches are shortcuts,
+  not restrictions.
+- Reset restores the selected actor's default color.
+- Invalid catalog IDs or color values use Default/Neutral safely.
+
+The skin color is rendered locally through fixed masks for the head and nine
+body pieces. It preserves alpha, outlines, shading, white eyes, highlights,
+and face details. It does not recolor hair, clothes, or accessories and never
+calls Gemini or Cloudflare.
+
+`actorProfileId`, `hairStyleId`, and `skinTone` are saved once in the
+appearance manifest. They are not copied into every pose. Switching between
+Idle, Talking, Pointing, Walking, or a custom pose therefore keeps the same
+appearance, and Story Mode can reuse it across chapters and later volumes.
+
 ## 7. Named custom poses
 
 Add a `+ New Pose` action:
@@ -503,6 +550,16 @@ controls its joints.
 - Exercise Neutral, Talking, Pointing, and Walking in one review chapter.
 - Validate speaking and strong-emotion fallbacks with project assets.
 
+### Part 7G.1A - Actor hair and skin foundation - next
+
+- Add one actor appearance record for Default, Hero, Heroine, Elder, and Adult.
+- Add one fitted front/back default hairstyle pair per actor.
+- Add rig-owned skin masks for the head and nine body pieces.
+- Add the compact Actor, Hair, and Skin controls.
+- Save actor profile, hairstyle, and skin tone in appearance data.
+- Verify all five actors in Idle, Talking, Pointing, and Walking without
+  changing geometry or making an image-provider request for tinting.
+
 The default `humanoid_v1` rig is the approved V1 geometry template. A generated
 book character references that stable template ID/version/hash and adds its own
 face catalog, front/back hair, outfit overlays, accessory attachments, and
@@ -525,6 +582,10 @@ Sprite Studio is complete when:
 - turning off Bone mode prevents joint movement but still permits selection;
 - every default face aligns with the same head and preserves eye whites and
   highlights;
+- each starter actor loads a complete matching front/back hairstyle pair;
+- any valid skin color updates every exposed head/body skin region while
+  preserving outlines, shading, eyes, hair, clothes, and accessories;
+- actor, hairstyle, and skin tone remain unchanged when the pose changes;
 - neutral speech changes to Talking while stronger emotions remain unchanged;
 - a named pose starts from Neutral and survives an app restart;
 - session and project-default saves preserve layer order;
