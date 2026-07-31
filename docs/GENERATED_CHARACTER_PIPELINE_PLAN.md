@@ -5,9 +5,9 @@ reusable Sprite Studio package for Animated Story Mode.
 
 Status: **Planning correction complete. Phase 7G proved the package structure,
 but its visual-fidelity gate failed. Phase 7G.1, the locked-template layered
-composer, is current. Phase 7G.1A adds the actor hair and local skin-tone
-foundation before generated clothing and accessories. Phase 7H Story Mode
-binding must wait for the complete Phase 7G.1 gate.**
+composer, is current. Phase 7G.1A completed the actor hair and local skin-tone
+foundation. Phase 7G.1B generated appearance layers are next. Phase 7H Story
+Mode binding must wait for the complete Phase 7G.1 gate.**
 
 ## 1. Decision
 

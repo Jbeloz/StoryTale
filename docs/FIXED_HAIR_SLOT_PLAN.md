@@ -57,7 +57,10 @@ offset, but it must never change the slot size.
 ## Actor hair catalogs
 
 Phase 7G.1A gives Default, Hero, Heroine, Elder, and Adult one fitted default
-hairstyle each. One hairstyle record always contains both files:
+hairstyle selection each. The V1 actor records currently resolve an approved
+Short, Medium, or Long pair from the shared fixed-slot catalog. Phase 7G.1B
+may replace those files with actor-specific generated artwork without changing
+the slots. One hairstyle record always contains both files:
 
 ```text
 hair-style
@@ -71,9 +74,9 @@ IDs, compatible rig/template version, head anchor, and optional small X/Y
 correction. Sprite Studio switches the pair as one catalog choice. It never
 mixes unmatched front and back files automatically.
 
-Short, Medium, and Long are shared test/reference back parts. They remain
-available for alignment checks, but every starter actor must have a complete
-front/back pair before Phase 7G.1A is complete.
+Short, Medium, and Long remain available for alignment checks and form the V1
+starter catalog. Every actor appearance points to one complete front/back pair
+and never selects only a back layer.
 
 Hair selection belongs to the character appearance and is reused by every
 pose. Hair movement continues to follow the head, while changing skin tone

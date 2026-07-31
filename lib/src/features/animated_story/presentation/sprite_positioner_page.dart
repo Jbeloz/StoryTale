@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../shared/widgets/storytale_components.dart';
 import '../data/pose_repository.dart';
+import '../data/sprite_appearance.dart';
 import '../data/sprite_face_catalog.dart';
 import '../data/sprite_rig.dart';
 import 'widgets/sprite_face_editor.dart';
@@ -47,17 +48,13 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     'pointing': 'Pointing',
     'walking': 'Walking',
   };
-  static const _backHairVariants = {
-    'Short': 'assets/images/characters/rigs/humanoid_v1/hair/back_short.png',
-    'Medium': 'assets/images/characters/rigs/humanoid_v1/hair/back_default.png',
-    'Long': 'assets/images/characters/rigs/humanoid_v1/hair/back_long.png',
-  };
-
   final _poseRepository = PoseRepository();
+  final _appearanceRepository = const SpriteAppearanceRepository();
   final _injectedPoses = <String, SpriteRigPose>{};
   SpriteRigDefinition? _rig;
   SpriteFaceCatalog? _faceCatalog;
   SpriteFaceOverlayData? _faceOverlay;
+  SpriteAppearanceSelection _appearance = const SpriteAppearanceSelection();
   SpriteRigPose? _pose;
   SpriteRigPose? _initialPose;
   final _sessionDrafts = <String, SpriteRigPose>{};
@@ -97,12 +94,14 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
         SpriteFaceCatalog.load(_faceCatalogAsset),
         _poseRepository.loadProjectPoses(),
         _poseRepository.loadAll(),
+        _appearanceRepository.load(),
       ]);
       if (!mounted) return;
       final rig = results[0] as SpriteRigDefinition;
       final catalog = results[2] as SpriteFaceCatalog;
       final projectPoses = results[3] as List<SpriteRigPose>;
       final localPoses = results[4] as List<SpriteRigPose>;
+      final appearance = results[5] as SpriteAppearanceSelection;
       final customPoses = {
         for (final pose in projectPoses) pose.id: pose,
         for (final pose in localPoses) pose.id: pose,
@@ -110,12 +109,17 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
       final loadedPose = SpriteLayerPolicy.normalize(
         results[1] as SpriteRigPose,
       );
-      final pose = loadedPose.withFaceExpression(
-        catalog.resolveId(loadedPose.faceExpressionId),
+      final pose = _applyAppearance(
+        loadedPose.withFaceExpression(
+          catalog.resolveId(loadedPose.faceExpressionId),
+        ),
+        appearance,
+        rig: rig,
       );
       setState(() {
         _rig = rig;
         _faceCatalog = catalog;
+        _appearance = appearance;
         _pose = pose;
         _initialPose = pose;
         _customPoses
@@ -397,6 +401,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
                               child: SpriteRigView(
                                 rig: rig,
                                 pose: pose,
+                                skinTone: _colorFromHex(_appearance.skinTone),
                                 partBytes: widget.initialPartBytes,
                                 faceCatalog: _faceCatalog,
                                 faceOverlay: _faceOverlay,
@@ -551,9 +556,11 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (!_usesInjectedSource)
+          _section('Appearance', [_appearanceSelector()]),
         if (selected.id == 'back_hair')
           _section('Back hair parts', [
-            _backHairSelector(selected, pose),
+            _backHairSelector(),
             const SizedBox(height: 8),
             const Text(
               'These fitted parts keep the same position and size when switched.',
@@ -777,23 +784,95 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     );
   }
 
-  Widget _backHairSelector(SpriteRigPart part, SpriteRigPose pose) {
-    final selectedAsset = pose.assetFor(part);
-    String? selectedLabel;
-    for (final entry in _backHairVariants.entries) {
-      if (entry.value == selectedAsset) {
-        selectedLabel = entry.key;
-        break;
-      }
-    }
+  Widget _appearanceSelector() {
+    final selectedActor = SpriteAppearanceCatalog.actor(_appearance.actorId);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DropdownButtonFormField<String>(
+          key: const Key('actorAppearanceSelector'),
+          initialValue: selectedActor.id,
+          decoration: const InputDecoration(
+            labelText: 'Actor template',
+            border: OutlineInputBorder(),
+          ),
+          items: [
+            for (final actor in SpriteAppearanceCatalog.actors)
+              DropdownMenuItem(value: actor.id, child: Text(actor.label)),
+          ],
+          onChanged: (value) {
+            if (value != null) _setActorAppearance(value);
+          },
+        ),
+        const SizedBox(height: 10),
+        const Text('Fitted hair'),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final style in SpriteAppearanceCatalog.hairStyles)
+              ChoiceChip(
+                key: Key('hairStyle-${style.id}'),
+                avatar: Image.asset(
+                  style.backAsset,
+                  width: 28,
+                  height: 28,
+                  fit: BoxFit.contain,
+                ),
+                label: Text(style.label),
+                selected: _appearance.hairStyleId == style.id,
+                onSelected: (_) => _setHairStyle(style.id),
+              ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                key: const Key('skinToneButton'),
+                onPressed: _chooseSkinTone,
+                icon: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: _colorFromHex(_appearance.skinTone),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                  ),
+                  child: const SizedBox.square(dimension: 20),
+                ),
+                label: Text('Skin  ${_appearance.skinTone}'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            TextButton(
+              key: const Key('resetSkinToneButton'),
+              onPressed: _appearance.skinTone == selectedActor.defaultSkinTone
+                  ? null
+                  : () => _setSkinTone(selectedActor.defaultSkinTone),
+              child: const Text('Reset'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '${selectedActor.label} appearance is shared by every pose and saved on this device.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
+    );
+  }
 
+  Widget _backHairSelector() {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
-        for (final entry in _backHairVariants.entries)
+        for (final style in SpriteAppearanceCatalog.hairStyles)
           ChoiceChip(
-            key: Key('backHair${entry.key}'),
+            key: Key('backHair${style.label}'),
             showCheckmark: false,
             label: SizedBox(
               width: 62,
@@ -801,29 +880,185 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Image.asset(
-                    entry.value,
+                    style.backAsset,
                     width: 54,
                     height: 54,
                     fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 4),
-                  Text(entry.key),
+                  Text(style.label),
                 ],
               ),
             ),
-            selected:
-                selectedLabel == entry.key ||
-                (selectedLabel == null && entry.key == 'Medium'),
-            onSelected: (_) {
-              if (selectedAsset == entry.value) return;
-              _rememberPose();
-              setState(() {
-                _pose = _pose!.withPartAsset(part.id, entry.value);
-              });
-            },
+            selected: _appearance.hairStyleId == style.id,
+            onSelected: (_) => _setHairStyle(style.id),
           ),
       ],
     );
+  }
+
+  void _setActorAppearance(String actorId) {
+    final actor = SpriteAppearanceCatalog.actor(actorId);
+    final appearance = SpriteAppearanceSelection(
+      actorId: actor.id,
+      hairStyleId: actor.defaultHairStyleId,
+      skinTone: actor.defaultSkinTone,
+    );
+    setState(() {
+      _appearance = appearance;
+      _pose = _applyAppearance(_pose!, appearance, resetFace: true);
+    });
+    _persistAppearance();
+  }
+
+  void _setHairStyle(String styleId) {
+    if (_appearance.hairStyleId == styleId) return;
+    final appearance = _appearance.copyWith(hairStyleId: styleId);
+    setState(() {
+      _appearance = appearance;
+      _pose = _applyAppearance(_pose!, appearance);
+    });
+    _persistAppearance();
+  }
+
+  Future<void> _chooseSkinTone() async {
+    var selected = _colorFromHex(_appearance.skinTone);
+    var hsv = HSVColor.fromColor(selected);
+    final controller = TextEditingController(text: _hexFromColor(selected));
+    final chosen = await showDialog<Color>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          void update(HSVColor value) {
+            hsv = value;
+            selected = hsv.toColor();
+            controller.text = _hexFromColor(selected);
+            setDialogState(() {});
+          }
+
+          return AlertDialog(
+            title: const Text('Choose skin color'),
+            content: SizedBox(
+              width: 360,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: selected,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('Hue'),
+                  Slider(
+                    value: hsv.hue,
+                    min: 0,
+                    max: 360,
+                    onChanged: (value) => update(hsv.withHue(value)),
+                  ),
+                  const Text('Color'),
+                  Slider(
+                    value: hsv.saturation,
+                    onChanged: (value) => update(hsv.withSaturation(value)),
+                  ),
+                  const Text('Brightness'),
+                  Slider(
+                    value: hsv.value,
+                    onChanged: (value) => update(hsv.withValue(value)),
+                  ),
+                  TextField(
+                    key: const Key('skinToneHexInput'),
+                    controller: controller,
+                    decoration: const InputDecoration(
+                      labelText: 'Hex color',
+                      hintText: '#F2D2B6',
+                      border: OutlineInputBorder(),
+                    ),
+                    onSubmitted: (value) {
+                      selected = _colorFromHex(value);
+                      hsv = HSVColor.fromColor(selected);
+                      controller.text = _hexFromColor(selected);
+                      setDialogState(() {});
+                    },
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                key: const Key('applySkinToneButton'),
+                onPressed: () => Navigator.pop(context, selected),
+                child: const Text('Apply'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    controller.dispose();
+    if (chosen == null || !mounted) return;
+    _setSkinTone(_hexFromColor(chosen));
+  }
+
+  void _setSkinTone(String skinTone) {
+    final appearance = _appearance.copyWith(skinTone: skinTone);
+    setState(() => _appearance = appearance);
+    _persistAppearance();
+  }
+
+  SpriteRigPose _applyAppearance(
+    SpriteRigPose pose,
+    SpriteAppearanceSelection appearance, {
+    SpriteRigDefinition? rig,
+    bool resetFace = false,
+  }) {
+    final targetRig = rig ?? _rig;
+    if (targetRig == null) return pose;
+    final actor = SpriteAppearanceCatalog.actor(appearance.actorId);
+    final hair = SpriteAppearanceCatalog.hair(appearance.hairStyleId);
+    var result = pose;
+    if (targetRig.partsById.containsKey('front_hair')) {
+      result = result.withPartAsset('front_hair', hair.frontAsset);
+    }
+    if (targetRig.partsById.containsKey('back_hair')) {
+      result = result.withPartAsset('back_hair', hair.backAsset);
+    }
+    if (_faceCatalog != null || rig != null) {
+      final setId = resetFace
+          ? 'neutral'
+          : pose.faceSetId ?? pose.faceExpressionId;
+      result = result.withFaceSelection(actor.faceProfileId, setId);
+      if (resetFace) result = result.withFaceExpression('neutral');
+    }
+    return result;
+  }
+
+  void _persistAppearance() {
+    _appearanceRepository.save(_appearance).catchError((_) {});
+  }
+
+  Color _colorFromHex(String source) {
+    final cleaned = source.trim().replaceFirst('#', '');
+    final value = int.tryParse(cleaned, radix: 16);
+    if (value == null || cleaned.length != 6) {
+      return const Color(0xFFF2EDEF);
+    }
+    return Color(0xFF000000 | value);
+  }
+
+  String _hexFromColor(Color color) {
+    final rgb = color.toARGB32() & 0x00FFFFFF;
+    return '#${rgb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
   }
 
   Widget _section(String title, List<Widget> children) {
@@ -989,7 +1224,12 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
         _faceCatalog!.expressionsById.containsKey(setId)) {
       pose = pose.withFaceExpression(setId);
     }
-    setState(() => _pose = pose);
+    final actor = SpriteAppearanceCatalog.actorForProfile(profileId);
+    setState(() {
+      _pose = pose;
+      _appearance = _appearance.copyWith(actorId: actor.id);
+    });
+    _persistAppearance();
   }
 
   void _selectPart(String? partId) {
@@ -1069,9 +1309,14 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
 
   Future<SpriteRigPose> _loadBuiltInPose(String id) async {
     final saved = _savedDefaults[id];
-    if (saved != null) return _normalizePose(saved);
+    if (saved != null) {
+      return _applyAppearance(_normalizePose(saved), _appearance);
+    }
     if (_usesInjectedSource) return _normalizePose(_injectedPoses[id]!);
-    return _normalizePose(await SpriteRigPose.load(_builtInPoses[id]!));
+    return _applyAppearance(
+      _normalizePose(await SpriteRigPose.load(_builtInPoses[id]!)),
+      _appearance,
+    );
   }
 
   bool get _isDirty =>
@@ -1220,8 +1465,9 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     if (_isBuiltInPose(id)) {
       storedPose = await _loadBuiltInPose(id);
     } else {
-      storedPose = _normalizePose(
-        _customPoses.firstWhere((pose) => pose.id == id),
+      storedPose = _applyAppearance(
+        _normalizePose(_customPoses.firstWhere((pose) => pose.id == id)),
+        _appearance,
       );
     }
     final visiblePose = _sessionDrafts[id] ?? storedPose;

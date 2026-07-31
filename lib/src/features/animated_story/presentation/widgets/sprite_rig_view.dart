@@ -15,6 +15,7 @@ class SpriteRigView extends StatelessWidget {
   const SpriteRigView({
     required this.rig,
     required this.pose,
+    this.skinTone,
     this.partBytes,
     this.faceCatalog,
     this.faceOverlay,
@@ -31,6 +32,7 @@ class SpriteRigView extends StatelessWidget {
 
   final SpriteRigDefinition rig;
   final SpriteRigPose pose;
+  final Color? skinTone;
   final Map<String, Uint8List>? partBytes;
   final SpriteFaceCatalog? faceCatalog;
   final SpriteFaceOverlayData? faceOverlay;
@@ -209,13 +211,18 @@ class SpriteRigView extends StatelessWidget {
 
   Widget _image(SpriteRigPart part, {Color? color}) {
     final bytes = partBytes?[part.id];
-    final blendMode = color == null ? null : BlendMode.srcIn;
+    final tint = color ?? (_canTint(part, bytes) ? skinTone : null);
+    final blendMode = color != null
+        ? BlendMode.srcIn
+        : tint != null
+        ? BlendMode.modulate
+        : null;
     if (bytes != null) {
       return Image.memory(
         bytes,
         fit: BoxFit.fill,
         filterQuality: FilterQuality.high,
-        color: color,
+        color: tint,
         colorBlendMode: blendMode,
       );
     }
@@ -223,9 +230,15 @@ class SpriteRigView extends StatelessWidget {
       pose.assetFor(part),
       fit: BoxFit.fill,
       filterQuality: FilterQuality.high,
-      color: color,
+      color: tint,
       colorBlendMode: blendMode,
     );
+  }
+
+  bool _canTint(SpriteRigPart part, Uint8List? bytes) {
+    if (bytes != null) return false;
+    return pose.assetFor(part).contains('/base/') ||
+        part.id == faceCatalog?.headPartId;
   }
 
   Widget _anchor(SpriteRigPart part, Offset pivot) {

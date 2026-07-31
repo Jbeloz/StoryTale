@@ -361,9 +361,9 @@ novel EPUB remains deferred; Phase 6 uses the Little Prince fixture first.
 
 Status: **Current.** Phase 7G is a completed structural prototype, but the live
 Little Prince result failed the exact-template visual-fidelity gate. Phase
-7G.1, the locked-template layered composer, is the immediate blocker. Its next
-slice is Phase 7G.1A, the actor hair and local skin-tone foundation. Phase 7H
-Story Mode binding waits for the complete Phase 7G.1 gate.
+7G.1A now provides the local actor, paired-hair, and skin-tone foundation.
+Phase 7G.1B, generated layers on the locked template, is the immediate blocker.
+Phase 7H Story Mode binding waits for the complete Phase 7G.1 gate.
 
 Implementation order:
 
@@ -376,12 +376,12 @@ Implementation order:
 3. **Current Phase 7G.1:** freeze the ten total local rig parts (one head plus
    nine body pieces), masks, anchors, and geometry hash. Gemini must not
    generate replacement geometry.
-4. **Next Phase 7G.1A:** give Default, Hero, Heroine, Elder, and Adult one
+4. **Implemented Phase 7G.1A:** give Default, Hero, Heroine, Elder, and Adult one
    stable actor appearance catalog containing a fitted front/back hair pair,
    a default hair-style ID, and a default skin-tone value. The current
    Short/Medium/Long back-hair choices remain shared test parts until each
    actor catalog is complete.
-5. **Next Phase 7G.1A:** add one local skin-tone picker for the locked head and
+5. **Implemented Phase 7G.1A:** add one local skin-tone picker for the locked head and
    nine body pieces. It accepts any opaque RGB/hex color, preserves alpha,
    black line art, and shading through rig-owned skin masks, and never calls an
    image provider.
@@ -435,14 +435,15 @@ Current Phase 7G.1 work:
 
 - [ ] Never send a generated head or body to the runtime package.
 - [ ] Keep the shared `humanoid_v1` base geometry immutable and versioned.
-- [ ] **Phase 7G.1A:** add one fitted front/back default hairstyle for each
+- [x] **Phase 7G.1A:** add one fitted front/back default hairstyle for each
   Default, Hero, Heroine, Elder, and Adult actor profile.
-- [ ] **Phase 7G.1A:** keep actor identity, hairstyle selection, and skin tone
+- [x] **Phase 7G.1A:** keep actor identity, hairstyle selection, and skin tone
   in an appearance record shared by every pose, chapter, and later volume.
-- [ ] **Phase 7G.1A:** add rig-owned skin masks and a free RGB/hex color picker
+- [x] **Phase 7G.1A:** use the locked base-part alpha as the V1 rig-owned tint
+  mask and add a free RGB/hex color picker
   that recolors all exposed template skin locally without recoloring hair,
   face marks, clothing, white eyes, highlights, or black outlines.
-- [ ] **Phase 7G.1A:** show compact Actor, Hair, and Skin controls in Sprite
+- [x] **Phase 7G.1A:** show compact Actor, Hair, and Skin controls in Sprite
   Studio, with thumbnail selection, current-color swatch, Reset, and a
   neutral fallback when an asset or saved color is invalid.
 - [ ] Produce a component-sheet pipeline for modular faces, front/back hair,
@@ -468,6 +469,16 @@ Phase 7G.1A acceptance gate:
 - tinting is local and consumes no Gemini or Cloudflare request; and
 - Story Mode can later resolve the same `appearanceId` without rebuilding the
   character.
+
+Phase 7G.1A implementation note:
+
+- the appearance record is saved once in local device storage and reapplied
+  when the user changes pose;
+- each actor currently resolves one approved pair from the fitted
+  Short/Medium/Long V1 catalog; actor-specific generated front/back artwork is
+  produced in Phase 7G.1B without changing slot geometry; and
+- the V1 base artwork alpha is the tint boundary while the face overlay and
+  hair layers remain outside the tint operation.
 
 Blocked Phase 7H work:
 

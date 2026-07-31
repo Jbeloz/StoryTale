@@ -322,7 +322,7 @@ Unknown or missing expressions always fall back to `neutral`.
 
 ## 6A. Actor appearance, hair, and skin tone
 
-**Status: planned as Phase 7G.1A, the next current roadmap slice.**
+**Status: implemented as Phase 7G.1A. Phase 7G.1B is next.**
 
 The five starter actors remain reusable appearance starting points:
 
@@ -550,15 +550,25 @@ controls its joints.
 - Exercise Neutral, Talking, Pointing, and Walking in one review chapter.
 - Validate speaking and strong-emotion fallbacks with project assets.
 
-### Part 7G.1A - Actor hair and skin foundation - next
+### Part 7G.1A - Actor hair and skin foundation - complete
 
-- Add one actor appearance record for Default, Hero, Heroine, Elder, and Adult.
-- Add one fitted front/back default hairstyle pair per actor.
-- Add rig-owned skin masks for the head and nine body pieces.
-- Add the compact Actor, Hair, and Skin controls.
-- Save actor profile, hairstyle, and skin tone in appearance data.
-- Verify all five actors in Idle, Talking, Pointing, and Walking without
+- [x] Add one actor appearance record for Default, Hero, Heroine, Elder, and
+  Adult.
+- [x] Add one fitted front/back default hairstyle pair per actor.
+- [x] Use each locked base part's alpha as the V1 local skin-tint mask.
+- [x] Add the compact Actor, Hair, and Skin controls.
+- [x] Save actor profile, hairstyle, and skin tone in appearance data.
+- [ ] User verification: check all five actors in Idle, Talking, Pointing, and
+  Walking without
   changing geometry or making an image-provider request for tinting.
+
+### Part 7G.1B - Generated appearance layers - next
+
+- Generate aligned face, actor-specific front/back hair, clothing, loose
+  garment, and accessory layers only.
+- Keep the shared head and nine body pieces unchanged.
+- Validate dimensions, transparency, anchors, layer roles, and geometry hash
+  before accepting a generated layer.
 
 The default `humanoid_v1` rig is the approved V1 geometry template. A generated
 book character references that stable template ID/version/hash and adds its own
