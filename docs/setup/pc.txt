@@ -1,0 +1,1 @@
+& "C:\Users\Houro\Desktop\IT Elect 4\storytale\tool\run_storytale.ps1" -Device web-server -Port 52827

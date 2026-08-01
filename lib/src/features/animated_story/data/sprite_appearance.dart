@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SpriteAppearanceSelection {
@@ -38,6 +39,8 @@ class SpriteAppearanceSelection {
     'hairStyleId': hairStyleId,
     'skinTone': skinTone,
   };
+
+  String toJsonString() => jsonEncode(toJson());
 }
 
 class SpriteActorAppearance {
@@ -45,6 +48,7 @@ class SpriteActorAppearance {
     required this.id,
     required this.label,
     required this.faceProfileId,
+    required this.frontHairAsset,
     required this.defaultHairStyleId,
     required this.defaultSkinTone,
   });
@@ -52,6 +56,7 @@ class SpriteActorAppearance {
   final String id;
   final String label;
   final String faceProfileId;
+  final String frontHairAsset;
   final String defaultHairStyleId;
   final String defaultSkinTone;
 }
@@ -60,24 +65,29 @@ class SpriteHairStyle {
   const SpriteHairStyle({
     required this.id,
     required this.label,
-    required this.frontAsset,
     required this.backAsset,
   });
 
   final String id;
   final String label;
-  final String frontAsset;
   final String backAsset;
+
+  bool get hasBackHair => backAsset.isNotEmpty;
 }
 
 class SpriteAppearanceCatalog {
   const SpriteAppearanceCatalog._();
+
+  static const _heroineLongBackHair =
+      'assets/images/characters/rigs/humanoid_v1/hair/back_heroine_long.png';
 
   static const actors = [
     SpriteActorAppearance(
       id: 'default',
       label: 'Default',
       faceProfileId: 'default',
+      frontHairAsset:
+          'assets/images/characters/rigs/humanoid_v1/hair/front_default.png',
       defaultHairStyleId: 'medium',
       defaultSkinTone: '#F2EDEF',
     ),
@@ -85,6 +95,8 @@ class SpriteAppearanceCatalog {
       id: 'hero',
       label: 'Hero',
       faceProfileId: 'hero',
+      frontHairAsset:
+          'assets/images/characters/rigs/humanoid_v1/hair/front_hero.png',
       defaultHairStyleId: 'short',
       defaultSkinTone: '#EFC9AA',
     ),
@@ -92,47 +104,48 @@ class SpriteAppearanceCatalog {
       id: 'heroine',
       label: 'Heroine',
       faceProfileId: 'heroine',
-      defaultHairStyleId: 'long',
+      frontHairAsset:
+          'assets/images/characters/rigs/humanoid_v1/hair/front_heroine_v8.png',
+      defaultHairStyleId: 'none',
       defaultSkinTone: '#F3D2BD',
     ),
     SpriteActorAppearance(
       id: 'elder',
       label: 'Elder',
       faceProfileId: 'elder',
-      defaultHairStyleId: 'medium',
+      frontHairAsset:
+          'assets/images/characters/rigs/humanoid_v1/hair/front_elder.png',
+      defaultHairStyleId: 'none',
       defaultSkinTone: '#DDB99D',
     ),
     SpriteActorAppearance(
       id: 'adult',
       label: 'Adult',
       faceProfileId: 'adult_deep',
+      frontHairAsset:
+          'assets/images/characters/rigs/humanoid_v1/hair/front_adult.png',
       defaultHairStyleId: 'short',
       defaultSkinTone: '#C99575',
     ),
   ];
 
   static const hairStyles = [
+    SpriteHairStyle(id: 'none', label: 'None', backAsset: ''),
     SpriteHairStyle(
       id: 'short',
       label: 'Short',
-      frontAsset:
-          'assets/images/characters/rigs/humanoid_v1/hair/front_default.png',
       backAsset:
           'assets/images/characters/rigs/humanoid_v1/hair/back_short.png',
     ),
     SpriteHairStyle(
       id: 'medium',
       label: 'Medium',
-      frontAsset:
-          'assets/images/characters/rigs/humanoid_v1/hair/front_default.png',
       backAsset:
           'assets/images/characters/rigs/humanoid_v1/hair/back_default.png',
     ),
     SpriteHairStyle(
       id: 'long',
       label: 'Long',
-      frontAsset:
-          'assets/images/characters/rigs/humanoid_v1/hair/front_default.png',
       backAsset: 'assets/images/characters/rigs/humanoid_v1/hair/back_long.png',
     ),
   ];
@@ -154,8 +167,15 @@ class SpriteAppearanceCatalog {
   static SpriteHairStyle hair(String id) {
     return hairStyles.firstWhere(
       (value) => value.id == id,
-      orElse: () => hairStyles[1],
+      orElse: () => hairStyles[2],
     );
+  }
+
+  static String backHairAsset(String actorId, String hairStyleId) {
+    if (actorId == 'heroine' && hairStyleId == 'long') {
+      return _heroineLongBackHair;
+    }
+    return hair(hairStyleId).backAsset;
   }
 }
 
@@ -165,12 +185,25 @@ class SpriteAppearanceRepository {
   final String rigId;
 
   String get _storageKey => 'sprite_studio.$rigId.appearance';
+  String get _projectAsset =>
+      'assets/images/characters/rigs/$rigId/appearance.json';
 
   Future<SpriteAppearanceSelection> load() async {
     final preferences = await SharedPreferences.getInstance();
     final source = preferences.getString(_storageKey);
-    if (source == null) return const SpriteAppearanceSelection();
+    if (source == null) return _loadProjectDefault();
     try {
+      return SpriteAppearanceSelection.fromJson(
+        jsonDecode(source) as Map<String, dynamic>,
+      );
+    } catch (_) {
+      return _loadProjectDefault();
+    }
+  }
+
+  Future<SpriteAppearanceSelection> _loadProjectDefault() async {
+    try {
+      final source = await rootBundle.loadString(_projectAsset);
       return SpriteAppearanceSelection.fromJson(
         jsonDecode(source) as Map<String, dynamic>,
       );

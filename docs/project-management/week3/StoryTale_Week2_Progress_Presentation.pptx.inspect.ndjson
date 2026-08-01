@@ -1,0 +1,147 @@
+{"kind":"deck","id":"pr/z7deht","name":"Deck"}
+{"kind":"layout","layoutId":"671709cc-1de2-48c1-a95f-64f01bad91ff","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"48e115b4-b022-4e91-97d0-9df6bfb5d12d","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/1du5k1","slide":1,"title":"WEEK 2 PROGRESS UPDATE","textShapes":4}
+{"kind":"shape","id":"sh/36lcjmxo","slide":1,"name":"cover-left","bbox":[0,0,510,720]}
+{"kind":"textbox","id":"sh/47utcry9","slide":1,"name":"cover-kicker","text":"WEEK 2 PROGRESS UPDATE","textPreview":"WEEK 2 PROGRESS UPDATE","textChars":22,"textLines":1,"bbox":[64,64,360,28]}
+{"kind":"textbox","id":"sh/583ulcfu","slide":1,"name":"cover-title","text":"StoryTale","textPreview":"StoryTale","textChars":9,"textLines":1,"bbox":[64,126,390,74]}
+{"kind":"textbox","id":"sh/q9wbehgf","slide":1,"name":"cover-subtitle","text":"A local-first mobile e-book library that helps students read, translate, listen, and imagine.","textPreview":"A local-first mobile e-book library that helps students read, translate, listen, and imagine.","textChars":93,"textLines":1,"bbox":[64,218,365,150]}
+{"kind":"textbox","id":"sh/ra5cnmx0","slide":1,"name":"cover-meta","text":"John Benedict S. Alejo\nIT Elect 4  |  August 2026","textPreview":"John Benedict S. Alejo | IT Elect 4  |  August 2026","textChars":49,"textLines":2,"bbox":[64,592,350,56]}
+{"kind":"image","id":"im/hgval07m","slide":1,"name":"","geometry":"roundRect","alt":"StoryTale splash screen concept","bbox":[585,42,560,636]}
+{"kind":"notes","id":"nt/1du5k1","slide":1,"text":"Introduce StoryTale as the proposed application and frame the update around practical Week 2 progress.\n\n[Sources]\n- Internal source: StoryTale README.md and ARCHITECTURE.md\n- Local visual: C:\\Users\\Houro\\Desktop\\IT Elect 4\\storytale\\docs\\ui-concepts\\ui\\1 revamped.png\n[/Sources]"}
+{"kind":"slide","id":"sl/u9yf0o","slide":2,"title":"PROJECT CONCEPT","textShapes":8}
+{"kind":"textbox","id":"sh/6x0bilwv","slide":2,"name":"section-2","text":"PROJECT CONCEPT","textPreview":"PROJECT CONCEPT","textChars":15,"textLines":1,"bbox":[64,40,360,24]}
+{"kind":"textbox","id":"sh/tkrud0fm","slide":2,"name":"title-2","text":"One app removes the need to switch between reading tools","textPreview":"One app removes the need to switch between reading tools","textChars":56,"textLines":1,"bbox":[64,70,1110,68]}
+{"kind":"shape","id":"sh/szitkve1","slide":2,"name":"title-rule-2","bbox":[64,145,1152,2]}
+{"kind":"textbox","id":"sh/fm9cfqxs","slide":2,"name":"footer-2","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1180,676,36,18]}
+{"kind":"textbox","id":"sh/hobuh0fi","slide":2,"name":"problem-label","text":"THE PROBLEM","textPreview":"THE PROBLEM","textChars":11,"textLines":1,"bbox":[570,184,260,25]}
+{"kind":"textbox","id":"sh/gnitoved","slide":2,"name":"problem-copy","text":"Students may struggle with unfamiliar English, long text, and separate apps for translation, narration, and visual content.","textPreview":"Students may struggle with unfamiliar English, long text, and separate apps for translation, narration, and visual content.","textChars":123,"textLines":1,"bbox":[570,216,590,112]}
+{"kind":"textbox","id":"sh/3qtcjaxo","slide":2,"name":"audience-label","text":"TARGET AUDIENCE","textPreview":"TARGET AUDIENCE","textChars":15,"textLines":1,"bbox":[570,362,260,25]}
+{"kind":"textbox","id":"sh/2pkvq5w3","slide":2,"name":"audience-copy","text":"Students and English learners who want a simpler, more engaging way to understand EPUB stories.","textPreview":"Students and English learners who want a simpler, more engaging way to understand EPUB stories.","textChars":95,"textLines":1,"bbox":[570,394,590,90]}
+{"kind":"textbox","id":"sh/snupgv6d","slide":2,"name":"promise","text":"Read  •  Translate  •  Listen  •  Imagine","textPreview":"Read  •  Translate  •  Listen  •  Imagine","textChars":41,"textLines":1,"bbox":[570,554,580,42]}
+{"kind":"image","id":"im/fit4fq1g","slide":2,"name":"","geometry":"roundRect","alt":"StoryTale library screen concept","bbox":[64,178,440,470]}
+{"kind":"notes","id":"nt/u9yf0o","slide":2,"text":"Explain the student problem first, then show how the four modes answer it.\n\n[Sources]\n- Internal source: StoryTale README.md\n- Local visual: C:\\Users\\Houro\\Desktop\\IT Elect 4\\storytale\\docs\\ui-concepts\\ui\\6.png\n[/Sources]"}
+{"kind":"slide","id":"sl/4qbm2r","slide":3,"title":"SOLUTION FLOW","textShapes":23}
+{"kind":"textbox","id":"sh/0v25w7eh","slide":3,"name":"section-3","text":"SOLUTION FLOW","textPreview":"SOLUTION FLOW","textChars":13,"textLines":1,"bbox":[64,40,360,24]}
+{"kind":"textbox","id":"sh/zut432xw","slide":3,"name":"title-3","text":"Books stay local while AI prepares optional enhancements","textPreview":"Books stay local while AI prepares optional enhancements","textChars":56,"textLines":1,"bbox":[64,70,1110,68]}
+{"kind":"shape","id":"sh/etknuxwb","slide":3,"name":"title-rule-3","bbox":[64,145,1152,2]}
+{"kind":"textbox","id":"sh/dsbm1cfq","slide":3,"name":"footer-3","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1180,676,36,18]}
+{"kind":"shape","id":"sh/cr25s7e5","slide":3,"name":"flow-box-0","bbox":[66,216,216,292]}
+{"kind":"textbox","id":"sh/rqt4z2x0","slide":3,"name":"flow-num-0","text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[84,235,48,38]}
+{"kind":"textbox","id":"sh/qpknqxwf","slide":3,"name":"flow-title-0","text":"Import EPUB","textPreview":"Import EPUB","textChars":11,"textLines":1,"bbox":[84,296,180,54]}
+{"kind":"textbox","id":"sh/xof6dwva","slide":3,"name":"flow-body-0","text":"Parse metadata, cover, spine, and cleaned chapters","textPreview":"Parse metadata, cover, spine, and cleaned chapters","textChars":50,"textLines":1,"bbox":[84,365,180,110]}
+{"kind":"textbox","id":"sh/wnm54rep","slide":3,"name":"flow-arrow-0","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[284,330,26,36]}
+{"kind":"shape","id":"sh/utkbil43","slide":3,"name":"flow-box-1","bbox":[300,216,216,292]}
+{"kind":"textbox","id":"sh/futcbq5o","slide":3,"name":"flow-num-1","text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[318,235,48,38]}
+{"kind":"textbox","id":"sh/gv2tkvm9","slide":3,"name":"flow-title-1","text":"Read locally","textPreview":"Read locally","textChars":12,"textLines":1,"bbox":[318,296,180,54]}
+{"kind":"textbox","id":"sh/hwbud0nu","slide":3,"name":"flow-body-1","text":"Save chapter position, progress, and reader settings","textPreview":"Save chapter position, progress, and reader settings","textChars":52,"textLines":1,"bbox":[318,365,180,110]}
+{"kind":"textbox","id":"sh/650bel47","slide":3,"name":"flow-arrow-1","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[518,330,26,36]}
+{"kind":"shape","id":"sh/7q9s765s","slide":3,"name":"flow-box-2","bbox":[534,216,216,292]}
+{"kind":"textbox","id":"sh/sritgbmd","slide":3,"name":"flow-num-2","text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[552,235,48,38]}
+{"kind":"textbox","id":"sh/tsra9gny","slide":3,"name":"flow-title-2","text":"Translate & listen","textPreview":"Translate & listen","textChars":18,"textLines":1,"bbox":[552,296,180,54]}
+{"kind":"textbox","id":"sh/q14bq54b","slide":3,"name":"flow-body-2","text":"DeepL Filipino cache plus offline narration","textPreview":"DeepL Filipino cache plus offline narration","textChars":43,"textLines":1,"bbox":[552,365,180,110]}
+{"kind":"textbox","id":"sh/rmdcja5w","slide":3,"name":"flow-arrow-2","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[752,330,26,36]}
+{"kind":"shape","id":"sh/n658b2l8","slide":3,"name":"flow-box-3","bbox":[768,216,216,292]}
+{"kind":"textbox","id":"sh/m5w7ixk3","slide":3,"name":"flow-num-3","text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[786,235,48,38]}
+{"kind":"textbox","id":"sh/98nqdc3e","slide":3,"name":"flow-title-3","text":"Analyze story","textPreview":"Analyze story","textChars":13,"textLines":1,"bbox":[786,296,180,54]}
+{"kind":"textbox","id":"sh/87e9k72t","slide":3,"name":"flow-body-3","text":"Gemini produces validated characters, places, and scenes","textPreview":"Gemini produces validated characters, places, and scenes","textChars":56,"textLines":1,"bbox":[786,365,180,110]}
+{"kind":"textbox","id":"sh/vap8fmlk","slide":3,"name":"flow-arrow-3","text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[986,330,26,36]}
+{"kind":"shape","id":"sh/a9wrmhkz","slide":3,"name":"flow-box-4","bbox":[1002,216,216,292]}
+{"kind":"textbox","id":"sh/xw7qhc3q","slide":3,"name":"flow-num-4","text":"5","textPreview":"5","textChars":1,"textLines":1,"bbox":[1020,235,48,38]}
+{"kind":"textbox","id":"sh/wby9o725","slide":3,"name":"flow-title-4","text":"Play Story Mode","textPreview":"Play Story Mode","textChars":15,"textLines":1,"bbox":[1020,296,180,54]}
+{"kind":"textbox","id":"sh/jyp8jmlg","slide":3,"name":"flow-body-4","text":"Reusable sprites, backgrounds, subtitles, camera, and motion","textPreview":"Reusable sprites, backgrounds, subtitles, camera, and motion","textChars":60,"textLines":1,"bbox":[1020,365,180,110]}
+{"kind":"textbox","id":"sh/ixgrqhkv","slide":3,"name":"flow-guardrail","text":"Core reading remains usable even when an AI or image service is unavailable.","textPreview":"Core reading remains usable even when an AI or image service is unavailable.","textChars":76,"textLines":1,"bbox":[66,566,1120,42]}
+{"kind":"notes","id":"nt/4qbm2r","slide":3,"text":"Walk from EPUB import to Story Mode and emphasize that the app is local-first.\n\n[Sources]\n- Internal source: StoryTale ARCHITECTURE.md\n- Internal source: StoryTale Animated Story Mode planning documents\n[/Sources]"}
+{"kind":"slide","id":"sl/cugtmp","slide":4,"title":"WEEK 2 ACHIEVEMENTS","textShapes":21}
+{"kind":"textbox","id":"sh/4zatsvy5","slide":4,"name":"s4-section","text":"WEEK 2 ACHIEVEMENTS","textPreview":"WEEK 2 ACHIEVEMENTS","textChars":19,"textLines":1,"bbox":[64,44,360,25]}
+{"kind":"textbox","id":"sh/jy1czaxk","slide":4,"name":"s4-title","text":"The functional foundation is ready for feature integration","textPreview":"The functional foundation is ready for feature integration","textChars":58,"textLines":1,"bbox":[64,80,1080,82]}
+{"kind":"shape","id":"sh/ixsbq5gz","slide":4,"name":"s4-rule","bbox":[64,170,1152,2]}
+{"kind":"textbox","id":"sh/hwzux0fe","slide":4,"name":"s4-num-0","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[64,208,46,30]}
+{"kind":"textbox","id":"sh/wvqtovyt","slide":4,"name":"s4-head-0","text":"Organized Flutter structure","textPreview":"Organized Flutter structure","textChars":27,"textLines":1,"bbox":[126,206,470,36]}
+{"kind":"textbox","id":"sh/vuhcvqxo","slide":4,"name":"s4-body-0","text":"Clear src, assets, docs, services, models, and reusable components.","textPreview":"Clear src, assets, docs, services, models, and reusable components.","textChars":67,"textLines":1,"bbox":[126,246,480,60]}
+{"kind":"textbox","id":"sh/ut8bmlg3","slide":4,"name":"s4-num-1","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[649,208,46,30]}
+{"kind":"textbox","id":"sh/1s3u9kfy","slide":4,"name":"s4-head-1","text":"Reusable app shell","textPreview":"Reusable app shell","textChars":18,"textLines":1,"bbox":[711,206,470,36]}
+{"kind":"textbox","id":"sh/grud0fyd","slide":4,"name":"s4-body-1","text":"Shared navigation and dynamic placeholder screens reduce duplicated code.","textPreview":"Shared navigation and dynamic placeholder screens reduce duplicated code.","textChars":73,"textLines":1,"bbox":[711,246,480,60]}
+{"kind":"textbox","id":"sh/65w7qpsz","slide":4,"name":"s4-num-2","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[64,344,46,30]}
+{"kind":"textbox","id":"sh/7658zu9k","slide":4,"name":"s4-head-2","text":"Local-first architecture","textPreview":"Local-first architecture","textChars":24,"textLines":1,"bbox":[126,342,470,36]}
+{"kind":"textbox","id":"sh/87ypszap","slide":4,"name":"s4-body-2","text":"EPUB books, progress, translation cache, and generated assets stay device-owned.","textPreview":"EPUB books, progress, translation cache, and generated assets stay device-owned.","textChars":80,"textLines":1,"bbox":[126,382,480,60]}
+{"kind":"textbox","id":"sh/t87q14ra","slide":4,"name":"s4-num-3","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[649,344,46,30]}
+{"kind":"textbox","id":"sh/yhw7m5sn","slide":4,"name":"s4-head-3","text":"Functional EPUB path","textPreview":"Functional EPUB path","textChars":20,"textLines":1,"bbox":[711,342,470,36]}
+{"kind":"textbox","id":"sh/ji58va98","slide":4,"name":"s4-body-3","text":"Real file selection, metadata, cover, and cleaned chapter parsing are represented.","textPreview":"Real file selection, metadata, cover, and cleaned chapter parsing are represented.","textChars":82,"textLines":1,"bbox":[711,382,480,60]}
+{"kind":"textbox","id":"sh/k3epofat","slide":4,"name":"s4-num-4","text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[64,480,46,30]}
+{"kind":"textbox","id":"sh/l4nqxkre","slide":4,"name":"s4-head-4","text":"AI boundaries documented","textPreview":"AI boundaries documented","textChars":24,"textLines":1,"bbox":[126,478,470,36]}
+{"kind":"textbox","id":"sh/idgry9s7","slide":4,"name":"s4-body-4","text":"DeepL translates; Gemini analyzes stories and sprites; Cloudflare prepares backgrounds.","textPreview":"DeepL translates; Gemini analyzes stories and sprites; Cloudflare prepares backgrounds.","textChars":87,"textLines":1,"bbox":[126,518,480,60]}
+{"kind":"textbox","id":"sh/3yp87e9s","slide":4,"name":"s4-num-5","text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[649,480,46,30]}
+{"kind":"textbox","id":"sh/zi14z6p4","slide":4,"name":"s4-head-5","text":"Prototype screens connected","textPreview":"Prototype screens connected","textChars":27,"textLines":1,"bbox":[711,478,470,36]}
+{"kind":"textbox","id":"sh/ehsnq18j","slide":4,"name":"s4-body-5","text":"Reader, audio, Sprite Studio, Story Bible, catalogs, and Story Mode are navigable.","textPreview":"Reader, audio, Sprite Studio, Story Bible, catalogs, and Story Mode are navigable.","textChars":82,"textLines":1,"bbox":[711,518,480,60]}
+{"kind":"textbox","id":"sh/1kjm1g7u","slide":4,"name":"s4-footer","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1180,676,36,18]}
+{"kind":"notes","id":"nt/cugtmp","slide":4,"text":"Report the concrete Week 2 outputs and avoid claiming that later API integrations are complete.\n\n[Sources]\n- Internal source: StoryTale README.md\n- Internal source: StoryTale source structure and current prototype\n[/Sources]"}
+{"kind":"slide","id":"sl/v73lpp","slide":5,"title":"PROTOTYPE PROGRESS","textShapes":7}
+{"kind":"textbox","id":"sh/i9cbml4b","slide":5,"name":"section-5","text":"PROTOTYPE PROGRESS","textPreview":"PROTOTYPE PROGRESS","textChars":18,"textLines":1,"bbox":[64,40,360,24]}
+{"kind":"textbox","id":"sh/5cnahg32","slide":5,"name":"title-5","text":"The prototype demonstrates Story Mode and audiobook playback","textPreview":"The prototype demonstrates Story Mode and audiobook playback","textChars":60,"textLines":1,"bbox":[64,70,1110,68]}
+{"kind":"shape","id":"sh/kbutovmh","slide":5,"name":"title-rule-5","bbox":[64,145,1152,2]}
+{"kind":"textbox","id":"sh/7e5sjqls","slide":5,"name":"footer-5","text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1180,676,36,18]}
+{"kind":"shape","id":"sh/6dwbql4n","slide":5,"name":"s5-left-bg","bbox":[64,176,548,470]}
+{"kind":"shape","id":"sh/tgnal03y","slide":5,"name":"s5-right-bg","bbox":[668,176,548,470]}
+{"kind":"textbox","id":"sh/ni1s76lo","slide":5,"name":"s5-left-title","text":"Animated Story Mode","textPreview":"Animated Story Mode","textChars":19,"textLines":1,"bbox":[355,222,225,62]}
+{"kind":"textbox","id":"sh/mhsre143","slide":5,"name":"s5-left-body","text":"Chapter scenes combine approved backgrounds, character sprites, one-line subtitles, camera movement, and simple motion.","textPreview":"Chapter scenes combine approved backgrounds, character sprites, one-line subtitles, camera movement, and simple motion.","textChars":119,"textLines":1,"bbox":[355,308,220,178]}
+{"kind":"textbox","id":"sh/x8bapwre","slide":5,"name":"s5-right-title","text":"Audio Book","textPreview":"Audio Book","textChars":10,"textLines":1,"bbox":[958,222,225,62]}
+{"kind":"textbox","id":"sh/a5kbeh8n","slide":5,"name":"s5-right-body","text":"The audio screen is structured for chapter playback, narrator selection, speed, sleep timer, and queued chapters.","textPreview":"The audio screen is structured for chapter playback, narrator selection, speed, sleep timer, and queued chapters.","textChars":113,"textLines":1,"bbox":[958,308,220,160]}
+{"kind":"image","id":"im/lwzalcre","slide":5,"name":"","geometry":"roundRect","alt":"Animated Story Mode screen concept","bbox":[84,192,250,428]}
+{"kind":"image","id":"im/bap8valc","slide":5,"name":"","geometry":"roundRect","alt":"Audio book screen concept","bbox":[688,192,250,428]}
+{"kind":"notes","id":"nt/v73lpp","slide":5,"text":"Show that the interaction design exists while clearly separating prototype behavior from unfinished production services.\n\n[Sources]\n- Local visual: C:\\Users\\Houro\\Desktop\\IT Elect 4\\storytale\\docs\\ui-concepts\\ui\\12 animated story mode.png\n- Local visual: C:\\Users\\Houro\\Desktop\\IT Elect 4\\storytale\\docs\\ui-concepts\\ui\\17 audio.png\n- Internal source: current StoryTale prototype\n[/Sources]"}
+{"kind":"slide","id":"sl/6bokrr","slide":6,"title":"IMPLEMENTATION TIMELINE","textShapes":4}
+{"kind":"textbox","id":"sh/crul8nyp","slide":6,"name":"section-6","text":"IMPLEMENTATION TIMELINE","textPreview":"IMPLEMENTATION TIMELINE","textChars":23,"textLines":1,"bbox":[64,40,360,24]}
+{"kind":"textbox","id":"sh/bqlkfixk","slide":6,"name":"title-6","text":"An 11-week plan protects core reading before Story Mode","textPreview":"An 11-week plan protects core reading before Story Mode","textChars":55,"textLines":1,"bbox":[64,70,1110,68]}
+{"kind":"shape","id":"sh/aps36dgz","slide":6,"name":"title-rule-6","bbox":[64,145,1152,2]}
+{"kind":"textbox","id":"sh/lg3mlsfm","slide":6,"name":"footer-6","text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1180,676,36,18]}
+{"kind":"textbox","id":"sh/zulkjixg","slide":6,"name":"s6-footer-note","text":"Final target: completed system, documentation, and presentation by 4 October 2026","textPreview":"Final target: completed system, documentation, and presentation by 4 October 2026","textChars":81,"textLines":1,"bbox":[64,642,1060,28]}
+{"kind":"image","id":"im/hof65sv2","slide":6,"name":"","alt":"StoryTale 11-week project Gantt chart","bbox":[48,156,1184,484]}
+{"kind":"notes","id":"nt/6bokrr","slide":6,"text":"Use the timeline to show sequencing: reader first, then language/audio, story intelligence, Story Mode, and QA.\n\n[Sources]\n- Local source: C:\\Users\\Houro\\Desktop\\IT Elect 4\\storytale\\docs\\project-management\\week3\\StoryTale_Project_Timeline_Gantt.pdf\n[/Sources]"}
+{"kind":"slide","id":"sl/h02yis","slide":7,"title":"RISK READINESS","textShapes":14}
+{"kind":"textbox","id":"sh/1wbm1wzi","slide":7,"name":"section-7","text":"RISK READINESS","textPreview":"RISK READINESS","textChars":14,"textLines":1,"bbox":[64,40,360,24]}
+{"kind":"textbox","id":"sh/etknq1g7","slide":7,"name":"title-7","text":"Five risks could threaten the schedule, but each has a safe fallback","textPreview":"Five risks could threaten the schedule, but each has a safe fallback","textChars":68,"textLines":1,"bbox":[64,70,1110,68]}
+{"kind":"shape","id":"sh/zut4zmhs","slide":7,"name":"title-rule-7","bbox":[64,145,1152,2]}
+{"kind":"textbox","id":"sh/ozm5wby9","slide":7,"name":"footer-7","text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1180,676,36,18]}
+{"kind":"shape","id":"sh/9kvm5gzu","slide":7,"name":"risk-rank-0","bbox":[66,190,16,54]}
+{"kind":"textbox","id":"sh/mx4nu1g3","slide":7,"name":"risk-name-0","text":"EPUB differences","textPreview":"EPUB differences","textChars":16,"textLines":1,"bbox":[104,186,330,32]}
+{"kind":"textbox","id":"sh/nyd436ho","slide":7,"name":"risk-action-0","text":"Normalize chapters and keep manual review","textPreview":"Normalize chapters and keep manual review","textChars":41,"textLines":1,"bbox":[454,186,666,42]}
+{"kind":"shape","id":"sh/wnm50by5","slide":7,"name":"risk-rule-0","bbox":[104,244,1016,1]}
+{"kind":"shape","id":"sh/xovm9gzq","slide":7,"name":"risk-rank-1","bbox":[66,272,16,54]}
+{"kind":"textbox","id":"sh/p4nqd0zq","slide":7,"name":"risk-name-1","text":"AI inconsistency","textPreview":"AI inconsistency","textChars":16,"textLines":1,"bbox":[104,268,330,32]}
+{"kind":"textbox","id":"sh/4je9kfy5","slide":7,"name":"risk-action-1","text":"Validate structured output and use safe packages","textPreview":"Validate structured output and use safe packages","textChars":48,"textLines":1,"bbox":[454,268,666,42]}
+{"kind":"shape","id":"sh/3i58bahk","slide":7,"name":"risk-rule-1","bbox":[104,326,1016,1]}
+{"kind":"shape","id":"sh/2hwri5gf","slide":7,"name":"risk-rank-2","bbox":[66,354,16,54]}
+{"kind":"textbox","id":"sh/d87qhkz2","slide":7,"name":"risk-name-2","text":"Large voice packs","textPreview":"Large voice packs","textChars":17,"textLines":1,"bbox":[104,350,330,32]}
+{"kind":"textbox","id":"sh/c7y9ofyh","slide":7,"name":"risk-action-2","text":"Five optional, quantized ONNX packs","textPreview":"Five optional, quantized ONNX packs","textChars":35,"textLines":1,"bbox":[454,350,666,42]}
+{"kind":"shape","id":"sh/r6p8fahw","slide":7,"name":"risk-rule-2","bbox":[104,408,1016,1]}
+{"kind":"shape","id":"sh/q5grm5gb","slide":7,"name":"risk-rank-3","bbox":[66,436,16,54]}
+{"kind":"textbox","id":"sh/tc3q5gzi","slide":7,"name":"risk-name-3","text":"Mobile performance","textPreview":"Mobile performance","textChars":18,"textLines":1,"bbox":[104,432,330,32]}
+{"kind":"textbox","id":"sh/sbupcvyx","slide":7,"name":"risk-action-3","text":"Cache assets and reduce active layers","textPreview":"Cache assets and reduce active layers","textChars":37,"textLines":1,"bbox":[454,432,666,42]}
+{"kind":"shape","id":"sh/kvy9sv6t","slide":7,"name":"risk-rule-3","bbox":[104,490,1016,1]}
+{"kind":"shape","id":"sh/lw7q107e","slide":7,"name":"risk-rank-4","bbox":[66,518,16,54]}
+{"kind":"textbox","id":"sh/ytgrqlo3","slide":7,"name":"risk-name-4","text":"API quota or outage","textPreview":"API quota or outage","textChars":19,"textLines":1,"bbox":[104,514,330,32]}
+{"kind":"textbox","id":"sh/jup8zqp8","slide":7,"name":"risk-action-4","text":"Cache valid results and retry later","textPreview":"Cache valid results and retry later","textChars":35,"textLines":1,"bbox":[454,514,666,42]}
+{"kind":"shape","id":"sh/8ji9wv65","slide":7,"name":"risk-rule-4","bbox":[104,572,1016,1]}
+{"kind":"shape","id":"sh/tkrq507q","slide":7,"name":"risk-callout","bbox":[873,587,285,58]}
+{"kind":"textbox","id":"sh/6xgru5oz","slide":7,"name":"risk-callout-text","text":"MVP fallback: read, translate,\nand listen without Story Mode","textPreview":"MVP fallback: read, translate, | and listen without Story Mode","textChars":60,"textLines":2,"bbox":[891,597,250,40]}
+{"kind":"notes","id":"nt/h02yis","slide":7,"text":"Focus on the risks most likely to affect the student deadline and explain the smaller working fallback.\n\n[Sources]\n- Local source: C:\\Users\\Houro\\Desktop\\IT Elect 4\\storytale\\docs\\project-management\\week3\\StoryTale_Risk_Assessment_and_Contingency_Plan.docx\n[/Sources]"}
+{"kind":"slide","id":"sl/oq2tw3","slide":8,"title":"NEXT STEPS","textShapes":16}
+{"kind":"textbox","id":"sh/et8vqtkf","slide":8,"name":"s8-section","text":"NEXT STEPS","textPreview":"NEXT STEPS","textChars":10,"textLines":1,"bbox":[64,52,260,24]}
+{"kind":"textbox","id":"sh/1wzulo3q","slide":8,"name":"s8-title","text":"Week 3 turns the prototype into a durable local library","textPreview":"Week 3 turns the prototype into a durable local library","textChars":55,"textLines":1,"bbox":[64,94,1050,78]}
+{"kind":"textbox","id":"sh/0vqds325","slide":8,"name":"next-num-0","text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[64,220,44,38]}
+{"kind":"textbox","id":"sh/r6xcfelo","slide":8,"name":"next-title-0","text":"Finish durable local storage","textPreview":"Finish durable local storage","textChars":28,"textLines":1,"bbox":[122,220,460,40]}
+{"kind":"textbox","id":"sh/q5ovm9k3","slide":8,"name":"next-body-0","text":"Books, chapter progress, settings, and generated assets survive app restarts.","textPreview":"Books, chapter progress, settings, and generated assets survive app restarts.","textChars":77,"textLines":1,"bbox":[122,270,470,76]}
+{"kind":"textbox","id":"sh/dsfuho3u","slide":8,"name":"next-num-1","text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[650,220,44,38]}
+{"kind":"textbox","id":"sh/cr6doj29","slide":8,"name":"next-title-1","text":"Strengthen EPUB coverage","textPreview":"Strengthen EPUB coverage","textChars":24,"textLines":1,"bbox":[708,220,460,40]}
+{"kind":"textbox","id":"sh/32xcbels","slide":8,"name":"next-body-1","text":"Test varied EPUB structures and make chapter boundaries reliable.","textPreview":"Test varied EPUB structures and make chapter boundaries reliable.","textChars":65,"textLines":1,"bbox":[708,270,470,76]}
+{"kind":"textbox","id":"sh/i1ovi9k7","slide":8,"name":"next-num-2","text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[64,390,44,38]}
+{"kind":"textbox","id":"sh/gnudozep","slide":8,"name":"next-title-2","text":"Connect language and voice","textPreview":"Connect language and voice","textChars":26,"textLines":1,"bbox":[122,390,460,40]}
+{"kind":"textbox","id":"sh/ho3eh4vu","slide":8,"name":"next-body-2","text":"Integrate DeepL caching and a mobile ONNX Tagalog narration path.","textPreview":"Integrate DeepL caching and a mobile ONNX Tagalog narration path.","textChars":65,"textLines":1,"bbox":[122,440,470,76]}
+{"kind":"textbox","id":"sh/ulcvm9wj","slide":8,"name":"next-num-3","text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[650,390,44,38]}
+{"kind":"textbox","id":"sh/vmlwfud4","slide":8,"name":"next-title-3","text":"Prepare the Story Mode pipeline","textPreview":"Prepare the Story Mode pipeline","textChars":31,"textLines":1,"bbox":[708,390,460,40]}
+{"kind":"textbox","id":"sh/8judkzed","slide":8,"name":"next-body-3","text":"Validate book-wide characters, locations, assets, and per-chapter story packages.","textPreview":"Validate book-wide characters, locations, assets, and per-chapter story packages.","textChars":81,"textLines":1,"bbox":[708,440,470,76]}
+{"kind":"shape","id":"sh/tk3ed4vy","slide":8,"name":"s8-close","bbox":[64,580,1152,76]}
+{"kind":"textbox","id":"sh/6hsvipw7","slide":8,"name":"s8-close-text","text":"Outcome: a practical e-book app first, with translation, narration, and animated visualization added in controlled phases.","textPreview":"Outcome: a practical e-book app first, with translation, narration, and animated visualization added in controlled phases.","textChars":122,"textLines":1,"bbox":[96,596,1088,44]}
+{"kind":"textbox","id":"sh/7i1wbuds","slide":8,"name":"s8-footer","text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1180,676,36,18]}
+{"kind":"notes","id":"nt/oq2tw3","slide":8,"text":"Close by linking the next week to a durable local reading experience and the final project outcome.\n\n[Sources]\n- Internal source: StoryTale roadmap and architecture documents\n- Local source: C:\\Users\\Houro\\Desktop\\IT Elect 4\\storytale\\docs\\project-management\\week3\\StoryTale_Milestones_and_Deliverables.docx\n[/Sources]"}

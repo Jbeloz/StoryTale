@@ -1,0 +1,1172 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/h02yis",
+    "id": "h02yis",
+    "slide": 7,
+    "layoutId": "48e115b4-b022-4e91-97d0-9df6bfb5d12d",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "671709cc-1de2-48c1-a95f-64f01bad91ff",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "48e115b4-b022-4e91-97d0-9df6bfb5d12d",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "671709cc-1de2-48c1-a95f-64f01bad91ff",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "671709cc-1de2-48c1-a95f-64f01bad91ff",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1wbm1wzi",
+      "id": "1",
+      "name": "section-7",
+      "bbox": [
+        64,
+        40,
+        360,
+        24
+      ],
+      "geometry": "rect",
+      "text": "RISK READINESS",
+      "textPreview": "RISK READINESS",
+      "resolvedFontSize": 13,
+      "resolvedTextStyle": {
+        "fontSize": 13,
+        "typeface": "+mn-lt",
+        "color": "#4C2BBF",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "RISK READINESS"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "RISK READINESS",
+          "resolvedTextStyle": {
+            "fontSize": 13,
+            "color": "#4C2BBF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "RISK READINESS",
+              "fontSize": 13,
+              "color": "#4C2BBF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/etknq1g7",
+      "id": "2",
+      "name": "title-7",
+      "bbox": [
+        64,
+        70,
+        1110,
+        68
+      ],
+      "geometry": "rect",
+      "text": "Five risks could threaten the schedule, but each has a safe fallback",
+      "textPreview": "Five risks could threaten the schedule, but each has a safe fallback",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "fontSize": 38,
+        "typeface": "+mn-lt",
+        "color": "#171428",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Five risks could threaten the schedule, but each has a safe fallback"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Five risks could threaten the schedule, but each has a safe fallback",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "color": "#171428",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Five risks could threaten the schedule, but each has a safe fallback",
+              "fontSize": 38,
+              "color": "#171428",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/zut4zmhs",
+      "id": "3",
+      "name": "title-rule-7",
+      "bbox": [
+        64,
+        145,
+        1152,
+        2
+      ],
+      "geometry": "rect",
+      "fillColor": "#D8D2E2",
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ozm5wby9",
+      "id": "4",
+      "name": "footer-7",
+      "bbox": [
+        1180,
+        676,
+        36,
+        18
+      ],
+      "geometry": "rect",
+      "text": "07",
+      "textPreview": "07",
+      "resolvedFontSize": 11,
+      "resolvedTextStyle": {
+        "fontSize": 11,
+        "typeface": "+mn-lt",
+        "color": "#A39DAC",
+        "alignment": "right",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "07"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "07",
+          "resolvedTextStyle": {
+            "fontSize": 11,
+            "color": "#A39DAC",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "07",
+              "fontSize": 11,
+              "color": "#A39DAC",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9kvm5gzu",
+      "id": "5",
+      "name": "risk-rank-0",
+      "bbox": [
+        66,
+        190,
+        16,
+        54
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#B84C63",
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/mx4nu1g3",
+      "id": "6",
+      "name": "risk-name-0",
+      "bbox": [
+        104,
+        186,
+        330,
+        32
+      ],
+      "geometry": "rect",
+      "text": "EPUB differences",
+      "textPreview": "EPUB differences",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#171428",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "EPUB differences"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "EPUB differences",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#171428",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "EPUB differences",
+              "fontSize": 22,
+              "color": "#171428",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/nyd436ho",
+      "id": "7",
+      "name": "risk-action-0",
+      "bbox": [
+        454,
+        186,
+        666,
+        42
+      ],
+      "geometry": "rect",
+      "text": "Normalize chapters and keep manual review",
+      "textPreview": "Normalize chapters and keep manual review",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#625D6D",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Normalize chapters and keep manual review"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Normalize chapters and keep manual review",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#625D6D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Normalize chapters and keep manual review",
+              "fontSize": 20,
+              "color": "#625D6D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wnm50by5",
+      "id": "8",
+      "name": "risk-rule-0",
+      "bbox": [
+        104,
+        244,
+        1016,
+        1
+      ],
+      "geometry": "rect",
+      "fillColor": "#D8D2E2",
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xovm9gzq",
+      "id": "9",
+      "name": "risk-rank-1",
+      "bbox": [
+        66,
+        272,
+        16,
+        54
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#B84C63",
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/p4nqd0zq",
+      "id": "10",
+      "name": "risk-name-1",
+      "bbox": [
+        104,
+        268,
+        330,
+        32
+      ],
+      "geometry": "rect",
+      "text": "AI inconsistency",
+      "textPreview": "AI inconsistency",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#171428",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "AI inconsistency"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "AI inconsistency",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#171428",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "AI inconsistency",
+              "fontSize": 22,
+              "color": "#171428",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/4je9kfy5",
+      "id": "11",
+      "name": "risk-action-1",
+      "bbox": [
+        454,
+        268,
+        666,
+        42
+      ],
+      "geometry": "rect",
+      "text": "Validate structured output and use safe packages",
+      "textPreview": "Validate structured output and use safe packages",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#625D6D",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Validate structured output and use safe packages"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Validate structured output and use safe packages",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#625D6D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Validate structured output and use safe packages",
+              "fontSize": 20,
+              "color": "#625D6D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3i58bahk",
+      "id": "12",
+      "name": "risk-rule-1",
+      "bbox": [
+        104,
+        326,
+        1016,
+        1
+      ],
+      "geometry": "rect",
+      "fillColor": "#D8D2E2",
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2hwri5gf",
+      "id": "13",
+      "name": "risk-rank-2",
+      "bbox": [
+        66,
+        354,
+        16,
+        54
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#C77A20",
+      "lineWidth": 0
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/d87qhkz2",
+      "id": "14",
+      "name": "risk-name-2",
+      "bbox": [
+        104,
+        350,
+        330,
+        32
+      ],
+      "geometry": "rect",
+      "text": "Large voice packs",
+      "textPreview": "Large voice packs",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#171428",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Large voice packs"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Large voice packs",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#171428",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Large voice packs",
+              "fontSize": 22,
+              "color": "#171428",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/c7y9ofyh",
+      "id": "15",
+      "name": "risk-action-2",
+      "bbox": [
+        454,
+        350,
+        666,
+        42
+      ],
+      "geometry": "rect",
+      "text": "Five optional, quantized ONNX packs",
+      "textPreview": "Five optional, quantized ONNX packs",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#625D6D",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Five optional, quantized ONNX packs"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Five optional, quantized ONNX packs",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#625D6D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Five optional, quantized ONNX packs",
+              "fontSize": 20,
+              "color": "#625D6D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/r6p8fahw",
+      "id": "16",
+      "name": "risk-rule-2",
+      "bbox": [
+        104,
+        408,
+        1016,
+        1
+      ],
+      "geometry": "rect",
+      "fillColor": "#D8D2E2",
+      "lineWidth": 0
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/q5grm5gb",
+      "id": "17",
+      "name": "risk-rank-3",
+      "bbox": [
+        66,
+        436,
+        16,
+        54
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#C77A20",
+      "lineWidth": 0
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/tc3q5gzi",
+      "id": "18",
+      "name": "risk-name-3",
+      "bbox": [
+        104,
+        432,
+        330,
+        32
+      ],
+      "geometry": "rect",
+      "text": "Mobile performance",
+      "textPreview": "Mobile performance",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#171428",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Mobile performance"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Mobile performance",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#171428",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Mobile performance",
+              "fontSize": 22,
+              "color": "#171428",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/sbupcvyx",
+      "id": "19",
+      "name": "risk-action-3",
+      "bbox": [
+        454,
+        432,
+        666,
+        42
+      ],
+      "geometry": "rect",
+      "text": "Cache assets and reduce active layers",
+      "textPreview": "Cache assets and reduce active layers",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#625D6D",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Cache assets and reduce active layers"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Cache assets and reduce active layers",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#625D6D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Cache assets and reduce active layers",
+              "fontSize": 20,
+              "color": "#625D6D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kvy9sv6t",
+      "id": "20",
+      "name": "risk-rule-3",
+      "bbox": [
+        104,
+        490,
+        1016,
+        1
+      ],
+      "geometry": "rect",
+      "fillColor": "#D8D2E2",
+      "lineWidth": 0
+    },
+    {
+      "order": 21,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/lw7q107e",
+      "id": "21",
+      "name": "risk-rank-4",
+      "bbox": [
+        66,
+        518,
+        16,
+        54
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#357761",
+      "lineWidth": 0
+    },
+    {
+      "order": 22,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ytgrqlo3",
+      "id": "22",
+      "name": "risk-name-4",
+      "bbox": [
+        104,
+        514,
+        330,
+        32
+      ],
+      "geometry": "rect",
+      "text": "API quota or outage",
+      "textPreview": "API quota or outage",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#171428",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "API quota or outage"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "API quota or outage",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#171428",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "API quota or outage",
+              "fontSize": 22,
+              "color": "#171428",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 23,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/jup8zqp8",
+      "id": "23",
+      "name": "risk-action-4",
+      "bbox": [
+        454,
+        514,
+        666,
+        42
+      ],
+      "geometry": "rect",
+      "text": "Cache valid results and retry later",
+      "textPreview": "Cache valid results and retry later",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#625D6D",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Cache valid results and retry later"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Cache valid results and retry later",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#625D6D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Cache valid results and retry later",
+              "fontSize": 20,
+              "color": "#625D6D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 24,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8ji9wv65",
+      "id": "24",
+      "name": "risk-rule-4",
+      "bbox": [
+        104,
+        572,
+        1016,
+        1
+      ],
+      "geometry": "rect",
+      "fillColor": "#D8D2E2",
+      "lineWidth": 0
+    },
+    {
+      "order": 25,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/tkrq507q",
+      "id": "25",
+      "name": "risk-callout",
+      "bbox": [
+        873,
+        587,
+        285,
+        58
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#171428",
+      "lineWidth": 0
+    },
+    {
+      "order": 26,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6xgru5oz",
+      "id": "26",
+      "name": "risk-callout-text",
+      "bbox": [
+        891,
+        597,
+        250,
+        40
+      ],
+      "geometry": "rect",
+      "text": "MVP fallback: read, translate,\nand listen without Story Mode",
+      "textPreview": "MVP fallback: read, translate, | and listen without Story Mode",
+      "resolvedFontSize": 15,
+      "resolvedTextStyle": {
+        "fontSize": 15,
+        "typeface": "+mn-lt",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "center",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "MVP fallback: read, translate,"
+          },
+          {
+            "index": 2,
+            "text": "and listen without Story Mode"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "MVP fallback: read, translate,",
+          "resolvedTextStyle": {
+            "fontSize": 15,
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "MVP fallback: read, translate,",
+              "fontSize": 15,
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "and listen without Story Mode",
+          "resolvedTextStyle": {
+            "fontSize": 15,
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "and listen without Story Mode",
+              "fontSize": 15,
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

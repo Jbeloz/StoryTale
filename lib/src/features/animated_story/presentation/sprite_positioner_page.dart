@@ -566,8 +566,12 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
               'These fitted parts keep the same position and size when switched.',
             ),
           ]),
-        if (_faceCatalog != null && !_isFixedHairSlot(selected.id))
-          _section('Face', [_faceSelector(rig, pose)]),
+        if (_faceCatalog != null)
+          Visibility(
+            visible: !_isFixedHairSlot(selected.id),
+            maintainState: true,
+            child: _section('Face', [_faceSelector(rig, pose)]),
+          ),
         _section('Bones', [
           SwitchListTile(
             key: const Key('showBonesSwitch'),
@@ -814,12 +818,14 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
             for (final style in SpriteAppearanceCatalog.hairStyles)
               ChoiceChip(
                 key: Key('hairStyle-${style.id}'),
-                avatar: Image.asset(
-                  style.backAsset,
-                  width: 28,
-                  height: 28,
-                  fit: BoxFit.contain,
-                ),
+                avatar: _backHairAsset(style).isNotEmpty
+                    ? Image.asset(
+                        _backHairAsset(style),
+                        width: 28,
+                        height: 28,
+                        fit: BoxFit.contain,
+                      )
+                    : const Icon(Icons.block, size: 20),
                 label: Text(style.label),
                 selected: _appearance.hairStyleId == style.id,
                 onSelected: (_) => _setHairStyle(style.id),
@@ -879,12 +885,19 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Image.asset(
-                    style.backAsset,
-                    width: 54,
-                    height: 54,
-                    fit: BoxFit.contain,
-                  ),
+                  if (_backHairAsset(style).isNotEmpty)
+                    Image.asset(
+                      _backHairAsset(style),
+                      width: 54,
+                      height: 54,
+                      fit: BoxFit.contain,
+                    )
+                  else
+                    const SizedBox(
+                      width: 54,
+                      height: 54,
+                      child: Icon(Icons.block),
+                    ),
                   const SizedBox(height: 4),
                   Text(style.label),
                 ],
@@ -895,6 +908,10 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
           ),
       ],
     );
+  }
+
+  String _backHairAsset(SpriteHairStyle style) {
+    return SpriteAppearanceCatalog.backHairAsset(_appearance.actorId, style.id);
   }
 
   void _setActorAppearance(String actorId) {
@@ -955,22 +972,22 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
+                  _SkinColorField(
+                    color: selected,
+                    onChanged: (value) {
+                      selected = value;
+                      hsv = HSVColor.fromColor(value);
+                      controller.text = _hexFromColor(value);
+                      setDialogState(() {});
+                    },
+                  ),
+                  const SizedBox(height: 12),
                   const Text('Hue'),
                   Slider(
                     value: hsv.hue,
                     min: 0,
                     max: 360,
                     onChanged: (value) => update(hsv.withHue(value)),
-                  ),
-                  const Text('Color'),
-                  Slider(
-                    value: hsv.saturation,
-                    onChanged: (value) => update(hsv.withSaturation(value)),
-                  ),
-                  const Text('Brightness'),
-                  Slider(
-                    value: hsv.value,
-                    onChanged: (value) => update(hsv.withValue(value)),
                   ),
                   TextField(
                     key: const Key('skinToneHexInput'),
@@ -1025,13 +1042,18 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     final targetRig = rig ?? _rig;
     if (targetRig == null) return pose;
     final actor = SpriteAppearanceCatalog.actor(appearance.actorId);
-    final hair = SpriteAppearanceCatalog.hair(appearance.hairStyleId);
     var result = pose;
     if (targetRig.partsById.containsKey('front_hair')) {
-      result = result.withPartAsset('front_hair', hair.frontAsset);
+      result = result.withPartAsset('front_hair', actor.frontHairAsset);
     }
     if (targetRig.partsById.containsKey('back_hair')) {
-      result = result.withPartAsset('back_hair', hair.backAsset);
+      result = result.withPartAsset(
+        'back_hair',
+        SpriteAppearanceCatalog.backHairAsset(
+          appearance.actorId,
+          appearance.hairStyleId,
+        ),
+      );
     }
     if (_faceCatalog != null || rig != null) {
       final setId = resetFace
@@ -1678,6 +1700,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     try {
       final normalizedPose = _normalizePose(_pose!);
       final selected = _rig!.partsById[_selectedPartId!]!;
+      await _postProjectAppearance();
 
       if (_isBuiltIn && !_usesInjectedSource && !selected.hasBone) {
         final attachment = normalizedPose.transformFor(selected.id);
@@ -1729,6 +1752,16 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     }
   }
 
+  Future<void> _postProjectAppearance() async {
+    final response = await http.post(
+      Uri.parse('$_adminUrl/appearance'),
+      headers: const {'Content-Type': 'application/json'},
+      body: _appearance.toJsonString(),
+    );
+    if (response.statusCode != 200) throw Exception('Save failed');
+    await _appearanceRepository.save(_appearance);
+  }
+
   Future<void> _postProjectDefault(SpriteRigPose pose) async {
     final response = await http.post(
       Uri.parse('$_adminUrl/poses/${pose.id}'),
@@ -1765,3 +1798,84 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
 }
 
 enum _UnsavedPoseAction { save, discard, cancel }
+
+class _SkinColorField extends StatelessWidget {
+  const _SkinColorField({required this.color, required this.onChanged});
+
+  final Color color;
+  final ValueChanged<Color> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final hsv = HSVColor.fromColor(color);
+    return AspectRatio(
+      aspectRatio: 1.8,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          void select(Offset position) {
+            final saturation = (position.dx / constraints.maxWidth).clamp(
+              0.0,
+              1.0,
+            );
+            final value =
+                1 - (position.dy / constraints.maxHeight).clamp(0.0, 1.0);
+            onChanged(
+              HSVColor.fromAHSV(1, hsv.hue, saturation, value).toColor(),
+            );
+          }
+
+          return GestureDetector(
+            key: const Key('skinToneColorField'),
+            behavior: HitTestBehavior.opaque,
+            onTapDown: (details) => select(details.localPosition),
+            onPanUpdate: (details) => select(details.localPosition),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ColoredBox(
+                    color: HSVColor.fromAHSV(1, hsv.hue, 1, 1).toColor(),
+                  ),
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.white, Colors.transparent],
+                      ),
+                    ),
+                  ),
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Colors.black],
+                      ),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment(
+                      (hsv.saturation * 2) - 1,
+                      ((1 - hsv.value) * 2) - 1,
+                    ),
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                        boxShadow: const [
+                          BoxShadow(color: Colors.black54, blurRadius: 2),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}

@@ -1,0 +1,394 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/1du5k1",
+    "id": "1du5k1",
+    "slide": 1,
+    "layoutId": "48e115b4-b022-4e91-97d0-9df6bfb5d12d",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "671709cc-1de2-48c1-a95f-64f01bad91ff",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#F6F3FC",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "48e115b4-b022-4e91-97d0-9df6bfb5d12d",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "671709cc-1de2-48c1-a95f-64f01bad91ff",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "671709cc-1de2-48c1-a95f-64f01bad91ff",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/36lcjmxo",
+      "id": "1",
+      "name": "cover-left",
+      "bbox": [
+        0,
+        0,
+        510,
+        720
+      ],
+      "geometry": "rect",
+      "fillColor": "#171428",
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/47utcry9",
+      "id": "2",
+      "name": "cover-kicker",
+      "bbox": [
+        64,
+        64,
+        360,
+        28
+      ],
+      "geometry": "rect",
+      "text": "WEEK 2 PROGRESS UPDATE",
+      "textPreview": "WEEK 2 PROGRESS UPDATE",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "+mn-lt",
+        "color": "#E9E1FF",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "WEEK 2 PROGRESS UPDATE"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "WEEK 2 PROGRESS UPDATE",
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "color": "#E9E1FF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "WEEK 2 PROGRESS UPDATE",
+              "fontSize": 14,
+              "color": "#E9E1FF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/583ulcfu",
+      "id": "3",
+      "name": "cover-title",
+      "bbox": [
+        64,
+        126,
+        390,
+        74
+      ],
+      "geometry": "rect",
+      "text": "StoryTale",
+      "textPreview": "StoryTale",
+      "resolvedFontSize": 58,
+      "resolvedTextStyle": {
+        "fontSize": 58,
+        "typeface": "+mn-lt",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "StoryTale"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "StoryTale",
+          "resolvedTextStyle": {
+            "fontSize": 58,
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "StoryTale",
+              "fontSize": 58,
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/q9wbehgf",
+      "id": "4",
+      "name": "cover-subtitle",
+      "bbox": [
+        64,
+        218,
+        365,
+        150
+      ],
+      "geometry": "rect",
+      "text": "A local-first mobile e-book library that helps students read, translate, listen, and imagine.",
+      "textPreview": "A local-first mobile e-book library that helps students read, translate, listen, and imagine.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "color": "#E9E1FF",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "A local-first mobile e-book library"
+          },
+          {
+            "index": 2,
+            "text": "that helps students read, translate,"
+          },
+          {
+            "index": 3,
+            "text": "listen, and imagine."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "A local-first mobile e-book library that helps students read, translate, listen, and imagine.",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "color": "#E9E1FF",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "A local-first mobile e-book library that helps students read, translate, listen, and imagine.",
+              "fontSize": 24,
+              "color": "#E9E1FF",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ra5cnmx0",
+      "id": "5",
+      "name": "cover-meta",
+      "bbox": [
+        64,
+        592,
+        350,
+        56
+      ],
+      "geometry": "rect",
+      "text": "John Benedict S. Alejo\nIT Elect 4  |  August 2026",
+      "textPreview": "John Benedict S. Alejo | IT Elect 4  |  August 2026",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#FFFFFF",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "John Benedict S. Alejo"
+          },
+          {
+            "index": 2,
+            "text": "IT Elect 4  |  August 2026"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "John Benedict S. Alejo",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#FFFFFF",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "John Benedict S. Alejo",
+              "fontSize": 16,
+              "color": "#FFFFFF",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "IT Elect 4  |  August 2026",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#FFFFFF",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "IT Elect 4  |  August 2026",
+              "fontSize": 16,
+              "color": "#FFFFFF",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/hgval07m",
+      "id": "6",
+      "bbox": [
+        585,
+        42,
+        560,
+        636
+      ],
+      "geometry": "roundRect",
+      "alt": "StoryTale splash screen concept",
+      "contentType": "image/png",
+      "imageFit": "contain",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 2143"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "9fb03693-0837-4f91-b663-99c7ba3e6339",
+        "contentType": "image/png",
+        "byteLength": 1395783
+      }
+    }
+  ],
+  "composeRuns": []
+}

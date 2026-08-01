@@ -1,0 +1,628 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/u9yf0o",
+    "id": "u9yf0o",
+    "slide": 2,
+    "layoutId": "48e115b4-b022-4e91-97d0-9df6bfb5d12d",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "671709cc-1de2-48c1-a95f-64f01bad91ff",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "48e115b4-b022-4e91-97d0-9df6bfb5d12d",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "671709cc-1de2-48c1-a95f-64f01bad91ff",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "671709cc-1de2-48c1-a95f-64f01bad91ff",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6x0bilwv",
+      "id": "1",
+      "name": "section-2",
+      "bbox": [
+        64,
+        40,
+        360,
+        24
+      ],
+      "geometry": "rect",
+      "text": "PROJECT CONCEPT",
+      "textPreview": "PROJECT CONCEPT",
+      "resolvedFontSize": 13,
+      "resolvedTextStyle": {
+        "fontSize": 13,
+        "typeface": "+mn-lt",
+        "color": "#4C2BBF",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "PROJECT CONCEPT"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "PROJECT CONCEPT",
+          "resolvedTextStyle": {
+            "fontSize": 13,
+            "color": "#4C2BBF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "PROJECT CONCEPT",
+              "fontSize": 13,
+              "color": "#4C2BBF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/tkrud0fm",
+      "id": "2",
+      "name": "title-2",
+      "bbox": [
+        64,
+        70,
+        1110,
+        68
+      ],
+      "geometry": "rect",
+      "text": "One app removes the need to switch between reading tools",
+      "textPreview": "One app removes the need to switch between reading tools",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "fontSize": 38,
+        "typeface": "+mn-lt",
+        "color": "#171428",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "One app removes the need to switch between reading tools"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "One app removes the need to switch between reading tools",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "color": "#171428",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "One app removes the need to switch between reading tools",
+              "fontSize": 38,
+              "color": "#171428",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/szitkve1",
+      "id": "3",
+      "name": "title-rule-2",
+      "bbox": [
+        64,
+        145,
+        1152,
+        2
+      ],
+      "geometry": "rect",
+      "fillColor": "#D8D2E2",
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fm9cfqxs",
+      "id": "4",
+      "name": "footer-2",
+      "bbox": [
+        1180,
+        676,
+        36,
+        18
+      ],
+      "geometry": "rect",
+      "text": "02",
+      "textPreview": "02",
+      "resolvedFontSize": 11,
+      "resolvedTextStyle": {
+        "fontSize": 11,
+        "typeface": "+mn-lt",
+        "color": "#A39DAC",
+        "alignment": "right",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "02"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "02",
+          "resolvedTextStyle": {
+            "fontSize": 11,
+            "color": "#A39DAC",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "02",
+              "fontSize": 11,
+              "color": "#A39DAC",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/fit4fq1g",
+      "id": "5",
+      "bbox": [
+        64,
+        178,
+        440,
+        470
+      ],
+      "geometry": "roundRect",
+      "alt": "StoryTale library screen concept",
+      "contentType": "image/png",
+      "imageFit": "contain",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 2727"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "805c8b50-273a-4fec-af53-ebbe2bd5808a",
+        "contentType": "image/png",
+        "byteLength": 1654029
+      }
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/hobuh0fi",
+      "id": "6",
+      "name": "problem-label",
+      "bbox": [
+        570,
+        184,
+        260,
+        25
+      ],
+      "geometry": "rect",
+      "text": "THE PROBLEM",
+      "textPreview": "THE PROBLEM",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "+mn-lt",
+        "color": "#4C2BBF",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "THE PROBLEM"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "THE PROBLEM",
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "color": "#4C2BBF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "THE PROBLEM",
+              "fontSize": 14,
+              "color": "#4C2BBF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gnitoved",
+      "id": "7",
+      "name": "problem-copy",
+      "bbox": [
+        570,
+        216,
+        590,
+        112
+      ],
+      "geometry": "rect",
+      "text": "Students may struggle with unfamiliar English, long text, and separate apps for translation, narration, and visual content.",
+      "textPreview": "Students may struggle with unfamiliar English, long text, and separate apps for translation, narration, and visual content.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "color": "#171428",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Students may struggle with unfamiliar English, long text,"
+          },
+          {
+            "index": 2,
+            "text": "and separate apps for translation, narration, and visual"
+          },
+          {
+            "index": 3,
+            "text": "content."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Students may struggle with unfamiliar English, long text, and separate apps for translation, narration, and visual content.",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "color": "#171428",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Students may struggle with unfamiliar English, long text, and separate apps for translation, narration, and visual content.",
+              "fontSize": 24,
+              "color": "#171428",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3qtcjaxo",
+      "id": "8",
+      "name": "audience-label",
+      "bbox": [
+        570,
+        362,
+        260,
+        25
+      ],
+      "geometry": "rect",
+      "text": "TARGET AUDIENCE",
+      "textPreview": "TARGET AUDIENCE",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "+mn-lt",
+        "color": "#4C2BBF",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "TARGET AUDIENCE"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "TARGET AUDIENCE",
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "color": "#4C2BBF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "TARGET AUDIENCE",
+              "fontSize": 14,
+              "color": "#4C2BBF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2pkvq5w3",
+      "id": "9",
+      "name": "audience-copy",
+      "bbox": [
+        570,
+        394,
+        590,
+        90
+      ],
+      "geometry": "rect",
+      "text": "Students and English learners who want a simpler, more engaging way to understand EPUB stories.",
+      "textPreview": "Students and English learners who want a simpler, more engaging way to understand EPUB stories.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "color": "#171428",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Students and English learners who want a simpler, more"
+          },
+          {
+            "index": 2,
+            "text": "engaging way to understand EPUB stories."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Students and English learners who want a simpler, more engaging way to understand EPUB stories.",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "color": "#171428",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Students and English learners who want a simpler, more engaging way to understand EPUB stories.",
+              "fontSize": 24,
+              "color": "#171428",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/snupgv6d",
+      "id": "10",
+      "name": "promise",
+      "bbox": [
+        570,
+        554,
+        580,
+        42
+      ],
+      "geometry": "rect",
+      "text": "Read  •  Translate  •  Listen  •  Imagine",
+      "textPreview": "Read  •  Translate  •  Listen  •  Imagine",
+      "resolvedFontSize": 25,
+      "resolvedTextStyle": {
+        "fontSize": 25,
+        "typeface": "+mn-lt",
+        "color": "#4C2BBF",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Read  •  Translate  •  Listen  •  Imagine"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Read  •  Translate  •  Listen  •  Imagine",
+          "resolvedTextStyle": {
+            "fontSize": 25,
+            "color": "#4C2BBF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Read  •  Translate  •  Listen  •  Imagine",
+              "fontSize": 25,
+              "color": "#4C2BBF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

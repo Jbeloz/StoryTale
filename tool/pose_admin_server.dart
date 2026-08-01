@@ -17,7 +17,10 @@ const _partNames = {
   'upper_leg_left',
   'lower_leg_left',
   'front_hair',
+  'back_hair',
 };
+const _actorIds = {'default', 'hero', 'heroine', 'elder', 'adult'};
+const _hairStyleIds = {'none', 'short', 'medium', 'long'};
 const _origins = {
   'http://127.0.0.1:52827',
   'http://localhost:52827',
@@ -45,6 +48,9 @@ Future<void> _handle(HttpRequest request) async {
   }
   if (request.method == 'GET' && request.uri.path == '/health') {
     return _reply(request, HttpStatus.ok, {'ready': true});
+  }
+  if (request.method == 'POST' && request.uri.path == '/appearance') {
+    return _saveAppearance(request);
   }
 
   final segments = request.uri.pathSegments;
@@ -93,6 +99,48 @@ Future<void> _handle(HttpRequest request) async {
   } catch (_) {
     return _reply(request, HttpStatus.badRequest, {'error': 'Invalid JSON.'});
   }
+}
+
+Future<void> _saveAppearance(HttpRequest request) async {
+  if (request.contentLength > 4096) {
+    return _reply(request, HttpStatus.badRequest, {
+      'error': 'Appearance is too big.',
+    });
+  }
+  try {
+    final source = await utf8.decoder.bind(request).join();
+    final value = jsonDecode(source);
+    if (value is! Map<String, dynamic> || !_validAppearance(value)) {
+      return _reply(request, HttpStatus.badRequest, {
+        'error': 'Invalid appearance.',
+      });
+    }
+    final file = File(
+      '${Directory.current.path}${Platform.pathSeparator}'
+      'assets${Platform.pathSeparator}images${Platform.pathSeparator}'
+      'characters${Platform.pathSeparator}rigs${Platform.pathSeparator}'
+      'humanoid_v1${Platform.pathSeparator}appearance.json',
+    );
+    final formatted = const JsonEncoder.withIndent('  ').convert(value);
+    await file.writeAsString('$formatted\n');
+    return _reply(request, HttpStatus.ok, {'saved': true});
+  } catch (_) {
+    return _reply(request, HttpStatus.badRequest, {
+      'error': 'Invalid appearance.',
+    });
+  }
+}
+
+bool _validAppearance(Map<String, dynamic> value) {
+  final actorId = value['actorId'];
+  final hairStyleId = value['hairStyleId'];
+  final skinTone = value['skinTone'];
+  return actorId is String &&
+      _actorIds.contains(actorId) &&
+      hairStyleId is String &&
+      _hairStyleIds.contains(hairStyleId) &&
+      skinTone is String &&
+      RegExp(r'^#[0-9A-Fa-f]{6}$').hasMatch(skinTone);
 }
 
 bool _validPose(Map<String, dynamic> pose, String name) {

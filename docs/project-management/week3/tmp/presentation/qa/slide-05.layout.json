@@ -1,0 +1,663 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/v73lpp",
+    "id": "v73lpp",
+    "slide": 5,
+    "layoutId": "48e115b4-b022-4e91-97d0-9df6bfb5d12d",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "671709cc-1de2-48c1-a95f-64f01bad91ff",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "48e115b4-b022-4e91-97d0-9df6bfb5d12d",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "671709cc-1de2-48c1-a95f-64f01bad91ff",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "671709cc-1de2-48c1-a95f-64f01bad91ff",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/i9cbml4b",
+      "id": "1",
+      "name": "section-5",
+      "bbox": [
+        64,
+        40,
+        360,
+        24
+      ],
+      "geometry": "rect",
+      "text": "PROTOTYPE PROGRESS",
+      "textPreview": "PROTOTYPE PROGRESS",
+      "resolvedFontSize": 13,
+      "resolvedTextStyle": {
+        "fontSize": 13,
+        "typeface": "+mn-lt",
+        "color": "#4C2BBF",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "PROTOTYPE PROGRESS"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "PROTOTYPE PROGRESS",
+          "resolvedTextStyle": {
+            "fontSize": 13,
+            "color": "#4C2BBF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "PROTOTYPE PROGRESS",
+              "fontSize": 13,
+              "color": "#4C2BBF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5cnahg32",
+      "id": "2",
+      "name": "title-5",
+      "bbox": [
+        64,
+        70,
+        1110,
+        68
+      ],
+      "geometry": "rect",
+      "text": "The prototype demonstrates Story Mode and audiobook playback",
+      "textPreview": "The prototype demonstrates Story Mode and audiobook playback",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "fontSize": 38,
+        "typeface": "+mn-lt",
+        "color": "#171428",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The prototype demonstrates Story Mode and audiobook playback"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The prototype demonstrates Story Mode and audiobook playback",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "color": "#171428",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "The prototype demonstrates Story Mode and audiobook playback",
+              "fontSize": 38,
+              "color": "#171428",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kbutovmh",
+      "id": "3",
+      "name": "title-rule-5",
+      "bbox": [
+        64,
+        145,
+        1152,
+        2
+      ],
+      "geometry": "rect",
+      "fillColor": "#D8D2E2",
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7e5sjqls",
+      "id": "4",
+      "name": "footer-5",
+      "bbox": [
+        1180,
+        676,
+        36,
+        18
+      ],
+      "geometry": "rect",
+      "text": "05",
+      "textPreview": "05",
+      "resolvedFontSize": 11,
+      "resolvedTextStyle": {
+        "fontSize": 11,
+        "typeface": "+mn-lt",
+        "color": "#A39DAC",
+        "alignment": "right",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "05"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "05",
+          "resolvedTextStyle": {
+            "fontSize": 11,
+            "color": "#A39DAC",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "05",
+              "fontSize": 11,
+              "color": "#A39DAC",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6dwbql4n",
+      "id": "5",
+      "name": "s5-left-bg",
+      "bbox": [
+        64,
+        176,
+        548,
+        470
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#F6F3FC",
+      "lineColor": "#D8D2E2",
+      "lineWidth": 1
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/tgnal03y",
+      "id": "6",
+      "name": "s5-right-bg",
+      "bbox": [
+        668,
+        176,
+        548,
+        470
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#F7F8FB",
+      "lineColor": "#D8D2E2",
+      "lineWidth": 1
+    },
+    {
+      "order": 7,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/lwzalcre",
+      "id": "7",
+      "bbox": [
+        84,
+        192,
+        250,
+        428
+      ],
+      "geometry": "roundRect",
+      "alt": "Animated Story Mode screen concept",
+      "contentType": "image/png",
+      "imageFit": "contain",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 4800"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "1d10fb80-33de-448d-8baf-251880c1ef3b",
+        "contentType": "image/png",
+        "byteLength": 1576079
+      }
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ni1s76lo",
+      "id": "8",
+      "name": "s5-left-title",
+      "bbox": [
+        355,
+        222,
+        225,
+        62
+      ],
+      "geometry": "rect",
+      "text": "Animated Story Mode",
+      "textPreview": "Animated Story Mode",
+      "resolvedFontSize": 26,
+      "resolvedTextStyle": {
+        "fontSize": 26,
+        "typeface": "+mn-lt",
+        "color": "#171428",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Animated Story"
+          },
+          {
+            "index": 2,
+            "text": "Mode"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Animated Story Mode",
+          "resolvedTextStyle": {
+            "fontSize": 26,
+            "color": "#171428",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Animated Story Mode",
+              "fontSize": 26,
+              "color": "#171428",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/mhsre143",
+      "id": "9",
+      "name": "s5-left-body",
+      "bbox": [
+        355,
+        308,
+        220,
+        178
+      ],
+      "geometry": "rect",
+      "text": "Chapter scenes combine approved backgrounds, character sprites, one-line subtitles, camera movement, and simple motion.",
+      "textPreview": "Chapter scenes combine approved backgrounds, character sprites, one-line subtitles, camera movement, and simple motion.",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#625D6D",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 6,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Chapter scenes combine"
+          },
+          {
+            "index": 2,
+            "text": "approved backgrounds,"
+          },
+          {
+            "index": 3,
+            "text": "character sprites, one-line"
+          },
+          {
+            "index": 4,
+            "text": "subtitles, camera"
+          },
+          {
+            "index": 5,
+            "text": "movement, and simple"
+          },
+          {
+            "index": 6,
+            "text": "motion."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Chapter scenes combine approved backgrounds, character sprites, one-line subtitles, camera movement, and simple motion.",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#625D6D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Chapter scenes combine approved backgrounds, character sprites, one-line subtitles, camera movement, and simple motion.",
+              "fontSize": 18,
+              "color": "#625D6D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/bap8valc",
+      "id": "10",
+      "bbox": [
+        688,
+        192,
+        250,
+        428
+      ],
+      "geometry": "roundRect",
+      "alt": "Audio book screen concept",
+      "contentType": "image/png",
+      "imageFit": "contain",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 4800"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "dd6fe073-2a54-4bd6-a046-448de6ad0d2a",
+        "contentType": "image/png",
+        "byteLength": 1424207
+      }
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/x8bapwre",
+      "id": "11",
+      "name": "s5-right-title",
+      "bbox": [
+        958,
+        222,
+        225,
+        62
+      ],
+      "geometry": "rect",
+      "text": "Audio Book",
+      "textPreview": "Audio Book",
+      "resolvedFontSize": 26,
+      "resolvedTextStyle": {
+        "fontSize": 26,
+        "typeface": "+mn-lt",
+        "color": "#171428",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Audio Book"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Audio Book",
+          "resolvedTextStyle": {
+            "fontSize": 26,
+            "color": "#171428",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Audio Book",
+              "fontSize": 26,
+              "color": "#171428",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/a5kbeh8n",
+      "id": "12",
+      "name": "s5-right-body",
+      "bbox": [
+        958,
+        308,
+        220,
+        160
+      ],
+      "geometry": "rect",
+      "text": "The audio screen is structured for chapter playback, narrator selection, speed, sleep timer, and queued chapters.",
+      "textPreview": "The audio screen is structured for chapter playback, narrator selection, speed, sleep timer, and queued chapters.",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#625D6D",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 6,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The audio screen is"
+          },
+          {
+            "index": 2,
+            "text": "structured for chapter"
+          },
+          {
+            "index": 3,
+            "text": "playback, narrator"
+          },
+          {
+            "index": 4,
+            "text": "selection, speed, sleep"
+          },
+          {
+            "index": 5,
+            "text": "timer, and queued"
+          },
+          {
+            "index": 6,
+            "text": "chapters."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The audio screen is structured for chapter playback, narrator selection, speed, sleep timer, and queued chapters.",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#625D6D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "The audio screen is structured for chapter playback, narrator selection, speed, sleep timer, and queued chapters.",
+              "fontSize": 18,
+              "color": "#625D6D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

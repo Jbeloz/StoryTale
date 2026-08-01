@@ -47,29 +47,31 @@ class SpriteRigView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final transforms = SpriteRigCalculator.calculate(rig, pose);
-    final parts = [...rig.parts]..sort(_compareLayers);
+    final displayRig = _displayRig();
+    final transforms = SpriteRigCalculator.calculate(displayRig, pose);
+    final parts = [...displayRig.parts]..sort(_compareLayers);
     final bones = showBones || boneMode
-        ? SpriteBoneCalculator.calculate(rig, pose)
+        ? SpriteBoneCalculator.calculate(displayRig, pose)
         : const <SpriteBone>[];
 
     return SizedBox(
-      width: rig.canvasSize.width,
-      height: rig.canvasSize.height,
+      width: displayRig.canvasSize.width,
+      height: displayRig.canvasSize.height,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           for (final part in parts)
-            _visualPart(
-              context,
-              part,
-              transforms[part.id]!,
-              pose.transformFor(part.id).scale,
-            ),
+            if (pose.assetFor(part).isNotEmpty)
+              _visualPart(
+                context,
+                part,
+                transforms[part.id]!,
+                pose.transformFor(part.id).scale,
+              ),
           if (onPartSelected != null)
             Positioned.fill(
               child: _SpriteRigInteractionLayer(
-                rig: rig,
+                rig: displayRig,
                 pose: pose,
                 transforms: transforms,
                 bones: bones,
@@ -87,7 +89,7 @@ class SpriteRigView extends StatelessWidget {
               child: IgnorePointer(
                 child: CustomPaint(
                   painter: _BonePainter(
-                    rig: rig,
+                    rig: displayRig,
                     pose: pose,
                     bones: bones,
                     selectedPartId: selectedPartId,
@@ -102,6 +104,76 @@ class SpriteRigView extends StatelessWidget {
             for (final part in parts) _anchor(part, transforms[part.id]!.pivot),
         ],
       ),
+    );
+  }
+
+  SpriteRigDefinition _displayRig() {
+    final elderFrontHair = rig.partsById['front_hair'];
+    final longHeroineHair = rig.partsById['back_hair'];
+    final fitElderFrontHair =
+        elderFrontHair != null &&
+        pose
+            .assetFor(elderFrontHair)
+            .replaceAll('\\', '/')
+            .endsWith('/front_elder.png');
+    final fitLongHeroineHair =
+        longHeroineHair != null &&
+        pose
+            .assetFor(longHeroineHair)
+            .replaceAll('\\', '/')
+            .endsWith('/back_heroine_long.png');
+    if (!fitElderFrontHair && !fitLongHeroineHair) {
+      return rig;
+    }
+
+    final fittedElderHair = fitElderFrontHair
+        ? _resizePart(
+            elderFrontHair,
+            Size(
+              elderFrontHair.size.width * 1.12,
+              elderFrontHair.size.height * 1.12,
+            ),
+            Offset(
+              elderFrontHair.size.width * 1.12 / 2,
+              elderFrontHair.imagePivot.dy,
+            ),
+          )
+        : null;
+    final fittedHeroineHair = fitLongHeroineHair
+        ? _resizePart(
+            longHeroineHair,
+            const Size(600, 700),
+            const Offset(300, 700 * 0.542),
+          )
+        : null;
+
+    return SpriteRigDefinition(
+      id: rig.id,
+      canvasSize: rig.canvasSize,
+      parts: [
+        for (final part in rig.parts)
+          if (part.id == fittedElderHair?.id)
+            fittedElderHair!
+          else if (part.id == fittedHeroineHair?.id)
+            fittedHeroineHair!
+          else
+            part,
+      ],
+    );
+  }
+
+  SpriteRigPart _resizePart(SpriteRigPart part, Size size, Offset imagePivot) {
+    return SpriteRigPart(
+      id: part.id,
+      label: part.label,
+      asset: part.asset,
+      parentId: part.parentId,
+      position: part.pivot - imagePivot,
+      pivot: part.pivot,
+      size: size,
+      z: part.z,
+      hasBone: part.hasBone,
+      rotationRange: part.rotationRange,
     );
   }
 
@@ -211,28 +283,74 @@ class SpriteRigView extends StatelessWidget {
 
   Widget _image(SpriteRigPart part, {Color? color}) {
     final bytes = partBytes?[part.id];
-    final tint = color ?? (_canTint(part, bytes) ? skinTone : null);
-    final blendMode = color != null
-        ? BlendMode.srcIn
-        : tint != null
-        ? BlendMode.modulate
-        : null;
-    if (bytes != null) {
-      return Image.memory(
-        bytes,
-        fit: BoxFit.fill,
-        filterQuality: FilterQuality.high,
-        color: tint,
-        colorBlendMode: blendMode,
-      );
-    }
-    return Image.asset(
-      pose.assetFor(part),
-      fit: BoxFit.fill,
-      filterQuality: FilterQuality.high,
-      color: tint,
-      colorBlendMode: blendMode,
+    final canTintSkin = color == null && _canTint(part, bytes);
+    final tint = color;
+    final blendMode = color == null ? null : BlendMode.srcIn;
+    final image = bytes != null
+        ? Image.memory(
+            bytes,
+            fit: BoxFit.fill,
+            filterQuality: FilterQuality.high,
+            color: tint,
+            colorBlendMode: blendMode,
+          )
+        : Image.asset(
+            pose.assetFor(part),
+            fit: BoxFit.fill,
+            filterQuality: FilterQuality.high,
+            color: tint,
+            colorBlendMode: blendMode,
+          );
+
+    final fill = skinTone;
+    if (!canTintSkin || fill == null) return image;
+    return ColorFiltered(
+      colorFilter: ColorFilter.matrix(_skinColorMatrix(fill)),
+      child: image,
     );
+  }
+
+  List<double> _skinColorMatrix(Color fill) {
+    final outline = _skinOutline(fill);
+    final fillR = fill.r * 255;
+    final fillG = fill.g * 255;
+    final fillB = fill.b * 255;
+    final outlineR = outline.r * 255;
+    final outlineG = outline.g * 255;
+    final outlineB = outline.b * 255;
+
+    List<double> channel(double target, double edge) {
+      final difference = (target - edge) / 255;
+      return [
+        difference * 0.299,
+        difference * 0.587,
+        difference * 0.114,
+        0,
+        edge,
+      ];
+    }
+
+    return [
+      ...channel(fillR, outlineR),
+      ...channel(fillG, outlineG),
+      ...channel(fillB, outlineB),
+      0,
+      0,
+      0,
+      1,
+      0,
+    ];
+  }
+
+  Color _skinOutline(Color fill) {
+    final hsl = HSLColor.fromColor(fill);
+    if (hsl.lightness > 0.9 && hsl.saturation < 0.12) {
+      return const Color(0xFF777777);
+    }
+    return hsl
+        .withSaturation(math.max(hsl.saturation, 0.18))
+        .withLightness((hsl.lightness * 0.42).clamp(0.16, 0.46))
+        .toColor();
   }
 
   bool _canTint(SpriteRigPart part, Uint8List? bytes) {
@@ -314,8 +432,11 @@ class _SpriteRigInteractionLayerState
     final entries = await Future.wait(
       widget.rig.parts.map((part) async {
         final bytes = widget.partBytes?[part.id];
-        final mask = bytes == null
-            ? await _AlphaMask.load(widget.pose.assetFor(part))
+        final asset = widget.pose.assetFor(part);
+        final mask = bytes == null && asset.isEmpty
+            ? _AlphaMask.empty
+            : bytes == null
+            ? await _AlphaMask.load(asset)
             : await _AlphaMask.loadBytes(bytes);
         return MapEntry(part.id, mask);
       }),
@@ -573,6 +694,7 @@ class _AlphaMask {
   const _AlphaMask(this.width, this.height, this.rgba);
 
   static final _cache = <String, Future<_AlphaMask>>{};
+  static final empty = _AlphaMask(1, 1, Uint8List(4));
 
   final int width;
   final int height;
