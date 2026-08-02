@@ -7,20 +7,25 @@ StoryTale is a local-first mobile EPUB library with DeepL translation, on-device
 - Flutter project for Android, iOS, and Web
 - Feature-first source folders under `lib/src`
 - Functional reusable screens for Library, Reader, Audio, Sprite Studio, Story
-  Bible review, background review, and visual-novel Story Mode
+  Bible review, generated-asset catalogs, and visual-novel Story Mode
 - Local-first architecture with no Supabase
 - Real local EPUB selection, metadata, cover, and cleaned chapter parsing
 - Gemini chapter analysis, semantic validation, persistent per-book Story
   Bibles, automatic entity approval, and location requirements
-- Completed prototype Sprite Studio, starter modular faces, scene layouts,
-  camera movement, character movement, and Story Mode playback
-- Local generated-background catalog with review and stable asset registration
+- Completed prototype Sprite Studio, starter modular faces, universal fitted
+  hair controls, scene layouts, camera movement, character movement, and Story
+  Mode playback
+- Local generated-background catalog with automatic validation, stable asset
+  registration, and read-only result previews
 
-The current development phase is the final landscape visual-novel background
-pipeline. The existing square Workers AI route is only a connectivity
-smoke test. Imported books still remain in memory for the app session, DeepL
-uses placeholder text, the mobile ONNX TTS runtime is not connected, and
-book-specific foreground and character assets are not complete.
+The current development phase is the locked-template character pipeline. The
+immediate correction saves each actor's front hair, optional back hair
+including `None`, and universal X/Y/scale fit. The following step gives Gemini
+one canonical clothing-only sheet; StoryTale then removes green and cuts its
+nine known body-part cells locally. Gemini does not redraw the runtime head,
+body, or poses. Imported books still remain in memory for the app session,
+DeepL uses placeholder text, the mobile ONNX TTS runtime is not connected, and
+final book-specific layered characters are not complete.
 
 See the [master roadmap](docs/ROADMAP.md) for the only authoritative phase
 status and development order.
@@ -52,6 +57,7 @@ flutter test
 
 ## Documentation
 
+- [Complete project handoff](docs/PROJECT_HANDOFF.md)
 - [Master roadmap](docs/ROADMAP.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Short plan](docs/PROJECT_PLAN.md)
@@ -61,4 +67,6 @@ flutter test
 - [Environment setup](docs/ENVIRONMENT_SETUP.md)
 - [Asset guide](docs/ASSET_GUIDE.md)
 - [Cloudflare image generator](docs/CLOUDFLARE_IMAGE_GENERATOR.md)
+- [Generated character pipeline](docs/GENERATED_CHARACTER_PIPELINE_PLAN.md)
+- [Character clothing sheet](docs/CHARACTER_CLOTHING_SHEET_PLAN.md)
 - [UI concepts](docs/ui-concepts/README.md)

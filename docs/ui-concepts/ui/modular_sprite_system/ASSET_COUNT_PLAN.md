@@ -1,103 +1,95 @@
 # Modular Sprite Asset Count Plan
 
-There is no single fixed image total because every new character, outfit, and animal adds assets. The modular system keeps the total manageable by reusing rigs and pose data.
+There is no single fixed image total because every book character may need a
+different face catalog, hairstyle, outfit, and set of accessories. StoryTale
+keeps the total manageable by sharing immutable rig geometry and pose data.
 
-## One humanoid character
+## Shared humanoid rig
 
-### Body rig: 9 PNG parts
+`humanoid_v1` owns ten local base PNGs that are not regenerated per character:
 
-| Part | Count |
-|---|---:|
-| Torso and pelvis | 1 |
+| Base part | Count |
+| --- | ---: |
+| Head | 1 |
+| Torso | 1 |
 | Left and right upper arms | 2 |
-| Left and right forearm + hand | 2 |
-| Left and right thighs | 2 |
-| Left and right lower leg + foot | 2 |
-| **Body total** | **9** |
+| Left and right lower arms with hands | 2 |
+| Left and right upper legs | 2 |
+| Left and right lower legs with feet | 2 |
+| **Shared base total** | **10** |
 
-Hands are initially joined to the forearms and feet are joined to the lower legs. This keeps the code and rig simple. Separate hands can be added later only for important hand gestures.
+Hands remain joined to lower arms and feet remain joined to lower legs for the
+first version. A different body proportion requires another manually approved
+and versioned rig; Gemini cannot replace or reshape these base parts.
 
-### Head and design: 8–10 PNG parts
+## One book-character appearance
 
-| Asset | Count |
-|---|---:|
-| Head base | 1 |
-| Neutral, talking, happy, sad, and angry faces | 5 |
-| Back and front hair | 2 |
-| Optional accessories | 0–2 |
-| **Head/design total** | **8–10** |
+Character-specific files are layers placed over the shared rig:
 
-### Expected total
+| Appearance group | Typical count |
+| --- | ---: |
+| Eyes/brows expression layers | 1-6 |
+| Nose layer | 1 |
+| Mouth expression layers | 2-6 |
+| Optional details such as wrinkles | 0-2 |
+| Front hair | 1 |
+| Optional back hair | 0-1 |
+| Fitted clothing overlays cut from one sheet | 0-9 |
+| Loose garments and accessories | As required by the story |
 
-- One human character with one outfit: **17–19 PNGs**.
-- Each extra outfit: up to **9 more part overlays**.
-- Poses and animations: **0 additional PNGs** because they reuse the jointed parts.
-- Ten human characters with one outfit each: roughly **170–190 PNGs**.
+The exact PNG count depends on which catalog parts can be reused. `None` is a
+valid saved back-hair default and does not delete Short, Medium, Long, or
+generated catalog choices. All saved hair X/Y/scale fits belong to appearance
+data and are reused by every pose.
 
-Clothes should be attached to their matching part. For example, a sleeve follows the upper arm and forearm; trousers follow the thigh and lower leg. The final mobile export may merge each body part and clothing overlay into one PNG for faster rendering.
+One Gemini clothing request returns the fixed-layout clothing-only sheet.
+StoryTale removes green and cuts up to nine known cells locally using the
+versioned crop manifest. Idle, Talking, Pointing, Walking, and named poses add
+no PNGs because they reuse the same layers with transform JSON.
 
 ## Animal rig families
 
-Do not create one rig for every animal species. Start with reusable families.
+Do not create one rig for every species. Start with reusable families:
 
 | Rig family | Parts | Suggested images |
-|---|---|---:|
+| --- | --- | ---: |
 | Small quadruped: cat, dog, fox | Head, torso, tail, four legs | 7 |
 | Large quadruped: wolf, horse, cow | Head, torso, tail, four legs | 7 |
 | Bird | Head, body, two wings, tail, two legs | 7 |
-| Background or unusual creature | One static sprite with slide/bob/scale movement | 1 |
+| Background or unusual creature | One static whole sprite | 1 |
 
-Recurring speaking animals may add three face states: neutral, talking, and angry or happy. Background animals should stay static so they do not multiply the asset count.
+Recurring speaking animals may add neutral, talking, and one strong-emotion
+face state. Rare or background animals stay static unless the plot needs
+important movement or dialogue.
 
-## Reusable base library
+## Possible future humanoid rigs
 
-Eventually, StoryTale can support five humanoid proportions:
+Future approved templates may cover:
 
-1. Small child
-2. Teen or petite adult
-3. Average adult
-4. Broad or tall adult
-5. Elder
+1. small child;
+2. teen or petite adult;
+3. average adult;
+4. broad or tall adult; and
+5. elder.
 
-Five complete nine-part body templates would be **45 base body PNGs**. Add the three seven-part animal rigs and one static fallback for about **67 reusable base images**. These should not all be made immediately.
+These are separate versioned rig families, not five copies required for the
+current MVP. Build a new family only after the shared `humanoid_v1` pipeline
+passes its complete character-package gate.
 
-## Recommended build phases
+## Current production order
 
-### Phase 1 — Prove one heroine rig
+1. **Phase 7G.1A.1:** persist front hair, optional back hair including `None`,
+   skin tone, and universal per-style hair fits.
+2. **Phase 7G.1B.1:** version the canonical clothing guide and exact crop/mask
+   manifest.
+3. **Phase 7G.1B.2:** generate one clothing-only sheet from the source-backed
+   character brief.
+4. **Phase 7G.1B.3:** remove green, cut known cells, validate, and build the
+   reusable appearance package locally.
+5. **Phase 7G.1B.4:** add only source-required loose garments and accessories.
+6. **Phase 7G.1C:** prove the same appearance in all required faces and four
+   built-in poses before Story Mode binding.
 
-1. Combine the approved head and current body on a `1024 x 2048` master canvas.
-2. Approve the full-body proportions and neutral outfit.
-3. Split the body into the nine humanoid parts.
-4. Record shoulder, elbow, hip, knee, and neck pivot points.
-5. Test neutral, talking, pointing, and reaction poses using the same parts.
-
-### Phase 2 — Finish the heroine
-
-1. Add the remaining four approved face expressions.
-2. Separate front and back hair.
-3. Attach clothing to the correct body-part layers.
-4. Test simple idle, talking, walking, and reaction animations.
-
-### Phase 3 — Prove reuse
-
-1. Build one hero using the same rig.
-2. Build one elder or broad adult with a different body base.
-3. Confirm that pose files can be reused with adjusted joint positions.
-
-### Phase 4 — Add animals
-
-1. Make one small quadruped rig.
-2. Make one bird rig.
-3. Use static sprites for rare animals unless they need important movement or dialogue.
-
-### Phase 5 — Generate per book
-
-Gemini analyzes the book and lists recurring characters. Only recurring or speaking characters receive full rigs. Minor characters receive a neutral full sprite, and background crowds or animals use static sprites.
-
-## Historical first proof step
-
-The original first proof step was to make the approved heroine into one clean
-nine-part rig before creating many bases. The reusable humanoid rig and Sprite
-Studio proof now exist. Do not treat this historical asset-production note as
-the current project phase; follow the
-[Master Roadmap](../../../ROADMAP.md).
+See the [Character Clothing Sheet Plan](../../../CHARACTER_CLOTHING_SHEET_PLAN.md)
+for the sheet contract and the [Master Roadmap](../../../ROADMAP.md) for global
+status and development order.

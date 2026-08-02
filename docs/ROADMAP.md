@@ -4,7 +4,7 @@ This is the single source of truth for StoryTale development order and status.
 The architecture and feature plans explain how individual systems work, but
 only this file decides what is completed, what is current, and what comes next.
 
-Last reviewed: 2026-07-31
+Last reviewed: 2026-08-02
 
 ## Status meanings
 
@@ -37,8 +37,8 @@ flowchart TD
     C --> D["Gemini chapter analysis"]
     D --> E["Merge approved Story Bible entities"]
     E --> F["Collect required location and entity assets"]
-    F --> G["Generate and approve visual-novel backgrounds"]
-    G --> H["Generate and approve foreground/entity assets"]
+    F --> G["Generate, validate, and register visual-novel backgrounds"]
+    G --> H["Generate, validate, and register foreground/entity assets"]
     H --> I["Generate and validate Sprite Studio character packages"]
     I --> J["Gemini plans approved cutscenes, shots, and beats"]
     J --> K["Flutter validates complete source coverage and asset IDs"]
@@ -58,9 +58,9 @@ animation limits, validation, storage, and safe fallbacks.
 | 1. EPUB import foundation | **Partial** | EPUB picking, validation, metadata, cover, cleaned chapters, and stable text blocks work; permanent library storage and volumes remain |
 | 2. Sprite Studio and starter faces | **Prototype done** | Rig selection, bones, poses, layers, five starter actor profiles, modular face sets, and Story Mode loading work |
 | 3. Visual-novel runtime and Gemini contract | **Prototype done** | Cutscenes, shots, beats, layouts, facing, depth, camera presets, movement, transitions, and validated Gemini plans work with safe fixtures |
-| 4. Story Bible and location requirements | **Partial** | Entity extraction, review, automatic approval, specific locations, required background pairs, and the local background catalog work |
-| 5. Final visual-novel backgrounds | **Done** | Generate, review, approve, persist, resolve, refresh, and render exact location/state backgrounds in Story Mode |
-| 6. Volume analysis and foreground inventory | **Done** | Analyze all chapters through one resumable job, prepare reusable non-human assets, connect them to stories, and provide optional review/replacement |
+| 4. Story Bible and location requirements | **Done** | Entity extraction, review, automatic approval, specific locations, required background pairs, and the local background catalog work |
+| 5. Final visual-novel backgrounds | **Done** | Generate, validate, register, resolve, refresh, and render exact location/state backgrounds with a read-only result catalog |
+| 6. Volume analysis and foreground inventory | **Done** | Analyze all chapters through one resumable job, prepare reusable non-human assets, connect them to stories, and show read-only results while management stays developer-only |
 | 7. Generated book-specific humans | **Current** | Phase 7G proved the package structure but failed exact visual fidelity; Phase 7G.1 now builds actor hair catalogs, local skin-tone tinting, and generated face, clothing, and accessory layers on locked base geometry |
 | 8. Persistent books and volumes | **Planned** | Save EPUBs, books, progress, story bibles, assets, jobs, and `Book -> Volume -> Chapter` data across restarts after the generated-character gate passes |
 | 9. Complete ChapterStory builder | **Planned** | Assemble approved assets, exact text coverage, subtitles, moral, movement, and manifests for any imported chapter |
@@ -77,7 +77,7 @@ Completed:
 - reusable app shell and four-item bottom navigation
 - reusable book, chapter, progress, empty-state, and placeholder widgets
 - onboarding, Library, Search, Book Details, Reader, Audio, Profile, Sprite
-  Studio, Story Bible, location-background review, and Story Mode routes
+  Studio, Story Bible, generated-asset catalog, and Story Mode routes
 - dynamic demo data and responsive Flutter layouts
 
 Remaining UI polish belongs to the feature phase that owns the data. A visible
@@ -104,7 +104,7 @@ Still missing:
 - duplicate-title and stable-ID migration tests
 
 These items must be complete before Phase 9 can claim persistent ChapterStory
-packages, but they do not block the current background-provider correction.
+packages, but they do not block the current locked-template character work.
 
 ### Phase 2 - Sprite Studio and starter faces
 
@@ -145,9 +145,8 @@ Completed prototype:
 
 Still missing:
 
-- approved book-specific entity assets in the runtime catalog
-- focus-asset layers for plants, props, and important silent subjects
-- final ChapterStory manifests and synchronized line audio
+- validated book-specific layered human packages
+- final persistent ChapterStory manifests and synchronized line audio
 - full end-to-end testing with arbitrary imported EPUB chapters
 
 ### Phase 4 - Story Bible and location requirements
@@ -161,7 +160,8 @@ Completed:
 - manual approve, edit, merge, delete, and type correction
 - specific background-ready locations with parent-setting context
 - ordered `locationId + backgroundStateId` requirements
-- stable local background records, review, approval, and entity registration
+- stable local background records, automatic validation/registration, and a
+  read-only result catalog
 
 The Story Bible and location-requirement foundation now feeds the completed
 landscape background workflow. Broader entity assets remain Phase 6 work.
@@ -184,9 +184,10 @@ Implementation order:
    accepts explicit `1024 x 576` output.
 4. Preserve the returned MIME type and reject corrupt or incorrectly sized
    images.
-5. Show the complete uncropped landscape result in the review screen.
-6. Keep the last approved background active while regeneration is pending.
-7. Connect each approved asset ID only to the matching
+5. Show the complete uncropped landscape result in the read-only catalog.
+6. Automatically register a valid first result; keep retry, regeneration,
+   replacement, and discard controls behind the disabled developer flag.
+7. Connect each ready asset ID only to the matching
    `locationId + backgroundStateId` cutscenes.
 8. Test one imported chapter with multiple places and multiple states of one
    place.
@@ -199,7 +200,7 @@ Acceptance checks:
 - essential landmarks avoid the subtitle-safe lower area
 - no person, character, text, UI, floating island, miniature diorama, isolated
   object, or portrait composition appears
-- rejecting or regenerating does not replace the approved asset
+- viewing a result never starts another provider request
 - unchanged shots reuse one background
 - place and state changes use the correct ordered backgrounds
 
@@ -209,11 +210,12 @@ Validated so far:
 - the reviewed sample was a continuous landscape environment without people,
   text, floating islands, or a portrait composition
 - automated tests cover corrupt and wrong-sized output rejection
-- automated tests cover approved-background preservation during replacement
+- developer-only replacement tests preserve the current ready background until
+  a valid replacement is explicitly accepted
 - automated tests cover ordered matching across multiple places and two states
   of one place
-- provider output, dimensions, prompt construction, review, approval, rejection,
-  and ordered key matching pass targeted tests
+- provider output, dimensions, prompt construction, automatic registration,
+  read-only catalog display, and ordered key matching pass targeted tests
 
 Playback acceptance defect resolved:
 
@@ -312,8 +314,7 @@ Implementation order:
    - automatically relink/rebuild the fixture after its asset queue completes
      or when Story Mode opens, so the user never has to approve or attach a
      prepared asset manually.
-10. **Implemented, awaiting manual gate - Phase 6E.1: live Chapter 1
-    stabilization:**
+10. **Done - Phase 6E.1: live Chapter 1 stabilization:**
     - trace the complete foreground connection from Story Bible entity,
       generated variant, automatic acceptance, binary bytes, ready catalog,
       `focusAssetLayers`, and final player byte lookup;
@@ -361,8 +362,10 @@ novel EPUB remains deferred; Phase 6 uses the Little Prince fixture first.
 
 Status: **Current.** Phase 7G is a completed structural prototype, but the live
 Little Prince result failed the exact-template visual-fidelity gate. Phase
-7G.1A now provides the local actor, paired-hair, and skin-tone foundation.
-Phase 7G.1B, generated layers on the locked template, is the immediate blocker.
+7G.1A now provides the local actor, hair, skin-tone, and universal hair-fit
+foundation. Phase 7G.1A.1 must persist an explicit `None` back-hair default per
+actor. Phase 7G.1B then builds generated layers from fixed component sheets on
+the locked template.
 Phase 7H Story Mode binding waits for the complete Phase 7G.1 gate.
 
 Implementation order:
@@ -377,24 +380,28 @@ Implementation order:
    nine body pieces), masks, anchors, and geometry hash. Gemini must not
    generate replacement geometry.
 4. **Implemented Phase 7G.1A:** give Default, Hero, Heroine, Elder, and Adult one
-   stable actor appearance catalog containing a fitted front/back hair pair,
-   a default hair-style ID, and a default skin-tone value. The current
+   stable actor appearance catalog containing fitted front hair, a back-hair
+   catalog, a default hair-style ID, and a default skin-tone value. The current
    Short/Medium/Long back-hair choices remain shared test parts until each
    actor catalog is complete.
 5. **Implemented Phase 7G.1A:** add one local skin-tone picker for the locked head and
    nine body pieces. It accepts any opaque RGB/hex color, preserves alpha,
    black line art, and shading through rig-owned skin masks, and never calls an
    image provider.
-6. **Phase 7G.1B:** generate only aligned face, front/back hair,
-   per-body-part clothing, loose-garment extension, and accessory layers.
-7. **Phase 7G.1B:** attach held items to a hand anchor with approved
-   behind-arm, behind-hand, and front-of-hand layer modes.
-8. **Phase 7G.1C:** compose and validate six faces and four poses on the
+6. **Phase 7G.1A.1:** persist each actor's front hair, optional back hair,
+   per-style X/Y, and scale. `None` remains a valid default without removing
+   other back-hair catalog choices.
+7. **Phase 7G.1B:** generate only aligned face, front/back hair, and one
+   fixed-layout clothing-only sheet for the nine body pieces. StoryTale removes
+   green and cuts the known cells locally; Gemini never redraws the body.
+8. **Phase 7G.1B:** attach loose garments and held items to approved anchors
+   and behind-arm, behind-hand, and front-of-hand layer modes.
+9. **Phase 7G.1C:** compose and validate six faces and four poses on the
    locked rig, then expose Character, Layers, Faces, Poses, and Details proof.
-9. **Phase 7G.1C:** reuse completed components by design hash, remove the
+10. **Phase 7G.1C:** reuse completed components by design hash, remove the
    private sprite route's shared three-per-minute app bottleneck, and keep one
    sequential request active without automatic paid regeneration.
-10. **Blocked Phase 7H:** register the validated layered package and rebuild
+11. **Blocked Phase 7H:** register the validated layered package and rebuild
    every affected ChapterStory so Story Mode uses it across chapters and
    volumes.
 
@@ -435,8 +442,8 @@ Current Phase 7G.1 work:
 
 - [ ] Never send a generated head or body to the runtime package.
 - [ ] Keep the shared `humanoid_v1` base geometry immutable and versioned.
-- [x] **Phase 7G.1A:** add one fitted front/back default hairstyle for each
-  Default, Hero, Heroine, Elder, and Adult actor profile.
+- [x] **Phase 7G.1A:** add fitted actor-specific front hair and a reusable
+  back-hair catalog for Default, Hero, Heroine, Elder, and Adult.
 - [x] **Phase 7G.1A:** keep actor identity, hairstyle selection, and skin tone
   in an appearance record shared by every pose, chapter, and later volume.
 - [x] **Phase 7G.1A:** use the locked base-part alpha as the V1 rig-owned tint
@@ -446,8 +453,15 @@ Current Phase 7G.1 work:
 - [x] **Phase 7G.1A:** show compact Actor, Hair, and Skin controls in Sprite
   Studio, with thumbnail selection, current-color swatch, Reset, and a
   neutral fallback when an asset or saved color is invalid.
+- [ ] **Phase 7G.1A.1:** make `None` a persistent per-actor back-hair default
+  and save the selected front/back IDs plus per-style fit values without
+  deleting any catalog hair.
 - [ ] Produce a component-sheet pipeline for modular faces, front/back hair,
-  nine fitted clothing overlays, optional loose garments, and accessories.
+  one fixed-layout clothing-only sheet for nine fitted overlays, optional
+  loose garments, and accessories.
+- [ ] Version the supplied separated-parts guide, store one exact crop/anchor
+  manifest, and cut accepted Gemini sheets locally rather than detecting parts
+  with AI.
 - [ ] Add named held-item anchors and relative layer modes.
 - [ ] Hard-mask, align, validate, cache, and locally compose all layers.
 - [ ] Prove the Little Prince keeps the exact template head and body in all six
@@ -458,12 +472,14 @@ Current Phase 7G.1 work:
 
 Phase 7G.1A acceptance gate:
 
-- switching actors loads that actor's default face, fitted front/back hair
-  pair, and default skin tone without changing the locked rig geometry;
+- switching actors loads that actor's default face, front hair, optional back
+  hair, saved fit, and default skin tone without changing the locked rig
+  geometry;
 - changing skin tone updates the head and every body part immediately and
   consistently in Idle, Talking, Pointing, and Walking;
-- the selected hair pair and skin tone survive pose changes and are stored
-  once in the appearance manifest rather than copied into every pose;
+- the selected hair IDs, including explicit `None`, fit values, and skin tone
+  survive pose changes and are stored once in the appearance manifest rather
+  than copied into every pose;
 - any valid opaque `#RRGGBB` color is accepted, while invalid saved values fall
   back safely;
 - tinting is local and consumes no Gemini or Cloudflare request; and
@@ -474,9 +490,9 @@ Phase 7G.1A implementation note:
 
 - the appearance record is saved once in local device storage and reapplied
   when the user changes pose;
-- each actor currently resolves one approved pair from the fitted
-  Short/Medium/Long V1 catalog; actor-specific generated front/back artwork is
-  produced in Phase 7G.1B without changing slot geometry; and
+- each actor currently resolves approved front hair plus an optional fitted
+  Short/Medium/Long back-hair choice; actor-specific generated front/back
+  artwork is produced in Phase 7G.1B without changing rig geometry; and
 - the V1 base artwork alpha is the tint boundary while the face overlay and
   hair layers remain outside the tint operation.
 
@@ -489,6 +505,8 @@ Blocked Phase 7H work:
 
 The exact Phase 7G.1 layered-package and Phase 7H playback plan is in
 [Generated Character Pipeline Plan](GENERATED_CHARACTER_PIPELINE_PLAN.md).
+The exact one-sheet clothing request, local split, and package contract is in
+[Character Clothing Sheet Plan](CHARACTER_CLOTHING_SHEET_PLAN.md).
 Generated image bytes intentionally remain session-only until Phase 8 replaces
 the binary store with durable local files.
 
@@ -677,6 +695,7 @@ These decisions must be recorded here when resolved.
 
 | Document | Responsibility |
 | --- | --- |
+| `PROJECT_HANDOFF.md` | Complete new-chat context: purpose, users, decisions, records, academic requirements, rejected ideas, working agreement, and current handoff state |
 | `ROADMAP.md` | Development order, current phase, status, and all remaining work |
 | `PROJECT_PLAN.md` | Short overview that links to this roadmap |
 | `ARCHITECTURE.md` | Components, providers, data boundaries, and folders |
@@ -691,6 +710,8 @@ These decisions must be recorded here when resolved.
 | `SPRITE_STUDIO_PLAN.md` | Rig and pose editor behavior |
 | `MODULAR_FACE_SYSTEM_PLAN.md` | Face-part catalogs and set behavior |
 | `GENERATED_CHARACTER_PIPELINE_PLAN.md` | Template-constrained Gemini character, real rig, face/pose proof, and Story Mode binding gate |
+| `CHARACTER_CLOTHING_SHEET_PLAN.md` | Canonical clothing-only sheet, local crop/mask pipeline, outfit package, and optional-hair persistence |
+| `FIXED_HAIR_SLOT_PLAN.md` | Universal per-actor/per-style front/back hair fitting and explicit no-back-hair behavior |
 | `CLOUDFLARE_IMAGE_GENERATOR.md` | Worker routes and provider responsibilities |
 | `UI_IMPLEMENTATION_PLAN.md` | Responsive screen and reusable-widget reference |
 | prompt packs and asset READMEs | Historical production references; they never decide the global next phase |

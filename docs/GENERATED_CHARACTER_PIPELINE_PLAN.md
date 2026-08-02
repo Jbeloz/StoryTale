@@ -6,8 +6,9 @@ reusable Sprite Studio package for Animated Story Mode.
 Status: **Planning correction complete. Phase 7G proved the package structure,
 but its visual-fidelity gate failed. Phase 7G.1, the locked-template layered
 composer, is current. Phase 7G.1A completed the actor hair and local skin-tone
-foundation. Phase 7G.1B generated appearance layers are next. Phase 7H Story
-Mode binding must wait for the complete Phase 7G.1 gate.**
+foundation. Phase 7G.1A.1 appearance-default persistence is next, followed by
+Phase 7G.1B generated appearance layers. Phase 7H Story Mode binding must wait
+for the complete Phase 7G.1 gate.**
 
 ## 1. Decision
 
@@ -328,13 +329,17 @@ To control cost and alignment, V1 uses fixed-layout component sheets:
 
 1. face-expression sheet for five eyes/brows, five mouths, and one nose;
 2. hair sheet with one back-hair and one front-hair slot;
-3. nine-part fitted-clothing sheet plus optional outfit extension slots; and
+3. one clothing-only sheet aligned to the locked head-plus-nine-parts guide;
+   the head is reference-only and the nine body slots contain only fitted
+   garment pixels; and
 4. accessory sheet only when the story requires accessories.
 
-StoryTale splits each accepted sheet locally by known cells, then applies the
-canonical masks. This uses about three core Gemini image calls per human, plus
-one optional accessory call, rather than generating dozens of independent
-images.
+StoryTale splits each accepted sheet locally by one versioned crop manifest,
+then applies canonical allowed/protected masks. The clothing sheet must retain
+the guide's exact dimensions, arrangement, left/right ownership, and pure
+green background. Gemini may not output another assembled body. This uses
+about three core Gemini image calls per human, plus one optional accessory
+call, rather than generating dozens of independent images.
 
 If a sheet format proves less consistent than separate edits, the same
 contract may use one call per component group. It may not fall back to a
@@ -602,25 +607,30 @@ Implementation order:
 
 1. Freeze and version the canonical rig, alpha masks, anchors, and geometry
    hash.
-2. **Phase 7G.1A:** add the five actor appearance records and one fitted
-   front/back default hairstyle pair for Default, Hero, Heroine, Elder, and
-   Adult.
+2. **Phase 7G.1A:** add the five actor appearance records, fitted front hair,
+   optional fitted back hair, and a default skin tone for Default, Hero,
+   Heroine, Elder, and Adult.
 3. **Phase 7G.1A:** add per-part skin masks, local RGB/hex tint composition,
    compact Actor/Hair/Skin controls, appearance persistence, and neutral
    fallbacks.
-4. Add the appearance-manifest and named layer/attachment contracts.
-5. Change sprite generation from `master` to face, hair, clothing, and optional
-   accessory component sheets.
-6. Split and hard-mask every component locally.
-7. Compose the fixed base plus appearance layers in the normal Sprite Studio
+4. **Phase 7G.1A.1:** persist explicit no-back-hair selection and universal
+   per-actor/per-style hair fits without deleting catalog choices.
+5. Add the appearance-manifest and named layer/attachment contracts.
+6. Approve and version `clothing_sheet_v1` with exact crop rectangles,
+   allowed/protected masks, joint overlap, and anchors.
+7. Change sprite generation from `master` to face, hair, clothing-only, and
+   optional accessory component sheets.
+8. Remove green, split by the fixed manifest, and hard-mask every component
+   locally.
+9. Compose the fixed base plus appearance layers in the normal Sprite Studio
    renderer.
-8. Add the held-item anchor and approved relative layer modes.
-9. Add preparation progress, design-hash reuse, and no-duplicate generation.
-10. Remove or disable the private sprite route's shared three-per-minute
+10. Add the held-item anchor and approved relative layer modes.
+11. Add preparation progress, design-hash reuse, and no-duplicate generation.
+12. Remove or disable the private sprite route's shared three-per-minute
    StoryTale limiter while retaining sequential requests and provider errors.
-11. Prove one Little Prince package matches the exact StoryTale head/body
+13. Prove one Little Prince package matches the exact StoryTale head/body
    template in all six faces and four poses.
-12. Mark the package ready only after every validation check passes.
+14. Mark the package ready only after every validation check passes.
 
 ### Phase 7H - Story Mode binding
 
@@ -648,16 +658,21 @@ Durable files across full app restarts remain Phase 8.
   pieces) are byte/hash locked.
 - [ ] A character changes through face, hair, clothing, tint, and accessory
   layers only.
-- [ ] Default, Hero, Heroine, Elder, and Adult each have a stable default
-  front/back hairstyle pair and default skin tone.
+- [ ] Default, Hero, Heroine, Elder, and Adult each have stable default front
+  hair, an optional back-hair selection including `None`, and a default skin
+  tone.
 - [ ] The skin picker accepts any valid opaque RGB/hex color and recolors only
   approved skin-mask pixels without an image-generation request.
 - [ ] Hair style and skin tone are appearance data shared by every pose,
   chapter, and later volume rather than duplicated pose data.
+- [ ] An actor may save `None` as its back-hair default while all back-hair
+  catalog assets remain available for other appearances.
 - [ ] Front and back hair are separate and long back hair can extend behind the
   torso.
 - [ ] Eyes/brows, nose, mouths, and details remain separately selectable.
 - [ ] Clothing follows every rotated body part.
+- [ ] The clothing sheet keeps the canonical size and arrangement, leaves its
+  head cell empty, and is split locally by fixed rectangles.
 - [ ] Loose garments use extension layers.
 - [ ] Head, face, front, back, and held accessories have explicit anchors.
 - [ ] A held sword can render behind the right arm with a grip overlay above

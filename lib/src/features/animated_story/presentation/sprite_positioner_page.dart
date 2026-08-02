@@ -508,7 +508,6 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
   Widget _selectionSummary(SpriteRigDefinition rig, SpriteRigPose pose) {
     final selected = rig.partsById[_selectedPartId]!;
     final transform = pose.transformFor(selected.id);
-    final fixedHair = _isFixedHairSlot(selected.id);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       child: Column(
@@ -536,7 +535,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
           Text(
             'Rotation ${transform.rotation.round()}°  •  '
             'X ${transform.offsetX.round()}  •  Y ${transform.offsetY.round()}'
-            '${selected.hasBone || fixedHair ? '' : '  •  Size ${(transform.scale * 100).round()}%'}',
+            '${selected.hasBone ? '' : '  •  Size ${(transform.scale * 100).round()}%'}',
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
@@ -563,12 +562,12 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
             _backHairSelector(),
             const SizedBox(height: 8),
             const Text(
-              'These fitted parts keep the same position and size when switched.',
+              'Each actor and hair style keeps its own saved position and size.',
             ),
           ]),
         if (_faceCatalog != null)
           Visibility(
-            visible: !_isFixedHairSlot(selected.id),
+            visible: !_isHairSlot(selected.id),
             maintainState: true,
             child: _section('Face', [_faceSelector(rig, pose)]),
           ),
@@ -624,8 +623,8 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
             id: 'x',
             label: 'Horizontal offset',
             value: transform.offsetX,
-            min: -80,
-            max: 80,
+            min: _isHairSlot(selected.id) ? -180 : -80,
+            max: _isHairSlot(selected.id) ? 180 : 80,
             onSliderStart: _rememberPose,
             onChanged: (value) => _setHorizontalOffset(value),
           ),
@@ -633,18 +632,18 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
             id: 'y',
             label: 'Vertical offset',
             value: transform.offsetY,
-            min: -80,
-            max: 80,
+            min: _isHairSlot(selected.id) ? -180 : -80,
+            max: _isHairSlot(selected.id) ? 180 : 80,
             onSliderStart: _rememberPose,
             onChanged: (value) => _setVerticalOffset(value),
           ),
-          if (!selected.hasBone && !_isFixedHairSlot(selected.id))
+          if (!selected.hasBone)
             _transformControl(
               id: 'scale',
               label: 'Size',
               value: transform.scale * 100,
-              min: 50,
-              max: 180,
+              min: _isHairSlot(selected.id) ? 30 : 50,
+              max: _isHairSlot(selected.id) ? 250 : 180,
               suffix: '%',
               onSliderStart: _rememberPose,
               onChanged: (value) => _setScale(value / 100),
@@ -652,9 +651,8 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
           if (!selected.hasBone)
             Text(
               '${selected.parentId == null ? '' : 'Attached to ${rig.partsById[selected.parentId]?.label ?? selected.parentId}. '}'
-              '${_isFixedHairSlot(selected.id) ? 'Hair uses the permanent fitted size. Drag it to adjust only its position, then use ' : 'Drag it directly to adjust only this attachment, then use '}'
-              'Save project default to keep its '
-              '${_isFixedHairSlot(selected.id) ? 'position.' : 'position and size.'}',
+              '${_isHairSlot(selected.id) ? 'This hair fit is shared by ${SpriteAppearanceCatalog.actor(_appearance.actorId).label} across every pose. ' : 'Drag it directly to adjust only this attachment. '}'
+              'Use Save project default to keep its position and size.',
             ),
         ]),
         _section('Layers', [
@@ -916,7 +914,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
 
   void _setActorAppearance(String actorId) {
     final actor = SpriteAppearanceCatalog.actor(actorId);
-    final appearance = SpriteAppearanceSelection(
+    final appearance = _appearance.copyWith(
       actorId: actor.id,
       hairStyleId: actor.defaultHairStyleId,
       skinTone: actor.defaultSkinTone,
@@ -1053,6 +1051,20 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
           appearance.actorId,
           appearance.hairStyleId,
         ),
+      );
+    }
+    for (final partId in const ['front_hair', 'back_hair']) {
+      if (!targetRig.partsById.containsKey(partId)) continue;
+      final fit = appearance.hairFitForPart(partId);
+      result = result.update(
+        partId,
+        result
+            .transformFor(partId)
+            .copyWith(
+              offsetX: fit.offsetX,
+              offsetY: fit.offsetY,
+              scale: fit.scale,
+            ),
       );
     }
     if (_faceCatalog != null || rig != null) {
@@ -1198,18 +1210,26 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
   void _update(SpritePartTransform transform) {
     final partId = _selectedPartId;
     if (partId == null) return;
-    setState(() => _pose = _pose!.update(partId, transform));
+    setState(() {
+      _pose = _pose!.update(partId, transform);
+      _captureHairFit(partId, transform);
+    });
   }
 
   void _updatePart(String partId, SpritePartTransform transform) {
     final part = _rig!.partsById[partId]!;
+    final hair = _isHairSlot(partId);
+    final offsetLimit = hair ? 180.0 : 80.0;
     final safe = transform.copyWith(
       rotation: part.clampRotation(transform.rotation),
-      offsetX: transform.offsetX.clamp(-80, 80),
-      offsetY: transform.offsetY.clamp(-80, 80),
-      scale: _isFixedHairSlot(partId) ? 1 : transform.scale.clamp(0.5, 1.8),
+      offsetX: transform.offsetX.clamp(-offsetLimit, offsetLimit),
+      offsetY: transform.offsetY.clamp(-offsetLimit, offsetLimit),
+      scale: transform.scale.clamp(hair ? 0.3 : 0.5, hair ? 2.5 : 1.8),
     );
-    setState(() => _pose = _pose!.update(partId, safe));
+    setState(() {
+      _pose = _pose!.update(partId, safe);
+      _captureHairFit(partId, safe);
+    });
   }
 
   void _setRotation(double value) {
@@ -1230,11 +1250,11 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
   }
 
   void _setScale(double value) {
-    if (_isFixedHairSlot(_selectedPartId!)) return;
+    final hair = _isHairSlot(_selectedPartId!);
     _update(
       _pose!
           .transformFor(_selectedPartId!)
-          .copyWith(scale: value.clamp(0.5, 1.8)),
+          .copyWith(scale: value.clamp(hair ? 0.3 : 0.5, hair ? 2.5 : 1.8)),
     );
   }
 
@@ -1247,9 +1267,15 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
       pose = pose.withFaceExpression(setId);
     }
     final actor = SpriteAppearanceCatalog.actorForProfile(profileId);
+    final appearance = _appearance.copyWith(
+      actorId: actor.id,
+      hairStyleId: actor.defaultHairStyleId,
+      skinTone: actor.defaultSkinTone,
+    );
+    pose = _applyAppearance(pose, appearance);
     setState(() {
       _pose = pose;
-      _appearance = _appearance.copyWith(actorId: actor.id);
+      _appearance = appearance;
     });
     _persistAppearance();
   }
@@ -1263,10 +1289,11 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     final partId = _selectedPartId;
     if (partId == null) return;
     final current = _pose!.transformFor(partId);
+    final limit = _isHairSlot(partId) ? 180.0 : 80.0;
     _update(
       current.copyWith(
-        offsetX: (current.offsetX + dx).clamp(-80, 80),
-        offsetY: (current.offsetY + dy).clamp(-80, 80),
+        offsetX: (current.offsetX + dx).clamp(-limit, limit),
+        offsetY: (current.offsetY + dy).clamp(-limit, limit),
       ),
     );
   }
@@ -1474,6 +1501,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     final initial = _initialPose!;
     setState(() {
       _pose = initial;
+      _captureHairFits(initial);
       if (!_isBuiltIn) _replaceCustom(initial);
       _undoStack.clear();
       _redoStack.clear();
@@ -1492,7 +1520,10 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
         _appearance,
       );
     }
-    final visiblePose = _sessionDrafts[id] ?? storedPose;
+    final visiblePose = _applyAppearance(
+      _sessionDrafts[id] ?? storedPose,
+      _appearance,
+    );
     if (!mounted) return;
     setState(() {
       _selectedPoseId = id;
@@ -1622,7 +1653,10 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
   void _reset() {
     if (_pose!.toPrettyJson() == _initialPose!.toPrettyJson()) return;
     _rememberPose();
-    setState(() => _pose = _initialPose);
+    setState(() {
+      _pose = _initialPose;
+      _captureHairFits(_initialPose!);
+    });
   }
 
   void _save() {
@@ -1632,6 +1666,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
       _pose = saved;
       _initialPose = saved;
     });
+    _persistAppearance();
     _message('Pose saved for this session.');
   }
 
@@ -1639,7 +1674,10 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     final saved = _sessionDrafts[_selectedPoseId];
     if (saved == null || _pose!.toPrettyJson() == saved.toPrettyJson()) return;
     _rememberPose();
-    setState(() => _pose = _normalizePose(saved));
+    setState(() {
+      _pose = _normalizePose(saved);
+      _captureHairFits(_pose!);
+    });
     _message('Saved pose loaded.');
   }
 
@@ -1648,6 +1686,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     final saved = _normalizePose(_pose!);
     try {
       await _poseRepository.save(saved);
+      await _appearanceRepository.save(_appearance);
       if (!mounted) return;
       setState(() {
         _pose = saved;
@@ -1678,6 +1717,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     setState(() {
       _redoStack.add(current);
       _pose = _undoStack.removeLast();
+      _captureHairFits(_pose!);
     });
   }
 
@@ -1687,6 +1727,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     setState(() {
       _undoStack.add(current);
       _pose = _redoStack.removeLast();
+      _captureHairFits(_pose!);
     });
   }
 
@@ -1701,6 +1742,19 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
       final normalizedPose = _normalizePose(_pose!);
       final selected = _rig!.partsById[_selectedPartId!]!;
       await _postProjectAppearance();
+
+      if (_isHairSlot(selected.id)) {
+        if (!mounted) return;
+        setState(() {
+          _pose = normalizedPose;
+          _initialPose = normalizedPose;
+        });
+        _message(
+          '${SpriteAppearanceCatalog.actor(_appearance.actorId).label} '
+          '${selected.label.toLowerCase()} fit is now shared by every pose.',
+        );
+        return;
+      }
 
       if (_isBuiltIn && !_usesInjectedSource && !selected.hasBone) {
         final attachment = normalizedPose.transformFor(selected.id);
@@ -1772,14 +1826,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
   }
 
   SpriteRigPose _normalizePose(SpriteRigPose pose) {
-    var normalized = SpriteLayerPolicy.normalize(pose);
-    for (final partId in const ['front_hair', 'back_hair']) {
-      if (_rig?.partsById.containsKey(partId) != true) continue;
-      normalized = normalized.update(
-        partId,
-        normalized.transformFor(partId).copyWith(scale: 1),
-      );
-    }
+    final normalized = SpriteLayerPolicy.normalize(pose);
     final catalog = _faceCatalog;
     return catalog == null
         ? normalized
@@ -1792,8 +1839,27 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
-  bool _isFixedHairSlot(String partId) {
+  bool _isHairSlot(String partId) {
     return partId == 'front_hair' || partId == 'back_hair';
+  }
+
+  void _captureHairFit(String partId, SpritePartTransform transform) {
+    if (!_isHairSlot(partId)) return;
+    _appearance = _appearance.withHairFitForPart(
+      partId,
+      SpriteHairFit(
+        offsetX: transform.offsetX,
+        offsetY: transform.offsetY,
+        scale: transform.scale,
+      ),
+    );
+  }
+
+  void _captureHairFits(SpriteRigPose pose) {
+    for (final partId in const ['front_hair', 'back_hair']) {
+      if (_rig?.partsById.containsKey(partId) != true) continue;
+      _captureHairFit(partId, pose.transformFor(partId));
+    }
   }
 }
 

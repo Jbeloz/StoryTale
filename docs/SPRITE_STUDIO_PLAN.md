@@ -50,8 +50,8 @@ Sprite Studio will support:
 - drag mode, rotation, X/Y position, Undo, and Redo;
 - safe front/back layer adjustments;
 - a reusable five-expression default face catalog;
-- a compact Appearance section for actor profile, paired hairstyle, and local
-  skin-tone color;
+- a compact Appearance section for actor profile, independent front hair,
+  optional back hair, and local skin-tone color;
 - aligned front/back hair, per-part clothing, loose-garment, and accessory
   layers from an approved appearance package;
 - permanent front/back hair slots that follow the head and use the fixed
@@ -322,7 +322,8 @@ Unknown or missing expressions always fall back to `neutral`.
 
 ## 6A. Actor appearance, hair, and skin tone
 
-**Status: implemented as Phase 7G.1A. Phase 7G.1B is next.**
+**Status: Phase 7G.1A is implemented. Phase 7G.1A.1 appearance-default
+persistence is next, followed by Phase 7G.1B generated appearance layers.**
 
 The five starter actors remain reusable appearance starting points:
 
@@ -332,8 +333,8 @@ The five starter actors remain reusable appearance starting points:
 4. Elder
 5. Adult
 
-Each actor provides a default face profile, one fitted front/back hairstyle
-pair, and one default skin tone. All five use the same immutable
+Each actor provides a default face profile, fitted front hair, a reusable
+optional back-hair catalog, and one default skin tone. All five use the same immutable
 `humanoid_v1` head and body geometry.
 
 Sprite Studio adds one compact **Appearance** section:
@@ -344,9 +345,10 @@ Hair       [thumbnail catalog]
 Skin       [swatch] [color picker] [#RRGGBB] [Reset]
 ```
 
-- Actor changes load that actor's default face, complete hairstyle pair, and
-  default skin tone.
-- Hair changes switch the fitted front and back files together.
+- Actor changes load that actor's default face, front hair, saved optional back
+  hair, saved fit, and default skin tone.
+- Hair changes may switch front and back files independently. Saving `None`
+  hides the back layer without deleting any catalog choice.
 - Skin opens a dropper-style picker with saturation/value, hue, and hex entry.
 - Any opaque RGB color is allowed; suggested human-tone swatches are shortcuts,
   not restrictions.
@@ -358,8 +360,8 @@ body pieces. It preserves alpha, outlines, shading, white eyes, highlights,
 and face details. It does not recolor hair, clothes, or accessories and never
 calls Gemini or Cloudflare.
 
-`actorProfileId`, `hairStyleId`, and `skinTone` are saved once in the
-appearance manifest. They are not copied into every pose. Switching between
+`actorProfileId`, front/back hair IDs, hair-fit values, and `skinTone` are saved
+once in the appearance manifest. They are not copied into every pose. Switching between
 Idle, Talking, Pointing, Walking, or a custom pose therefore keeps the same
 appearance, and Story Mode can reuse it across chapters and later volumes.
 
@@ -554,7 +556,9 @@ controls its joints.
 
 - [x] Add one actor appearance record for Default, Hero, Heroine, Elder, and
   Adult.
-- [x] Add one fitted front/back default hairstyle pair per actor.
+- [x] Add fitted actor-specific front hair and reusable back-hair choices.
+- [ ] Persist an explicit `None` back-hair default and universal per-style fit
+  without deleting catalog choices.
 - [x] Use each locked base part's alpha as the V1 local skin-tint mask.
 - [x] Add the compact Actor, Hair, and Skin controls.
 - [x] Save actor profile, hairstyle, and skin tone in appearance data.
@@ -564,11 +568,20 @@ controls its joints.
 
 ### Part 7G.1B - Generated appearance layers - next
 
+- First persist an explicit `None` back-hair default and each actor/style hair
+  fit in appearance data; saving it must not remove catalog choices.
 - Generate aligned face, actor-specific front/back hair, clothing, loose
   garment, and accessory layers only.
+- Generate fitted clothing as one fixed-layout clothing-only sheet aligned to
+  the canonical separated-parts guide, then remove green and cut the nine body
+  cells locally from one versioned manifest.
 - Keep the shared head and nine body pieces unchanged.
 - Validate dimensions, transparency, anchors, layer roles, and geometry hash
   before accepting a generated layer.
+
+See [Character Clothing Sheet Plan](CHARACTER_CLOTHING_SHEET_PLAN.md) for the
+sheet layout, prompt, local splitter, folders, character-start flow, and
+acceptance gate.
 
 The default `humanoid_v1` rig is the approved V1 geometry template. A generated
 book character references that stable template ID/version/hash and adds its own
@@ -592,7 +605,8 @@ Sprite Studio is complete when:
 - turning off Bone mode prevents joint movement but still permits selection;
 - every default face aligns with the same head and preserves eye whites and
   highlights;
-- each starter actor loads a complete matching front/back hairstyle pair;
+- each starter actor loads its fitted front hair and its saved optional
+  back-hair choice, including `None`;
 - any valid skin color updates every exposed head/body skin region while
   preserving outlines, shading, eyes, hair, clothes, and accessories;
 - actor, hairstyle, and skin tone remain unchanged when the pose changes;

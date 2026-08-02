@@ -80,7 +80,7 @@ missing asset after the volume job.
 | 3. Analyze chapters | 25% | Characters, aliases, dialogue speakers, locations, plot beats, and summaries |
 | 4. Merge Story Bible | 10% | One consistent volume roster, timeline, style guide, and unresolved list |
 | 5. Plan shared assets | 5% | Unique character, non-human, prop, and location/state requirements |
-| 6. Prepare shared assets | 20% | Approved reusable sprites, rigs, focus assets, and backgrounds |
+| 6. Prepare shared assets | 20% | Reused or generated faces, hair, clothing sheets, accessories, non-human focus assets, and backgrounds |
 | 7. Assemble chapters | 20% | Cutscenes, shots, poses, faces, camera, movement, subtitles, and moral |
 | 8. Validate packages | 5% | Complete source coverage, valid IDs, files, fallbacks, and ready states |
 
@@ -207,6 +207,11 @@ StoryTale plans assets after all chapter analyses have been merged.
 - Pose changes use Sprite Studio transform JSON; they do not generate another
   full character picture.
 - Face changes use reusable eyes, nose, mouth, and detail parts.
+- Fitted clothing is generated once as a canonical clothing-only sheet, then
+  cut locally into the nine known body-part overlays. No chapter or pose asks
+  Gemini to redraw that outfit.
+- Front hair, optional back hair including `None`, saved hair fits, and skin
+  tone belong to the shared appearance package rather than chapter data.
 - Important animals and creatures use approved whole sprites.
 - Important plants and props use only the normal and plot-required states.
 - One location/state background is generated once and reused by every matching
@@ -406,8 +411,8 @@ Status: **Completed on 2026-07-28.**
 
 ### Phase 6E.1 - Live Chapter 1 stabilization
 
-Status: **Implemented; the user-run Chapter 1 acceptance gate is still
-required before Phase 6F.**
+Status: **Implemented and superseded by the completed Phase 6F catalog work.
+The remaining beat-level pose and talking behavior belongs to Phase 9.**
 
 This is a narrow repair and verification gate for the first connected chapter.
 It does not expand asset connection to every chapter and it does not implement
@@ -446,7 +451,7 @@ the final beat-level character animation system.
   camera-trigger reactions assigned to Phase 9. This stabilization phase only
   improves useful shot boundaries and foreground connection.
 
-Acceptance checklist before Phase 6F:
+Historical Chapter 1 observation checklist retained for regression reference:
 
 - [ ] Generated background appears in Chapter 1.
 - [ ] Chair appears on the chair action and nowhere unrelated.
@@ -508,8 +513,14 @@ Status: **Current and blocking.**
   anchors, anatomical layer policy, template version, and geometry hash
   immutable.
 - [ ] Replace whole-character generation with aligned face, front/back hair,
-  clothing-by-part, optional garment-extension, accessory, and held-item
-  component sheets.
+  one canonical clothing-only sheet, optional garment-extension, accessory,
+  and held-item component sheets.
+- [ ] Persist front hair, optional back hair including explicit `None`, and
+  per-actor/per-style X/Y/scale fits without removing catalog choices.
+- [ ] Version the exact sheet dimensions, cell rectangles, masks, overlap,
+  anchors, and left/right ownership in one local crop manifest.
+- [ ] Remove green and cut the nine clothing cells locally; never ask Gemini to
+  discover the boundaries or generate runtime anatomy.
 - [ ] Store one appearance manifest with stable package, face, hair, clothing,
   accessory, held-item, attachment, and pose IDs.
 - [ ] Validate hard masks, face landmarks, clothing seams, anchors, named
@@ -518,6 +529,9 @@ Status: **Current and blocking.**
   every chapter and later volume reuses the same package.
 - [ ] Prove the Little Prince preview preserves the exact StoryTale head/body
   template before marking the package ready.
+
+The exact generation and local-processing contract is in the
+[Character Clothing Sheet Plan](CHARACTER_CLOTHING_SHEET_PLAN.md).
 
 #### Phase 7H - Story Mode human binding
 

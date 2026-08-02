@@ -36,6 +36,12 @@ locally from the shared rig plus approved appearance layers. `rig.json` stores
 each base part's position, size, parent, pivot, geometry hash, and fixed layer
 order. Poses change transforms only.
 
+Fitted clothing is requested as one canonical clothing-only sheet aligned to
+the head-plus-nine-parts guide. The head is reference-only. StoryTale removes
+green and cuts the nine known cells locally through one versioned manifest.
+Front hair, optional back hair, their saved X/Y/scale fits, and skin tone live
+in the character appearance instead of pose JSON.
+
 ## Runtime idea
 
 The app stacks transparent PNG parts and rotates them around saved joints:
@@ -69,5 +75,7 @@ storage, and Story Mode pose/face resolution. Locked-template book-character
 appearance composition is the current Phase 7G.1 correction. See the
 [Sprite Studio plan](../../../SPRITE_STUDIO_PLAN.md) for editor behavior and the
 [Generated Character Pipeline plan](../../../GENERATED_CHARACTER_PIPELINE_PLAN.md)
-for the production rig gate, plus the
+for the production rig gate,
+[Character Clothing Sheet plan](../../../CHARACTER_CLOTHING_SHEET_PLAN.md) for
+outfit generation and cutting, plus the
 [Master Roadmap](../../../ROADMAP.md) for the global next phase.

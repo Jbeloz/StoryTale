@@ -1,5 +1,26 @@
 {
-  "actorId": "default",
-  "hairStyleId": "medium",
-  "skinTone": "#F2EDEF"
+  "actorId": "adult",
+  "hairStyleId": "none",
+  "skinTone": "#C99575",
+  "hairFits": {
+    "hero": {
+      "front_hair": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "scale": 1
+      },
+      "back_hair:short": {
+        "offsetX": 0,
+        "offsetY": 0,
+        "scale": 1
+      }
+    },
+    "elder": {
+      "front_hair": {
+        "offsetX": 8.033003373579533,
+        "offsetY": -16.958714004390487,
+        "scale": 0.9109092018821023
+      }
+    }
+  }
 }

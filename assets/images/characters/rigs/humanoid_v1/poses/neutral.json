@@ -3,12 +3,28 @@
   "name": "Idle",
   "rigId": "humanoid_v1",
   "faceExpressionId": "neutral",
+  "faceProfileId": "adult_deep",
+  "faceSetId": "neutral",
   "layerPolicyVersion": 1,
+  "partAssets": {
+    "front_hair": "assets/images/characters/rigs/humanoid_v1/hair/front_adult.png",
+    "back_hair": ""
+  },
   "parts": {
     "head": {
       "rotation": 0,
       "x": 0.39667807334714666,
       "y": 16.26444666838843
+    },
+    "front_hair": {
+      "rotation": 0,
+      "x": 0,
+      "y": 0
+    },
+    "back_hair": {
+      "rotation": 0,
+      "x": 0,
+      "y": 0
     }
   }
 }

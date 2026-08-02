@@ -1,8 +1,9 @@
 # StoryTale Visual-Novel Scene Library
 
-**Status: approved. Parts 1-7 are implemented. The global current phase is the
-final landscape background pipeline; matching foreground/entity assets follow
-it. See the [Master Roadmap](ROADMAP.md).**
+**Status: approved. Parts 1-7 are implemented. Background and foreground asset
+foundations are connected; the global current work is Phase 7G.1A.1
+locked-template character appearance persistence. See the
+[Master Roadmap](ROADMAP.md).**
 
 This replaces the current small-character technical demo with a visual-novel
 cutscene style. StoryTale still uses transparent full-body sprites, reusable
@@ -233,7 +234,10 @@ Analyzer rules:
 
 ## 7. One-sentence ChatGPT prompts for layout references
 
-Attach the approved full-body character images when a prompt requires them.
+Attach approved rendered character composites when a layout-reference prompt
+requires them. Runtime Story Mode still assembles the locked rig and modular
+appearance layers locally; these prompt references do not become replacement
+character masters.
 Replace bracketed words, but keep each request as one sentence.
 
 1. **Empty establishing:** "Can you make a 16:9 anime visual-novel establishing scene of [location and time] with no characters, a clear cinematic focal point, and no text or UI?"
@@ -268,8 +272,8 @@ Replace bracketed words, but keep each request as one sentence.
 3. **Completed:** add reusable layout presets for zero, one, two, and three
    characters. The same resolver accepts deterministic test shots, imported
    EPUB chapters, and future Gemini shot plans.
-4. **Completed:** add whole-character facing, controlled scale, depth ordering,
-   speaker emphasis, listener dimming, and multiple assembled rig layers.
+4. **Completed:** add assembled-rig facing, controlled scale, depth ordering,
+   speaker emphasis, listener dimming, and multiple layered character rigs.
 5. **Completed:** add the camera viewport, approved pan/zoom presets, safety
    clamps, fixed subtitle UI, and reduced-motion fade fallback.
 6. **Completed:** add whole-rig character entrance/exit, walking, steps,

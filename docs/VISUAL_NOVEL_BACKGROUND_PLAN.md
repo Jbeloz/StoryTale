@@ -1,8 +1,10 @@
 # Visual-Novel Background Plan
 
-Status: **current; provider and catalog implemented, runtime playback still
-failing manual acceptance.** See the [Master Roadmap](ROADMAP.md) for the
-blocking defect and the phases that follow.
+Status: **Phase 5 foundation complete. Generated backgrounds are validated,
+registered, shown in a read-only catalog, and resolved by Story Mode. The
+global current work is Phase 7G.1A.1 locked-template character appearance
+persistence.** See the [Master Roadmap](ROADMAP.md) for the authoritative
+status and development order.
 
 ## Goal
 
@@ -107,22 +109,26 @@ Flutter app. Cloudflare currently marks this SDXL model as Beta, so background
 generation stays behind a provider adapter and can be replaced without changing
 the catalog or Story Mode data.
 
-## Generation, review, and reuse
+## Generation, validation, and reuse
 
 1. Collect distinct `locationId + stateId` requirements from the chapter plan.
 2. Resolve an approved structured location brief.
-3. Generate one pending landscape background for that pair.
+3. Generate one landscape background for that pair.
 4. Reject corrupt images or incorrect dimensions automatically.
-5. Show the full uncropped landscape result in the review screen.
-6. Let the user approve, reject, or regenerate it.
-7. Keep the last approved asset active while a replacement is pending.
-8. Register the stable asset ID only after approval.
-9. Reuse that asset in every consecutive shot with the same location and state.
+5. Validate the location/state ownership and stable asset ID.
+6. Register valid results automatically and mark invalid results
+   `needsReview` without automatically spending another provider request.
+7. Show the full uncropped landscape result in a read-only catalog.
+8. Keep regeneration, replacement, rejection, and manual upload controls hidden
+   behind the disabled developer-only management path.
+9. Reuse the ready asset in every consecutive shot with the same location and
+   state.
 10. Generate another asset only for a real place change or meaningful visual
     state change.
 
-Visual quality remains an approval decision. Automatic validation should not
-pretend it can reliably judge whether the scenery matches the book.
+Automatic validation checks the technical and semantic contract but does not
+pretend it can score artwork like a person. The read-only catalog lets the
+project owner inspect results without exposing paid retries to normal users.
 
 ## Story Mode use
 
@@ -139,16 +145,17 @@ pretend it can reliably judge whether the scenery matches the book.
 1. Add the structured background brief and prompt builder.
 2. Change only the background provider path to landscape SDXL.
 3. Add dimension and response validation plus focused Worker tests.
-4. Update the review card for landscape preview, reject, and regenerate.
-5. Connect approved asset IDs to matching cutscenes.
+4. Update the catalog card for a read-only landscape preview and readiness or
+   error details.
+5. Connect ready asset IDs to matching cutscenes.
 6. Test multiple locations and multiple states in one imported EPUB chapter.
 
 Before Phase 6 starts, the app must also pass this real-flow test:
 
-1. Generate and approve a valid background from the catalog.
+1. Generate and automatically register a valid background in the catalog.
 2. Open Animated Story Mode for that same book and chapter.
 3. Resolve the current shot's exact `locationId + stateId`.
-4. Load the approved local image record for that key.
+4. Load the ready local image record for that key.
 5. Render it in the `16:9` stage instead of the bundled fallback.
 6. Repeat after leaving and reopening Story Mode.
 
@@ -160,6 +167,8 @@ Before Phase 6 starts, the app must also pass this real-flow test:
 - The lower subtitle area does not cover essential landmarks.
 - No character, text, floating island, diorama, or isolated-object composition
   appears.
-- Rejecting a result does not replace the last approved background.
+- Opening the read-only catalog does not generate or replace an image.
+- If the developer-only replacement path is enabled later, the current ready
+  background stays active until a valid replacement is explicitly accepted.
 - A chapter with two locations uses two matching backgrounds.
 - A state change such as day to night uses the correct variant.

@@ -47,7 +47,7 @@ class SpriteRigView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayRig = _displayRig();
+    final displayRig = rig;
     final transforms = SpriteRigCalculator.calculate(displayRig, pose);
     final parts = [...displayRig.parts]..sort(_compareLayers);
     final bones = showBones || boneMode
@@ -104,76 +104,6 @@ class SpriteRigView extends StatelessWidget {
             for (final part in parts) _anchor(part, transforms[part.id]!.pivot),
         ],
       ),
-    );
-  }
-
-  SpriteRigDefinition _displayRig() {
-    final elderFrontHair = rig.partsById['front_hair'];
-    final longHeroineHair = rig.partsById['back_hair'];
-    final fitElderFrontHair =
-        elderFrontHair != null &&
-        pose
-            .assetFor(elderFrontHair)
-            .replaceAll('\\', '/')
-            .endsWith('/front_elder.png');
-    final fitLongHeroineHair =
-        longHeroineHair != null &&
-        pose
-            .assetFor(longHeroineHair)
-            .replaceAll('\\', '/')
-            .endsWith('/back_heroine_long.png');
-    if (!fitElderFrontHair && !fitLongHeroineHair) {
-      return rig;
-    }
-
-    final fittedElderHair = fitElderFrontHair
-        ? _resizePart(
-            elderFrontHair,
-            Size(
-              elderFrontHair.size.width * 1.12,
-              elderFrontHair.size.height * 1.12,
-            ),
-            Offset(
-              elderFrontHair.size.width * 1.12 / 2,
-              elderFrontHair.imagePivot.dy,
-            ),
-          )
-        : null;
-    final fittedHeroineHair = fitLongHeroineHair
-        ? _resizePart(
-            longHeroineHair,
-            const Size(600, 700),
-            const Offset(300, 700 * 0.542),
-          )
-        : null;
-
-    return SpriteRigDefinition(
-      id: rig.id,
-      canvasSize: rig.canvasSize,
-      parts: [
-        for (final part in rig.parts)
-          if (part.id == fittedElderHair?.id)
-            fittedElderHair!
-          else if (part.id == fittedHeroineHair?.id)
-            fittedHeroineHair!
-          else
-            part,
-      ],
-    );
-  }
-
-  SpriteRigPart _resizePart(SpriteRigPart part, Size size, Offset imagePivot) {
-    return SpriteRigPart(
-      id: part.id,
-      label: part.label,
-      asset: part.asset,
-      parentId: part.parentId,
-      position: part.pivot - imagePivot,
-      pivot: part.pivot,
-      size: size,
-      z: part.z,
-      hasBone: part.hasBone,
-      rotationRange: part.rotationRange,
     );
   }
 

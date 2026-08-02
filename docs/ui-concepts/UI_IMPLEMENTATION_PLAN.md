@@ -215,13 +215,13 @@ loading, error, and polish work follows the owning roadmap phase.
 | High | Voice manager | Shows the five installed ONNX voice packs and their test controls |
 | High | Chapter audio preparation | Shows background TTS/RVC generation progress and errors |
 | High | Reader chapter contents | Navigates between chapters without returning to Book Details |
-| High | Story Mode preparation | Creates or loads sprites, scenes, moral, and audio for one chapter |
+| High | Story Mode preparation | Runs one minimal volume job for shared entities/assets and chapter analysis, then opens ready chapters or repairs one missing chapter on demand |
 | High | Chapter moral | Displays the moral after Story Mode completes |
 | Medium | Search results/empty | Results list and no-result state |
 | Medium | Full bookshelf | See All books, sorting, filters, favorites, and delete/edit actions |
 | Medium | Reading history | Books and chapters ordered by last opened time |
 | Medium | Book options sheet | Rename metadata, replace cover, remove book, and clear progress |
-| Medium | Sprite/background review | Accept, regenerate, replace, or remove generated artwork |
+| Medium | Generated asset catalog | Read-only previews and readiness/error details; normal users cannot regenerate, replace, or remove paid generated artwork |
 | Medium | Settings | Theme, language, storage, translation, audio, and accessibility |
 | Low | Help and About | Local documentation, API notices, and app information |
 

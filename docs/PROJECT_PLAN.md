@@ -67,12 +67,12 @@ grouping. The test EPUB currently parses into 15 readable story sections.
   place and place-state changes
 - [x] Reuse backgrounds for unchanged consecutive shots instead of generating
   one image per paragraph
-- [x] Build the local location-background catalog, review flow, approval, and
-  stable asset registration
-- [ ] Replace the square FLUX smoke test with approved `1024 x 576`
-  visual-novel background generation and connect matching assets to cutscenes
-- [ ] Generate and register approved matching foreground assets
-- Create one `ChapterStory` package for every chapter
+- [x] Build the local location-background catalog, automatic validation,
+  stable asset registration, and read-only result preview
+- [x] Replace the square FLUX smoke test with `1024 x 576` visual-novel
+  background generation and connect matching ready assets to cutscenes
+- [x] Generate, validate, and register matching foreground assets automatically
+- [ ] Create one final persistent `ChapterStory` package for every chapter
 - Preserve the complete chapter from its first to last source block
 - Add backgrounds, character sprites, voices, subtitles, movement, and sound
 - Store transparent body and expression-head sprite layers with fixed anchors
@@ -88,8 +88,9 @@ Detailed phases, folder organization, schemas, rebuilding rules, and tests are
 in [Animated Story Mode plan](ANIMATED_STORY_MODE_PLAN.md). Non-human subjects
 and important objects follow the
 [Story Bible Entity and Asset Plan](STORY_BIBLE_ENTITY_ASSET_PLAN.md).
-The current implementation phase follows the
-[Visual-Novel Background Plan](VISUAL_NOVEL_BACKGROUND_PLAN.md).
+Landscape backgrounds are connected. The current blocking implementation phase
+is the locked-template human package described by the
+[Generated Character Pipeline Plan](GENERATED_CHARACTER_PIPELINE_PLAN.md).
 
 ## 5.1 Sprite Studio
 
@@ -110,16 +111,23 @@ The complete final-editor plan is in
 - Keep the ten approved local rig geometries (one head plus nine body pieces)
   immutable
 - Use Gemini 3.1 Flash Image only for missing face, front/back hair,
-  per-body-part clothing, loose-garment, and accessory component sheets
+  clothing-only, loose-garment, and accessory component sheets
 - Keep the Gemini key in the private Worker, never in Flutter
 - Send the locked description, exact component guide, and approved style
   references to preserve identity and alignment
-- Remove green, split known component cells, hard-mask them locally, and
-  compose them over the shared rig
+- Send one canonical clothing-only guide whose head is reference-only and whose
+  nine body cells keep exact left/right ownership, canvas size, and placement
+- Remove green, cut the known cells using one versioned crop manifest,
+  hard-mask them locally, and compose them over the shared rig
+- Save front hair, optional back hair, per-style X/Y/scale fits, and skin tone
+  once in the appearance manifest; `None` does not delete catalog hair
 - Never regenerate a locked character for every chapter or volume
 - Route sprites to Gemini and backgrounds to Workers AI through the private Worker
 - Store accepted sprites and backgrounds locally
 - Keep Story Mode working with manually provided artwork
+
+The exact sheet, splitter, folders, and acceptance gate are in the
+[Character Clothing Sheet Plan](CHARACTER_CLOTHING_SHEET_PLAN.md).
 
 ## Decisions still open
 

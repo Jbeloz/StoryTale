@@ -3,34 +3,95 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+class SpriteHairFit {
+  const SpriteHairFit({this.offsetX = 0, this.offsetY = 0, this.scale = 1});
+
+  final double offsetX;
+  final double offsetY;
+  final double scale;
+
+  factory SpriteHairFit.fromJson(Map<String, dynamic> json) {
+    return SpriteHairFit(
+      offsetX: (json['offsetX'] as num?)?.toDouble() ?? 0,
+      offsetY: (json['offsetY'] as num?)?.toDouble() ?? 0,
+      scale: (json['scale'] as num?)?.toDouble() ?? 1,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'offsetX': offsetX,
+    'offsetY': offsetY,
+    'scale': scale,
+  };
+}
+
 class SpriteAppearanceSelection {
   const SpriteAppearanceSelection({
     this.actorId = 'default',
     this.hairStyleId = 'medium',
     this.skinTone = '#F2EDEF',
+    this.hairFits = const {},
   });
 
   final String actorId;
   final String hairStyleId;
   final String skinTone;
+  final Map<String, Map<String, SpriteHairFit>> hairFits;
 
   SpriteAppearanceSelection copyWith({
     String? actorId,
     String? hairStyleId,
     String? skinTone,
+    Map<String, Map<String, SpriteHairFit>>? hairFits,
   }) {
     return SpriteAppearanceSelection(
       actorId: actorId ?? this.actorId,
       hairStyleId: hairStyleId ?? this.hairStyleId,
       skinTone: skinTone ?? this.skinTone,
+      hairFits: hairFits ?? this.hairFits,
     );
   }
 
+  String hairFitKey(String partId) {
+    return partId == 'back_hair' ? '$partId:$hairStyleId' : partId;
+  }
+
+  SpriteHairFit hairFitForPart(String partId) {
+    return hairFits[actorId]?[hairFitKey(partId)] ?? const SpriteHairFit();
+  }
+
+  SpriteAppearanceSelection withHairFitForPart(
+    String partId,
+    SpriteHairFit fit,
+  ) {
+    final actorFits = <String, SpriteHairFit>{
+      ...?hairFits[actorId],
+      hairFitKey(partId): fit,
+    };
+    return copyWith(hairFits: {...hairFits, actorId: actorFits});
+  }
+
   factory SpriteAppearanceSelection.fromJson(Map<String, dynamic> json) {
+    final hairFits = <String, Map<String, SpriteHairFit>>{};
+    final source = json['hairFits'];
+    if (source is Map) {
+      for (final actorEntry in source.entries) {
+        final actorSource = actorEntry.value;
+        if (actorSource is! Map) continue;
+        hairFits[actorEntry.key.toString()] = {
+          for (final fitEntry in actorSource.entries)
+            if (fitEntry.value is Map)
+              fitEntry.key.toString(): SpriteHairFit.fromJson(
+                Map<String, dynamic>.from(fitEntry.value as Map),
+              ),
+        };
+      }
+    }
     return SpriteAppearanceSelection(
       actorId: json['actorId'] as String? ?? 'default',
       hairStyleId: json['hairStyleId'] as String? ?? 'medium',
       skinTone: json['skinTone'] as String? ?? '#F2EDEF',
+      hairFits: hairFits,
     );
   }
 
@@ -38,6 +99,13 @@ class SpriteAppearanceSelection {
     'actorId': actorId,
     'hairStyleId': hairStyleId,
     'skinTone': skinTone,
+    'hairFits': {
+      for (final actorEntry in hairFits.entries)
+        actorEntry.key: {
+          for (final fitEntry in actorEntry.value.entries)
+            fitEntry.key: fitEntry.value.toJson(),
+        },
+    },
   };
 
   String toJsonString() => jsonEncode(toJson());

@@ -32,6 +32,10 @@ One request contains:
 Gemini never receives permission to invent an asset ID or control raw pixels,
 joint coordinates, anatomical layer order, attachment offsets, grip pivots,
 timing, easing, zoom, scale values, depth values, or movement distance.
+During asset planning, Gemini may return a source-backed semantic appearance
+brief such as garment type, palette, material, hair description, and required
+accessories. It never returns sheet dimensions, crop rectangles, masks, pivots,
+or per-part placement; those come from the versioned StoryTale template.
 
 For a human layer, Gemini returns approved semantic IDs only:
 
@@ -100,9 +104,14 @@ again.
 Phase 7G proved the package-loading path, but its full-body generated master did
 not preserve the StoryTale template closely enough. Phase 7G.1 replaces that
 approach with fixed local head/body geometry plus generated face, hair,
-clothing, and optional accessory layers. Phase 7H, which binds book humans into
+one canonical clothing-only sheet, and optional accessory layers. StoryTale
+cuts the nine clothing cells locally and reuses them for every pose. Phase 7H,
+which binds book humans into
 all affected ChapterStory packages, is blocked until the Phase 7G.1 visual and
 structural gate passes.
+
+See [Character Clothing Sheet Plan](CHARACTER_CLOTHING_SHEET_PLAN.md) for the
+image-generation boundary that follows this semantic contract.
 
 ## Current limitation
 
@@ -131,17 +140,17 @@ place-state change may require another background; unchanged shots reuse the
 same pair. The number of backgrounds is driven by the chapter, not fixed to one
 and not padded to a target count.
 
-Entity approval only makes a subject eligible for generation. Generated art is
-reviewed separately and cannot enter scene planning until its asset ID is
-accepted and registered.
+Entity approval only makes a subject eligible for generation. Generated art
+must pass deterministic validation and receive a stable registered asset ID
+before it can enter scene planning. Normal users inspect these results in a
+read-only catalog; provider retry and replacement controls stay hidden behind
+the disabled developer flag.
 
-Required location backgrounds can now be requested, reviewed, approved, and
-registered in the local catalog with stable asset IDs. The catalog workflow is
-implemented, but the current provider remains a square FLUX smoke test. The
-global current phase is the final `1024 x 576` visual-novel background contract.
-Human/animal/plant/prop assets, focus-asset layers, and entity-aware scene
-catalogs follow it. Until those matching foreground assets and final scene
-catalogs are ready, the visible player still uses the prototype actor catalog.
-See
+Required `1024 x 576` visual-novel backgrounds and source-supported
+animal/plant/prop foregrounds are generated, validated, registered, and
+resolved by stable ID. The global current work is Phase 7G.1A.1 appearance
+persistence, followed by the locked-template layered human package. Until that
+package passes its face-and-pose fidelity gate and Phase 7H binds it, Story
+Mode continues to use the safe prototype/fallback human path. See the
 [Story Bible Entity and Asset Plan](STORY_BIBLE_ENTITY_ASSET_PLAN.md).
 See the [Master Roadmap](ROADMAP.md) for the authoritative order.

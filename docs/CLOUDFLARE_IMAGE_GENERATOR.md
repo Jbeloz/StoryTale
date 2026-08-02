@@ -6,9 +6,9 @@ separate below. See the [Master Roadmap](ROADMAP.md) for the current phase.
 ## Provider decision
 
 - Gemini analyzes cleaned chapter text into structured story data.
-- Gemini 3.1 Flash Image creates only missing face, front/back hair,
-  per-body-part clothing, loose-garment, and accessory component sheets for an
-  immutable local Sprite Studio rig.
+- Gemini 3.1 Flash Image creates only missing face, front/back hair, one
+  canonical clothing-only sheet, loose-garment, and accessory components for
+  an immutable local Sprite Studio rig.
 - Cloudflare Workers AI creates chapter backgrounds only.
 
 ## Simple flow
@@ -21,7 +21,7 @@ ChapterStory artwork request
 -> kind=background -> current FLUX.1 square smoke-test route
 -> planned visual-novel background -> landscape SDXL
 -> generated component sheet
--> local split, hard masks, locked-rig composition, review, and storage
+-> local green removal, fixed-manifest cut, hard masks, locked-rig composition, and storage
 -> Story Mode scene
 ```
 
@@ -37,7 +37,7 @@ Endpoint: `https://storytale-image-worker.jbalejoshift0928.workers.dev`
 - `POST /generate?kind=background` accepts multipart form data.
 - `POST /generate?kind=sprite` currently sends the prompt and references to
   Gemini. Phase 7G.1 replaces its complete-character `master` request with
-  face, hair, clothing, and accessory component requests.
+  face, hair, canonical clothing-only, and accessory component requests.
 - `prompt` is required and must contain 3-500 characters.
 - Up to four small reference images may lock a recurring character or location style.
 - Successful generation returns raw image bytes.
@@ -67,6 +67,11 @@ one finished character, then removes green and divides that image locally.
 That flow proved connectivity but cannot enforce the fixed Sprite Studio
 silhouette. Phase 7G.1 keeps the local head/body unchanged and uses the Worker
 only for missing appearance component sheets.
+
+For fitted clothing, the Worker forwards the exact versioned guide and semantic
+outfit brief. Flutter owns the crop manifest and local masks; neither the Worker
+nor Gemini discovers cell boundaries. See
+[Character Clothing Sheet Plan](CHARACTER_CLOTHING_SHEET_PLAN.md).
 
 ## Sprite request throughput
 

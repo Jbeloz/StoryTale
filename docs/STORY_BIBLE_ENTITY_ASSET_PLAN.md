@@ -2,8 +2,9 @@
 
 **Status: Story Bible extraction, automatic approval, final landscape
 backgrounds, shared foreground requirements, automatic validated asset
-preparation, ChapterStory connection, and optional asset replacement are
-implemented. The provisional whole-character human prototype exists, but its
+preparation, ChapterStory connection, read-only user catalogs, and a hidden
+developer-only replacement path are implemented. The provisional
+whole-character human prototype exists, but its
 visual-fidelity gate failed. Phase 7G.1 now replaces it with a locked-template
 layered character package; Phase 7H Story Mode binding is blocked until that
 gate passes. See the [Master Roadmap](ROADMAP.md).**
@@ -65,7 +66,7 @@ StoryEntity
 - rigTemplateId, rigTemplateVersion, and geometryHash (humans only)
 - designHash (humans only)
 - facePartIds and faceSetIds (humans only)
-- hairBackId and hairFrontId (humans only)
+- hairBackId or explicit none, hairFrontId, and saved hair fits (humans only)
 - clothingByPart and extensionLayerIds (humans only)
 - accessoryIds and heldItemAttachmentIds (humans only)
 - unresolvedNotes
@@ -190,7 +191,7 @@ HumanCharacterLayer
 - geometryHash
 - poseId
 - faceProfileId and faceSetId
-- hairBackId and hairFrontId
+- optional hairBackId, hairFrontId, and saved hair-fit IDs
 - clothingByPart IDs
 - accessoryIds
 - optional heldItemId and attachmentId
@@ -246,7 +247,7 @@ focus.
 
 | Entity | Minimum first-version assets |
 | --- | --- |
-| Human | One locked rig reference plus a validated appearance package: face parts/sets, front/back hair, clothing-by-part, optional accessories/held attachments, and compatible fallback pose |
+| Human | One locked rig reference plus a validated appearance package: face parts/sets, front hair, optional back hair, saved hair fits, locally cut clothing-by-part, optional accessories/held attachments, and compatible fallback pose |
 | Speaking animal/creature | One transparent full-body neutral sprite and one talking state |
 | Important silent animal | One transparent full-body neutral sprite |
 | Plant | One transparent normal state plus only plot-required states |
@@ -262,9 +263,9 @@ not generate a new image for every scene.
 
 - Gemini story analysis extracts and classifies entities.
 - Gemini image generation creates reusable human appearance component sheets
-  for aligned face parts, front/back hair, clothing overlays, and optional
-  accessories or held items. It never creates replacement human head or body
-  geometry.
+  for aligned face parts, front/back hair, one canonical clothing-only sheet,
+  and optional accessories or held items. It never creates replacement human
+  head or body geometry.
 - Gemini image generation also creates reusable whole foreground assets for
   animals, creatures, plants, and props.
 - Cloudflare Workers AI creates location backgrounds.
@@ -312,15 +313,19 @@ not generate a new image for every scene.
 7. Let the user inspect generated results without exposing retry or replacement
    controls in the normal app.
 8. Reuse an approved asset when one already exists.
-9. For humans, prepare only missing approved face, hair, clothing, accessory,
-   and held-item components for the locked rig. For non-humans, prepare only
-   the missing required whole-sprite states.
+9. For humans, prepare only missing approved face, hair, canonical
+   clothing-only sheet, accessory, and held-item components for the locked rig.
+   Remove green and cut fixed cells locally. For non-humans, prepare only the
+   missing required whole-sprite states.
 10. Register deterministic successes in the story bible automatically. Retain
     regeneration and replacement only behind the disabled developer flag for a
     possible future administration flow.
 11. Run Gemini scene planning with the updated approved catalog.
 12. Validate that every visible layer matches its referenced entity.
 13. Cache the validated chapter plan locally.
+
+The human clothing-sheet contract is defined in
+[Character Clothing Sheet Plan](CHARACTER_CLOTHING_SHEET_PLAN.md).
 
 ## Implementation status
 

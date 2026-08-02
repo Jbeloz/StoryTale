@@ -54,11 +54,11 @@ flowchart LR
 | Visual entity catalog | Maps each story subject to its own approved sprite, state, rig, focus asset, or background ID and prevents unrelated substitutions. |
 | ChapterStory data | Stores the sprites, dialogue, movements, sounds, and moral for one chapter. |
 | Story Mode player | Moves sprites over backgrounds while playing voices, subtitles, and sound effects. |
-| Gemini image model | Uses `gemini-3.1-flash-image` to create only aligned face, front/back hair, fitted-clothing, loose-garment, and accessory component sheets for a locked local rig. It never creates the runtime head or body geometry. |
+| Gemini image model | Uses `gemini-3.1-flash-image` to create only aligned face, front/back hair, one canonical clothing-only sheet, loose-garment, and accessory components for a locked local rig. It never creates the runtime head, body geometry, or poses. |
 | Cloudflare Image Worker | Private gateway that keeps the Gemini key server-side, validates sprite-component requests, and routes backgrounds to Workers AI. The current shared three-per-minute sprite throttle is an app setting to remove or disable in Phase 7G.1. |
 | Workers AI | The visual-novel route uses `@cf/stabilityai/stable-diffusion-xl-base-1.0` with explicit `1024 x 576` dimensions. |
 | Location background catalog | Saves one generated image per required location/state pair, keeps it pending during review, and registers its stable asset ID only after approval. |
-| Local sprite processor | Removes edge-connected green, splits fixed-layout component sheets, hard-masks generated layers, and validates alignment without altering the locked local head, body parts, anchors, or poses. |
+| Local sprite processor | Removes edge-connected green, cuts fixed-layout component sheets through a versioned crop manifest, hard-masks generated layers, and validates alignment without altering the locked local head, body parts, anchors, or poses. |
 | Layered character composer | Combines the shared rig with skin tint, modular face parts, back/front hair, per-part clothing, garment extensions, and anchored accessories using named layer slots. |
 | Book human catalog | Stores one stable design brief, shared rig-template ID/version/hash, modular face profile, hair, outfit overlays, accessory attachments, existing voice mapping, pose proof, and validation status for every approved human. |
 | Sprite Studio | Edits compatible rigs and named poses with precise joint transforms, validated layer rules, and local pose storage. |
@@ -90,6 +90,9 @@ The UI reads this data, so we do not create a separate Flutter screen for every 
 the ten total local rig parts (one head plus nine body pieces), anchors, and
 pose contract unchanged, then adds its own face, front/back hair, clothing,
 loose-garment, and accessory layers.
+A character appearance stores front hair, optional back hair, per-style hair
+X/Y/scale fits, and skin tone once for every pose. `None` is a valid back-hair
+selection and never deletes the reusable back-hair catalog.
 A future body proportion requires another manually approved template/version;
 Gemini never invents a runtime rig. Story Mode resolves the appearance IDs
 dynamically and falls back to that same character's Neutral face/pose when an
@@ -98,6 +101,9 @@ subtitles continue.
 
 The production contract for creating and proving those generated rigs is in
 [Generated Character Pipeline Plan](GENERATED_CHARACTER_PIPELINE_PLAN.md).
+The exact clothing-only request, fixed crop manifest, local processing, and
+outfit package are in
+[Character Clothing Sheet Plan](CHARACTER_CLOTHING_SHEET_PLAN.md).
 
 Character identities, aliases, appearances, voices, and locations live in one
 book-level story bible so they can be reused across chapters and volumes. See

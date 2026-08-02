@@ -43,6 +43,8 @@ books/<book-id>/story-bible/characters/<character-id>/face/details/*.png
 books/<book-id>/story-bible/characters/<character-id>/face/sets.json
 books/<book-id>/story-bible/characters/<character-id>/hair/back.png
 books/<book-id>/story-bible/characters/<character-id>/hair/front.png
+books/<book-id>/story-bible/characters/<character-id>/generation/clothing-sheet-source.png
+books/<book-id>/story-bible/characters/<character-id>/generation/clothing-sheet-clean.png
 books/<book-id>/story-bible/characters/<character-id>/outfits/<outfit-id>/parts/*.png
 books/<book-id>/story-bible/characters/<character-id>/outfits/<outfit-id>/outfit-back.png
 books/<book-id>/story-bible/characters/<character-id>/outfits/<outfit-id>/outfit-front.png
@@ -78,6 +80,11 @@ not contain replacement base geometry. Face features, front/back hair,
 per-body-part clothing, garment extensions, and accessories are composed over
 that rig.
 
+The appearance manifest stores selected front hair, optional back hair,
+per-style X/Y/scale fits, skin tone, face-set IDs, outfit IDs, and accessory
+IDs. Saving `None` as back hair hides only that appearance layer; it does not
+delete Short, Medium, Long, or generated catalog assets.
+
 Each clothing overlay uses the exact matching body-part canvas and pivot, so it
 moves with that limb. Long hair uses `hair/back.png` behind the head and torso,
 while bangs and front locks use `hair/front.png` above the face. Loose skirts,
@@ -103,12 +110,18 @@ remains the alignment reference; runtime parts are cropped and reconstructed
 using their saved positions and pivots.
 
 Gemini 3.1 Flash Image creates only missing fixed-layout component sheets for
-face parts, front/back hair, nine fitted clothing overlays, and optional
-accessories. StoryTale removes the flat green background, splits known cells,
-hard-masks each generated layer, and composes it over the shared rig locally.
+face parts, front/back hair, one nine-part clothing-only sheet, and optional
+accessories. The clothing sheet keeps the canonical canvas and arrangement;
+its head is a reference cell and contains no generated face or anatomy.
+StoryTale removes the flat green background, cuts the fixed cells with one
+versioned crop manifest, hard-masks each generated layer, and composes it over
+the shared rig locally.
 Gemini never creates the runtime head or body. Reuse the accepted layers across
 every chapter and volume. Cloudflare Workers AI remains the location and
 chapter-background source.
+
+See [Character Clothing Sheet Plan](CHARACTER_CLOTHING_SHEET_PLAN.md) for the
+canonical sheet contract and output package.
 
 Speaking animals and creatures start with a transparent neutral sprite plus one
 talking state and use whole-sprite movement. Plants and props use transparent
