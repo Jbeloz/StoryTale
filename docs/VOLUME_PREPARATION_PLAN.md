@@ -80,7 +80,7 @@ missing asset after the volume job.
 | 3. Analyze chapters | 25% | Characters, aliases, dialogue speakers, locations, plot beats, and summaries |
 | 4. Merge Story Bible | 10% | One consistent volume roster, timeline, style guide, and unresolved list |
 | 5. Plan shared assets | 5% | Unique character, non-human, prop, and location/state requirements |
-| 6. Prepare shared assets | 20% | Reused or generated faces, hair, clothing sheets, accessories, non-human focus assets, and backgrounds |
+| 6. Prepare shared assets | 20% | Reused or generated character sheets, accessories, non-human focus assets, and backgrounds |
 | 7. Assemble chapters | 20% | Cutscenes, shots, poses, faces, camera, movement, subtitles, and moral |
 | 8. Validate packages | 5% | Complete source coverage, valid IDs, files, fallbacks, and ready states |
 
@@ -207,8 +207,8 @@ StoryTale plans assets after all chapter analyses have been merged.
 - Pose changes use Sprite Studio transform JSON; they do not generate another
   full character picture.
 - Face changes use reusable eyes, nose, mouth, and detail parts.
-- Fitted clothing is generated once as a canonical clothing-only sheet, then
-  cut locally into the nine known body-part overlays. No chapter or pose asks
+- Face details, hair, and fitted clothing are generated once as a canonical
+  separated character sheet, then cut and composed locally. No chapter or pose asks
   Gemini to redraw that outfit.
 - Front hair, optional back hair including `None`, saved hair fits, and skin
   tone belong to the shared appearance package rather than chapter data.
@@ -512,8 +512,8 @@ Status: **Current and blocking.**
 - [ ] Keep the shared local head and nine body-part silhouettes, masks, pivots,
   anchors, anatomical layer policy, template version, and geometry hash
   immutable.
-- [ ] Replace whole-character generation with aligned face, front/back hair,
-  one canonical clothing-only sheet, optional garment-extension, accessory,
+- [ ] Replace whole-character generation with one canonical separated
+  character sheet, optional garment-extension, accessory,
   and held-item component sheets.
 - [ ] Persist front hair, optional back hair including explicit `None`, and
   per-actor/per-style X/Y/scale fits without removing catalog choices.
@@ -531,7 +531,7 @@ Status: **Current and blocking.**
   template before marking the package ready.
 
 The exact generation and local-processing contract is in the
-[Character Clothing Sheet Plan](CHARACTER_CLOTHING_SHEET_PLAN.md).
+[Character Sheet V1 Plan](CHARACTER_SHEET_PLAN.md).
 
 #### Phase 7H - Story Mode human binding
 

@@ -262,9 +262,8 @@ not generate a new image for every scene.
 ## Generation ownership
 
 - Gemini story analysis extracts and classifies entities.
-- Gemini image generation creates reusable human appearance component sheets
-  for aligned face parts, front/back hair, one canonical clothing-only sheet,
-  and optional accessories or held items. It never creates replacement human
+- Gemini image generation creates one reusable separated character sheet plus
+  optional accessories or held items. It never creates replacement human
   head or body geometry.
 - Gemini image generation also creates reusable whole foreground assets for
   animals, creatures, plants, and props.
@@ -313,8 +312,8 @@ not generate a new image for every scene.
 7. Let the user inspect generated results without exposing retry or replacement
    controls in the normal app.
 8. Reuse an approved asset when one already exists.
-9. For humans, prepare only missing approved face, hair, canonical
-   clothing-only sheet, accessory, and held-item components for the locked rig.
+9. For humans, prepare only the missing approved canonical character sheet,
+   accessory, and held-item components for the locked rig.
    Remove green and cut fixed cells locally. For non-humans, prepare only the
    missing required whole-sprite states.
 10. Register deterministic successes in the story bible automatically. Retain
@@ -324,8 +323,8 @@ not generate a new image for every scene.
 12. Validate that every visible layer matches its referenced entity.
 13. Cache the validated chapter plan locally.
 
-The human clothing-sheet contract is defined in
-[Character Clothing Sheet Plan](CHARACTER_CLOTHING_SHEET_PLAN.md).
+The human character-sheet contract is defined in
+[Character Sheet V1 Plan](CHARACTER_SHEET_PLAN.md).
 
 ## Implementation status
 

@@ -914,11 +914,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
 
   void _setActorAppearance(String actorId) {
     final actor = SpriteAppearanceCatalog.actor(actorId);
-    final appearance = _appearance.copyWith(
-      actorId: actor.id,
-      hairStyleId: actor.defaultHairStyleId,
-      skinTone: actor.defaultSkinTone,
-    );
+    final appearance = _appearance.copyWith(actorId: actor.id);
     setState(() {
       _appearance = appearance;
       _pose = _applyAppearance(_pose!, appearance, resetFace: true);
@@ -1042,7 +1038,13 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     final actor = SpriteAppearanceCatalog.actor(appearance.actorId);
     var result = pose;
     if (targetRig.partsById.containsKey('front_hair')) {
-      result = result.withPartAsset('front_hair', actor.frontHairAsset);
+      result = result.withPartAsset(
+        'front_hair',
+        SpriteAppearanceCatalog.frontHairAsset(
+          actor.id,
+          appearance.frontHairId,
+        ),
+      );
     }
     if (targetRig.partsById.containsKey('back_hair')) {
       result = result.withPartAsset(
@@ -1267,11 +1269,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
       pose = pose.withFaceExpression(setId);
     }
     final actor = SpriteAppearanceCatalog.actorForProfile(profileId);
-    final appearance = _appearance.copyWith(
-      actorId: actor.id,
-      hairStyleId: actor.defaultHairStyleId,
-      skinTone: actor.defaultSkinTone,
-    );
+    final appearance = _appearance.copyWith(actorId: actor.id);
     pose = _applyAppearance(pose, appearance);
     setState(() {
       _pose = pose;

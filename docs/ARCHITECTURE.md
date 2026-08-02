@@ -54,7 +54,7 @@ flowchart LR
 | Visual entity catalog | Maps each story subject to its own approved sprite, state, rig, focus asset, or background ID and prevents unrelated substitutions. |
 | ChapterStory data | Stores the sprites, dialogue, movements, sounds, and moral for one chapter. |
 | Story Mode player | Moves sprites over backgrounds while playing voices, subtitles, and sound effects. |
-| Gemini image model | Uses `gemini-3.1-flash-image` to create only aligned face, front/back hair, one canonical clothing-only sheet, loose-garment, and accessory components for a locked local rig. It never creates the runtime head, body geometry, or poses. |
+| Gemini image model | Uses `gemini-3.1-flash-image` to create one canonical separated character sheet plus source-required loose-garment and accessory components for a locked local rig. StoryTale assembles the full-body proof locally; Gemini never creates the runtime head, body geometry, or poses. |
 | Cloudflare Image Worker | Private gateway that keeps the Gemini key server-side, validates sprite-component requests, and routes backgrounds to Workers AI. The current shared three-per-minute sprite throttle is an app setting to remove or disable in Phase 7G.1. |
 | Workers AI | The visual-novel route uses `@cf/stabilityai/stable-diffusion-xl-base-1.0` with explicit `1024 x 576` dimensions. |
 | Location background catalog | Saves one generated image per required location/state pair, keeps it pending during review, and registers its stable asset ID only after approval. |
@@ -103,7 +103,7 @@ The production contract for creating and proving those generated rigs is in
 [Generated Character Pipeline Plan](GENERATED_CHARACTER_PIPELINE_PLAN.md).
 The exact clothing-only request, fixed crop manifest, local processing, and
 outfit package are in
-[Character Clothing Sheet Plan](CHARACTER_CLOTHING_SHEET_PLAN.md).
+[Character Sheet V1 Plan](CHARACTER_SHEET_PLAN.md).
 
 Character identities, aliases, appearances, voices, and locations live in one
 book-level story bible so they can be reused across chapters and volumes. See

@@ -103,14 +103,14 @@ again.
 
 Phase 7G proved the package-loading path, but its full-body generated master did
 not preserve the StoryTale template closely enough. Phase 7G.1 replaces that
-approach with fixed local head/body geometry plus generated face, hair,
-one canonical clothing-only sheet, and optional accessory layers. StoryTale
-cuts the nine clothing cells locally and reuses them for every pose. Phase 7H,
+approach with fixed local head/body geometry plus one canonical separated
+character sheet and optional accessory layers. StoryTale cuts the face, hair,
+and clothing cells locally and reuses them for every pose. Phase 7H,
 which binds book humans into
 all affected ChapterStory packages, is blocked until the Phase 7G.1 visual and
 structural gate passes.
 
-See [Character Clothing Sheet Plan](CHARACTER_CLOTHING_SHEET_PLAN.md) for the
+See [Character Sheet V1 Plan](CHARACTER_SHEET_PLAN.md) for the
 image-generation boundary that follows this semantic contract.
 
 ## Current limitation

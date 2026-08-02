@@ -1,0 +1,165 @@
+{
+  "contractId": "character_sheet_v1",
+  "contractVersion": 1,
+  "canvas": {
+    "width": 4096,
+    "height": 4096,
+    "mimeType": "image/png",
+    "backgroundColor": "#00FF00"
+  },
+  "guideSha256": "bd6731d1136df05fc4de44292aa2c6cbd131dc44fb5601b7ea66f45f6b803645",
+  "lockedRig": {
+    "id": "humanoid_v1",
+    "geometryHashAlgorithm": "sha256 of sorted rig.json and base PNG path-hash entries",
+    "geometryHash": "0df67ec660c1aa5616f9a12d205111f8591dc24f123316f9f87b0f8239e57648"
+  },
+  "rules": {
+    "cropCoordinatesAreInclusiveExclusive": true,
+    "resizeRegions": false,
+    "cropToVisiblePixels": false,
+    "inactiveOptionalRegionsRemainGreen": true,
+    "visibleCellBorders": false
+  },
+  "regions": [
+    {
+      "id": "back_hair_short",
+      "kind": "backHair",
+      "crop": { "x": 64, "y": 32, "width": 1254, "height": 2150 },
+      "outputCanvas": { "width": 1254, "height": 2150 },
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/hair/back_short.png",
+      "parentPart": "head",
+      "side": "center",
+      "requirement": "activeWhenSelected"
+    },
+    {
+      "id": "back_hair_medium",
+      "kind": "backHair",
+      "crop": { "x": 1421, "y": 32, "width": 1254, "height": 2150 },
+      "outputCanvas": { "width": 1254, "height": 2150 },
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/hair/back_default.png",
+      "parentPart": "head",
+      "side": "center",
+      "requirement": "activeWhenSelected"
+    },
+    {
+      "id": "back_hair_long",
+      "kind": "backHair",
+      "crop": { "x": 2778, "y": 32, "width": 1254, "height": 2150 },
+      "outputCanvas": { "width": 1254, "height": 2150 },
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/hair/back_long.png",
+      "parentPart": "head",
+      "side": "center",
+      "requirement": "activeWhenSelected"
+    },
+    {
+      "id": "front_hair",
+      "kind": "frontHair",
+      "crop": { "x": 64, "y": 2246, "width": 1254, "height": 1254 },
+      "outputCanvas": { "width": 1254, "height": 1254 },
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/hair/front_default.png",
+      "parentPart": "head",
+      "side": "center",
+      "requirement": "required"
+    },
+    {
+      "id": "head",
+      "kind": "faceDetails",
+      "crop": { "x": 1421, "y": 2246, "width": 357, "height": 367 },
+      "outputCanvas": { "width": 357, "height": 367 },
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/head.png",
+      "parentPart": "head",
+      "side": "center",
+      "requirement": "required"
+    },
+    {
+      "id": "torso",
+      "kind": "fittedClothing",
+      "crop": { "x": 1842, "y": 2246, "width": 165, "height": 234 },
+      "outputCanvas": { "width": 165, "height": 234 },
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/torso.png",
+      "parentPart": "torso",
+      "side": "center",
+      "requirement": "required"
+    },
+    {
+      "id": "upper_arm_right",
+      "kind": "fittedClothing",
+      "crop": { "x": 1421, "y": 2677, "width": 67, "height": 118 },
+      "outputCanvas": { "width": 67, "height": 118 },
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/upper_arm_right.png",
+      "parentPart": "upper_arm_right",
+      "side": "right",
+      "requirement": "optional"
+    },
+    {
+      "id": "upper_arm_left",
+      "kind": "fittedClothing",
+      "crop": { "x": 1552, "y": 2677, "width": 78, "height": 128 },
+      "outputCanvas": { "width": 78, "height": 128 },
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/upper_arm_left.png",
+      "parentPart": "upper_arm_left",
+      "side": "left",
+      "requirement": "optional"
+    },
+    {
+      "id": "lower_arm_right",
+      "kind": "fittedClothing",
+      "crop": { "x": 1421, "y": 2869, "width": 77, "height": 145 },
+      "outputCanvas": { "width": 77, "height": 145 },
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/lower_arm_right.png",
+      "parentPart": "lower_arm_right",
+      "side": "right",
+      "requirement": "optional"
+    },
+    {
+      "id": "lower_arm_left",
+      "kind": "fittedClothing",
+      "crop": { "x": 1552, "y": 2869, "width": 86, "height": 129 },
+      "outputCanvas": { "width": 86, "height": 129 },
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/lower_arm_left.png",
+      "parentPart": "lower_arm_left",
+      "side": "left",
+      "requirement": "optional"
+    },
+    {
+      "id": "upper_leg_right",
+      "kind": "fittedClothing",
+      "crop": { "x": 1842, "y": 2544, "width": 94, "height": 150 },
+      "outputCanvas": { "width": 94, "height": 150 },
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/upper_leg_right.png",
+      "parentPart": "upper_leg_right",
+      "side": "right",
+      "requirement": "optional"
+    },
+    {
+      "id": "upper_leg_left",
+      "kind": "fittedClothing",
+      "crop": { "x": 2000, "y": 2544, "width": 85, "height": 141 },
+      "outputCanvas": { "width": 85, "height": 141 },
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/upper_leg_left.png",
+      "parentPart": "upper_leg_left",
+      "side": "left",
+      "requirement": "optional"
+    },
+    {
+      "id": "lower_leg_right",
+      "kind": "fittedClothing",
+      "crop": { "x": 1842, "y": 2758, "width": 84, "height": 156 },
+      "outputCanvas": { "width": 84, "height": 156 },
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/lower_leg_right.png",
+      "parentPart": "lower_leg_right",
+      "side": "right",
+      "requirement": "optional"
+    },
+    {
+      "id": "lower_leg_left",
+      "kind": "fittedClothing",
+      "crop": { "x": 2000, "y": 2758, "width": 88, "height": 140 },
+      "outputCanvas": { "width": 88, "height": 140 },
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/lower_leg_left.png",
+      "parentPart": "lower_leg_left",
+      "side": "left",
+      "requirement": "optional"
+    }
+  ]
+}

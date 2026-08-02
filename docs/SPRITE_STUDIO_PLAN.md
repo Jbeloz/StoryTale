@@ -572,14 +572,14 @@ controls its joints.
   fit in appearance data; saving it must not remove catalog choices.
 - Generate aligned face, actor-specific front/back hair, clothing, loose
   garment, and accessory layers only.
-- Generate fitted clothing as one fixed-layout clothing-only sheet aligned to
-  the canonical separated-parts guide, then remove green and cut the nine body
-  cells locally from one versioned manifest.
+- Generate face details, hair, and fitted clothing as one fixed-layout
+  character sheet aligned to the canonical separated-parts guide, then remove
+  green and cut the known cells locally from one versioned manifest.
 - Keep the shared head and nine body pieces unchanged.
 - Validate dimensions, transparency, anchors, layer roles, and geometry hash
   before accepting a generated layer.
 
-See [Character Clothing Sheet Plan](CHARACTER_CLOTHING_SHEET_PLAN.md) for the
+See [Character Sheet V1 Plan](CHARACTER_SHEET_PLAN.md) for the
 sheet layout, prompt, local splitter, folders, character-start flow, and
 acceptance gate.
 

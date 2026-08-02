@@ -1,5 +1,8 @@
 # Universal Hair Fit Plan
 
+Status: **Phase 7G.1A.1 implementation complete. Owner manual verification is
+pending before Phase 7G.1B implementation begins.**
+
 ## Goal
 
 StoryTale gives every actor and hairstyle one reusable fit. A hairstyle may be

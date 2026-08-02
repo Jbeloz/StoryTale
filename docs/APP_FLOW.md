@@ -44,6 +44,6 @@ clothing, and accessories for reuse by every chapter.
   unrelated prototype human.
 
 See [Animated Story Mode plan](ANIMATED_STORY_MODE_PLAN.md) for the full preparation pipeline.
-See [Character Clothing Sheet Plan](CHARACTER_CLOTHING_SHEET_PLAN.md) for the
-fixed sheet and local-cut contract.
+See [Character Sheet V1 Plan](CHARACTER_SHEET_PLAN.md) for the fixed separated
+sheet, local full-body proof, and local-cut contract.
 See the [Master Roadmap](ROADMAP.md) for current implementation status.

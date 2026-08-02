@@ -42,8 +42,8 @@ valid saved back-hair default and does not delete Short, Medium, Long, or
 generated catalog choices. All saved hair X/Y/scale fits belong to appearance
 data and are reused by every pose.
 
-One Gemini clothing request returns the fixed-layout clothing-only sheet.
-StoryTale removes green and cuts up to nine known cells locally using the
+One Gemini character-sheet request returns the fixed-layout separated face,
+hair, and clothing artwork. StoryTale removes green and cuts the known cells locally using the
 versioned crop manifest. Idle, Talking, Pointing, Walking, and named poses add
 no PNGs because they reuse the same layers with transform JSON.
 
@@ -78,11 +78,11 @@ passes its complete character-package gate.
 
 ## Current production order
 
-1. **Phase 7G.1A.1:** persist front hair, optional back hair including `None`,
+1. **Implemented Phase 7G.1A.1:** persist front hair, optional back hair including `None`,
    skin tone, and universal per-style hair fits.
-2. **Phase 7G.1B.1:** version the canonical clothing guide and exact crop/mask
+2. **Phase 7G.1B.1:** version the canonical character-sheet guide and exact crop/mask
    manifest.
-3. **Phase 7G.1B.2:** generate one clothing-only sheet from the source-backed
+3. **Phase 7G.1B.2:** generate one separated character sheet from the source-backed
    character brief.
 4. **Phase 7G.1B.3:** remove green, cut known cells, validate, and build the
    reusable appearance package locally.
@@ -90,6 +90,6 @@ passes its complete character-package gate.
 6. **Phase 7G.1C:** prove the same appearance in all required faces and four
    built-in poses before Story Mode binding.
 
-See the [Character Clothing Sheet Plan](../../../CHARACTER_CLOTHING_SHEET_PLAN.md)
+See the [Character Sheet V1 Plan](../../../CHARACTER_SHEET_PLAN.md)
 for the sheet contract and the [Master Roadmap](../../../ROADMAP.md) for global
 status and development order.

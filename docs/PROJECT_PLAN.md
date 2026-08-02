@@ -110,13 +110,13 @@ The complete final-editor plan is in
 
 - Keep the ten approved local rig geometries (one head plus nine body pieces)
   immutable
-- Use Gemini 3.1 Flash Image only for missing face, front/back hair,
-  clothing-only, loose-garment, and accessory component sheets
+- Use Gemini 3.1 Flash Image for one canonical separated character sheet plus
+  missing loose-garment and accessory component sheets
 - Keep the Gemini key in the private Worker, never in Flutter
 - Send the locked description, exact component guide, and approved style
   references to preserve identity and alignment
-- Send one canonical clothing-only guide whose head is reference-only and whose
-  nine body cells keep exact left/right ownership, canvas size, and placement
+- Send one canonical `character_sheet_v1` guide whose face, hair, and nine
+  clothing regions keep exact ownership, canvas size, and placement
 - Remove green, cut the known cells using one versioned crop manifest,
   hard-mask them locally, and compose them over the shared rig
 - Save front hair, optional back hair, per-style X/Y/scale fits, and skin tone
@@ -127,7 +127,7 @@ The complete final-editor plan is in
 - Keep Story Mode working with manually provided artwork
 
 The exact sheet, splitter, folders, and acceptance gate are in the
-[Character Clothing Sheet Plan](CHARACTER_CLOTHING_SHEET_PLAN.md).
+[Character Sheet V1 Plan](CHARACTER_SHEET_PLAN.md).
 
 ## Decisions still open
 

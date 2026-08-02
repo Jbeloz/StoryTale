@@ -6,8 +6,8 @@ reusable Sprite Studio package for Animated Story Mode.
 Status: **Planning correction complete. Phase 7G proved the package structure,
 but its visual-fidelity gate failed. Phase 7G.1, the locked-template layered
 composer, is current. Phase 7G.1A completed the actor hair and local skin-tone
-foundation. Phase 7G.1A.1 appearance-default persistence is next, followed by
-Phase 7G.1B generated appearance layers. Phase 7H Story Mode binding must wait
+foundation, and Phase 7G.1A.1 completed per-actor appearance-default
+persistence. Phase 7G.1B generated appearance layers are next. Phase 7H Story Mode binding must wait
 for the complete Phase 7G.1 gate.**
 
 ## 1. Decision
@@ -325,25 +325,22 @@ Gemini receives:
 
 It never receives permission to redesign the base head or body.
 
-To control cost and alignment, V1 uses fixed-layout component sheets:
+To control cost, alignment, and whole-character consistency, V1 uses one
+fixed-layout `character_sheet_v1` image containing separated face-detail,
+front-hair, back-hair, and nine fitted-clothing regions. An accessory sheet is
+requested only when the story requires accessories.
 
-1. face-expression sheet for five eyes/brows, five mouths, and one nose;
-2. hair sheet with one back-hair and one front-hair slot;
-3. one clothing-only sheet aligned to the locked head-plus-nine-parts guide;
-   the head is reference-only and the nine body slots contain only fitted
-   garment pixels; and
-4. accessory sheet only when the story requires accessories.
+StoryTale splits the accepted character sheet locally by one versioned crop
+manifest, then applies canonical allowed/protected masks. The sheet must retain
+the exact `1611 x 720` dimensions, arrangement, left/right ownership, and pure
+green background. Gemini designs one coherent character across the separated
+regions but may not output another assembled body. StoryTale creates the
+authoritative full-body proof locally from the accepted layers.
 
-StoryTale splits each accepted sheet locally by one versioned crop manifest,
-then applies canonical allowed/protected masks. The clothing sheet must retain
-the guide's exact dimensions, arrangement, left/right ownership, and pure
-green background. Gemini may not output another assembled body. This uses
-about three core Gemini image calls per human, plus one optional accessory
-call, rather than generating dozens of independent images.
-
-If a sheet format proves less consistent than separate edits, the same
-contract may use one call per component group. It may not fall back to a
-complete generated head or body.
+V1 must not silently switch to separate provider sheets when a result fails.
+Any future layout change requires a new versioned contract, roadmap decision,
+and acceptance gate. It may never fall back to a complete generated head or
+body.
 
 There is:
 
@@ -613,10 +610,10 @@ Implementation order:
 3. **Phase 7G.1A:** add per-part skin masks, local RGB/hex tint composition,
    compact Actor/Hair/Skin controls, appearance persistence, and neutral
    fallbacks.
-4. **Phase 7G.1A.1:** persist explicit no-back-hair selection and universal
+4. **Implemented Phase 7G.1A.1:** persist explicit no-back-hair selection and universal
    per-actor/per-style hair fits without deleting catalog choices.
 5. Add the appearance-manifest and named layer/attachment contracts.
-6. Approve and version `clothing_sheet_v1` with exact crop rectangles,
+6. Approve and version `character_sheet_v1` with exact crop rectangles,
    allowed/protected masks, joint overlap, and anchors.
 7. Change sprite generation from `master` to face, hair, clothing-only, and
    optional accessory component sheets.
@@ -658,21 +655,22 @@ Durable files across full app restarts remain Phase 8.
   pieces) are byte/hash locked.
 - [ ] A character changes through face, hair, clothing, tint, and accessory
   layers only.
-- [ ] Default, Hero, Heroine, Elder, and Adult each have stable default front
+- [x] Default, Hero, Heroine, Elder, and Adult each have stable default front
   hair, an optional back-hair selection including `None`, and a default skin
   tone.
 - [ ] The skin picker accepts any valid opaque RGB/hex color and recolors only
   approved skin-mask pixels without an image-generation request.
-- [ ] Hair style and skin tone are appearance data shared by every pose,
+- [x] Hair style and skin tone are appearance data shared by every pose,
   chapter, and later volume rather than duplicated pose data.
-- [ ] An actor may save `None` as its back-hair default while all back-hair
+- [x] An actor may save `None` as its back-hair default while all back-hair
   catalog assets remain available for other appearances.
 - [ ] Front and back hair are separate and long back hair can extend behind the
   torso.
 - [ ] Eyes/brows, nose, mouths, and details remain separately selectable.
 - [ ] Clothing follows every rotated body part.
-- [ ] The clothing sheet keeps the canonical size and arrangement, leaves its
-  head cell empty, and is split locally by fixed rectangles.
+- [ ] The character sheet keeps the canonical `1611 x 720` size and arrangement,
+  accepts masked face details without replacement anatomy, and is split locally
+  by fixed rectangles.
 - [ ] Loose garments use extension layers.
 - [ ] Head, face, front, back, and held accessories have explicit anchors.
 - [ ] A held sword can render behind the right arm with a grip overlay above

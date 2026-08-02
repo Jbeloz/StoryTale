@@ -237,8 +237,8 @@ the app depends only on validated `ChapterAnalysis` data. DeepL remains only
 for English-to-Filipino translation. Gemini image generation creates reviewed
 face, hair, clothing, and optional accessory components that fit the locked
 local rig; it never creates replacement head, body geometry, or pose images.
-Fitted clothing uses one canonical clothing-only sheet. StoryTale removes
-green, cuts the nine known cells through a versioned local manifest, applies
+Face, hair, and fitted clothing use one canonical separated character sheet.
+StoryTale removes green, cuts the known cells through a versioned local manifest, applies
 the rig-owned masks, and attaches each layer to its matching body part.
 Cloudflare Workers AI creates backgrounds only. Both image routes pass through
 the private Worker. A manually prepared JSON fixture should still exist for
@@ -402,13 +402,11 @@ different Flutter page for each chapter.
    palette, face family, hair brief, outfit brief, and required accessories.
 4. Reuse an existing ready package when that design hash already exists,
    including in a later chapter or volume.
-5. Request only missing aligned component sheets from Gemini: paired
-   eyes/brows, noses, mouths/details, front/back hair, clothing overlays for
-   the torso and eight limbs, optional garment extensions, and
-   source-supported accessories or held items.
-   The nine fitted clothing overlays arrive in one canonical clothing-only
-   sheet; its unchanged head is reference-only and its body cells contain
-   garment pixels rather than new anatomy.
+5. Request one aligned `character_sheet_v1` from Gemini containing masked face
+   details, front/back hair, and clothing overlays for the torso and eight
+   limbs. Optional garment extensions and source-supported accessories or held
+   items remain separate. Gemini designs one coherent person across the
+   separated regions, while StoryTale assembles the full-body proof locally.
 6. Remove green, cut the fixed component cells through the versioned crop
    manifest, hard-mask, and validate each component locally. Reject any result
    that includes or changes the fixed skull, ear, head fill, torso, or limb
@@ -434,7 +432,7 @@ while Cloudflare Workers AI creates chapter backgrounds only.
 The complete readiness, proof UI, and Story Mode reconnection gate is in the
 [Generated Character Pipeline Plan](GENERATED_CHARACTER_PIPELINE_PLAN.md).
 The sheet and local-cut details are in the
-[Character Clothing Sheet Plan](CHARACTER_CLOTHING_SHEET_PLAN.md).
+[Character Sheet V1 Plan](CHARACTER_SHEET_PLAN.md).
 
 Reference-guided generation improves style consistency but does not own
 geometry. Consistency comes from the immutable local rig, deterministic masks,

@@ -18,11 +18,12 @@ StoryTale is a local-first mobile EPUB library with DeepL translation, on-device
 - Local generated-background catalog with automatic validation, stable asset
   registration, and read-only result previews
 
-The current development phase is the locked-template character pipeline. The
-immediate correction saves each actor's front hair, optional back hair
-including `None`, and universal X/Y/scale fit. The following step gives Gemini
-one canonical clothing-only sheet; StoryTale then removes green and cuts its
-nine known body-part cells locally. Gemini does not redraw the runtime head,
+The current development phase is the locked-template character pipeline. Each
+actor now saves and restores its own front hair, optional back hair including
+`None`, skin tone, and universal per-style X/Y/scale fits. The next step gives
+Gemini one canonical character sheet containing separated face, front/back
+hair, and nine clothing regions. StoryTale removes green, cuts the fixed cells,
+and assembles the full-body proof locally without redrawing the runtime head,
 body, or poses. Imported books still remain in memory for the app session,
 DeepL uses placeholder text, the mobile ONNX TTS runtime is not connected, and
 final book-specific layered characters are not complete.
@@ -68,5 +69,5 @@ flutter test
 - [Asset guide](docs/ASSET_GUIDE.md)
 - [Cloudflare image generator](docs/CLOUDFLARE_IMAGE_GENERATOR.md)
 - [Generated character pipeline](docs/GENERATED_CHARACTER_PIPELINE_PLAN.md)
-- [Character clothing sheet](docs/CHARACTER_CLOTHING_SHEET_PLAN.md)
+- [Character sheet V1](docs/CHARACTER_SHEET_PLAN.md)
 - [UI concepts](docs/ui-concepts/README.md)

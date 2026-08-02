@@ -36,4 +36,36 @@ void main() {
       1.5,
     );
   });
+
+  test('restores each actor selection including explicit no back hair', () {
+    var appearance = const SpriteAppearanceSelection();
+    appearance = appearance.copyWith(hairStyleId: 'none', skinTone: '#ABCDEF');
+    appearance = appearance.copyWith(actorId: 'hero');
+    appearance = appearance.copyWith(hairStyleId: 'long', skinTone: '#123456');
+
+    final restored = SpriteAppearanceSelection.fromJson(appearance.toJson());
+    final defaultActor = restored.copyWith(actorId: 'default');
+    final hero = restored.copyWith(actorId: 'hero');
+
+    expect(defaultActor.frontHairId, 'front_default');
+    expect(defaultActor.hairStyleId, 'none');
+    expect(defaultActor.skinTone, '#ABCDEF');
+    expect(hero.frontHairId, 'front_hero');
+    expect(hero.hairStyleId, 'long');
+    expect(hero.skinTone, '#123456');
+    expect(restored.toJson()['actorAppearances'], hasLength(5));
+  });
+
+  test('migrates the previous active-actor appearance format', () {
+    final appearance = SpriteAppearanceSelection.fromJson({
+      'actorId': 'elder',
+      'hairStyleId': 'none',
+      'skinTone': '#DDB99D',
+    });
+
+    expect(appearance.actorId, 'elder');
+    expect(appearance.frontHairId, 'front_elder');
+    expect(appearance.hairStyleId, 'none');
+    expect(appearance.actorAppearance('default').backHairId, 'medium');
+  });
 }

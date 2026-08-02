@@ -319,25 +319,29 @@ use the talking mouth.
   coherently; near-white skin keeps a visible gray outline.
 - Skin recoloring must make no Gemini or Cloudflare request.
 
-Current limitation: the implementation still stores one selected actor and
-hair style globally with per-actor fit maps. Phase 7G.1A.1 must persist each
-actor's front-hair ID, optional back-hair ID including `None`, and fits so
-switching templates restores the actor's saved complete appearance.
+Phase 7G.1A.1 now stores one complete appearance per actor: stable front-hair
+ID, optional back-hair ID including explicit `None`, skin tone, and separate
+per-style X/Y/scale fits. Switching actor templates restores the saved actor
+appearance instead of resetting it to the catalog defaults. The previous
+single-active-actor JSON shape migrates into the new manifest safely.
 
-### Canonical clothing-sheet plan
+### Canonical character-sheet plan
 
-The next generated-character method is a fixed paper-doll component sheet, not
-a complete generated person:
+The next generated-character method is the fixed `character_sheet_v1`. Gemini
+designs one coherent person across separated appearance regions, while
+StoryTale assembles the authoritative full-body proof locally:
 
-1. StoryTale supplies the locked guide and design brief.
-2. Gemini returns clothing/art only in known cells for the nine body pieces;
-   the head cell is reference-only/empty.
+1. StoryTale supplies the locked `4096 x 4096` guide, with native-size front
+   hair plus Short/Medium/Long back-hair cells, a locally assembled neutral
+   reference, and the source-backed design brief.
+2. Gemini returns only separated masked face details, front/back hair, and nine
+   fitted clothing regions; it does not return another assembled body.
 3. StoryTale removes the flat green locally.
 4. StoryTale cuts fixed, versioned rectangles using a crop/anchor manifest; it
    does not ask AI to detect part boundaries.
-5. Each cell is hard-masked to the matching rig geometry and validated.
-6. Clothing overlays, front/back hair, face layers, loose garments, and
-   accessories are composed locally over the unchanged base.
+5. Each region is hard-masked against allowed, protected, and seam masks.
+6. Face, hair, and clothing layers are composed locally over the unchanged
+   head and nine body pieces.
 7. One outfit is reused for every pose by following the same bones.
 
 Accessories use named anchors and relative layer modes such as behind arm,
@@ -469,20 +473,25 @@ The [Master Roadmap](ROADMAP.md) is authoritative. As of this handoff:
 
 ### Exact current and next work
 
-1. **Current: Phase 7G.1A.1** — make per-actor front hair, optional back hair
-   (`None` included), each style's X/Y/scale fit, and skin/default selection
-   restore and persist reliably across actor/pose changes.
-2. **Next: Phase 7G.1B** — implement the canonical fixed clothing-only sheet,
-   local green removal, fixed crop manifest, hard masks, loose garments, and
-   accessory/held-item anchors.
-3. **Then: Phase 7G.1C** — prove exact locked geometry with six faces and four
+1. **Implemented: Phase 7G.1A.1** — per-actor front hair, optional back hair
+   (`None` included), skin tone, and each style's X/Y/scale fit now restore and
+   persist across actor/pose changes. Owner manual verification is pending.
+2. **Current: Phase 7G.1B.1** — the native-size `4096 x 4096`
+   `character_sheet_v1` guide and initial crop manifest are versioned. Complete
+   the assembled neutral reference, attachment anchors, allowed/protected/seam
+   masks, and prompt contract. Do not make a paid provider request in this
+   subphase.
+3. **Next: Phase 7G.1B.2-7G.1B.4** — generate the separated face, front/back
+   hair, and nine clothing regions; assemble the full-body proof locally; then
+   add source-supported loose garments and accessory/held-item anchors.
+4. **Then: Phase 7G.1C** — prove exact locked geometry with six faces and four
    poses; remove the app-defined shared three-per-minute sprite bottleneck
    while keeping one sequential request, deduplication, and real provider
    quota errors.
-4. **Then: Phase 7H** — register the validated character package and rebuild
+5. **Then: Phase 7H** — register the validated character package and rebuild
    every affected ChapterStory so the correct human appears across chapters
    and volumes.
-5. Continue with Phases 8–11 in roadmap order.
+6. Continue with Phases 8–11 in roadmap order.
 
 Do not start persistence, final Story Mode binding, or audio integration before
 their roadmap gates unless a blocking defect requires a narrow fix.
@@ -494,10 +503,8 @@ their roadmap gates unless a blocking defect requires a narrow fix.
 - The Phase 7G whole-character Little Prince result is a rejected structural
   prototype: Gemini redrew the skull/body, and splitting it could not recover
   exact StoryTale geometry.
-- Hair artwork has undergone manual visual fitting. The remaining system issue
-  is canonical per-actor selection/default/fit persistence, especially `None`.
-- Current appearance storage does not yet hold a separate complete selection
-  for every actor.
+- Phase 7G.1A.1 per-actor appearance persistence is implemented; the project
+  owner still needs to perform the documented manual actor/pose/reload check.
 - Book-specific humans are not yet connected to every Story Mode chapter;
   Phase 7H is intentionally blocked.
 - The clothing/accessory component-sheet pipeline is documented but not
@@ -675,7 +682,7 @@ Academic schedule (not the same as live engineering status):
 | `docs/MODULAR_FACE_SYSTEM_PLAN.md` | face parts and set behavior |
 | `docs/FIXED_HAIR_SLOT_PLAN.md` | front/back hair fitting and `None` |
 | `docs/GENERATED_CHARACTER_PIPELINE_PLAN.md` | exact-template layered human pipeline |
-| `docs/CHARACTER_CLOTHING_SHEET_PLAN.md` | fixed sheet, crop, masks, clothing/accessories |
+| `docs/CHARACTER_SHEET_PLAN.md` | authoritative Phase 7G.1B character-sheet, local composition, crop/mask, and acceptance contract |
 | `assets/images/characters/rigs/humanoid_v1/` | canonical rig, poses, faces, hair, appearance |
 | `assets/images/characters/face_profiles/` | Default/Hero/Heroine/Elder/Adult modular faces |
 | `models/voices/raw/` | development RVC `.pth` and index/model pairs |

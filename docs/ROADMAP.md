@@ -362,10 +362,13 @@ novel EPUB remains deferred; Phase 6 uses the Little Prince fixture first.
 
 Status: **Current.** Phase 7G is a completed structural prototype, but the live
 Little Prince result failed the exact-template visual-fidelity gate. Phase
-7G.1A now provides the local actor, hair, skin-tone, and universal hair-fit
-foundation. Phase 7G.1A.1 must persist an explicit `None` back-hair default per
-actor. Phase 7G.1B then builds generated layers from fixed component sheets on
-the locked template.
+7G.1A provides the local actor, hair, skin-tone, and universal hair-fit
+foundation. Phase 7G.1A.1 now persists a complete appearance and explicit
+`None` back-hair default per actor; owner manual verification is pending.
+**Phase 7G.1B.1 is current:** the native-size `4096 x 4096`
+`character_sheet_v1` guide and initial fixed crop manifest are now versioned.
+Complete masks, anchors, assembled reference, and prompt contract before any
+paid provider request.
 Phase 7H Story Mode binding waits for the complete Phase 7G.1 gate.
 
 Implementation order:
@@ -388,20 +391,25 @@ Implementation order:
    nine body pieces. It accepts any opaque RGB/hex color, preserves alpha,
    black line art, and shading through rig-owned skin masks, and never calls an
    image provider.
-6. **Phase 7G.1A.1:** persist each actor's front hair, optional back hair,
+6. **Implemented Phase 7G.1A.1:** persist each actor's front hair, optional back hair,
    per-style X/Y, and scale. `None` remains a valid default without removing
    other back-hair catalog choices.
-7. **Phase 7G.1B:** generate only aligned face, front/back hair, and one
-   fixed-layout clothing-only sheet for the nine body pieces. StoryTale removes
-   green and cuts the known cells locally; Gemini never redraws the body.
-8. **Phase 7G.1B:** attach loose garments and held items to approved anchors
+7. **Current Phase 7G.1B.1:** version the approved `character_sheet_v1` guide,
+   assembled neutral reference, exact crop/anchor manifest, allowed/protected/
+   seam masks, and prompt contract. Make no paid provider request in this
+   subphase.
+8. **Phase 7G.1B.2-7G.1B.3:** request one fixed character sheet containing
+   aligned face details, front/back hair, and nine fitted-clothing regions;
+   then remove green, cut the known cells, and assemble the full-body proof
+   locally. Gemini never redraws the body.
+9. **Phase 7G.1B.4:** attach loose garments and held items to approved anchors
    and behind-arm, behind-hand, and front-of-hand layer modes.
-9. **Phase 7G.1C:** compose and validate six faces and four poses on the
+10. **Phase 7G.1C:** compose and validate six faces and four poses on the
    locked rig, then expose Character, Layers, Faces, Poses, and Details proof.
-10. **Phase 7G.1C:** reuse completed components by design hash, remove the
+11. **Phase 7G.1C:** reuse completed components by design hash, remove the
    private sprite route's shared three-per-minute app bottleneck, and keep one
    sequential request active without automatic paid regeneration.
-11. **Blocked Phase 7H:** register the validated layered package and rebuild
+12. **Blocked Phase 7H:** register the validated layered package and rebuild
    every affected ChapterStory so Story Mode uses it across chapters and
    volumes.
 
@@ -453,15 +461,16 @@ Current Phase 7G.1 work:
 - [x] **Phase 7G.1A:** show compact Actor, Hair, and Skin controls in Sprite
   Studio, with thumbnail selection, current-color swatch, Reset, and a
   neutral fallback when an asset or saved color is invalid.
-- [ ] **Phase 7G.1A.1:** make `None` a persistent per-actor back-hair default
+- [x] **Phase 7G.1A.1:** make `None` a persistent per-actor back-hair default
   and save the selected front/back IDs plus per-style fit values without
   deleting any catalog hair.
-- [ ] Produce a component-sheet pipeline for modular faces, front/back hair,
-  one fixed-layout clothing-only sheet for nine fitted overlays, optional
-  loose garments, and accessories.
-- [ ] Version the supplied separated-parts guide, store one exact crop/anchor
-  manifest, and cut accepted Gemini sheets locally rather than detecting parts
-  with AI.
+- [ ] **Current Phase 7G.1B.1:** version the supplied separated-parts guide and
+  add one exact crop/anchor manifest, assembled reference, allowed/protected/
+  seam masks, and prompt contract without making a paid request.
+- [ ] Produce the fixed `character_sheet_v1` pipeline for modular face details,
+  front/back hair, nine fitted overlays, optional loose garments, and
+  accessories, with a locally assembled full-body proof.
+- [ ] Cut accepted Gemini sheets locally rather than detecting parts with AI.
 - [ ] Add named held-item anchors and relative layer modes.
 - [ ] Hard-mask, align, validate, cache, and locally compose all layers.
 - [ ] Prove the Little Prince keeps the exact template head and body in all six
@@ -490,6 +499,9 @@ Phase 7G.1A implementation note:
 
 - the appearance record is saved once in local device storage and reapplied
   when the user changes pose;
+- one versioned manifest stores a complete front-hair ID, optional back-hair ID,
+  skin tone, and per-style fits for all five actors, while migrating the prior
+  single-active-actor format;
 - each actor currently resolves approved front hair plus an optional fitted
   Short/Medium/Long back-hair choice; actor-specific generated front/back
   artwork is produced in Phase 7G.1B without changing rig geometry; and
@@ -505,8 +517,8 @@ Blocked Phase 7H work:
 
 The exact Phase 7G.1 layered-package and Phase 7H playback plan is in
 [Generated Character Pipeline Plan](GENERATED_CHARACTER_PIPELINE_PLAN.md).
-The exact one-sheet clothing request, local split, and package contract is in
-[Character Clothing Sheet Plan](CHARACTER_CLOTHING_SHEET_PLAN.md).
+The exact character-sheet request, local split, full-body proof, and package
+contract is in [Character Sheet V1 Plan](CHARACTER_SHEET_PLAN.md).
 Generated image bytes intentionally remain session-only until Phase 8 replaces
 the binary store with durable local files.
 
@@ -710,7 +722,7 @@ These decisions must be recorded here when resolved.
 | `SPRITE_STUDIO_PLAN.md` | Rig and pose editor behavior |
 | `MODULAR_FACE_SYSTEM_PLAN.md` | Face-part catalogs and set behavior |
 | `GENERATED_CHARACTER_PIPELINE_PLAN.md` | Template-constrained Gemini character, real rig, face/pose proof, and Story Mode binding gate |
-| `CHARACTER_CLOTHING_SHEET_PLAN.md` | Canonical clothing-only sheet, local crop/mask pipeline, outfit package, and optional-hair persistence |
+| `CHARACTER_SHEET_PLAN.md` | Authoritative `character_sheet_v1`, local full-body proof, crop/mask pipeline, package, and Phase 7G.1B acceptance gate |
 | `FIXED_HAIR_SLOT_PLAN.md` | Universal per-actor/per-style front/back hair fitting and explicit no-back-hair behavior |
 | `CLOUDFLARE_IMAGE_GENERATOR.md` | Worker routes and provider responsibilities |
 | `UI_IMPLEMENTATION_PLAN.md` | Responsive screen and reusable-widget reference |

@@ -43,8 +43,8 @@ books/<book-id>/story-bible/characters/<character-id>/face/details/*.png
 books/<book-id>/story-bible/characters/<character-id>/face/sets.json
 books/<book-id>/story-bible/characters/<character-id>/hair/back.png
 books/<book-id>/story-bible/characters/<character-id>/hair/front.png
-books/<book-id>/story-bible/characters/<character-id>/generation/clothing-sheet-source.png
-books/<book-id>/story-bible/characters/<character-id>/generation/clothing-sheet-clean.png
+books/<book-id>/story-bible/characters/<character-id>/generation/character-sheet-source.png
+books/<book-id>/story-bible/characters/<character-id>/generation/character-sheet-clean.png
 books/<book-id>/story-bible/characters/<character-id>/outfits/<outfit-id>/parts/*.png
 books/<book-id>/story-bible/characters/<character-id>/outfits/<outfit-id>/outfit-back.png
 books/<book-id>/story-bible/characters/<character-id>/outfits/<outfit-id>/outfit-front.png
@@ -109,10 +109,11 @@ uses an oversized chibi head and short body. The original full-body placement
 remains the alignment reference; runtime parts are cropped and reconstructed
 using their saved positions and pivots.
 
-Gemini 3.1 Flash Image creates only missing fixed-layout component sheets for
-face parts, front/back hair, one nine-part clothing-only sheet, and optional
-accessories. The clothing sheet keeps the canonical canvas and arrangement;
-its head is a reference cell and contains no generated face or anatomy.
+Gemini 3.1 Flash Image creates one fixed-layout character sheet containing
+separated face details, front/back hair, and nine fitted clothing regions, plus
+optional accessory components when required. The character sheet keeps the
+canonical canvas and arrangement; its head accepts masked face details but no
+generated skull, skin base, or anatomy.
 StoryTale removes the flat green background, cuts the fixed cells with one
 versioned crop manifest, hard-masks each generated layer, and composes it over
 the shared rig locally.
@@ -120,8 +121,8 @@ Gemini never creates the runtime head or body. Reuse the accepted layers across
 every chapter and volume. Cloudflare Workers AI remains the location and
 chapter-background source.
 
-See [Character Clothing Sheet Plan](CHARACTER_CLOTHING_SHEET_PLAN.md) for the
-canonical sheet contract and output package.
+See [Character Sheet V1 Plan](CHARACTER_SHEET_PLAN.md) for the canonical sheet,
+local full-body proof, and output package.
 
 Speaking animals and creatures start with a transparent neutral sprite plus one
 talking state and use whole-sprite movement. Plants and props use transparent

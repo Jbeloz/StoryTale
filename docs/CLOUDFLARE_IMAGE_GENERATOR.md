@@ -6,9 +6,9 @@ separate below. See the [Master Roadmap](ROADMAP.md) for the current phase.
 ## Provider decision
 
 - Gemini analyzes cleaned chapter text into structured story data.
-- Gemini 3.1 Flash Image creates only missing face, front/back hair, one
-  canonical clothing-only sheet, loose-garment, and accessory components for
-  an immutable local Sprite Studio rig.
+- Gemini 3.1 Flash Image creates one canonical separated character sheet plus
+  source-required loose-garment and accessory components for an immutable local
+  Sprite Studio rig.
 - Cloudflare Workers AI creates chapter backgrounds only.
 
 ## Simple flow
@@ -71,7 +71,7 @@ only for missing appearance component sheets.
 For fitted clothing, the Worker forwards the exact versioned guide and semantic
 outfit brief. Flutter owns the crop manifest and local masks; neither the Worker
 nor Gemini discovers cell boundaries. See
-[Character Clothing Sheet Plan](CHARACTER_CLOTHING_SHEET_PLAN.md).
+[Character Sheet V1 Plan](CHARACTER_SHEET_PLAN.md).
 
 ## Sprite request throughput
 

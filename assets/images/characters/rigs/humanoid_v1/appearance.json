@@ -1,10 +1,38 @@
 {
   "actorId": "adult",
+  "frontHairId": "front_adult",
   "hairStyleId": "none",
   "skinTone": "#C99575",
+  "actorAppearances": {
+    "default": {
+      "frontHairId": "front_default",
+      "backHairId": "medium",
+      "skinTone": "#F2EDEF"
+    },
+    "hero": {
+      "frontHairId": "front_hero",
+      "backHairId": "short",
+      "skinTone": "#EFC9AA"
+    },
+    "heroine": {
+      "frontHairId": "front_heroine_v8",
+      "backHairId": "none",
+      "skinTone": "#F3D2BD"
+    },
+    "elder": {
+      "frontHairId": "front_elder",
+      "backHairId": "none",
+      "skinTone": "#DDB99D"
+    },
+    "adult": {
+      "frontHairId": "front_adult",
+      "backHairId": "none",
+      "skinTone": "#C99575"
+    }
+  },
   "hairFits": {
     "hero": {
-      "front_hair": {
+      "front_hair:front_hero": {
         "offsetX": 0,
         "offsetY": 0,
         "scale": 1
@@ -16,7 +44,7 @@
       }
     },
     "elder": {
-      "front_hair": {
+      "front_hair:front_elder": {
         "offsetX": 8.033003373579533,
         "offsetY": -16.958714004390487,
         "scale": 0.9109092018821023

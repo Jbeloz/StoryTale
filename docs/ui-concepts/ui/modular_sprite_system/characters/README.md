@@ -7,5 +7,5 @@ to nine locally cut clothing overlays, optional garment/accessory layers,
 preview composites, and the appearance manifest. Joint positions stay in the
 shared rig and pose JSON.
 
-See [Character Clothing Sheet Plan](../../../../CHARACTER_CLOTHING_SHEET_PLAN.md)
+See [Character Sheet V1 Plan](../../../../CHARACTER_SHEET_PLAN.md)
 for the canonical generation and local-cut flow.
