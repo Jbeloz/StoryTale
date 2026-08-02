@@ -1,6 +1,6 @@
 # StoryTale Character Sheet V1 Implementation Plan
 
-Status: **Authoritative Phase 7G.1B plan. Phases 7G.1B.1-7G.1B.4 are implemented locally; Phase 7G.1C is next. The first owner-controlled generated package and visual acceptance gate remain pending.**
+Status: **Authoritative Phase 7G.1B plan. Phases 7G.1B.1-7G.1B.4 are implemented locally. The first owner-controlled request was attempted on 2026-08-02 but returned a Worker 502 before packaging; no generated package was accepted. The request-format fix is deployed, one owner-approved rerun and the Phase 7G.1C visual gate remain pending.**
 
 This document owns the exact character-sheet contract, implementation order,
 validation gate, and handoff rules for Phase 7G.1B. The Master Roadmap still
@@ -322,6 +322,15 @@ distinct before the package can become `ready`. The Sheet screen exposes
 read-only Character, Layers, Faces, Hair, Poses, and Details groups even before
 generation; viewing or switching groups never calls the provider. No paid
 request was made while implementing this phase.
+
+The first live owner-controlled request was made only after checkpoint
+`22f6a82` and Worker deployment `6c2c1427-1442-4101-b0fa-99a88d307293`. It
+returned `Story service request failed` before Flutter received image bytes, so
+it produced no package and does not satisfy this gate. The Character Sheet
+request now leaves Gemini's output MIME override unset so the current
+Interactions API can return its default PNG; safe provider failure messages are
+also exposed. That fix is deployed as
+`ab9b22c9-b94a-4923-ae33-26eb16dbc808`. A second paid request was not made.
 
 ### Phase 7G.1C - Exact-fidelity gate
 

@@ -43,8 +43,10 @@ Endpoint: `https://storytale-image-worker.jbalejoshift0928.workers.dev`
   four-reference contract.
 - Flutter sends contract/version, guide hash, geometry hash, selected back-hair
   cell, and a stable request fingerprint. The Worker rejects mismatches.
-- Gemini 3.1 Flash Image is asked for one square 4K PNG. The Worker rejects any
-  response that is not exactly `4096 x 4096` PNG.
+- Gemini 3.1 Flash Image is asked for one square 4K image without forcing the
+  Interactions API MIME override; the provider's default lossless PNG is
+  required. The Worker rejects any response that is not exactly `4096 x 4096`
+  PNG.
 - Successful generation returns raw image bytes plus provider, model, request
   ID, fingerprint, contract, width, and height response headers.
 - The Worker keeps both `APP_TOKEN` and `GEMINI_API_KEY` as secrets.
@@ -74,6 +76,12 @@ The legacy Flutter prototype can still create one complete-character master,
 but the new book-character path uses only the locked character-sheet contract.
 Phase 7G.1 keeps the local head/body unchanged and uses the Worker only for
 missing appearance layers.
+
+Deployment note (2026-08-02): the first owner-controlled Character Sheet call
+returned a Worker 502 and produced no package. The response-format compatibility
+fix and safe provider error messages are deployed as Worker version
+`ab9b22c9-b94a-4923-ae33-26eb16dbc808`. No automatic or second paid request was
+made; the controlled rerun remains owner-approved work.
 
 For fitted clothing, the Worker forwards the exact versioned guide and semantic
 outfit brief. Flutter owns the crop manifest and local masks; neither the Worker

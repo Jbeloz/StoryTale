@@ -371,16 +371,19 @@ allowed/protected/seam masks, prompt contract, hashes, and Flutter contract
 loader are versioned. **Phase 7G.1B.2 is implemented locally:** Flutter and the
 private Worker now share one fingerprinted five-reference 4K request contract,
 asset-hash checks, sequential reuse, and provider metadata without automatic
-paid retries. Worker deployment and the first owner-controlled request remain
-manual. **Phase 7G.1B.3 is implemented locally:** Flutter now validates the
+paid retries. The Worker is deployed. The first owner-controlled request on
+2026-08-02 returned a Worker 502 before packaging; the Gemini response-format
+compatibility fix is deployed, but a second paid request has not been made.
+**Phase 7G.1B.3 is implemented locally:** Flutter now validates the
 returned sheet and fingerprint, removes green, applies the fixed manifest and
 masks, records transparent session layers and stable metadata, rejects invalid
 geometry/slots/sides/seams, and assembles the neutral proof over the locked
 base. **Phase 7G.1B.4 is implemented locally:** the package uses
 the existing rig hierarchy to render four distinct proof PNGs, records their
 hashes and validation metadata, exposes six read-only proof groups, and cannot
-become `ready` until the four-pose gate passes. The first owner-controlled
-generated package is still pending. **Phase 7G.1C is next.**
+become `ready` until the four-pose gate passes. The first accepted generated
+package is still pending. **The controlled rerun is the immediate gate before
+Phase 7G.1C.**
 Phase 7H Story Mode binding waits for the complete Phase 7G.1 gate.
 
 Implementation order:

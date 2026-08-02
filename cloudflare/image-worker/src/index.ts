@@ -1358,7 +1358,11 @@ async function generateSprite(
       input,
       response_format: {
         type: "image",
-        mime_type: mode === "character-sheet" ? "image/png" : "image/jpeg",
+        // Gemini returns PNG by default. The current Interactions API schema
+        // only enumerates JPEG when mime_type is supplied, so leave it unset
+        // for the lossless character-sheet contract instead of sending a
+        // provider-rejected PNG override.
+        ...(mode === "character-sheet" ? {} : { mime_type: "image/jpeg" }),
         aspect_ratio: mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "front-hair" || mode === "foreground" || mode === "master" || mode === "character-sheet"
           ? "1:1"
           : mode === "body-pose" ? "9:16" : "3:4",
@@ -1384,14 +1388,21 @@ async function generateSprite(
     if (response.status === 401 || response.status === 403) {
       throw new PublicWorkerError("The Gemini API key was rejected by Google.", 503);
     }
-    throw new Error(`Gemini returned HTTP ${response.status}`);
+    throw new PublicWorkerError(
+      `Gemini rejected the character-sheet request (HTTP ${response.status}).`,
+      502,
+    );
   }
 
   const image = findGeminiImage(await response.json<unknown>());
-  if (!image) throw new Error("Gemini returned no image");
+  if (!image) {
+    throw new PublicWorkerError("Gemini completed without returning an image.", 502);
+  }
   const bytes = base64ToBytes(image.data);
   const details = imageDetails(bytes);
-  if (!details) throw new Error("Gemini returned an unsupported image");
+  if (!details) {
+    throw new PublicWorkerError("Gemini returned an unsupported image format.", 502);
+  }
   if (
     mode === "character-sheet" &&
     (details.mimeType !== "image/png" || details.width !== 4096 || details.height !== 4096)

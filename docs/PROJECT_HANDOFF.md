@@ -483,8 +483,11 @@ The [Master Roadmap](ROADMAP.md) is authoritative. As of this handoff:
 3. **Implemented locally: Phase 7G.1B.2** — Flutter and the private Worker share
    one hash-checked, fingerprinted, sequential five-reference 4K request and
    response contract. It preserves provider/request metadata and never retries
-   a paid failure automatically. Worker deployment and the first request remain
-   owner-controlled and were not performed.
+   a paid failure automatically. The Worker was deployed on 2026-08-02. The
+   first owner-controlled request returned a Worker 502 before packaging; no
+   output was accepted. The Gemini response-format compatibility fix is now
+   deployed as `ab9b22c9-b94a-4923-ae33-26eb16dbc808`, and a second paid request
+   was deliberately not made without renewed owner approval.
 4. **Implemented locally: Phase 7G.1B.3** — Flutter verifies the fixed contract,
    request fingerprint, exact PNG canvas, protected gaps, side ownership, and
    seam limits; removes green; cuts all 14 manifest cells; records transparent
@@ -496,15 +499,18 @@ The [Master Roadmap](ROADMAP.md) is authoritative. As of this handoff:
    hierarchy. Four preview PNGs receive stable session IDs, hashes, and
    validation metadata; Character, Layers, Faces, Hair, Poses, and Details are
    read-only review groups; and `ready` requires the full four-pose gate. The
-   first owner-controlled generated package remains pending.
-6. **Next: Phase 7G.1C** — prove exact locked geometry with six faces and four
+   first accepted owner-controlled generated package remains pending.
+6. **Immediate gate:** authorize one controlled rerun against the deployed
+   response-format fix, inspect all six proof groups, and accept or reject the
+   package without an automatic retry.
+7. **Next: Phase 7G.1C** — prove exact locked geometry with six faces and four
    poses; remove the app-defined shared three-per-minute sprite bottleneck
    while keeping one sequential request, deduplication, and real provider
    quota errors.
-7. **Then: Phase 7H** — register the validated character package and rebuild
+8. **Then: Phase 7H** — register the validated character package and rebuild
    every affected ChapterStory so the correct human appears across chapters
    and volumes.
-8. Continue with Phases 8–11 in roadmap order.
+9. Continue with Phases 8–11 in roadmap order.
 
 Do not start persistence, final Story Mode binding, or audio integration before
 their roadmap gates unless a blocking defect requires a narrow fix.
