@@ -365,10 +365,22 @@ Little Prince result failed the exact-template visual-fidelity gate. Phase
 7G.1A provides the local actor, hair, skin-tone, and universal hair-fit
 foundation. Phase 7G.1A.1 now persists a complete appearance and explicit
 `None` back-hair default per actor; owner manual verification is pending.
-**Phase 7G.1B.1 is current:** the native-size `4096 x 4096`
-`character_sheet_v1` guide and initial fixed crop manifest are now versioned.
-Complete masks, anchors, assembled reference, and prompt contract before any
-paid provider request.
+**Phase 7G.1B.1 is complete:** the native-size `4096 x 4096`
+`character_sheet_v1` guide, fixed crop/anchor manifest, neutral reference,
+allowed/protected/seam masks, prompt contract, hashes, and Flutter contract
+loader are versioned. **Phase 7G.1B.2 is implemented locally:** Flutter and the
+private Worker now share one fingerprinted five-reference 4K request contract,
+asset-hash checks, sequential reuse, and provider metadata without automatic
+paid retries. Worker deployment and the first owner-controlled request remain
+manual. **Phase 7G.1B.3 is implemented locally:** Flutter now validates the
+returned sheet and fingerprint, removes green, applies the fixed manifest and
+masks, records transparent session layers and stable metadata, rejects invalid
+geometry/slots/sides/seams, and assembles the neutral proof over the locked
+base. **Phase 7G.1B.4 is implemented locally:** the package uses
+the existing rig hierarchy to render four distinct proof PNGs, records their
+hashes and validation metadata, exposes six read-only proof groups, and cannot
+become `ready` until the four-pose gate passes. The first owner-controlled
+generated package is still pending. **Phase 7G.1C is next.**
 Phase 7H Story Mode binding waits for the complete Phase 7G.1 gate.
 
 Implementation order:
@@ -394,22 +406,25 @@ Implementation order:
 6. **Implemented Phase 7G.1A.1:** persist each actor's front hair, optional back hair,
    per-style X/Y, and scale. `None` remains a valid default without removing
    other back-hair catalog choices.
-7. **Current Phase 7G.1B.1:** version the approved `character_sheet_v1` guide,
+7. **Implemented Phase 7G.1B.1:** version the approved `character_sheet_v1` guide,
    assembled neutral reference, exact crop/anchor manifest, allowed/protected/
    seam masks, and prompt contract. Make no paid provider request in this
    subphase.
-8. **Phase 7G.1B.2-7G.1B.3:** request one fixed character sheet containing
-   aligned face details, front/back hair, and nine fitted-clothing regions;
-   then remove green, cut the known cells, and assemble the full-body proof
-   locally. Gemini never redraws the body.
-9. **Phase 7G.1B.4:** attach loose garments and held items to approved anchors
-   and behind-arm, behind-hand, and front-of-hand layer modes.
-10. **Phase 7G.1C:** compose and validate six faces and four poses on the
+8. **Implemented locally in Phase 7G.1B.2:** request one fixed character sheet
+   containing aligned face details, front/back hair, and nine fitted-clothing
+   regions without automatic paid retries.
+9. **Implemented locally in Phase 7G.1B.3:** remove green, cut the 14 fixed
+   cells, apply allowed/protected/seam masks, register the session package, and
+   assemble the neutral full-body proof. Gemini never redraws the body.
+10. **Implemented locally in Phase 7G.1B.4:** compose Idle, Talking, Pointing,
+   and Walking from the same layers and add the read-only Character, Layers,
+   Faces, Hair, Poses, and Details package proof groups.
+11. **Next Phase 7G.1C:** compose and validate six faces and four poses on the
    locked rig, then expose Character, Layers, Faces, Poses, and Details proof.
-11. **Phase 7G.1C:** reuse completed components by design hash, remove the
+12. **Phase 7G.1C:** reuse completed components by design hash, remove the
    private sprite route's shared three-per-minute app bottleneck, and keep one
    sequential request active without automatic paid regeneration.
-12. **Blocked Phase 7H:** register the validated layered package and rebuild
+13. **Blocked Phase 7H:** register the validated layered package and rebuild
    every affected ChapterStory so Story Mode uses it across chapters and
    volumes.
 
@@ -464,16 +479,22 @@ Current Phase 7G.1 work:
 - [x] **Phase 7G.1A.1:** make `None` a persistent per-actor back-hair default
   and save the selected front/back IDs plus per-style fit values without
   deleting any catalog hair.
-- [ ] **Current Phase 7G.1B.1:** version the supplied separated-parts guide and
+- [x] **Phase 7G.1B.1:** version the supplied separated-parts guide and
   add one exact crop/anchor manifest, assembled reference, allowed/protected/
   seam masks, and prompt contract without making a paid request.
-- [ ] Produce the fixed `character_sheet_v1` pipeline for modular face details,
-  front/back hair, nine fitted overlays, optional loose garments, and
-  accessories, with a locally assembled full-body proof.
-- [ ] Cut accepted Gemini sheets locally rather than detecting parts with AI.
+- [x] **Phase 7G.1B.2, local implementation:** connect one controlled fixed-sheet provider
+  request and response to the versioned contract without automatic retry.
+- [x] **Phase 7G.1B.3, local implementation:** produce the fixed-manifest
+  cutout/package portion of the `character_sheet_v1` pipeline for modular face
+  details, front/back hair, and nine fitted overlays, with a locally assembled
+  neutral full-body proof.
+- [x] Cut accepted Gemini sheets locally rather than detecting parts with AI.
+- [x] Hard-mask, align, validate, cache, and locally compose the neutral proof.
+- [x] **Phase 7G.1B.4, local implementation:** compose and review Idle, Talking,
+  Pointing, and Walking from the same accepted layers; expose the six read-only
+  proof groups; and keep the package out of `ready` until all four proofs pass.
 - [ ] Add named held-item anchors and relative layer modes.
-- [ ] Hard-mask, align, validate, cache, and locally compose all layers.
-- [ ] Prove the Little Prince keeps the exact template head and body in all six
+- [ ] **Next Phase 7G.1C:** prove the Little Prince keeps the exact template head and body in all six
   faces and Idle/Talking/Pointing/Walking.
 - [ ] Remove or disable the private sprite route's shared three-per-minute
   StoryTale limiter while keeping sequential requests, deduplication, and real

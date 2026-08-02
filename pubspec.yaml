@@ -8,6 +8,7 @@ environment:
 
 dependencies:
   audioplayers: ^6.7.1
+  crypto: ^3.0.6
   epubx: ^4.0.0
   file_picker: ^11.0.2
   flutter:
@@ -49,6 +50,7 @@ flutter:
     - assets/images/characters/rigs/humanoid_v1/faces/
     - assets/images/characters/rigs/humanoid_v1/hair/
     - assets/images/characters/rigs/humanoid_v1/poses/
+    - assets/images/characters/generation_templates/humanoid_v1/character_sheet_v1/
     - assets/images/characters/face_profiles/
     - assets/images/characters/face_profiles/default/
     - assets/images/characters/face_profiles/default/reference/

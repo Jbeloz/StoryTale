@@ -1,9 +1,12 @@
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as image;
 
+import 'character_sheet_contract.dart';
+import 'character_sheet_generation.dart';
 import 'sprite_references.dart';
 import 'sprite_layer_processor.dart';
 import 'story_foreground_repository.dart';
@@ -13,10 +16,14 @@ class StoryArtworkService {
   StoryArtworkService({
     http.Client? client,
     AssetBundle? bundle,
+    CharacterSheetContractRepository? characterSheetContracts,
     String? endpoint,
     String? token,
   }) : _client = client ?? http.Client(),
        _bundle = bundle ?? rootBundle,
+       _characterSheetContracts =
+           characterSheetContracts ??
+           CharacterSheetContractRepository(bundle: bundle ?? rootBundle),
        endpoint = endpoint ?? _endpoint,
        token = token ?? _token;
 
@@ -28,8 +35,11 @@ class StoryArtworkService {
 
   final http.Client _client;
   final AssetBundle _bundle;
+  final CharacterSheetContractRepository _characterSheetContracts;
   final String endpoint;
   final String token;
+  final Map<String, CharacterSheetGenerationResult> _characterSheetCache = {};
+  Future<CharacterSheetGenerationResult>? _characterSheetInFlight;
 
   bool get isConfigured => token.trim().isNotEmpty;
   String get spriteProvider => 'Google Gemini';
@@ -84,6 +94,134 @@ class StoryArtworkService {
     )).bytes;
   }
 
+  Future<CharacterSheetGenerationResult> generateCharacterSheet(
+    CharacterSheetGenerationRequest request,
+  ) async {
+    final contract = await _characterSheetContracts.load();
+    final fingerprint = request.fingerprint(contract);
+    final cached = _characterSheetCache[fingerprint];
+    if (cached != null) return cached;
+    if (_characterSheetInFlight != null) {
+      throw const ArtworkGenerationException(
+        'Another character-sheet request is already active. Wait for it to '
+        'finish before starting a paid request.',
+      );
+    }
+
+    final generation = _generateCharacterSheet(
+      request: request,
+      contract: contract,
+      fingerprint: fingerprint,
+    );
+    _characterSheetInFlight = generation;
+    try {
+      final result = await generation;
+      _characterSheetCache[fingerprint] = result;
+      return result;
+    } finally {
+      _characterSheetInFlight = null;
+    }
+  }
+
+  Future<CharacterSheetGenerationResult> _generateCharacterSheet({
+    required CharacterSheetGenerationRequest request,
+    required CharacterSheetContract contract,
+    required String fingerprint,
+  }) async {
+    final promptBytes = await _verifiedAssetBytes(
+      contract.assets.promptContract,
+      contract.assetSha256['promptContract']!,
+    );
+    final prompt = request.buildPrompt(utf8.decode(promptBytes));
+    final references = <MapEntry<String, String>>[
+      MapEntry('guide', contract.assets.guide),
+      MapEntry('assembledReference', contract.assets.assembledReference),
+      MapEntry('allowedRegions', contract.assets.allowedRegions),
+      MapEntry('protectedRegions', contract.assets.protectedRegions),
+      MapEntry('seamAllowances', contract.assets.seamAllowances),
+    ];
+    final files = <http.MultipartFile>[];
+    for (var index = 0; index < references.length; index++) {
+      final reference = references[index];
+      final bytes = await _verifiedAssetBytes(
+        reference.value,
+        contract.assetSha256[reference.key]!,
+      );
+      files.add(
+        http.MultipartFile.fromBytes(
+          'input_image_$index',
+          bytes,
+          filename: reference.value.split('/').last,
+        ),
+      );
+    }
+
+    final worker = await _generate(
+      kind: 'sprite',
+      mode: 'character-sheet',
+      prompt: prompt,
+      fields: {
+        'contract_id': contract.contractId,
+        'contract_version': '${contract.contractVersion}',
+        'guide_sha256': contract.assetSha256['guide']!,
+        'geometry_hash': contract.lockedRig.geometryHash,
+        'request_fingerprint': fingerprint,
+        'selected_back_hair': request.selectedBackHairRegion(),
+      },
+      files: files,
+    );
+    final decoded = image.decodeImage(worker.bytes);
+    if (decoded == null) {
+      throw const ArtworkGenerationException(
+        'Gemini returned a corrupt character sheet.',
+      );
+    }
+    if (worker.mimeType != 'image/png' ||
+        decoded.width != contract.canvas.width ||
+        decoded.height != contract.canvas.height) {
+      throw ArtworkGenerationException(
+        'Gemini returned ${decoded.width}x${decoded.height} '
+        '${worker.mimeType}; StoryTale requires one 4096x4096 PNG.',
+      );
+    }
+    if (worker.requestFingerprint != fingerprint) {
+      throw const ArtworkGenerationException(
+        'The Worker returned mismatched character-sheet request metadata.',
+      );
+    }
+    return CharacterSheetGenerationResult(
+      bytes: worker.bytes,
+      mimeType: worker.mimeType,
+      width: decoded.width,
+      height: decoded.height,
+      provider: worker.provider,
+      model: worker.model,
+      requestId: worker.requestId,
+      requestFingerprint: fingerprint,
+      contractId: contract.contractId,
+      contractVersion: contract.contractVersion,
+      prompt: prompt,
+      generatedAt: DateTime.now().toUtc().toIso8601String(),
+    );
+  }
+
+  Future<Uint8List> _verifiedAssetBytes(
+    String assetPath,
+    String expectedSha256,
+  ) async {
+    final data = await _bundle.load(assetPath);
+    final bytes = data.buffer.asUint8List(
+      data.offsetInBytes,
+      data.lengthInBytes,
+    );
+    if (sha256.convert(bytes).toString() != expectedSha256) {
+      throw ArtworkGenerationException(
+        'Character-sheet contract asset drifted: $assetPath.',
+      );
+    }
+    return bytes;
+  }
+
   Future<GeneratedForegroundData> generateForeground(
     StoryForegroundAssetData asset,
   ) async {
@@ -115,6 +253,7 @@ class StoryArtworkService {
     required String kind,
     required String prompt,
     String? mode,
+    Map<String, String> fields = const {},
     List<http.MultipartFile> files = const [],
   }) async {
     if (!isConfigured) {
@@ -129,6 +268,7 @@ class StoryArtworkService {
     final request = http.MultipartRequest('POST', uri)
       ..headers['Authorization'] = 'Bearer $token'
       ..fields['prompt'] = prompt
+      ..fields.addAll(fields)
       ..files.addAll(files);
 
     final response = await _client.send(request);
@@ -146,7 +286,14 @@ class StoryArtworkService {
         'The image service returned an unsupported file type: $mimeType.',
       );
     }
-    return _WorkerImage(Uint8List.fromList(bytes), mimeType);
+    return _WorkerImage(
+      bytes: Uint8List.fromList(bytes),
+      mimeType: mimeType,
+      provider: response.headers['x-image-provider'] ?? '',
+      model: response.headers['x-image-model'] ?? '',
+      requestId: response.headers['x-request-id'] ?? '',
+      requestFingerprint: response.headers['x-request-fingerprint'],
+    );
   }
 
   String _foregroundPrompt(StoryForegroundAssetData asset) {
@@ -207,10 +354,21 @@ class GeneratedForegroundData {
 }
 
 class _WorkerImage {
-  const _WorkerImage(this.bytes, this.mimeType);
+  const _WorkerImage({
+    required this.bytes,
+    required this.mimeType,
+    required this.provider,
+    required this.model,
+    required this.requestId,
+    this.requestFingerprint,
+  });
 
   final Uint8List bytes;
   final String mimeType;
+  final String provider;
+  final String model;
+  final String requestId;
+  final String? requestFingerprint;
 }
 
 class ArtworkGenerationException implements Exception {

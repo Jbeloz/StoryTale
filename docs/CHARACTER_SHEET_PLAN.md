@@ -1,6 +1,6 @@
 # StoryTale Character Sheet V1 Implementation Plan
 
-Status: **Authoritative Phase 7G.1B plan. Phase 7G.1B.1 is current.**
+Status: **Authoritative Phase 7G.1B plan. Phases 7G.1B.1-7G.1B.4 are implemented locally; Phase 7G.1C is next. The first owner-controlled generated package and visual acceptance gate remain pending.**
 
 This document owns the exact character-sheet contract, implementation order,
 validation gate, and handoff rules for Phase 7G.1B. The Master Roadmap still
@@ -92,7 +92,9 @@ assets/images/characters/generation_templates/humanoid_v1/character_sheet_v1/
 
 - `guide.png` is the exact approved `4096 x 4096` layout assembled from native
   StoryTale rig and hair assets.
-- `assembled_reference.png` is rendered locally from the neutral locked rig.
+- `assembled_reference.png` is rendered locally from the neutral locked rig
+  with the approved neutral-pose head offset applied to the whole head/hair
+  group, so the jaw overlaps the torso neck opening instead of floating.
 - `allowed_regions.png` identifies pixels where generated appearance artwork
   may survive.
 - `protected_regions.png` identifies anatomy, gaps, and areas the provider may
@@ -264,7 +266,7 @@ state, and design hashes must still be recorded now.
 
 ## 14. Implementation order
 
-### Phase 7G.1B.1 - Contract and canonical assets — current
+### Phase 7G.1B.1 - Contract and canonical assets — complete
 
 1. Version the native-size assembled source as `character_sheet_v1/guide.png`.
 2. Render the neutral assembled reference from the locked rig.
@@ -274,9 +276,9 @@ state, and design hashes must still be recorded now.
 6. Write the exact prompt contract.
 7. Add manifest-loading and contract-validation records.
 
-No paid provider request is allowed during 7G.1B.1.
+Phase 7G.1B.1 completed without a paid provider request.
 
-### Phase 7G.1B.2 - One-sheet generation
+### Phase 7G.1B.2 - One-sheet generation — implemented locally
 
 1. Add the character-sheet request/response contract to Flutter and the private
    Worker.
@@ -285,7 +287,10 @@ No paid provider request is allowed during 7G.1B.1.
 4. Keep sequential generation and design-hash reuse.
 5. Surface real provider errors without automatic regeneration.
 
-### Phase 7G.1B.3 - Local cutout and package builder
+The Flutter and Worker contracts are implemented. The private Worker has not
+been deployed and no paid character-sheet request has been made in this phase.
+
+### Phase 7G.1B.3 - Local cutout and package builder — implemented locally
 
 1. Validate and remove green locally.
 2. Split fixed cells from the manifest.
@@ -294,12 +299,29 @@ No paid provider request is allowed during 7G.1B.1.
 5. Compose the neutral full-body proof.
 6. Reject geometry, slot, side, or seam violations.
 
-### Phase 7G.1B.4 - Pose proof and package review
+The Flutter processor now verifies the contract and request fingerprint,
+requires the exact `4096 x 4096` PNG, rejects artwork outside the allowed and
+seam masks, preserves protected anatomy, cuts all 14 native-size cells, records
+empty optional slots, registers stable session asset IDs and package metadata,
+and composes the neutral proof over the locally tinted locked base. Invalid
+packages become `needsAttention` and compose only the safe locked-template
+fallback. No paid request was made while implementing this phase.
+
+### Phase 7G.1B.4 - Pose proof and package review — implemented locally
 
 1. Compose Idle, Talking, Pointing, and Walking from the same layers.
 2. Add Character, Layers, Faces, Hair, Poses, and Details proof groups.
 3. Keep the normal catalog read-only.
 4. Mark the package ready only after the complete gate passes.
+
+The local package builder now renders Idle, Talking, Pointing, and Walking PNG
+proofs through the existing rig hierarchy and the same extracted appearance
+layers. Each proof records stable session asset IDs, dimensions, visible-pixel
+counts, and hashes. `poseProofValid` requires all four proofs to be valid and
+distinct before the package can become `ready`. The Sheet screen exposes
+read-only Character, Layers, Faces, Hair, Poses, and Details groups even before
+generation; viewing or switching groups never calls the provider. No paid
+request was made while implementing this phase.
 
 ### Phase 7G.1C - Exact-fidelity gate
 
@@ -311,8 +333,8 @@ remains blocked until that proof passes.
 
 - [x] The canonical guide is versioned at exactly `4096 x 4096`, with native
   front-hair and Short/Medium/Long back-hair canvases.
-- [ ] Every region has one reviewed crop, output canvas, anchor, role, and side.
-- [ ] Allowed, protected, and seam masks are versioned and deterministic.
+- [x] Every region has one reviewed crop, output canvas, anchor, role, and side.
+- [x] Allowed, protected, and seam masks are versioned and deterministic.
 - [ ] Gemini receives one coherent-character brief and returns only the
   separated sheet.
 - [ ] No returned sheet contains an assembled body, extra person, text, UI, or

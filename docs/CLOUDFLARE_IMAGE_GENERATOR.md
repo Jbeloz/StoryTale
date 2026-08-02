@@ -35,12 +35,18 @@ Endpoint: `https://storytale-image-worker.jbalejoshift0928.workers.dev`
 - `POST /analyze` accepts one cleaned chapter plus its approved story catalog
   and returns a schema-validated `ChapterStoryData` plan.
 - `POST /generate?kind=background` accepts multipart form data.
-- `POST /generate?kind=sprite` currently sends the prompt and references to
-  Gemini. Phase 7G.1 replaces its complete-character `master` request with
-  face, hair, canonical clothing-only, and accessory component requests.
-- `prompt` is required and must contain 3-500 characters.
-- Up to four small reference images may lock a recurring character or location style.
-- Successful generation returns raw image bytes.
+- `POST /generate?kind=sprite&mode=character-sheet` accepts the locked
+  `character_sheet_v1` prompt plus exactly five references: guide, assembled
+  reference, allowed mask, protected mask, and seam mask.
+- The character-sheet request accepts up to 12,000 prompt characters and 8 MB
+  of reference images; other modes retain the smaller 2,500-character,
+  four-reference contract.
+- Flutter sends contract/version, guide hash, geometry hash, selected back-hair
+  cell, and a stable request fingerprint. The Worker rejects mismatches.
+- Gemini 3.1 Flash Image is asked for one square 4K PNG. The Worker rejects any
+  response that is not exactly `4096 x 4096` PNG.
+- Successful generation returns raw image bytes plus provider, model, request
+  ID, fingerprint, contract, width, and height response headers.
 - The Worker keeps both `APP_TOKEN` and `GEMINI_API_KEY` as secrets.
 
 The current FLUX.1 request proves the private Worker and Workers AI binding are
@@ -51,22 +57,23 @@ planned route uses SDXL at `1024 x 576` and follows the
 ## Flutter test
 
 1. Open a book and choose Story Mode.
-2. Prepare the chapter.
-3. Open `Review Sprites & Backgrounds`.
-4. Choose Sprite or Background.
-5. Prepare the missing character layers. Compare the fixed local head/body
-   against the locally composed face, hair, clothing, and accessory result.
+2. Open `Review Sprites & Backgrounds`.
+3. Choose `Sheet` for the new contract or `Sprite` only for the legacy master.
+4. Configure Actor, Hair, and Skin in Sprite Studio before a Sheet request.
+5. Generate once only when the deployed Worker and Gemini billing are ready.
+6. Phase 7G.1B.3 now validates, cuts, masks, packages, and locally composes the
+   returned sheet. Phase 7G.1B.4 now adds the four-pose package review and six
+   read-only proof groups; Phase 7G.1C owns the next exact-fidelity gate.
 
 The Flutter client is
 `lib/src/features/animated_story/data/story_artwork_service.dart`.
 
 The health response reports the analysis, sprite, and background providers and
 whether Gemini is configured.
-The current Flutter prototype attaches geometry references and asks Gemini for
-one finished character, then removes green and divides that image locally.
-That flow proved connectivity but cannot enforce the fixed Sprite Studio
-silhouette. Phase 7G.1 keeps the local head/body unchanged and uses the Worker
-only for missing appearance component sheets.
+The legacy Flutter prototype can still create one complete-character master,
+but the new book-character path uses only the locked character-sheet contract.
+Phase 7G.1 keeps the local head/body unchanged and uses the Worker only for
+missing appearance layers.
 
 For fitted clothing, the Worker forwards the exact versioned guide and semantic
 outfit brief. Flutter owns the crop manifest and local masks; neither the Worker

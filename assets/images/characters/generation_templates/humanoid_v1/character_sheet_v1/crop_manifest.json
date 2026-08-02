@@ -7,7 +7,27 @@
     "mimeType": "image/png",
     "backgroundColor": "#00FF00"
   },
-  "guideSha256": "bd6731d1136df05fc4de44292aa2c6cbd131dc44fb5601b7ea66f45f6b803645",
+  "assets": {
+    "guide": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v1/guide.png",
+    "assembledReference": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v1/assembled_reference.png",
+    "allowedRegions": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v1/allowed_regions.png",
+    "protectedRegions": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v1/protected_regions.png",
+    "seamAllowances": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v1/seam_allowances.png",
+    "promptContract": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v1/prompt_contract.md"
+  },
+  "assetSha256": {
+    "guide": "bd6731d1136df05fc4de44292aa2c6cbd131dc44fb5601b7ea66f45f6b803645",
+    "assembledReference": "0247225e7e8a9584961ce795c0f3e1e9bf0e61450e5cb151d0c02d042319fa50",
+    "allowedRegions": "6f34b3a3c9cfcf0b9cfbb63b3eb59168c8c804dbfad2de630dc05a9643011549",
+    "protectedRegions": "b478756bcfa28bc21b19171cda176c340530dbcdc625f16d054e563dc8f067e4",
+    "seamAllowances": "b3939964de90975a93371b58987160d1133429170132ff8cd51fd0194573747c",
+    "promptContract": "9f492a8a1ab2647704d263eaae6eea3e78245407258a418502be7fe9c2aa3049"
+  },
+  "maskEncoding": {
+    "allowedRegions": "white pixels may contain generated appearance; black pixels are discarded",
+    "protectedRegions": "white pixels always preserve the locked source; black pixels may accept appearance",
+    "seamAllowances": "white pixels permit the documented joint overlap; black pixels add no allowance"
+  },
   "lockedRig": {
     "id": "humanoid_v1",
     "geometryHashAlgorithm": "sha256 of sorted rig.json and base PNG path-hash entries",
@@ -29,6 +49,9 @@
       "sourceAsset": "assets/images/characters/rigs/humanoid_v1/hair/back_short.png",
       "parentPart": "head",
       "side": "center",
+      "attachmentAnchor": { "x": 626.7, "y": 1164.46 },
+      "defaultLayerOrder": 4,
+      "maskRegionId": "back_hair_short",
       "requirement": "activeWhenSelected"
     },
     {
@@ -39,6 +62,9 @@
       "sourceAsset": "assets/images/characters/rigs/humanoid_v1/hair/back_default.png",
       "parentPart": "head",
       "side": "center",
+      "attachmentAnchor": { "x": 626.7, "y": 1164.46 },
+      "defaultLayerOrder": 4,
+      "maskRegionId": "back_hair_medium",
       "requirement": "activeWhenSelected"
     },
     {
@@ -49,6 +75,9 @@
       "sourceAsset": "assets/images/characters/rigs/humanoid_v1/hair/back_long.png",
       "parentPart": "head",
       "side": "center",
+      "attachmentAnchor": { "x": 626.7, "y": 1164.46 },
+      "defaultLayerOrder": 4,
+      "maskRegionId": "back_hair_long",
       "requirement": "activeWhenSelected"
     },
     {
@@ -59,6 +88,9 @@
       "sourceAsset": "assets/images/characters/rigs/humanoid_v1/hair/front_default.png",
       "parentPart": "head",
       "side": "center",
+      "attachmentAnchor": { "x": 626.7, "y": 1240.15 },
+      "defaultLayerOrder": 50,
+      "maskRegionId": "front_hair",
       "requirement": "required"
     },
     {
@@ -69,6 +101,10 @@
       "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/head.png",
       "parentPart": "head",
       "side": "center",
+      "attachmentAnchor": { "x": 179.88, "y": 362.54 },
+      "seamAnchors": [{ "x": 179.88, "y": 362.54, "radius": 9 }],
+      "defaultLayerOrder": 40,
+      "maskRegionId": "head",
       "requirement": "required"
     },
     {
@@ -79,6 +115,16 @@
       "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/torso.png",
       "parentPart": "torso",
       "side": "center",
+      "attachmentAnchor": { "x": 84.45, "y": 215.28 },
+      "seamAnchors": [
+        { "x": 78.88, "y": 3.54, "radius": 9 },
+        { "x": 23, "y": 47.29, "radius": 9 },
+        { "x": 115.09, "y": 37.78, "radius": 9 },
+        { "x": 39.6, "y": 211.56, "radius": 9 },
+        { "x": 129.29, "y": 219, "radius": 9 }
+      ],
+      "defaultLayerOrder": 20,
+      "maskRegionId": "torso",
       "requirement": "required"
     },
     {
@@ -89,6 +135,13 @@
       "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/upper_arm_right.png",
       "parentPart": "upper_arm_right",
       "side": "right",
+      "attachmentAnchor": { "x": 43, "y": 28.29 },
+      "seamAnchors": [
+        { "x": 43, "y": 28.29, "radius": 9 },
+        { "x": 19.71, "y": 99, "radius": 9 }
+      ],
+      "defaultLayerOrder": 32,
+      "maskRegionId": "upper_arm_right",
       "requirement": "optional"
     },
     {
@@ -99,6 +152,13 @@
       "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/upper_arm_left.png",
       "parentPart": "upper_arm_left",
       "side": "left",
+      "attachmentAnchor": { "x": 19.09, "y": 24.78 },
+      "seamAnchors": [
+        { "x": 19.09, "y": 24.78, "radius": 9 },
+        { "x": 49.6, "y": 108.56, "radius": 9 }
+      ],
+      "defaultLayerOrder": 11,
+      "maskRegionId": "upper_arm_left",
       "requirement": "optional"
     },
     {
@@ -109,6 +169,10 @@
       "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/lower_arm_right.png",
       "parentPart": "lower_arm_right",
       "side": "right",
+      "attachmentAnchor": { "x": 54.71, "y": 25 },
+      "seamAnchors": [{ "x": 54.71, "y": 25, "radius": 9 }],
+      "defaultLayerOrder": 30,
+      "maskRegionId": "lower_arm_right",
       "requirement": "optional"
     },
     {
@@ -119,6 +183,10 @@
       "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/lower_arm_left.png",
       "parentPart": "lower_arm_left",
       "side": "left",
+      "attachmentAnchor": { "x": 23.6, "y": 18.56 },
+      "seamAnchors": [{ "x": 23.6, "y": 18.56, "radius": 9 }],
+      "defaultLayerOrder": 9,
+      "maskRegionId": "lower_arm_left",
       "requirement": "optional"
     },
     {
@@ -129,6 +197,13 @@
       "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/upper_leg_right.png",
       "parentPart": "upper_leg_right",
       "side": "right",
+      "attachmentAnchor": { "x": 44.6, "y": 12.56 },
+      "seamAnchors": [
+        { "x": 44.6, "y": 12.56, "radius": 9 },
+        { "x": 40, "y": 122.71, "radius": 9 }
+      ],
+      "defaultLayerOrder": 8,
+      "maskRegionId": "upper_leg_right",
       "requirement": "optional"
     },
     {
@@ -139,6 +214,13 @@
       "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/upper_leg_left.png",
       "parentPart": "upper_leg_left",
       "side": "left",
+      "attachmentAnchor": { "x": 46.29, "y": 7 },
+      "seamAnchors": [
+        { "x": 46.29, "y": 7, "radius": 9 },
+        { "x": 42.29, "y": 120, "radius": 9 }
+      ],
+      "defaultLayerOrder": 6,
+      "maskRegionId": "upper_leg_left",
       "requirement": "optional"
     },
     {
@@ -149,6 +231,10 @@
       "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/lower_leg_right.png",
       "parentPart": "lower_leg_right",
       "side": "right",
+      "attachmentAnchor": { "x": 44, "y": 14.71 },
+      "seamAnchors": [{ "x": 44, "y": 14.71, "radius": 9 }],
+      "defaultLayerOrder": 7,
+      "maskRegionId": "lower_leg_right",
       "requirement": "optional"
     },
     {
@@ -159,6 +245,10 @@
       "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/lower_leg_left.png",
       "parentPart": "lower_leg_left",
       "side": "left",
+      "attachmentAnchor": { "x": 39.29, "y": 16 },
+      "seamAnchors": [{ "x": 39.29, "y": 16, "radius": 9 }],
+      "defaultLayerOrder": 5,
+      "maskRegionId": "lower_leg_left",
       "requirement": "optional"
     }
   ]

@@ -20,11 +20,18 @@ StoryTale is a local-first mobile EPUB library with DeepL translation, on-device
 
 The current development phase is the locked-template character pipeline. Each
 actor now saves and restores its own front hair, optional back hair including
-`None`, skin tone, and universal per-style X/Y/scale fits. The next step gives
-Gemini one canonical character sheet containing separated face, front/back
-hair, and nine clothing regions. StoryTale removes green, cuts the fixed cells,
-and assembles the full-body proof locally without redrawing the runtime head,
-body, or poses. Imported books still remain in memory for the app session,
+`None`, skin tone, and universal per-style X/Y/scale fits. The canonical
+character-sheet guide, neutral reference, masks, crop/anchor manifest, prompt
+contract, and Flutter contract loader are complete. Flutter and the private
+Worker now share one controlled, fingerprinted 4K character-sheet request with
+five hash-checked references and no automatic paid retry. The local package
+builder now removes green, cuts the fixed manifest cells, applies the allowed,
+protected, and seam masks, stores transparent session layers and metadata, and
+assembles the neutral full-body proof without redrawing the runtime head or
+body. The same accepted package now composes read-only Idle, Talking, Pointing,
+and Walking proofs and exposes Character, Layers, Faces, Hair, Poses, and
+Details review groups. The next step is the Phase 7G.1C exact-fidelity gate for
+six faces and all four poses. Imported books still remain in memory for the app session,
 DeepL uses placeholder text, the mobile ONNX TTS runtime is not connected, and
 final book-specific layered characters are not complete.
 

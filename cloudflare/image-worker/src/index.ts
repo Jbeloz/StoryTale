@@ -1,10 +1,16 @@
 const BACKGROUND_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0" as const;
+const CHARACTER_SHEET_CONTRACT_ID = "character_sheet_v1";
+const CHARACTER_SHEET_CONTRACT_VERSION = "1";
+const CHARACTER_SHEET_GUIDE_SHA256 =
+  "bd6731d1136df05fc4de44292aa2c6cbd131dc44fb5601b7ea66f45f6b803645";
+const CHARACTER_SHEET_GEOMETRY_HASH =
+  "0df67ec660c1aa5616f9a12d205111f8591dc24f123316f9f87b0f8239e57648";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Authorization, Content-Type",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Expose-Headers":
-    "X-Image-Model, X-Image-Provider, X-Image-Width, X-Image-Height, X-Analysis-Model, X-Request-Id",
+    "X-Image-Model, X-Image-Provider, X-Image-Width, X-Image-Height, X-Analysis-Model, X-Request-Id, X-Request-Fingerprint, X-Character-Sheet-Contract",
 };
 
 type StoryTaleEnv = Env & {
@@ -19,7 +25,8 @@ type SpriteMode =
   | "face-layer"
   | "front-hair"
   | "body-pose"
-  | "foreground";
+  | "foreground"
+  | "character-sheet";
 type TimingSafeSubtleCrypto = SubtleCrypto & {
   timingSafeEqual(left: ArrayBuffer, right: ArrayBuffer): boolean;
 };
@@ -159,14 +166,23 @@ async function isAuthorized(request: Request, token: string): Promise<boolean> {
   return authorized;
 }
 
-async function parseBody(request: Request) {
+async function parseBody(
+  request: Request,
+  limits: {
+    maxPromptLength?: number;
+    maxReferences?: number;
+    maxReferenceBytes?: number;
+  } = {},
+) {
   const form = await request.formData();
   const prompt = String(form.get("prompt") ?? "").trim();
-  if (prompt.length < 3 || prompt.length > 2_500) return null;
+  if (prompt.length < 3 || prompt.length > (limits.maxPromptLength ?? 2_500)) {
+    return null;
+  }
 
   const references: File[] = [];
   let referenceBytes = 0;
-  for (let index = 0; index < 4; index++) {
+  for (let index = 0; index < (limits.maxReferences ?? 4); index++) {
     const file = form.get(`input_image_${index}`);
     if (!(file instanceof File) || file.size === 0) continue;
     if (file.type !== "application/octet-stream" && !file.type.startsWith("image/")) {
@@ -175,8 +191,20 @@ async function parseBody(request: Request) {
     references.push(file);
     referenceBytes += file.size;
   }
-  if (referenceBytes > 1536 * 1024) return null;
-  return { prompt, references };
+  if (referenceBytes > (limits.maxReferenceBytes ?? 1536 * 1024)) return null;
+  const fields: Record<string, string> = {};
+  for (const name of [
+    "contract_id",
+    "contract_version",
+    "guide_sha256",
+    "geometry_hash",
+    "request_fingerprint",
+    "selected_back_hair",
+  ]) {
+    const value = form.get(name);
+    if (typeof value === "string") fields[name] = value.trim();
+  }
+  return { prompt, references, fields };
 }
 
 function bytesToBase64(bytes: Uint8Array): string {
@@ -190,6 +218,13 @@ function bytesToBase64(bytes: Uint8Array): string {
 function base64ToBytes(data: string): Uint8Array {
   const binary = atob(data);
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+async function fileSha256(file: File): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+  return [...new Uint8Array(digest)]
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -1169,6 +1204,9 @@ async function generateStoryAnalysis(
 }
 
 function spritePrompt(details: string, mode: SpriteMode): string {
+  if (mode === "character-sheet") {
+    return details;
+  }
   if (mode === "foreground") {
     return `${details} ` +
       "Create one reusable 2D visual-novel foreground asset in a clean, cute storybook style. " +
@@ -1295,7 +1333,7 @@ async function generateSprite(
   references: File[],
   mode: SpriteMode,
   env: StoryTaleEnv,
-): Promise<{ bytes: Uint8Array; mimeType: string }> {
+): Promise<{ bytes: Uint8Array; mimeType: string; width: number; height: number }> {
   if (!env.GEMINI_API_KEY) throw new Error("Gemini is not configured");
 
   const input: Array<Record<string, string>> = [
@@ -1320,11 +1358,13 @@ async function generateSprite(
       input,
       response_format: {
         type: "image",
-        mime_type: "image/jpeg",
-        aspect_ratio: mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "front-hair" || mode === "foreground" || mode === "master"
+        mime_type: mode === "character-sheet" ? "image/png" : "image/jpeg",
+        aspect_ratio: mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "front-hair" || mode === "foreground" || mode === "master" || mode === "character-sheet"
           ? "1:1"
           : mode === "body-pose" ? "9:16" : "3:4",
-        image_size: mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "front-hair" || mode === "foreground" || mode === "master" ? "1K" : "512",
+        image_size: mode === "character-sheet"
+          ? "4K"
+          : mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "front-hair" || mode === "foreground" || mode === "master" ? "1K" : "512",
       },
       store: false,
     }),
@@ -1349,7 +1389,19 @@ async function generateSprite(
 
   const image = findGeminiImage(await response.json<unknown>());
   if (!image) throw new Error("Gemini returned no image");
-  return { bytes: base64ToBytes(image.data), mimeType: image.mimeType };
+  const bytes = base64ToBytes(image.data);
+  const details = imageDetails(bytes);
+  if (!details) throw new Error("Gemini returned an unsupported image");
+  if (
+    mode === "character-sheet" &&
+    (details.mimeType !== "image/png" || details.width !== 4096 || details.height !== 4096)
+  ) {
+    throw new PublicWorkerError(
+      `Gemini returned ${details.width}x${details.height} ${details.mimeType}; StoryTale requires one 4096x4096 PNG.`,
+      502,
+    );
+  }
+  return { bytes, ...details };
 }
 
 async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Response> {
@@ -1358,23 +1410,36 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
     return json({ error: "Unauthorized" }, 401);
   }
 
-  const contentLength = Number(request.headers.get("Content-Length") ?? 0);
-  if (contentLength > 2 * 1024 * 1024) {
-    return json({ error: "Request is too large" }, 413);
-  }
-  if (!request.headers.get("Content-Type")?.includes("multipart/form-data")) {
-    return json({ error: "Content-Type must be multipart/form-data" }, 415);
-  }
-
   const url = new URL(request.url);
   const kindValue = url.searchParams.get("kind") ?? "background";
   if (kindValue !== "background" && kindValue !== "sprite") {
     return json({ error: "kind must be background or sprite" }, 400);
   }
   const kind: ImageKind = kindValue;
-  const body = await parseBody(request);
+  const requestedMode = url.searchParams.get("mode") ?? "master";
+  const isCharacterSheet = kind === "sprite" && requestedMode === "character-sheet";
+  const contentLength = Number(request.headers.get("Content-Length") ?? 0);
+  const maxContentLength = isCharacterSheet ? 10 * 1024 * 1024 : 2 * 1024 * 1024;
+  if (contentLength > maxContentLength) {
+    return json({ error: "Request is too large" }, 413);
+  }
+  if (!request.headers.get("Content-Type")?.includes("multipart/form-data")) {
+    return json({ error: "Content-Type must be multipart/form-data" }, 415);
+  }
+
+  const body = await parseBody(request, isCharacterSheet
+    ? {
+      maxPromptLength: 12_000,
+      maxReferences: 5,
+      maxReferenceBytes: 8 * 1024 * 1024,
+    }
+    : {});
   if (!body) {
-    return json({ error: "Use a 3-2500 character prompt and up to four small image references" }, 400);
+    return json({
+      error: isCharacterSheet
+        ? "Use the character_sheet_v1 prompt and exactly five locked references"
+        : "Use a 3-2500 character prompt and up to four small image references",
+    }, 400);
   }
 
   const rateLimit = await env.IMAGE_RATE_LIMIT.limit({ key: "private-prototype" });
@@ -1392,7 +1457,7 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
     result = await generateBackground(body.prompt, env);
   } else {
     if (!env.GEMINI_API_KEY) return json({ error: "Gemini sprite generation is not configured" }, 503);
-    const modeValue = url.searchParams.get("mode") ?? "master";
+    const modeValue = requestedMode;
     if (
       modeValue !== "master" &&
       modeValue !== "head-design" &&
@@ -1400,10 +1465,11 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
       modeValue !== "face-layer" &&
       modeValue !== "front-hair" &&
       modeValue !== "body-pose" &&
-      modeValue !== "foreground"
+      modeValue !== "foreground" &&
+      modeValue !== "character-sheet"
     ) {
       return json({
-        error: "mode must be master, head-design, head-expression, face-layer, front-hair, body-pose, or foreground",
+        error: "mode must be master, head-design, head-expression, face-layer, front-hair, body-pose, foreground, or character-sheet",
       }, 400);
     }
     if (modeValue === "front-hair" && body.references.length !== 2) {
@@ -1413,12 +1479,40 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
       modeValue !== "master" &&
       modeValue !== "foreground" &&
       modeValue !== "front-hair" &&
+      modeValue !== "character-sheet" &&
       body.references.length !== 1
     ) {
       return json({ error: `${modeValue} requires exactly one image reference` }, 400);
     }
     if (modeValue === "foreground" && body.references.length !== 0) {
       return json({ error: "foreground does not accept image references" }, 400);
+    }
+    if (modeValue === "character-sheet") {
+      if (body.references.length !== 5) {
+        return json({ error: "character-sheet requires guide, assembled reference, allowed mask, protected mask, and seam mask" }, 400);
+      }
+      if (
+        body.fields.contract_id !== CHARACTER_SHEET_CONTRACT_ID ||
+        body.fields.contract_version !== CHARACTER_SHEET_CONTRACT_VERSION ||
+        body.fields.guide_sha256 !== CHARACTER_SHEET_GUIDE_SHA256 ||
+        body.fields.geometry_hash !== CHARACTER_SHEET_GEOMETRY_HASH
+      ) {
+        return json({ error: "The character-sheet contract does not match the deployed Worker" }, 409);
+      }
+      if (await fileSha256(body.references[0]) !== CHARACTER_SHEET_GUIDE_SHA256) {
+        return json({ error: "The uploaded character-sheet guide is not canonical" }, 409);
+      }
+      if (!/^[a-f0-9]{64}$/.test(body.fields.request_fingerprint ?? "")) {
+        return json({ error: "The character-sheet request fingerprint is invalid" }, 400);
+      }
+      if (!new Set([
+        "back_hair_short",
+        "back_hair_medium",
+        "back_hair_long",
+        "none",
+      ]).has(body.fields.selected_back_hair ?? "")) {
+        return json({ error: "The selected back-hair region is invalid" }, 400);
+      }
     }
     model = env.GEMINI_IMAGE_MODEL;
     provider = "google-gemini";
@@ -1433,6 +1527,7 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
     model,
     provider,
     references: body.references.length,
+    requestFingerprint: body.fields.request_fingerprint || undefined,
     width: result.width,
     height: result.height,
   }));
@@ -1449,6 +1544,12 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
       ...(result.width ? { "X-Image-Width": String(result.width) } : {}),
       ...(result.height ? { "X-Image-Height": String(result.height) } : {}),
       "X-Request-Id": requestId,
+      ...(body.fields.request_fingerprint
+        ? { "X-Request-Fingerprint": body.fields.request_fingerprint }
+        : {}),
+      ...(isCharacterSheet
+        ? { "X-Character-Sheet-Contract": `${CHARACTER_SHEET_CONTRACT_ID}@${CHARACTER_SHEET_CONTRACT_VERSION}` }
+        : {}),
     },
   });
 }

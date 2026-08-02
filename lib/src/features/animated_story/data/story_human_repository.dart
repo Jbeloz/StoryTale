@@ -34,6 +34,10 @@ class StoryHumanAssetData {
     this.packageValidated = false,
     this.generationProvider,
     this.generationModel,
+    this.generationRequestId,
+    this.generationFingerprint,
+    this.generationContractId,
+    this.generationContractVersion,
   });
 
   final String bookId;
@@ -57,6 +61,10 @@ class StoryHumanAssetData {
   final bool packageValidated;
   final String? generationProvider;
   final String? generationModel;
+  final String? generationRequestId;
+  final String? generationFingerprint;
+  final String? generationContractId;
+  final int? generationContractVersion;
 
   String get masterAssetId => '$rigId.master';
   String get rejoinedAssetId => '$rigId.rejoined';
@@ -113,6 +121,10 @@ class StoryHumanAssetData {
     bool? packageValidated,
     String? generationProvider,
     String? generationModel,
+    String? generationRequestId,
+    String? generationFingerprint,
+    String? generationContractId,
+    int? generationContractVersion,
   }) {
     return StoryHumanAssetData(
       bookId: bookId,
@@ -138,6 +150,12 @@ class StoryHumanAssetData {
       packageValidated: packageValidated ?? this.packageValidated,
       generationProvider: generationProvider ?? this.generationProvider,
       generationModel: generationModel ?? this.generationModel,
+      generationRequestId: generationRequestId ?? this.generationRequestId,
+      generationFingerprint:
+          generationFingerprint ?? this.generationFingerprint,
+      generationContractId: generationContractId ?? this.generationContractId,
+      generationContractVersion:
+          generationContractVersion ?? this.generationContractVersion,
     );
   }
 
@@ -163,6 +181,13 @@ class StoryHumanAssetData {
     'packageValidated': packageValidated,
     if (generationProvider != null) 'generationProvider': generationProvider,
     if (generationModel != null) 'generationModel': generationModel,
+    if (generationRequestId != null) 'generationRequestId': generationRequestId,
+    if (generationFingerprint != null)
+      'generationFingerprint': generationFingerprint,
+    if (generationContractId != null)
+      'generationContractId': generationContractId,
+    if (generationContractVersion != null)
+      'generationContractVersion': generationContractVersion,
   };
 
   factory StoryHumanAssetData.fromJson(Map<String, dynamic> json) {
@@ -196,6 +221,10 @@ class StoryHumanAssetData {
       packageValidated: json['packageValidated'] as bool? ?? false,
       generationProvider: json['generationProvider'] as String?,
       generationModel: json['generationModel'] as String?,
+      generationRequestId: json['generationRequestId'] as String?,
+      generationFingerprint: json['generationFingerprint'] as String?,
+      generationContractId: json['generationContractId'] as String?,
+      generationContractVersion: json['generationContractVersion'] as int?,
     );
   }
 

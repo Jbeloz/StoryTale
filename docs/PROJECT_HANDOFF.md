@@ -476,22 +476,35 @@ The [Master Roadmap](ROADMAP.md) is authoritative. As of this handoff:
 1. **Implemented: Phase 7G.1A.1** — per-actor front hair, optional back hair
    (`None` included), skin tone, and each style's X/Y/scale fit now restore and
    persist across actor/pose changes. Owner manual verification is pending.
-2. **Current: Phase 7G.1B.1** — the native-size `4096 x 4096`
-   `character_sheet_v1` guide and initial crop manifest are versioned. Complete
-   the assembled neutral reference, attachment anchors, allowed/protected/seam
-   masks, and prompt contract. Do not make a paid provider request in this
-   subphase.
-3. **Next: Phase 7G.1B.2-7G.1B.4** — generate the separated face, front/back
-   hair, and nine clothing regions; assemble the full-body proof locally; then
-   add source-supported loose garments and accessory/held-item anchors.
-4. **Then: Phase 7G.1C** — prove exact locked geometry with six faces and four
+2. **Completed: Phase 7G.1B.1** — the native-size `4096 x 4096`
+   `character_sheet_v1` guide, neutral reference, complete crop/anchor
+   manifest, masks, hashes, prompt contract, and Flutter contract loader are
+   versioned without making a paid provider request.
+3. **Implemented locally: Phase 7G.1B.2** — Flutter and the private Worker share
+   one hash-checked, fingerprinted, sequential five-reference 4K request and
+   response contract. It preserves provider/request metadata and never retries
+   a paid failure automatically. Worker deployment and the first request remain
+   owner-controlled and were not performed.
+4. **Implemented locally: Phase 7G.1B.3** — Flutter verifies the fixed contract,
+   request fingerprint, exact PNG canvas, protected gaps, side ownership, and
+   seam limits; removes green; cuts all 14 manifest cells; records transparent
+   session layers and stable package metadata; and assembles the neutral proof
+   over the untouched locked base. Invalid output becomes `needsAttention` and
+   uses the safe template fallback. No paid request was made.
+5. **Implemented locally: Phase 7G.1B.4** — the same extracted layers now
+   compose Idle, Talking, Pointing, and Walking through the existing rig
+   hierarchy. Four preview PNGs receive stable session IDs, hashes, and
+   validation metadata; Character, Layers, Faces, Hair, Poses, and Details are
+   read-only review groups; and `ready` requires the full four-pose gate. The
+   first owner-controlled generated package remains pending.
+6. **Next: Phase 7G.1C** — prove exact locked geometry with six faces and four
    poses; remove the app-defined shared three-per-minute sprite bottleneck
    while keeping one sequential request, deduplication, and real provider
    quota errors.
-5. **Then: Phase 7H** — register the validated character package and rebuild
+7. **Then: Phase 7H** — register the validated character package and rebuild
    every affected ChapterStory so the correct human appears across chapters
    and volumes.
-6. Continue with Phases 8–11 in roadmap order.
+8. Continue with Phases 8–11 in roadmap order.
 
 Do not start persistence, final Story Mode binding, or audio integration before
 their roadmap gates unless a blocking defect requires a narrow fix.

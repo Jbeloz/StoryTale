@@ -5,6 +5,11 @@ import 'package:flutter/material.dart';
 import '../../../core/state/storytale_scope.dart';
 import '../../../shared/models/storytale_models.dart';
 import '../../../shared/widgets/storytale_components.dart';
+import '../data/character_design_brief.dart';
+import '../data/character_sheet_generation.dart';
+import '../data/character_sheet_package.dart';
+import '../data/character_sheet_processor.dart';
+import '../data/sprite_appearance.dart';
 import '../data/sprite_layer_processor.dart';
 import '../data/story_bible_repository.dart';
 import '../data/story_artwork_service.dart';
@@ -20,7 +25,6 @@ import 'story_background_catalog_page.dart';
 import 'story_bible_review_page.dart';
 import 'story_foreground_inventory_page.dart';
 import 'story_human_catalog_page.dart';
-import 'sprite_positioner_page.dart';
 import 'widgets/story_shot_transition.dart';
 import 'widgets/visual_novel_stage.dart';
 
@@ -751,6 +755,7 @@ class SpriteReviewPage extends StatefulWidget {
 class _SpriteReviewPageState extends State<SpriteReviewPage> {
   final _service = StoryArtworkService();
   final _processor = const SpriteLayerProcessor();
+  final _sheetProcessor = CharacterSheetProcessor();
   final _spriteDetails = TextEditingController(
     text:
         'a kind young prince with short golden hair, a long blue coat, '
@@ -763,6 +768,11 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
   );
   _ArtworkMode _mode = _ArtworkMode.sprite;
   Uint8List? _generatedImage;
+  CharacterSheetGenerationResult? _characterSheetResult;
+  CharacterSheetPackage? _characterSheetPackage;
+  _CharacterSheetReviewGroup _sheetReviewGroup =
+      _CharacterSheetReviewGroup.character;
+  String _sheetPoseId = 'neutral';
   SpriteLayers? _spriteLayers;
   _SpritePreview _spritePreview = _SpritePreview.rejoined;
   String? _error;
@@ -779,6 +789,10 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
     setState(() {
       _generating = true;
       _generatedImage = null;
+      _characterSheetResult = null;
+      _characterSheetPackage = null;
+      _sheetReviewGroup = _CharacterSheetReviewGroup.character;
+      _sheetPoseId = 'neutral';
       _spriteLayers = null;
       _error = null;
     });
@@ -790,6 +804,41 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
           setState(() {
             _spriteLayers = layers;
             _spritePreview = _SpritePreview.rejoined;
+          });
+        }
+      } else if (_mode == _ArtworkMode.characterSheet) {
+        final appearance = await const SpriteAppearanceRepository().load();
+        final actor = SpriteAppearanceCatalog.actor(appearance.actorId);
+        final request = CharacterSheetGenerationRequest(
+          brief: CharacterDesignBrief(
+            bookId: 'developer-preview',
+            characterId: 'manual-character-sheet',
+            canonicalName: 'Preview character',
+            actorProfileId: actor.id,
+            sourceDescription: _spriteDetails.text,
+          ),
+          skinTone: appearance.skinTone,
+          frontHairId: appearance.frontHairId,
+          backHairId: appearance.hairStyleId,
+          outfitRequirements: _spriteDetails.text,
+        );
+        final result = await _service.generateCharacterSheet(request);
+        final package = await _sheetProcessor.process(
+          request: request,
+          generation: result,
+        );
+        if (mounted) {
+          setState(() {
+            _characterSheetResult = result;
+            _characterSheetPackage = package;
+            _sheetReviewGroup = _CharacterSheetReviewGroup.character;
+            _sheetPoseId = 'neutral';
+            _generatedImage = package.validation.isValid
+                ? package.neutralProofBytes
+                : package.cleanBytes;
+            _error = package.validation.isValid
+                ? null
+                : package.validation.errorMessage;
           });
         }
       } else {
@@ -804,6 +853,8 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
         if (mounted) setState(() => _generatedImage = background.bytes);
       }
     } on ArtworkGenerationException catch (error) {
+      if (mounted) setState(() => _error = error.message);
+    } on CharacterSheetProcessingException catch (error) {
       if (mounted) setState(() => _error = error.message);
     } catch (_) {
       if (mounted) {
@@ -829,6 +880,11 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
                 label: Text('Sprite'),
               ),
               ButtonSegment(
+                value: _ArtworkMode.characterSheet,
+                icon: Icon(Icons.grid_view_outlined),
+                label: Text('Sheet'),
+              ),
+              ButtonSegment(
                 value: _ArtworkMode.background,
                 icon: Icon(Icons.landscape_outlined),
                 label: Text('Background'),
@@ -838,23 +894,26 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
             onSelectionChanged: (selection) => setState(() {
               _mode = selection.first;
               _generatedImage = null;
+              _characterSheetResult = null;
+              _characterSheetPackage = null;
+              _sheetReviewGroup = _CharacterSheetReviewGroup.character;
+              _sheetPoseId = 'neutral';
               _spriteLayers = null;
               _error = null;
             }),
           ),
           const SizedBox(height: 16),
-          Text(
-            _mode == _ArtworkMode.sprite
-                ? 'Gemini Sprite Test'
-                : 'Cloudflare Background Test',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          Text(switch (_mode) {
+            _ArtworkMode.sprite => 'Legacy Gemini Sprite Test',
+            _ArtworkMode.characterSheet => 'Character Sheet V1 Request',
+            _ArtworkMode.background => 'Cloudflare Background Test',
+          }, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 4),
           Text(
             _service.isConfigured
-                ? _mode == _ArtworkMode.sprite
-                      ? 'Ready. Gemini 3.1 Flash Image creates character sprites.'
-                      : 'Ready. Cloudflare Workers AI creates chapter backgrounds.'
+                ? _mode == _ArtworkMode.background
+                      ? 'Ready. Cloudflare Workers AI creates chapter backgrounds.'
+                      : 'Ready. Gemini 3.1 Flash Image creates character artwork.'
                 : 'Token not loaded. Add it to .env and restart with the run script.',
           ),
           const SizedBox(height: 8),
@@ -870,14 +929,23 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
               'so the head and body always fit when rejoined.',
             ),
           ],
+          if (_mode == _ArtworkMode.characterSheet) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'Uses the current Sprite Studio actor, skin tone, front hair, '
+              'and selected Short, Medium, Long, or None back-hair slot. It '
+              'sends the locked guide, neutral reference, and three masks in '
+              'one paid request and never retries automatically.',
+            ),
+          ],
           const SizedBox(height: 12),
           TextField(
-            controller: _mode == _ArtworkMode.sprite
+            controller: _mode != _ArtworkMode.background
                 ? _spriteDetails
                 : _backgroundDetails,
             maxLines: 3,
             decoration: InputDecoration(
-              labelText: _mode == _ArtworkMode.sprite
+              labelText: _mode != _ArtworkMode.background
                   ? 'Character appearance'
                   : 'Background scene description',
               border: const OutlineInputBorder(),
@@ -900,6 +968,10 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
                 ? Image.memory(_previewImage!, fit: BoxFit.contain)
                 : Image.asset(_placeholderAsset, fit: BoxFit.contain),
           ),
+          if (_mode == _ArtworkMode.characterSheet) ...[
+            const SizedBox(height: 12),
+            _characterSheetReviewPanel(context, _characterSheetPackage),
+          ],
           if (_mode == _ArtworkMode.sprite && _spriteLayers != null) ...[
             const SizedBox(height: 12),
             Wrap(
@@ -918,6 +990,32 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
                   .toList(),
             ),
           ],
+          if (_mode == _ArtworkMode.characterSheet &&
+              _characterSheetResult != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              '${_characterSheetResult!.contractId}@'
+              '${_characterSheetResult!.contractVersion} • '
+              '${_characterSheetResult!.provider} • '
+              '${_characterSheetResult!.model}\n'
+              'Request ${_characterSheetResult!.requestId} • '
+              'Fingerprint '
+              '${_characterSheetResult!.requestFingerprint.substring(0, 12)}…',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            if (_characterSheetPackage != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                _characterSheetPackage!.validation.isValid
+                    ? '${_characterSheetPackage!.nonEmptyLayerCount} '
+                          'transparent layers packaged • four pose proofs '
+                          'assembled locally'
+                    : 'Package needs attention • the safe locked-template '
+                          'proof is shown',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ],
           if (_error != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -935,9 +1033,12 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
                 icon: const Icon(Icons.auto_awesome),
                 label: Text(
                   !_hasGeneratedArtwork
-                      ? _mode == _ArtworkMode.sprite
-                            ? 'Generate Master Sprite'
-                            : 'Generate Background'
+                      ? switch (_mode) {
+                          _ArtworkMode.sprite => 'Generate Legacy Master',
+                          _ArtworkMode.characterSheet =>
+                            'Generate Character Sheet',
+                          _ArtworkMode.background => 'Generate Background',
+                        }
                       : 'Regenerate',
                 ),
               ),
@@ -946,21 +1047,17 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
                     ? null
                     : () => Navigator.pop(context),
                 icon: const Icon(Icons.check),
-                label: Text(
-                  _mode == _ArtworkMode.sprite
-                      ? 'Accept Sprite'
-                      : 'Accept Background',
-                ),
+                label: Text(switch (_mode) {
+                  _ArtworkMode.sprite => 'Accept Sprite',
+                  _ArtworkMode.characterSheet => 'Keep Sheet Preview',
+                  _ArtworkMode.background => 'Accept Background',
+                }),
               ),
-              if (_mode == _ArtworkMode.sprite)
+              if (_mode != _ArtworkMode.background)
                 OutlinedButton.icon(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const SpritePositionerPage(),
-                    ),
-                  ),
-                  icon: const Icon(Icons.accessibility_new),
-                  label: const Text('Open Sprite Studio'),
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Back to Sprite Studio'),
                 ),
             ],
           ),
@@ -969,20 +1066,176 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
     );
   }
 
+  Widget _characterSheetReviewPanel(
+    BuildContext context,
+    CharacterSheetPackage? package,
+  ) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Package proof', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final group in _CharacterSheetReviewGroup.values)
+                ChoiceChip(
+                  label: Text(group.label),
+                  selected: _sheetReviewGroup == group,
+                  onSelected: (_) => setState(() {
+                    _sheetReviewGroup = group;
+                  }),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (package == null)
+            const Text(
+              'No accepted package yet. These read-only groups populate after '
+              'one sheet is generated and processed. Viewing them never sends '
+              'a provider request.',
+            )
+          else ...[
+            if (_sheetReviewGroup == _CharacterSheetReviewGroup.poses) ...[
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final poseId in const [
+                    'neutral',
+                    'talking',
+                    'pointing',
+                    'walking',
+                  ])
+                    ChoiceChip(
+                      label: Text(
+                        package.validation.proofsByPose[poseId]?.label ??
+                            poseId,
+                      ),
+                      selected: _sheetPoseId == poseId,
+                      onSelected: (_) => setState(() {
+                        _sheetPoseId = poseId;
+                      }),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
+            _characterSheetGroupDetails(context, package),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _characterSheetGroupDetails(
+    BuildContext context,
+    CharacterSheetPackage package,
+  ) {
+    final theme = Theme.of(context);
+    switch (_sheetReviewGroup) {
+      case _CharacterSheetReviewGroup.character:
+        return Text(
+          package.validation.isValid
+              ? '${package.characterName} • package ready • all four pose '
+                    'proofs passed'
+              : '${package.characterName} • needs attention • safe locked '
+                    'template shown',
+        );
+      case _CharacterSheetReviewGroup.layers:
+        return Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (final layer in package.layerMetadata.values)
+              Chip(
+                label: Text(
+                  '${layer.regionId}: '
+                  '${layer.empty ? 'Empty' : '${layer.visiblePixelCount} px'}',
+                ),
+              ),
+          ],
+        );
+      case _CharacterSheetReviewGroup.faces:
+        final face = package.layerMetadata['head']!;
+        return Text(
+          'Face details • ${face.width}x${face.height} • '
+          '${face.empty ? 'missing' : '${face.visiblePixelCount} visible pixels'}',
+        );
+      case _CharacterSheetReviewGroup.hair:
+        final front = package.layerMetadata['front_hair']!;
+        final back = package.selectedBackHairRegion == 'none'
+            ? null
+            : package.layerMetadata[package.selectedBackHairRegion];
+        return Text(
+          'Front: ${front.empty ? 'missing' : package.frontHairId} • '
+          'Back: ${back == null ? 'None' : back.regionId} • native canvases '
+          'preserved',
+        );
+      case _CharacterSheetReviewGroup.poses:
+        final proof = package.validation.proofsByPose[_sheetPoseId]!;
+        return Text(
+          '${proof.label} • ${proof.width}x${proof.height} • '
+          '${proof.visiblePixelCount} visible pixels • '
+          '${proof.valid ? 'passed' : 'needs attention'}',
+        );
+      case _CharacterSheetReviewGroup.details:
+        return Text(
+          '${package.contract.contractId}@${package.contract.contractVersion} • '
+          '${package.generation.provider} • ${package.generation.model}\n'
+          'Design ${package.generation.requestFingerprint.substring(0, 12)}… • '
+          'geometry ${package.contract.lockedRig.geometryHash.substring(0, 12)}…\n'
+          '${package.validation.errors.isEmpty ? 'No validation errors.' : package.validation.errorMessage}',
+          style: theme.textTheme.bodySmall,
+        );
+    }
+  }
+
   String get _placeholderAsset {
     if (_mode == _ArtworkMode.background) {
       return 'assets/images/backgrounds/cloudflare_examples/'
           'moonlit-rose-garden.jpg';
     }
+    if (_mode == _ArtworkMode.characterSheet) {
+      return 'assets/images/characters/generation_templates/humanoid_v1/'
+          'character_sheet_v1/guide.png';
+    }
     return 'assets/images/characters/references/full-proportion.png';
   }
 
-  bool get _hasGeneratedArtwork => _mode == _ArtworkMode.sprite
-      ? _spriteLayers != null
-      : _generatedImage != null;
+  bool get _hasGeneratedArtwork => switch (_mode) {
+    _ArtworkMode.sprite => _spriteLayers != null,
+    _ArtworkMode.characterSheet =>
+      _characterSheetPackage?.validation.isValid ?? false,
+    _ArtworkMode.background => _generatedImage != null,
+  };
 
   Uint8List? get _previewImage {
-    if (_mode == _ArtworkMode.background) return _generatedImage;
+    if (_mode == _ArtworkMode.characterSheet) {
+      final package = _characterSheetPackage;
+      if (package == null) return _generatedImage;
+      return switch (_sheetReviewGroup) {
+        _CharacterSheetReviewGroup.character => package.neutralProofBytes,
+        _CharacterSheetReviewGroup.layers => package.cleanBytes,
+        _CharacterSheetReviewGroup.faces =>
+          package.layerBytes['head'] ?? package.neutralProofBytes,
+        _CharacterSheetReviewGroup.hair =>
+          package.layerBytes['front_hair'] ?? package.neutralProofBytes,
+        _CharacterSheetReviewGroup.poses =>
+          package.previewBytesByPose[_sheetPoseId] ?? package.neutralProofBytes,
+        _CharacterSheetReviewGroup.details => package.neutralProofBytes,
+      };
+    }
+    if (_mode != _ArtworkMode.sprite) return _generatedImage;
     final layers = _spriteLayers;
     if (layers == null) return null;
     return switch (_spritePreview) {
@@ -994,7 +1247,20 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
   }
 }
 
-enum _ArtworkMode { sprite, background }
+enum _ArtworkMode { sprite, characterSheet, background }
+
+enum _CharacterSheetReviewGroup {
+  character('Character'),
+  layers('Layers'),
+  faces('Faces'),
+  hair('Hair'),
+  poses('Poses'),
+  details('Details');
+
+  const _CharacterSheetReviewGroup(this.label);
+
+  final String label;
+}
 
 enum _SpritePreview {
   source('Gemini source'),
