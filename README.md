@@ -30,9 +30,10 @@ protected, and seam masks, stores transparent session layers and metadata, and
 assembles the neutral full-body proof without redrawing the runtime head or
 body. The same accepted package now composes read-only Idle, Talking, Pointing,
 and Walking proofs and exposes Character, Layers, Faces, Hair, Poses, and
-Details review groups. A local-only V2 correction now provides a balanced 2K
-sheet with one selected back-hair slot and larger body transport cells while
-keeping runtime geometry unchanged. Owner visual approval of that V2 guide is
+Details review groups. A local-only V2 correction now provides a hair-focused
+2K sheet with one selected back-hair slot, slightly larger hair than the head,
+the reviewed head and torso scale, and native-size arm and leg cells. Owner
+visual approval of that V2 guide is
 the next gate; Flutter, the Worker, and Gemini still use V1 until approval.
 Imported books still remain in memory for the app session,
 DeepL uses placeholder text, the mobile ONNX TTS runtime is not connected, and

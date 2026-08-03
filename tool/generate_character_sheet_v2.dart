@@ -22,62 +22,62 @@ const _targets = <_TargetSpec>[
       'back_hair_medium',
       'back_hair_long',
     ],
-    crop: _Rect(32, 32, 512, 878),
+    crop: _Rect(32, 32, 576, 988),
   ),
   _TargetSpec(
     id: 'front_hair',
     sourceRegionId: 'front_hair',
-    crop: _Rect(576, 32, 512, 512),
+    crop: _Rect(640, 32, 576, 576),
   ),
   _TargetSpec(
     id: 'head',
     sourceRegionId: 'head',
-    crop: _Rect(1120, 32, 512, 512),
+    crop: _Rect(1280, 32, 512, 512),
   ),
   _TargetSpec(
     id: 'torso',
     sourceRegionId: 'torso',
-    crop: _Rect(1664, 32, 360, 512),
+    crop: _Rect(1280, 608, 360, 512),
   ),
   _TargetSpec(
     id: 'upper_arm_right',
     sourceRegionId: 'upper_arm_right',
-    crop: _Rect(576, 576, 320, 480),
+    crop: _Rect(1680, 608, 67, 118),
   ),
   _TargetSpec(
     id: 'upper_arm_left',
     sourceRegionId: 'upper_arm_left',
-    crop: _Rect(928, 576, 320, 480),
+    crop: _Rect(1790, 608, 78, 128),
   ),
   _TargetSpec(
     id: 'lower_arm_right',
     sourceRegionId: 'lower_arm_right',
-    crop: _Rect(1280, 576, 320, 480),
+    crop: _Rect(1680, 768, 77, 145),
   ),
   _TargetSpec(
     id: 'lower_arm_left',
     sourceRegionId: 'lower_arm_left',
-    crop: _Rect(1632, 576, 320, 480),
+    crop: _Rect(1790, 768, 86, 129),
   ),
   _TargetSpec(
     id: 'upper_leg_right',
     sourceRegionId: 'upper_leg_right',
-    crop: _Rect(576, 1088, 320, 480),
+    crop: _Rect(1680, 960, 94, 150),
   ),
   _TargetSpec(
     id: 'upper_leg_left',
     sourceRegionId: 'upper_leg_left',
-    crop: _Rect(928, 1088, 320, 480),
+    crop: _Rect(1800, 960, 85, 141),
   ),
   _TargetSpec(
     id: 'lower_leg_right',
     sourceRegionId: 'lower_leg_right',
-    crop: _Rect(1280, 1088, 320, 480),
+    crop: _Rect(1680, 1152, 84, 156),
   ),
   _TargetSpec(
     id: 'lower_leg_left',
     sourceRegionId: 'lower_leg_left',
-    crop: _Rect(1632, 1088, 320, 480),
+    crop: _Rect(1800, 1152, 88, 140),
   ),
 ];
 
@@ -213,7 +213,7 @@ void main() {
     'lockedRig': v1Manifest['lockedRig'],
     'transport': <String, dynamic>{
       'purpose':
-          'balanced provider detail density without changing runtime geometry',
+          'resize hair transport only while preserving reviewed head and torso sizes and native limb cells',
       'extractFrom': 'transportContent',
       'outputPolicy': 'resize once to outputCanvas after masking',
       'originalRuntimeAssetsRemainImmutable': true,

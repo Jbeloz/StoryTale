@@ -12,7 +12,7 @@ They are data fields, not permission to change the contract.
 
 ## Required provider inputs
 
-1. `guide.png` - the exact balanced transport layout.
+1. `guide.png` - the exact hair-focused transport layout.
 2. `assembled_reference.png` - how the locked parts connect locally.
 3. `allowed_regions.png` - white pixels may contain generated appearance.
 4. `protected_regions.png` - white pixels must preserve the locked source.
@@ -53,8 +53,10 @@ boots, armor, trim, and patterns must all belong to that same character.
   `crop_manifest.json`.
 - Keep the untouched background exactly flat `#00FF00`.
 - Do not move, rotate, merge, tightly crop, or add borders around any cell.
-- The larger body cells and smaller hair cells are transport regions. Do not
-  infer new anatomy or change the proportions of the supplied part inside one.
+- The hair uses the intentionally resized transport regions. The head and
+  torso keep their already reviewed V2 transport scale, while every arm and
+  leg cell keeps its original native dimensions. Do not infer new anatomy or
+  change any supplied proportions.
 - Draw the chosen Short, Medium, or Long design only in
   `back_hair_selected`. If the selection is `none`, leave that slot green.
 - Keep right-side artwork in right-side cells and left-side artwork in

@@ -1,6 +1,6 @@
 # StoryTale Character Sheet V1 and V2 Implementation Plan
 
-Status: **Authoritative Phase 7G.1 plan. The V1 Flutter/Worker pipeline and the Phase 7G.1C enforcement are implemented locally, but no generated package has been accepted. Corrective Phase 7G.1B.R now has a local-only `character_sheet_v2` candidate with a balanced `2048 x 2048` transport layout. Owner approval of the V2 guide is the immediate gate. Flutter and the Worker still use V1, and no V2 provider request is authorized before that approval.**
+Status: **Authoritative Phase 7G.1 plan. The V1 Flutter/Worker pipeline and the Phase 7G.1C enforcement are implemented locally, but no generated package has been accepted. Corrective Phase 7G.1B.R now has a local-only `character_sheet_v2` candidate with a hair-focused `2048 x 2048` transport layout. Owner approval of the V2 guide is the immediate gate. Flutter and the Worker still use V1, and no V2 provider request is authorized before that approval.**
 
 This document owns the exact character-sheet contract, implementation order,
 validation gate, and handoff rules for Phase 7G.1B. The Master Roadmap still
@@ -34,20 +34,20 @@ AI-drawn full-body master.
 The old name `clothing_sheet_v1` is superseded by the versioned
 `character_sheet_v1` and `character_sheet_v2` contracts.
 
-## 2A. Corrective Phase 7G.1B.R - balanced V2 transport contract
+## 2A. Corrective Phase 7G.1B.R - hair-focused V2 transport contract
 
 The native-size V1 sheet made the three hair canvases dominate a `4096 x
-4096` provider output while the native torso and limbs remained too small for
-reliable clothing detail. V2 separates provider transport size from immutable
-runtime output size:
+4096` provider output. V2 resizes the hair presentation only. The owner keeps
+the reviewed V2 head and torso scale, requires all arm and leg cells to remain
+at their original native sizes, and keeps runtime output geometry immutable:
 
 | Region family | V2 transport cell | Runtime output |
 | --- | --- | --- |
-| selected back hair | `512 x 878` | unchanged `1254 x 2150` hair canvas |
-| front hair | `512 x 512` | unchanged `1254 x 1254` hair canvas |
+| selected back hair | `576 x 988` | unchanged `1254 x 2150` hair canvas |
+| front hair | `576 x 576` | unchanged `1254 x 1254` hair canvas |
 | head/face details | `512 x 512` | unchanged `357 x 367` head part |
 | torso clothing | `360 x 512` | unchanged `165 x 234` torso part |
-| each arm or leg piece | `320 x 480` | that part's unchanged native canvas |
+| each arm or leg piece | its exact native size | the same native canvas |
 
 Only one `back_hair_selected` transport cell exists. The manifest maps
 `short`, `medium`, `long`, or `none` to that slot while retaining every
@@ -166,7 +166,7 @@ of repeating crop rectangles or guessing component boundaries.
 - validation tolerances that are deterministic and versioned.
 
 V2 additionally stores the `2K` provider image size, one selected back-hair
-slot and its variant map, each balanced transport crop, its inner
+slot and its variant map, each fixed transport crop, its inner
 `transportContent`, the unchanged runtime `outputCanvas`, and the one-time
 resampling policy.
 
@@ -193,7 +193,7 @@ version. An identical ready result is reused instead of generated again.
 ## 8. Gemini output rules
 
 The V2 target contract requires one exact `2048 x 2048` PNG, one active
-`back_hair_selected` slot or an explicit empty `none`, balanced transport
+`back_hair_selected` slot or an explicit empty `none`, hair-focused transport
 cells, flat green gaps, and no provider-added labels or borders. The current
 V1 integration keeps the following historical requirements until the owner
 approves V2 and the migration is implemented:
@@ -336,9 +336,10 @@ Phase 7G.1B.1 completed without a paid provider request.
 ### Phase 7G.1B.R - V2 transport correction - local candidate complete
 
 1. Preserve V1 and the locked runtime assets unchanged.
-2. Create the balanced `2048 x 2048` V2 guide with one selected back-hair slot.
-3. Enlarge the provider-facing torso and limb regions while recording their
-   unchanged runtime output canvases.
+2. Create the hair-focused `2048 x 2048` V2 guide with one selected back-hair
+   slot that is slightly larger than the head.
+3. Keep the reviewed head and torso scale and restore every arm and leg cell
+   to its exact native size.
 4. Regenerate allowed, protected, and seam masks deterministically.
 5. Record the `2K` provider contract, hashes, variant mapping, and one-time
    resampling rule.
@@ -433,8 +434,8 @@ version `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
 - [x] V1 and all original rig/hair assets remain unchanged behind checkpoint
   `92e6633`.
 - [x] The local V2 candidate is exactly `2048 x 2048`, uses one selected
-  back-hair slot, and records balanced transport cells separately from native
-  runtime output canvases.
+  back-hair slot slightly larger than the head, keeps the reviewed head/torso
+  scale, and keeps every arm and leg transport cell at native size.
 - [x] The V2 guide, masks, manifest, prompt, hashes, and deterministic builder
   are versioned without a provider request.
 - [ ] The owner visually approves the V2 guide and layout.

@@ -17,12 +17,12 @@
     "promptContract": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v2/prompt_contract.md"
   },
   "assetSha256": {
-    "guide": "f6844d1dc47786dfd07096e6bb77e8262a7d22f6bf3021a74f99421e6c0479d6",
+    "guide": "ce11631ef2e4b02467350583fae7e0e2293e37d1f667948b8c76061647a2960e",
     "assembledReference": "0247225e7e8a9584961ce795c0f3e1e9bf0e61450e5cb151d0c02d042319fa50",
-    "allowedRegions": "1e48d5557694ad1dac7af1574d4430e8f1c685b67be2ce6b330ffbb74435e94d",
-    "protectedRegions": "30e4def274ae9783c499419d0fd2c220abe082937640bd5d4058cf9915d653cb",
-    "seamAllowances": "60a2d967fa75b84e6b1be8cec5d81a3d9041f37d9bdd141ac6429a9512ad4ade",
-    "promptContract": "af58d9320b60ebb73afd518803c27db1bda911bb42ba1cd1ba1306f5400e5c4c"
+    "allowedRegions": "aa0d5a0428ff6a23734913046ac680bf901a9416a29471b4cba5bc765591bb6c",
+    "protectedRegions": "065c12d74ee68d1b60b4c1e38ae3ca2a870c788cfb190a0f637ed39975bae85a",
+    "seamAllowances": "8072fe0b3f5bd463ec4fcf97dc51bcf9e803f3d45188e29b3d9f2208bff60939",
+    "promptContract": "0a05bceb2b04ba2d2e55acd53f9df5b9d41750cc834add59b4d24b7574b7f061"
   },
   "maskEncoding": {
     "allowedRegions": "white pixels may contain generated appearance; black pixels are discarded",
@@ -48,7 +48,7 @@
     }
   },
   "transport": {
-    "purpose": "balanced provider detail density without changing runtime geometry",
+    "purpose": "resize hair transport only while preserving reviewed head and torso sizes and native limb cells",
     "extractFrom": "transportContent",
     "outputPolicy": "resize once to outputCanvas after masking",
     "originalRuntimeAssetsRemainImmutable": true
@@ -77,8 +77,8 @@
       "crop": {
         "x": 32,
         "y": 32,
-        "width": 512,
-        "height": 878
+        "width": 576,
+        "height": 988
       },
       "outputCanvas": {
         "width": 1254,
@@ -97,8 +97,8 @@
       "transportContent": {
         "x": 0,
         "y": 0,
-        "width": 512,
-        "height": 878
+        "width": 576,
+        "height": 988
       },
       "resampling": "linear-once-after-masking",
       "sourceVariants": {
@@ -113,10 +113,10 @@
       "id": "front_hair",
       "kind": "frontHair",
       "crop": {
-        "x": 576,
+        "x": 640,
         "y": 32,
-        "width": 512,
-        "height": 512
+        "width": 576,
+        "height": 576
       },
       "outputCanvas": {
         "width": 1254,
@@ -135,8 +135,8 @@
       "transportContent": {
         "x": 0,
         "y": 0,
-        "width": 512,
-        "height": 512
+        "width": 576,
+        "height": 576
       },
       "resampling": "linear-once-after-masking"
     },
@@ -144,7 +144,7 @@
       "id": "head",
       "kind": "faceDetails",
       "crop": {
-        "x": 1120,
+        "x": 1280,
         "y": 32,
         "width": 512,
         "height": 512
@@ -182,8 +182,8 @@
       "id": "torso",
       "kind": "fittedClothing",
       "crop": {
-        "x": 1664,
-        "y": 32,
+        "x": 1280,
+        "y": 608,
         "width": 360,
         "height": 512
       },
@@ -240,10 +240,10 @@
       "id": "upper_arm_right",
       "kind": "fittedClothing",
       "crop": {
-        "x": 576,
-        "y": 576,
-        "width": 320,
-        "height": 480
+        "x": 1680,
+        "y": 608,
+        "width": 67,
+        "height": 118
       },
       "outputCanvas": {
         "width": 67,
@@ -272,10 +272,10 @@
       "maskRegionId": "upper_arm_right",
       "requirement": "optional",
       "transportContent": {
-        "x": 24,
+        "x": 0,
         "y": 0,
-        "width": 273,
-        "height": 480
+        "width": 67,
+        "height": 118
       },
       "resampling": "linear-once-after-masking"
     },
@@ -283,10 +283,10 @@
       "id": "upper_arm_left",
       "kind": "fittedClothing",
       "crop": {
-        "x": 928,
-        "y": 576,
-        "width": 320,
-        "height": 480
+        "x": 1790,
+        "y": 608,
+        "width": 78,
+        "height": 128
       },
       "outputCanvas": {
         "width": 78,
@@ -315,10 +315,10 @@
       "maskRegionId": "upper_arm_left",
       "requirement": "optional",
       "transportContent": {
-        "x": 14,
+        "x": 0,
         "y": 0,
-        "width": 293,
-        "height": 480
+        "width": 78,
+        "height": 128
       },
       "resampling": "linear-once-after-masking"
     },
@@ -326,10 +326,10 @@
       "id": "lower_arm_right",
       "kind": "fittedClothing",
       "crop": {
-        "x": 1280,
-        "y": 576,
-        "width": 320,
-        "height": 480
+        "x": 1680,
+        "y": 768,
+        "width": 77,
+        "height": 145
       },
       "outputCanvas": {
         "width": 77,
@@ -353,10 +353,10 @@
       "maskRegionId": "lower_arm_right",
       "requirement": "optional",
       "transportContent": {
-        "x": 33,
+        "x": 0,
         "y": 0,
-        "width": 255,
-        "height": 480
+        "width": 77,
+        "height": 145
       },
       "resampling": "linear-once-after-masking"
     },
@@ -364,10 +364,10 @@
       "id": "lower_arm_left",
       "kind": "fittedClothing",
       "crop": {
-        "x": 1632,
-        "y": 576,
-        "width": 320,
-        "height": 480
+        "x": 1790,
+        "y": 768,
+        "width": 86,
+        "height": 129
       },
       "outputCanvas": {
         "width": 86,
@@ -393,8 +393,8 @@
       "transportContent": {
         "x": 0,
         "y": 0,
-        "width": 320,
-        "height": 480
+        "width": 86,
+        "height": 129
       },
       "resampling": "linear-once-after-masking"
     },
@@ -402,10 +402,10 @@
       "id": "upper_leg_right",
       "kind": "fittedClothing",
       "crop": {
-        "x": 576,
-        "y": 1088,
-        "width": 320,
-        "height": 480
+        "x": 1680,
+        "y": 960,
+        "width": 94,
+        "height": 150
       },
       "outputCanvas": {
         "width": 94,
@@ -434,10 +434,10 @@
       "maskRegionId": "upper_leg_right",
       "requirement": "optional",
       "transportContent": {
-        "x": 10,
+        "x": 0,
         "y": 0,
-        "width": 301,
-        "height": 480
+        "width": 94,
+        "height": 150
       },
       "resampling": "linear-once-after-masking"
     },
@@ -445,10 +445,10 @@
       "id": "upper_leg_left",
       "kind": "fittedClothing",
       "crop": {
-        "x": 928,
-        "y": 1088,
-        "width": 320,
-        "height": 480
+        "x": 1800,
+        "y": 960,
+        "width": 85,
+        "height": 141
       },
       "outputCanvas": {
         "width": 85,
@@ -477,10 +477,10 @@
       "maskRegionId": "upper_leg_left",
       "requirement": "optional",
       "transportContent": {
-        "x": 16,
+        "x": 0,
         "y": 0,
-        "width": 289,
-        "height": 480
+        "width": 85,
+        "height": 141
       },
       "resampling": "linear-once-after-masking"
     },
@@ -488,10 +488,10 @@
       "id": "lower_leg_right",
       "kind": "fittedClothing",
       "crop": {
-        "x": 1280,
-        "y": 1088,
-        "width": 320,
-        "height": 480
+        "x": 1680,
+        "y": 1152,
+        "width": 84,
+        "height": 156
       },
       "outputCanvas": {
         "width": 84,
@@ -515,10 +515,10 @@
       "maskRegionId": "lower_leg_right",
       "requirement": "optional",
       "transportContent": {
-        "x": 31,
+        "x": 0,
         "y": 0,
-        "width": 258,
-        "height": 480
+        "width": 84,
+        "height": 156
       },
       "resampling": "linear-once-after-masking"
     },
@@ -526,10 +526,10 @@
       "id": "lower_leg_left",
       "kind": "fittedClothing",
       "crop": {
-        "x": 1632,
-        "y": 1088,
-        "width": 320,
-        "height": 480
+        "x": 1800,
+        "y": 1152,
+        "width": 88,
+        "height": 140
       },
       "outputCanvas": {
         "width": 88,
@@ -553,10 +553,10 @@
       "maskRegionId": "lower_leg_left",
       "requirement": "optional",
       "transportContent": {
-        "x": 9,
+        "x": 0,
         "y": 0,
-        "width": 302,
-        "height": 480
+        "width": 88,
+        "height": 140
       },
       "resampling": "linear-once-after-masking"
     }
