@@ -327,13 +327,15 @@ single-active-actor JSON shape migrates into the new manifest safely.
 
 ### Canonical character-sheet plan
 
-The next generated-character method is the fixed `character_sheet_v1`. Gemini
-designs one coherent person across separated appearance regions, while
-StoryTale assembles the authoritative full-body proof locally:
+The current implemented provider path still uses fixed `character_sheet_v1`.
+Corrective Phase 7G.1B.R has now produced a local-only
+`character_sheet_v2` candidate for owner review. V2 keeps the same coherent
+character method while separating balanced provider transport sizes from the
+unchanged runtime canvases:
 
-1. StoryTale supplies the locked `4096 x 4096` guide, with native-size front
-   hair plus Short/Medium/Long back-hair cells, a locally assembled neutral
-   reference, and the source-backed design brief.
+1. StoryTale will supply one locked `2048 x 2048` guide with one selected
+   back-hair slot, similarly scaled head/hair regions, enlarged body transport
+   cells, a locally assembled neutral reference, and the source-backed brief.
 2. Gemini returns only separated masked face details, front/back hair, and nine
    fitted clothing regions; it does not return another assembled body.
 3. StoryTale removes the flat green locally.
@@ -343,6 +345,12 @@ StoryTale assembles the authoritative full-body proof locally:
 6. Face, hair, and clothing layers are composed locally over the unchanged
    head and nine body pieces.
 7. One outfit is reused for every pose by following the same bones.
+
+V1 and all original hair/rig assets remain unchanged behind checkpoint
+`92e6633`. The V2 guide, masks, manifest, prompt, hashes, and offline builder
+exist locally, but Flutter and the Worker have not been migrated and no V2
+Gemini request has been made. Owner visual approval of the guide is the current
+gate.
 
 Accessories use named anchors and relative layer modes such as behind arm,
 behind hand, or front of hand. A held sword may be partly behind the arm and
@@ -500,23 +508,27 @@ The [Master Roadmap](ROADMAP.md) is authoritative. As of this handoff:
    validation metadata; Character, Layers, Faces, Hair, Poses, and Details are
    read-only review groups; and `ready` requires the full four-pose gate. The
    first accepted owner-controlled generated package remains pending.
-6. **Immediate gate:** authorize one controlled rerun against the deployed
-   response-format fix, inspect all six proof groups, and accept or reject the
-   package without an automatic retry.
-7. **Implemented locally: Phase 7G.1C** — the package now verifies the approved
+6. **Local corrective candidate: Phase 7G.1B.R** - `character_sheet_v2` is a
+   balanced `2048 x 2048` transport contract with one selected back-hair slot,
+   larger body cells, unchanged runtime output canvases, regenerated masks,
+   and a deterministic offline builder. It made no provider request.
+7. **Immediate gate:** visually approve or reject the V2 guide. Do not connect
+   V2 to Flutter/Worker or spend another Gemini request before approval.
+8. **Implemented locally: Phase 7G.1C** — the V1 package now verifies the approved
    rig and ten head/body asset hashes, rejects generated face pixels outside
    the locked head, produces six distinct expression proofs plus four
    face-aware pose proofs, and reuses a matching ready design hash before any
    provider request. The private sprite route's shared three-per-minute
    bottleneck is removed while Flutter keeps one sequential request,
    deduplication, no automatic retry, and real provider quota errors. This was
-   implemented without a paid request or test run; the controlled rerun and
-   owner visual acceptance are still required. The Worker portion is deployed
-   as version `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
-8. **Then: Phase 7H** — register the validated character package and rebuild
+   implemented without a paid request or test run. After V2 guide approval and
+   migration, one controlled 2K request and owner proof acceptance are still
+   required. The Worker portion is deployed as version
+   `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
+9. **Then: Phase 7H** — register the validated character package and rebuild
    every affected ChapterStory so the correct human appears across chapters
    and volumes.
-9. Continue with Phases 8–11 in roadmap order.
+10. Continue with Phases 8–11 in roadmap order.
 
 Do not start persistence, final Story Mode binding, or audio integration before
 their roadmap gates unless a blocking defect requires a narrow fix.

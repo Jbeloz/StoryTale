@@ -1,6 +1,6 @@
-# StoryTale Character Sheet V1 Implementation Plan
+# StoryTale Character Sheet V1 and V2 Implementation Plan
 
-Status: **Authoritative Phase 7G.1 plan. Phases 7G.1B.1-7G.1B.4 and the Phase 7G.1C enforcement are implemented locally. The first owner-controlled request on 2026-08-02 returned a Worker 502 before packaging; no generated package was accepted. The request-format fix is deployed. One owner-approved rerun, manual review, and acceptance of the Phase 7G.1C proof remain pending.**
+Status: **Authoritative Phase 7G.1 plan. The V1 Flutter/Worker pipeline and the Phase 7G.1C enforcement are implemented locally, but no generated package has been accepted. Corrective Phase 7G.1B.R now has a local-only `character_sheet_v2` candidate with a balanced `2048 x 2048` transport layout. Owner approval of the V2 guide is the immediate gate. Flutter and the Worker still use V1, and no V2 provider request is authorized before that approval.**
 
 This document owns the exact character-sheet contract, implementation order,
 validation gate, and handoff rules for Phase 7G.1B. The Master Roadmap still
@@ -31,12 +31,41 @@ AI-drawn full-body master.
 - **Full-body proof:** the character StoryTale assembles locally from the
   returned parts. It is validation output, not another generated body.
 
-The old name `clothing_sheet_v1` is superseded by `character_sheet_v1`.
+The old name `clothing_sheet_v1` is superseded by the versioned
+`character_sheet_v1` and `character_sheet_v2` contracts.
 
-## 3. Approved source layout
+## 2A. Corrective Phase 7G.1B.R - balanced V2 transport contract
+
+The native-size V1 sheet made the three hair canvases dominate a `4096 x
+4096` provider output while the native torso and limbs remained too small for
+reliable clothing detail. V2 separates provider transport size from immutable
+runtime output size:
+
+| Region family | V2 transport cell | Runtime output |
+| --- | --- | --- |
+| selected back hair | `512 x 878` | unchanged `1254 x 2150` hair canvas |
+| front hair | `512 x 512` | unchanged `1254 x 1254` hair canvas |
+| head/face details | `512 x 512` | unchanged `357 x 367` head part |
+| torso clothing | `360 x 512` | unchanged `165 x 234` torso part |
+| each arm or leg piece | `320 x 480` | that part's unchanged native canvas |
+
+Only one `back_hair_selected` transport cell exists. The manifest maps
+`short`, `medium`, `long`, or `none` to that slot while retaining every
+original catalog asset. Each region records a `transportContent` rectangle.
+After masking, the future V2 processor will extract that rectangle and resize
+it exactly once to the recorded `outputCanvas`; it must never crop to visible
+pixels or alter rig geometry, pivots, anchors, or source assets.
+
+The deterministic local builder is `tool/generate_character_sheet_v2.dart`.
+It creates the guide, masks, reference copy, hashes, and manifest without a
+network request. Checkpoint `92e6633` marks the state immediately before this
+correction. The V2 assets are review candidates only until the owner approves
+the guide; runtime and Worker migration deliberately stop at that gate.
+
+## 3. V1 source layout retained for rollback
 
 The user-supplied `1611 x 720` PNG established the separated-parts idea, but it
-scaled the hair down and omitted front hair. It is superseded by the assembled
+scaled the hair down and omitted front hair. V1 replaced it with the assembled
 repository guide at
 `assets/images/characters/generation_templates/humanoid_v1/character_sheet_v1/guide.png`:
 
@@ -88,6 +117,15 @@ assets/images/characters/generation_templates/humanoid_v1/character_sheet_v1/
 |-- seam_allowances.png
 |-- crop_manifest.json
 `-- prompt_contract.md
+
+assets/images/characters/generation_templates/humanoid_v1/character_sheet_v2/
+|-- guide.png
+|-- assembled_reference.png
+|-- allowed_regions.png
+|-- protected_regions.png
+|-- seam_allowances.png
+|-- crop_manifest.json
+`-- prompt_contract.md
 ```
 
 - `guide.png` is the exact approved `4096 x 4096` layout assembled from native
@@ -103,6 +141,9 @@ assets/images/characters/generation_templates/humanoid_v1/character_sheet_v1/
   elbows, hips, and knees.
 - `crop_manifest.json` is the single authority for cell geometry and anchors.
 - `prompt_contract.md` contains the exact provider instructions and exclusions.
+
+The V2 folder is locally complete but is not an active Flutter asset contract
+until its owner visual gate passes. V1 remains available unchanged for rollback.
 
 Widgets, services, tests, and Workers must read the versioned manifest instead
 of repeating crop rectangles or guessing component boundaries.
@@ -123,6 +164,11 @@ of repeating crop rectangles or guessing component boundaries.
 - layer role and default layer order;
 - whether the region is required, optional, or explicitly nullable; and
 - validation tolerances that are deterministic and versioned.
+
+V2 additionally stores the `2K` provider image size, one selected back-hair
+slot and its variant map, each balanced transport crop, its inner
+`transportContent`, the unchanged runtime `outputCanvas`, and the one-time
+resampling policy.
 
 The manifest must be reviewed visually once against the approved guide. After
 approval, changing any rectangle, mask, or anchor requires a new sheet version.
@@ -145,6 +191,12 @@ version/hash, skin tone, face/hair/outfit choices, provider, model, and sheet
 version. An identical ready result is reused instead of generated again.
 
 ## 8. Gemini output rules
+
+The V2 target contract requires one exact `2048 x 2048` PNG, one active
+`back_hair_selected` slot or an explicit empty `none`, balanced transport
+cells, flat green gaps, and no provider-added labels or borders. The current
+V1 integration keeps the following historical requirements until the owner
+approves V2 and the migration is implemented:
 
 The prompt must require Gemini to:
 
@@ -187,8 +239,11 @@ steps locally:
 12. Apply the same layers to Idle, Talking, Pointing, and Walking.
 13. Register the package only after every deterministic validation passes.
 
-The processor never detects cells with AI, crops to visible content, resizes an
-individual part, or asks the provider to repair one failed cell automatically.
+The V1 processor never detects cells with AI, crops to visible content, resizes
+an individual part, or asks the provider to repair one failed cell
+automatically. The future V2 processor may use only the manifest's explicit
+`transportContent` and one deterministic resize to the unchanged runtime
+`outputCanvas`; it may not perform content detection or iterative resizing.
 
 ## 10. Full-character consistency gate
 
@@ -278,6 +333,20 @@ state, and design hashes must still be recorded now.
 
 Phase 7G.1B.1 completed without a paid provider request.
 
+### Phase 7G.1B.R - V2 transport correction - local candidate complete
+
+1. Preserve V1 and the locked runtime assets unchanged.
+2. Create the balanced `2048 x 2048` V2 guide with one selected back-hair slot.
+3. Enlarge the provider-facing torso and limb regions while recording their
+   unchanged runtime output canvases.
+4. Regenerate allowed, protected, and seam masks deterministically.
+5. Record the `2K` provider contract, hashes, variant mapping, and one-time
+   resampling rule.
+6. Stop for owner visual approval before Flutter/Worker migration or Gemini.
+
+The local candidate was generated after checkpoint `92e6633`. It made no
+network or provider request. Owner guide approval is pending.
+
 ### Phase 7G.1B.2 - One-sheet generation — implemented locally
 
 1. Add the character-sheet request/response contract to Flutter and the private
@@ -287,8 +356,9 @@ Phase 7G.1B.1 completed without a paid provider request.
 4. Keep sequential generation and design-hash reuse.
 5. Surface real provider errors without automatic regeneration.
 
-The Flutter and Worker contracts are implemented. The private Worker has not
-been deployed and no paid character-sheet request has been made in this phase.
+The V1 Flutter and Worker contracts are implemented and deployed. The first
+owner-controlled request failed before packaging, no output was accepted, and
+no automatic second request was made. V2 is not connected to either side.
 
 ### Phase 7G.1B.3 - Local cutout and package builder — implemented locally
 
@@ -351,14 +421,25 @@ character-sheet request at a time, rejects duplicates, never retries a paid
 failure, and keeps real Gemini quota or billing errors visible.
 
 This implementation was completed without a provider request or test run at
-the project owner's direction. It is not accepted until the controlled rerun
-and manual six-face/four-pose review pass. The sprite-limiter change is live in
-Worker version `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
+the project owner's direction. After the V2 guide is approved and the V2
+migration is complete, it still requires one controlled request and a manual
+six-face/four-pose review pass. The sprite-limiter change is live in Worker
+version `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
 
 ## 15. Acceptance gate
 
 - [x] The canonical guide is versioned at exactly `4096 x 4096`, with native
   front-hair and Short/Medium/Long back-hair canvases.
+- [x] V1 and all original rig/hair assets remain unchanged behind checkpoint
+  `92e6633`.
+- [x] The local V2 candidate is exactly `2048 x 2048`, uses one selected
+  back-hair slot, and records balanced transport cells separately from native
+  runtime output canvases.
+- [x] The V2 guide, masks, manifest, prompt, hashes, and deterministic builder
+  are versioned without a provider request.
+- [ ] The owner visually approves the V2 guide and layout.
+- [ ] Flutter and the private Worker consume V2 without silently falling back
+  to V1 or making an automatic paid retry.
 - [x] Every region has one reviewed crop, output canvas, anchor, role, and side.
 - [x] Allowed, protected, and seam masks are versioned and deterministic.
 - [ ] Gemini receives one coherent-character brief and returns only the

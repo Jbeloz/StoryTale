@@ -382,8 +382,15 @@ base. **Phase 7G.1B.4 is implemented locally:** the package uses
 the existing rig hierarchy to render four distinct proof PNGs, records their
 hashes and validation metadata, exposes six read-only proof groups, and cannot
 become `ready` until the four-pose gate passes. The first accepted generated
-package is still pending. **The controlled rerun is the immediate gate before
-accepting Phase 7G.1C.** Phase 7G.1C is implemented locally: the processor
+package is still pending. **Corrective Phase 7G.1B.R now has a local-only
+`character_sheet_v2` candidate:** it uses a balanced `2048 x 2048` transport
+sheet, one selected back-hair slot, larger provider-facing body cells, explicit
+transport-content rectangles, unchanged runtime output canvases, regenerated
+masks, and a deterministic offline builder. V1 and every rig/hair source remain
+unchanged behind checkpoint `92e6633`. Owner visual approval of the V2 guide is
+the immediate gate; Flutter, the Worker, and the provider still use V1 and must
+not migrate or spend another request before that approval. Phase 7G.1C is
+implemented locally: the processor
 hash-locks the ten runtime head/body assets, rejects face pixels outside the
 locked head, creates six distinct face proofs plus four face-aware pose proofs,
 reuses a matching ready design hash before generation, and the private Worker
@@ -420,21 +427,25 @@ Implementation order:
    assembled neutral reference, exact crop/anchor manifest, allowed/protected/
    seam masks, and prompt contract. Make no paid provider request in this
    subphase.
-8. **Implemented locally in Phase 7G.1B.2:** request one fixed character sheet
+8. **Local candidate complete in corrective Phase 7G.1B.R:** preserve V1 and
+   build `character_sheet_v2` as one balanced 2K transport sheet with one
+   selected back-hair slot, larger body cells, unchanged runtime output sizes,
+   regenerated masks, and no provider request. Stop for owner visual approval.
+9. **Implemented locally in Phase 7G.1B.2 for V1:** request one fixed character sheet
    containing aligned face details, front/back hair, and nine fitted-clothing
    regions without automatic paid retries.
-9. **Implemented locally in Phase 7G.1B.3:** remove green, cut the 14 fixed
+10. **Implemented locally in Phase 7G.1B.3 for V1:** remove green, cut the 14 fixed
    cells, apply allowed/protected/seam masks, register the session package, and
    assemble the neutral full-body proof. Gemini never redraws the body.
-10. **Implemented locally in Phase 7G.1B.4:** compose Idle, Talking, Pointing,
+11. **Implemented locally in Phase 7G.1B.4 for V1:** compose Idle, Talking, Pointing,
    and Walking from the same layers and add the read-only Character, Layers,
    Faces, Hair, Poses, and Details package proof groups.
-11. **Implemented locally in Phase 7G.1C:** compose and validate six faces and four poses on the
+12. **Implemented locally in Phase 7G.1C:** compose and validate six faces and four poses on the
    locked rig, then expose Character, Layers, Faces, Poses, and Details proof.
-12. **Implemented locally in Phase 7G.1C:** reuse completed components by design hash, remove the
+13. **Implemented locally in Phase 7G.1C:** reuse completed components by design hash, remove the
    private sprite route's shared three-per-minute app bottleneck, and keep one
    sequential request active without automatic paid regeneration.
-13. **Blocked Phase 7H:** register the validated layered package and rebuild
+14. **Blocked Phase 7H:** register the validated layered package and rebuild
    every affected ChapterStory so Story Mode uses it across chapters and
    volumes.
 
@@ -492,6 +503,11 @@ Current Phase 7G.1 work:
 - [x] **Phase 7G.1B.1:** version the supplied separated-parts guide and
   add one exact crop/anchor manifest, assembled reference, allowed/protected/
   seam masks, and prompt contract without making a paid request.
+- [x] **Corrective Phase 7G.1B.R, local candidate:** preserve V1 and generate a
+  balanced `2048 x 2048` V2 guide, masks, manifest, prompt, and reference with
+  one selected back-hair slot and unchanged runtime output canvases.
+- [ ] **Corrective Phase 7G.1B.R owner gate:** visually approve the V2 guide
+  before connecting it to Flutter, the Worker, or Gemini.
 - [x] **Phase 7G.1B.2, local implementation:** connect one controlled fixed-sheet provider
   request and response to the versioned contract without automatic retry.
 - [x] **Phase 7G.1B.3, local implementation:** produce the fixed-manifest
@@ -753,7 +769,7 @@ These decisions must be recorded here when resolved.
 | `SPRITE_STUDIO_PLAN.md` | Rig and pose editor behavior |
 | `MODULAR_FACE_SYSTEM_PLAN.md` | Face-part catalogs and set behavior |
 | `GENERATED_CHARACTER_PIPELINE_PLAN.md` | Template-constrained Gemini character, real rig, face/pose proof, and Story Mode binding gate |
-| `CHARACTER_SHEET_PLAN.md` | Authoritative `character_sheet_v1`, local full-body proof, crop/mask pipeline, package, and Phase 7G.1B acceptance gate |
+| `CHARACTER_SHEET_PLAN.md` | Authoritative V1/V2 character-sheet contracts, balanced transport correction, local proof pipeline, and Phase 7G.1B acceptance gates |
 | `FIXED_HAIR_SLOT_PLAN.md` | Universal per-actor/per-style front/back hair fitting and explicit no-back-hair behavior |
 | `CLOUDFLARE_IMAGE_GENERATOR.md` | Worker routes and provider responsibilities |
 | `UI_IMPLEMENTATION_PLAN.md` | Responsive screen and reusable-widget reference |
