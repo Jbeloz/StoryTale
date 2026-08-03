@@ -72,6 +72,19 @@ class CharacterSheetContract {
     'promptContract',
   };
 
+  static const requiredLockedAssetPaths = {
+    'assets/images/characters/rigs/humanoid_v1/faces/head_base.png',
+    'assets/images/characters/rigs/humanoid_v1/base/torso.png',
+    'assets/images/characters/rigs/humanoid_v1/base/upper_arm_right.png',
+    'assets/images/characters/rigs/humanoid_v1/base/upper_arm_left.png',
+    'assets/images/characters/rigs/humanoid_v1/base/lower_arm_right.png',
+    'assets/images/characters/rigs/humanoid_v1/base/lower_arm_left.png',
+    'assets/images/characters/rigs/humanoid_v1/base/upper_leg_right.png',
+    'assets/images/characters/rigs/humanoid_v1/base/upper_leg_left.png',
+    'assets/images/characters/rigs/humanoid_v1/base/lower_leg_right.png',
+    'assets/images/characters/rigs/humanoid_v1/base/lower_leg_left.png',
+  };
+
   factory CharacterSheetContract.fromJson(Map<String, dynamic> json) {
     return CharacterSheetContract(
       contractId: json['contractId'] as String,
@@ -126,6 +139,21 @@ class CharacterSheetContract {
     }
     if (lockedRig.id != 'humanoid_v1' || !_isSha256(lockedRig.geometryHash)) {
       errors.add('The locked humanoid_v1 geometry hash is missing.');
+    }
+    if (!_isSha256(lockedRig.manifestSha256)) {
+      errors.add('The locked humanoid_v1 rig manifest hash is missing.');
+    }
+    if (!lockedRig.assetSha256.keys.toSet().containsAll(
+          requiredLockedAssetPaths,
+        ) ||
+        lockedRig.assetSha256.entries.any(
+          (entry) =>
+              !requiredLockedAssetPaths.contains(entry.key) ||
+              !_isSha256(entry.value),
+        )) {
+      errors.add(
+        'The ten locked humanoid_v1 runtime asset hashes are invalid.',
+      );
     }
     if (!rules.cropCoordinatesAreInclusiveExclusive ||
         rules.resizeRegions ||
@@ -249,15 +277,25 @@ class CharacterSheetAssets {
 }
 
 class CharacterSheetLockedRig {
-  const CharacterSheetLockedRig({required this.id, required this.geometryHash});
+  const CharacterSheetLockedRig({
+    required this.id,
+    required this.geometryHash,
+    required this.manifestSha256,
+    required this.assetSha256,
+  });
 
   final String id;
   final String geometryHash;
+  final String manifestSha256;
+  final Map<String, String> assetSha256;
 
   factory CharacterSheetLockedRig.fromJson(Map<String, dynamic> json) {
     return CharacterSheetLockedRig(
       id: json['id'] as String,
       geometryHash: json['geometryHash'] as String,
+      manifestSha256: json['manifestSha256'] as String? ?? '',
+      assetSha256: (json['assetSha256'] as Map<String, dynamic>? ?? const {})
+          .map((key, value) => MapEntry(key, value as String)),
     );
   }
 }

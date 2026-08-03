@@ -42,6 +42,39 @@ class CharacterSheetPoseProofMetadata {
   };
 }
 
+class CharacterSheetFaceProofMetadata {
+  const CharacterSheetFaceProofMetadata({
+    required this.expressionId,
+    required this.label,
+    required this.assetId,
+    required this.width,
+    required this.height,
+    required this.visiblePixelCount,
+    required this.sha256,
+    required this.valid,
+  });
+
+  final String expressionId;
+  final String label;
+  final String assetId;
+  final int width;
+  final int height;
+  final int visiblePixelCount;
+  final String sha256;
+  final bool valid;
+
+  Map<String, dynamic> toJson() => {
+    'expressionId': expressionId,
+    'label': label,
+    'assetId': assetId,
+    'width': width,
+    'height': height,
+    'visiblePixelCount': visiblePixelCount,
+    'sha256': sha256,
+    'valid': valid,
+  };
+}
+
 class CharacterSheetLayerMetadata {
   const CharacterSheetLayerMetadata({
     required this.regionId,
@@ -104,7 +137,11 @@ class CharacterSheetPackageValidation {
     required this.slotValid,
     required this.sideValid,
     required this.seamValid,
+    required this.lockedAssetsValid,
+    required this.identityValid,
+    required this.faceProofValid,
     required this.poseProofValid,
+    required this.proofsByFace,
     required this.proofsByPose,
   });
 
@@ -118,7 +155,11 @@ class CharacterSheetPackageValidation {
   final bool slotValid;
   final bool sideValid;
   final bool seamValid;
+  final bool lockedAssetsValid;
+  final bool identityValid;
+  final bool faceProofValid;
   final bool poseProofValid;
+  final Map<String, CharacterSheetFaceProofMetadata> proofsByFace;
   final Map<String, CharacterSheetPoseProofMetadata> proofsByPose;
 
   bool get isValid =>
@@ -129,6 +170,9 @@ class CharacterSheetPackageValidation {
       slotValid &&
       sideValid &&
       seamValid &&
+      lockedAssetsValid &&
+      identityValid &&
+      faceProofValid &&
       poseProofValid;
 
   String get errorMessage => errors.isEmpty
@@ -143,7 +187,13 @@ class CharacterSheetPackageValidation {
     'slotValid': slotValid,
     'sideValid': sideValid,
     'seamValid': seamValid,
+    'lockedAssetsValid': lockedAssetsValid,
+    'identityValid': identityValid,
+    'faceProofValid': faceProofValid,
     'poseProofValid': poseProofValid,
+    'proofsByFace': {
+      for (final entry in proofsByFace.entries) entry.key: entry.value.toJson(),
+    },
     'proofsByPose': {
       for (final entry in proofsByPose.entries) entry.key: entry.value.toJson(),
     },
@@ -169,11 +219,13 @@ class CharacterSheetPackage {
     required this.generation,
     required this.sourceAssetId,
     required this.cleanAssetId,
+    required this.facePreviewAssetIds,
     required this.previewAssetIds,
     required this.layerMetadata,
     required this.layerBytes,
     required this.sourceBytes,
     required this.cleanBytes,
+    required this.facePreviewBytesByExpression,
     required this.previewBytesByPose,
     required this.validation,
     required this.createdAt,
@@ -192,11 +244,13 @@ class CharacterSheetPackage {
   final CharacterSheetGenerationResult generation;
   final String sourceAssetId;
   final String cleanAssetId;
+  final Map<String, String> facePreviewAssetIds;
   final Map<String, String> previewAssetIds;
   final Map<String, CharacterSheetLayerMetadata> layerMetadata;
   final Map<String, Uint8List> layerBytes;
   final Uint8List sourceBytes;
   final Uint8List cleanBytes;
+  final Map<String, Uint8List> facePreviewBytesByExpression;
   final Map<String, Uint8List> previewBytesByPose;
   final CharacterSheetPackageValidation validation;
   final String createdAt;
@@ -229,6 +283,7 @@ class CharacterSheetPackage {
     'createdAt': createdAt,
     'sourceAssetId': sourceAssetId,
     'cleanAssetId': cleanAssetId,
+    'facePreviewAssetIds': facePreviewAssetIds,
     'previewAssetIds': previewAssetIds,
     'layers': {
       for (final entry in layerMetadata.entries)
@@ -265,6 +320,12 @@ class CharacterSheetPackageStore {
     for (final entry in package.previewBytesByPose.entries) {
       StoryAssetBinaryStore.write(
         package.previewAssetIds[entry.key]!,
+        entry.value,
+      );
+    }
+    for (final entry in package.facePreviewBytesByExpression.entries) {
+      StoryAssetBinaryStore.write(
+        package.facePreviewAssetIds[entry.key]!,
         entry.value,
       );
     }

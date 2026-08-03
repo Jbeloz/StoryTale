@@ -495,7 +495,6 @@ class VolumePreparationCoordinator {
       }
 
       try {
-        await _rateGate.waitForSlot();
         final prompt = _humanPrompt(asset);
         final generated = await artworkService.generateSpriteMaster(prompt);
         final layers = processor.processRig(generated);

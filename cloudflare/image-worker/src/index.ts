@@ -1453,8 +1453,17 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
     }, 400);
   }
 
-  const rateLimit = await env.IMAGE_RATE_LIMIT.limit({ key: "private-prototype" });
-  if (!rateLimit.success) return json({ error: "Try again in one minute" }, 429);
+  // Sprite generation is already serialized and de-duplicated by the private
+  // Flutter client. Keep the shared app limiter for backgrounds, while real
+  // Gemini quota and billing responses remain visible for sprite requests.
+  if (kind === "background") {
+    const rateLimit = await env.IMAGE_RATE_LIMIT.limit({
+      key: "background-private-prototype",
+    });
+    if (!rateLimit.success) {
+      return json({ error: "Try again in one minute" }, 429);
+    }
+  }
 
   let model: string = BACKGROUND_MODEL;
   let provider = "cloudflare-workers-ai";

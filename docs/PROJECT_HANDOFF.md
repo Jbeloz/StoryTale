@@ -503,10 +503,16 @@ The [Master Roadmap](ROADMAP.md) is authoritative. As of this handoff:
 6. **Immediate gate:** authorize one controlled rerun against the deployed
    response-format fix, inspect all six proof groups, and accept or reject the
    package without an automatic retry.
-7. **Next: Phase 7G.1C** — prove exact locked geometry with six faces and four
-   poses; remove the app-defined shared three-per-minute sprite bottleneck
-   while keeping one sequential request, deduplication, and real provider
-   quota errors.
+7. **Implemented locally: Phase 7G.1C** — the package now verifies the approved
+   rig and ten head/body asset hashes, rejects generated face pixels outside
+   the locked head, produces six distinct expression proofs plus four
+   face-aware pose proofs, and reuses a matching ready design hash before any
+   provider request. The private sprite route's shared three-per-minute
+   bottleneck is removed while Flutter keeps one sequential request,
+   deduplication, no automatic retry, and real provider quota errors. This was
+   implemented without a paid request or test run; the controlled rerun and
+   owner visual acceptance are still required. The Worker portion is deployed
+   as version `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
 8. **Then: Phase 7H** — register the validated character package and rebuild
    every affected ChapterStory so the correct human appears across chapters
    and volumes.

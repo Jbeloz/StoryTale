@@ -9,6 +9,8 @@ import 'package:image/image.dart' as image;
 import 'character_sheet_contract.dart';
 import 'character_sheet_generation.dart';
 import 'character_sheet_package.dart';
+import 'face_profile_catalog.dart';
+import 'sprite_appearance.dart';
 import 'sprite_layer_processor.dart';
 import 'sprite_rig.dart';
 
@@ -31,6 +33,16 @@ class CharacterSheetProcessor {
            CharacterSheetContractRepository(bundle: bundle ?? rootBundle);
 
   static const _rigAsset = 'assets/images/characters/rigs/humanoid_v1/rig.json';
+  static const _faceProfileCatalogAsset =
+      'assets/images/characters/face_profiles/catalog.json';
+  static const _requiredFaceExpressions = {
+    'neutral': 'Neutral',
+    'talking': 'Talking',
+    'happy': 'Happy',
+    'sad': 'Sad',
+    'angry': 'Angry',
+    'surprised': 'Surprised',
+  };
 
   final AssetBundle _bundle;
   final CharacterSheetContractRepository _contracts;
@@ -228,27 +240,109 @@ class CharacterSheetProcessor {
       );
     }
 
-    final cutoutValid =
+    var cutoutValid =
         errors.isEmpty && geometryValid && slotValid && sideValid && seamValid;
-    final artworkByPart = await _buildProofArtwork(
+    var proofArtwork = await _buildProofArtwork(
       contract: contract,
       rig: rigData.rig,
       request: request,
       appearanceLayers: cutoutValid ? layerBytes : const {},
       selectedBackHair: selectedBackHair,
     );
+    if (!proofArtwork.headGeometryValid) {
+      geometryValid = false;
+      errors.add(
+        'Generated face details crossed the locked head alpha boundary.',
+      );
+      cutoutValid = false;
+      proofArtwork = await _buildProofArtwork(
+        contract: contract,
+        rig: rigData.rig,
+        request: request,
+        appearanceLayers: const {},
+        selectedBackHair: selectedBackHair,
+      );
+    }
+    final artworkByPart = proofArtwork.artworkByPart;
+    final faceArtwork = await _buildFaceArtwork(
+      request: request,
+      rig: rigData.rig,
+      artworkByPart: artworkByPart,
+    );
+    var identityValid = cutoutValid && faceArtwork.valid;
+    var faceProofValid = identityValid;
+    if (!faceArtwork.valid) {
+      errors.add(
+        'The selected actor profile does not provide all six locked face sets.',
+      );
+    }
+
+    final poses = SpriteLayerProcessor.canonicalPosesFor(contract.lockedRig.id);
+    final neutralPose = poses['neutral']!;
+    final facePreviewAssetIds = <String, String>{};
+    final facePreviewBytesByExpression = <String, Uint8List>{};
+    final faceProofMetadata = <String, CharacterSheetFaceProofMetadata>{};
+    final faceProofHashes = <String>{};
+    for (final entry in _requiredFaceExpressions.entries) {
+      final expressionId = entry.key;
+      final faceHead = faceArtwork.headsByExpression[expressionId];
+      final expressionArtwork = Map<String, image.Image>.of(artworkByPart);
+      if (faceHead != null) expressionArtwork['head'] = faceHead;
+      final proof = _composePoseProof(
+        rig: rigData.rig,
+        pose: neutralPose,
+        artworkByPart: expressionArtwork,
+      );
+      final bytes = Uint8List.fromList(image.encodePng(proof));
+      final visible = _visiblePixelCount(proof);
+      final proofHash = sha256.convert(bytes).toString();
+      final assetId = '$packageId/previews/faces/$expressionId.png';
+      final valid =
+          faceHead != null &&
+          proof.width == rigData.rig.canvasSize.width.round() &&
+          proof.height == rigData.rig.canvasSize.height.round() &&
+          visible > 0 &&
+          !_containsGreenPixels(proof);
+      if (!valid) {
+        faceProofValid = false;
+        errors.add('The ${entry.value} face proof failed local validation.');
+      }
+      facePreviewAssetIds[expressionId] = assetId;
+      facePreviewBytesByExpression[expressionId] = bytes;
+      faceProofHashes.add(proofHash);
+      faceProofMetadata[expressionId] = CharacterSheetFaceProofMetadata(
+        expressionId: expressionId,
+        label: entry.value,
+        assetId: assetId,
+        width: proof.width,
+        height: proof.height,
+        visiblePixelCount: visible,
+        sha256: proofHash,
+        valid: valid,
+      );
+    }
+    if (faceProofHashes.length != _requiredFaceExpressions.length) {
+      identityValid = false;
+      faceProofValid = false;
+      errors.add('The six face proofs are not visually distinct.');
+    }
+
     final previewAssetIds = <String, String>{};
     final previewBytesByPose = <String, Uint8List>{};
     final proofMetadata = <String, CharacterSheetPoseProofMetadata>{};
     final proofHashes = <String>{};
     var poseProofValid = cutoutValid;
-    final poses = SpriteLayerProcessor.canonicalPosesFor(contract.lockedRig.id);
     for (final poseId in const ['neutral', 'talking', 'pointing', 'walking']) {
       final pose = poses[poseId]!;
+      final poseArtwork = Map<String, image.Image>.of(artworkByPart);
+      poseArtwork['head'] =
+          faceArtwork.headsByExpression[pose.faceExpressionId] ??
+          faceArtwork.headsByExpression['neutral'] ??
+          artworkByPart['head']!;
       final proof = _composePoseProof(
         rig: rigData.rig,
         pose: pose,
-        artworkByPart: artworkByPart,
+        artworkByPart: poseArtwork,
       );
       final bytes = Uint8List.fromList(image.encodePng(proof));
       final visible = _visiblePixelCount(proof);
@@ -292,7 +386,11 @@ class CharacterSheetProcessor {
       slotValid: slotValid,
       sideValid: sideValid,
       seamValid: seamValid,
+      lockedAssetsValid: true,
+      identityValid: identityValid,
+      faceProofValid: faceProofValid,
       poseProofValid: poseProofValid,
+      proofsByFace: Map.unmodifiable(faceProofMetadata),
       proofsByPose: Map.unmodifiable(proofMetadata),
     );
     final cleanBytes = Uint8List.fromList(image.encodePng(cleanSheet));
@@ -310,11 +408,15 @@ class CharacterSheetProcessor {
       generation: generation,
       sourceAssetId: '$packageId/generation/character_sheet_source.png',
       cleanAssetId: '$packageId/generation/character_sheet_clean.png',
+      facePreviewAssetIds: Map.unmodifiable(facePreviewAssetIds),
       previewAssetIds: Map.unmodifiable(previewAssetIds),
       layerMetadata: Map.unmodifiable(layerMetadata),
       layerBytes: Map.unmodifiable(layerBytes),
       sourceBytes: generation.bytes,
       cleanBytes: cleanBytes,
+      facePreviewBytesByExpression: Map.unmodifiable(
+        facePreviewBytesByExpression,
+      ),
       previewBytesByPose: Map.unmodifiable(previewBytesByPose),
       validation: validation,
       createdAt: DateTime.now().toUtc().toIso8601String(),
@@ -355,8 +457,11 @@ class CharacterSheetProcessor {
   }
 
   Future<_RigData> _loadRigData(CharacterSheetContract contract) async {
-    final source = await _bundle.loadString(_rigAsset);
-    final json = jsonDecode(source) as Map<String, dynamic>;
+    final bytes = await _loadVerified(
+      _rigAsset,
+      contract.lockedRig.manifestSha256,
+    );
+    final json = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
     if (json['id'] != contract.lockedRig.id) {
       throw const CharacterSheetProcessingException(
         'The character sheet does not match the active humanoid rig.',
@@ -494,7 +599,7 @@ class CharacterSheetProcessor {
     return connected;
   }
 
-  Future<Map<String, image.Image>> _buildProofArtwork({
+  Future<_ProofArtwork> _buildProofArtwork({
     required CharacterSheetContract contract,
     required SpriteRigDefinition rig,
     required CharacterSheetGenerationRequest request,
@@ -502,6 +607,7 @@ class CharacterSheetProcessor {
     required String selectedBackHair,
   }) async {
     final artwork = <String, image.Image>{};
+    var headGeometryValid = true;
 
     for (final region in contract.regions) {
       if (region.kind == 'backHair') {
@@ -529,9 +635,14 @@ class CharacterSheetProcessor {
 
       final rigPart = rig.partsById[region.parentPart];
       if (rigPart == null) continue;
-      final data = await _bundle.load(region.sourceAsset);
+      final expectedHash = contract.lockedRig.assetSha256[rigPart.asset];
+      if (expectedHash == null) {
+        throw CharacterSheetProcessingException(
+          'The locked ${rigPart.id} runtime asset has no approved hash.',
+        );
+      }
       final base = image.decodeImage(
-        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+        await _loadVerified(rigPart.asset, expectedHash),
       );
       if (base == null ||
           base.width != region.outputCanvas.width ||
@@ -551,11 +662,86 @@ class CharacterSheetProcessor {
             'The extracted ${region.id} layer changed its native size.',
           );
         }
-        image.drawImage(composed, overlay);
+        if (region.id == 'head' && !_overlayFitsOpaqueBase(base, overlay)) {
+          headGeometryValid = false;
+        } else {
+          image.drawImage(composed, overlay);
+        }
       }
       artwork[rigPart.id] = composed;
     }
-    return Map.unmodifiable(artwork);
+    return _ProofArtwork(
+      artworkByPart: Map.unmodifiable(artwork),
+      headGeometryValid: headGeometryValid,
+    );
+  }
+
+  Future<_FaceArtwork> _buildFaceArtwork({
+    required CharacterSheetGenerationRequest request,
+    required SpriteRigDefinition rig,
+    required Map<String, image.Image> artworkByPart,
+  }) async {
+    final actor = SpriteAppearanceCatalog.actor(request.brief.actorProfileId);
+    final catalog = await SpriteFaceProfileCatalog.load(
+      _faceProfileCatalogAsset,
+      bundle: _bundle,
+    );
+    final bundle = await catalog.loadProfile(
+      actor.faceProfileId,
+      bundle: _bundle,
+    );
+    final baseHead = artworkByPart['head'];
+    final rigHead = rig.partsById['head'];
+    var valid =
+        baseHead != null &&
+        rigHead != null &&
+        bundle.profile.rigId == rig.id &&
+        bundle.profile.headPartId == 'head' &&
+        bundle.profile.isReady &&
+        bundle.sets.setsById.keys.toSet().containsAll(
+          _requiredFaceExpressions.keys,
+        );
+    if (baseHead == null || rigHead == null) {
+      return const _FaceArtwork(headsByExpression: {}, valid: false);
+    }
+
+    final heads = <String, image.Image>{};
+    for (final expressionId in _requiredFaceExpressions.keys) {
+      final set = bundle.sets.setsById[expressionId];
+      if (set == null) {
+        valid = false;
+        continue;
+      }
+      final composition = bundle.compositionFromSet(set);
+      final head = image.Image.from(baseHead)..channels = image.Channels.rgba;
+      for (final asset in composition.layerAssets) {
+        final data = await _bundle.load(asset);
+        final layer = image.decodeImage(
+          data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+        );
+        if (layer == null ||
+            layer.width != bundle.profile.canvasWidth ||
+            layer.height != bundle.profile.canvasHeight) {
+          valid = false;
+          continue;
+        }
+        final fitted = layer.width == head.width && layer.height == head.height
+            ? layer
+            : image.copyResize(
+                layer,
+                width: head.width,
+                height: head.height,
+                interpolation: image.Interpolation.linear,
+              );
+        image.drawImage(head, fitted);
+      }
+      _clipToBaseAlpha(head, baseHead);
+      heads[expressionId] = head;
+    }
+    return _FaceArtwork(
+      headsByExpression: Map.unmodifiable(heads),
+      valid: valid && heads.length == _requiredFaceExpressions.length,
+    );
   }
 
   image.Image _composePoseProof({
@@ -718,6 +904,31 @@ class CharacterSheetProcessor {
     return result;
   }
 
+  bool _overlayFitsOpaqueBase(image.Image base, image.Image overlay) {
+    if (base.width != overlay.width || base.height != overlay.height) {
+      return false;
+    }
+    for (var y = 0; y < overlay.height; y++) {
+      for (var x = 0; x < overlay.width; x++) {
+        if (image.getAlpha(overlay.getPixel(x, y)) > 0 &&
+            image.getAlpha(base.getPixel(x, y)) == 0) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  void _clipToBaseAlpha(image.Image target, image.Image base) {
+    for (var y = 0; y < target.height; y++) {
+      for (var x = 0; x < target.width; x++) {
+        if (image.getAlpha(base.getPixel(x, y)) == 0) {
+          target.setPixelRgba(x, y, 0, 0, 0, 0);
+        }
+      }
+    }
+  }
+
   bool _geometryMatches(
     CharacterSheetRegion region,
     Map<String, _RigPlacement> placements,
@@ -846,6 +1057,23 @@ class _RigData {
 
   final SpriteRigDefinition rig;
   final Map<String, _RigPlacement> placements;
+}
+
+class _ProofArtwork {
+  const _ProofArtwork({
+    required this.artworkByPart,
+    required this.headGeometryValid,
+  });
+
+  final Map<String, image.Image> artworkByPart;
+  final bool headGeometryValid;
+}
+
+class _FaceArtwork {
+  const _FaceArtwork({required this.headsByExpression, required this.valid});
+
+  final Map<String, image.Image> headsByExpression;
+  final bool valid;
 }
 
 class _CleanedRegion {

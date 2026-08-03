@@ -7,6 +7,8 @@ import 'character_design_brief.dart';
 import 'character_sheet_contract.dart';
 
 class CharacterSheetGenerationRequest {
+  static const fidelityGateVersion = 1;
+
   const CharacterSheetGenerationRequest({
     required this.brief,
     required this.skinTone,
@@ -41,6 +43,7 @@ class CharacterSheetGenerationRequest {
       'contractVersion': contract.contractVersion,
       'guideSha256': contract.assetSha256['guide'],
       'geometryHash': contract.lockedRig.geometryHash,
+      'fidelityGateVersion': fidelityGateVersion,
       'bookId': brief.bookId,
       'characterId': brief.characterId,
       'canonicalName': brief.canonicalName,

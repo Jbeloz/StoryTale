@@ -31,7 +31,20 @@
   "lockedRig": {
     "id": "humanoid_v1",
     "geometryHashAlgorithm": "sha256 of sorted rig.json and base PNG path-hash entries",
-    "geometryHash": "0df67ec660c1aa5616f9a12d205111f8591dc24f123316f9f87b0f8239e57648"
+    "geometryHash": "0df67ec660c1aa5616f9a12d205111f8591dc24f123316f9f87b0f8239e57648",
+    "manifestSha256": "080b37a19bd67bb26ce0e9f0b168b61702f56c405de2907c48bd4cfe70e50696",
+    "assetSha256": {
+      "assets/images/characters/rigs/humanoid_v1/faces/head_base.png": "721b68b3ebc47797f33faa1e4f57acbe807bf1c335bd73f894e7ed102562716a",
+      "assets/images/characters/rigs/humanoid_v1/base/torso.png": "ce377230f7b2e358c58486dcf3c633b3b2cfb7c37ab32ab4859c5b1bb9e8fa2c",
+      "assets/images/characters/rigs/humanoid_v1/base/upper_arm_right.png": "c1c5910a22eb0d3353e1a3f91b3f8dff960a2c9e904a7cbb2333b436b5c43ad4",
+      "assets/images/characters/rigs/humanoid_v1/base/upper_arm_left.png": "ccbf23be92b071f809b401b6061f3d8b1af2aee94579d92c223059d800887cc9",
+      "assets/images/characters/rigs/humanoid_v1/base/lower_arm_right.png": "146652dbcc5e36ce4018a47b3e2ef7c0f9e3699e1a80bc4f5fc0fb0be14e82d5",
+      "assets/images/characters/rigs/humanoid_v1/base/lower_arm_left.png": "b15a3eddfd33583a35a935815799242df12a780dd34cf0db012db1a29dfb1cce",
+      "assets/images/characters/rigs/humanoid_v1/base/upper_leg_right.png": "1c4d288daf0464405cd0bdd074960857fc310b8eafdf393a12c1ac2a0d532558",
+      "assets/images/characters/rigs/humanoid_v1/base/upper_leg_left.png": "fcad2a93472ce7f36c6bbdf1124b8d1cb236872f06f74de5e5b587d33cdd2c7d",
+      "assets/images/characters/rigs/humanoid_v1/base/lower_leg_right.png": "64c2ed9f3f827424885e1a30db853be1ac9657ce6a3bd323089a0c8136c87fe0",
+      "assets/images/characters/rigs/humanoid_v1/base/lower_leg_left.png": "324bc0b881d50651f968191244f58d2b079e11691d69e95f1dc27188eaad2c90"
+    }
   },
   "rules": {
     "cropCoordinatesAreInclusiveExclusive": true,

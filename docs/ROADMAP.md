@@ -383,7 +383,14 @@ the existing rig hierarchy to render four distinct proof PNGs, records their
 hashes and validation metadata, exposes six read-only proof groups, and cannot
 become `ready` until the four-pose gate passes. The first accepted generated
 package is still pending. **The controlled rerun is the immediate gate before
-Phase 7G.1C.**
+accepting Phase 7G.1C.** Phase 7G.1C is implemented locally: the processor
+hash-locks the ten runtime head/body assets, rejects face pixels outside the
+locked head, creates six distinct face proofs plus four face-aware pose proofs,
+reuses a matching ready design hash before generation, and the private Worker
+no longer applies the shared app limiter to sprite requests. No paid rerun or
+test run was performed for this implementation, so owner acceptance remains
+pending. The sprite-limiter change is deployed as Worker version
+`ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
 Phase 7H Story Mode binding waits for the complete Phase 7G.1 gate.
 
 Implementation order:
@@ -422,9 +429,9 @@ Implementation order:
 10. **Implemented locally in Phase 7G.1B.4:** compose Idle, Talking, Pointing,
    and Walking from the same layers and add the read-only Character, Layers,
    Faces, Hair, Poses, and Details package proof groups.
-11. **Next Phase 7G.1C:** compose and validate six faces and four poses on the
+11. **Implemented locally in Phase 7G.1C:** compose and validate six faces and four poses on the
    locked rig, then expose Character, Layers, Faces, Poses, and Details proof.
-12. **Phase 7G.1C:** reuse completed components by design hash, remove the
+12. **Implemented locally in Phase 7G.1C:** reuse completed components by design hash, remove the
    private sprite route's shared three-per-minute app bottleneck, and keep one
    sequential request active without automatic paid regeneration.
 13. **Blocked Phase 7H:** register the validated layered package and rebuild
@@ -497,9 +504,9 @@ Current Phase 7G.1 work:
   Pointing, and Walking from the same accepted layers; expose the six read-only
   proof groups; and keep the package out of `ready` until all four proofs pass.
 - [ ] Add named held-item anchors and relative layer modes.
-- [ ] **Next Phase 7G.1C:** prove the Little Prince keeps the exact template head and body in all six
+- [ ] **Phase 7G.1C owner gate:** prove the Little Prince keeps the exact template head and body in all six
   faces and Idle/Talking/Pointing/Walking.
-- [ ] Remove or disable the private sprite route's shared three-per-minute
+- [x] Remove or disable the private sprite route's shared three-per-minute
   StoryTale limiter while keeping sequential requests, deduplication, and real
   provider quota errors.
 

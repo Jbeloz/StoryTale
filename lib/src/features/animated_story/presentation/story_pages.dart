@@ -6,6 +6,7 @@ import '../../../core/state/storytale_scope.dart';
 import '../../../shared/models/storytale_models.dart';
 import '../../../shared/widgets/storytale_components.dart';
 import '../data/character_design_brief.dart';
+import '../data/character_sheet_contract.dart';
 import '../data/character_sheet_generation.dart';
 import '../data/character_sheet_package.dart';
 import '../data/character_sheet_processor.dart';
@@ -772,6 +773,7 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
   CharacterSheetPackage? _characterSheetPackage;
   _CharacterSheetReviewGroup _sheetReviewGroup =
       _CharacterSheetReviewGroup.character;
+  String _sheetFaceId = 'neutral';
   String _sheetPoseId = 'neutral';
   SpriteLayers? _spriteLayers;
   _SpritePreview _spritePreview = _SpritePreview.rejoined;
@@ -792,6 +794,7 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
       _characterSheetResult = null;
       _characterSheetPackage = null;
       _sheetReviewGroup = _CharacterSheetReviewGroup.character;
+      _sheetFaceId = 'neutral';
       _sheetPoseId = 'neutral';
       _spriteLayers = null;
       _error = null;
@@ -822,6 +825,24 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
           backHairId: appearance.hairStyleId,
           outfitRequirements: _spriteDetails.text,
         );
+        final contract = await CharacterSheetContractRepository().load();
+        final cached = CharacterSheetPackageStore.read(
+          request.fingerprint(contract),
+        );
+        if (cached != null && cached.validation.isValid) {
+          if (mounted) {
+            setState(() {
+              _characterSheetResult = cached.generation;
+              _characterSheetPackage = cached;
+              _sheetReviewGroup = _CharacterSheetReviewGroup.character;
+              _sheetFaceId = 'neutral';
+              _sheetPoseId = 'neutral';
+              _generatedImage = cached.neutralProofBytes;
+              _error = null;
+            });
+          }
+          return;
+        }
         final result = await _service.generateCharacterSheet(request);
         final package = await _sheetProcessor.process(
           request: request,
@@ -832,6 +853,7 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
             _characterSheetResult = result;
             _characterSheetPackage = package;
             _sheetReviewGroup = _CharacterSheetReviewGroup.character;
+            _sheetFaceId = 'neutral';
             _sheetPoseId = 'neutral';
             _generatedImage = package.validation.isValid
                 ? package.neutralProofBytes
@@ -897,6 +919,7 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
               _characterSheetResult = null;
               _characterSheetPackage = null;
               _sheetReviewGroup = _CharacterSheetReviewGroup.character;
+              _sheetFaceId = 'neutral';
               _sheetPoseId = 'neutral';
               _spriteLayers = null;
               _error = null;
@@ -1029,10 +1052,19 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
             runSpacing: 8,
             children: [
               FilledButton.icon(
-                onPressed: _generating ? null : _generate,
+                onPressed:
+                    _generating ||
+                        (_mode == _ArtworkMode.characterSheet &&
+                            (_characterSheetPackage?.validation.isValid ??
+                                false))
+                    ? null
+                    : _generate,
                 icon: const Icon(Icons.auto_awesome),
                 label: Text(
-                  !_hasGeneratedArtwork
+                  _mode == _ArtworkMode.characterSheet &&
+                          (_characterSheetPackage?.validation.isValid ?? false)
+                      ? 'Ready Package Reused'
+                      : !_hasGeneratedArtwork
                       ? switch (_mode) {
                           _ArtworkMode.sprite => 'Generate Legacy Master',
                           _ArtworkMode.characterSheet =>
@@ -1105,6 +1137,33 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
               'a provider request.',
             )
           else ...[
+            if (_sheetReviewGroup == _CharacterSheetReviewGroup.faces) ...[
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final faceId in const [
+                    'neutral',
+                    'talking',
+                    'happy',
+                    'sad',
+                    'angry',
+                    'surprised',
+                  ])
+                    ChoiceChip(
+                      label: Text(
+                        package.validation.proofsByFace[faceId]?.label ??
+                            faceId,
+                      ),
+                      selected: _sheetFaceId == faceId,
+                      onSelected: (_) => setState(() {
+                        _sheetFaceId = faceId;
+                      }),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
             if (_sheetReviewGroup == _CharacterSheetReviewGroup.poses) ...[
               Wrap(
                 spacing: 8,
@@ -1146,8 +1205,8 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
       case _CharacterSheetReviewGroup.character:
         return Text(
           package.validation.isValid
-              ? '${package.characterName} • package ready • all four pose '
-                    'proofs passed'
+              ? '${package.characterName} • package ready • all six faces and '
+                    'four poses passed'
               : '${package.characterName} • needs attention • safe locked '
                     'template shown',
         );
@@ -1166,10 +1225,11 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
           ],
         );
       case _CharacterSheetReviewGroup.faces:
-        final face = package.layerMetadata['head']!;
+        final proof = package.validation.proofsByFace[_sheetFaceId]!;
         return Text(
-          'Face details • ${face.width}x${face.height} • '
-          '${face.empty ? 'missing' : '${face.visiblePixelCount} visible pixels'}',
+          '${proof.label} • ${proof.width}x${proof.height} • '
+          '${proof.visiblePixelCount} visible pixels • '
+          '${proof.valid ? 'passed' : 'needs attention'}',
         );
       case _CharacterSheetReviewGroup.hair:
         final front = package.layerMetadata['front_hair']!;
@@ -1194,6 +1254,10 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
           '${package.generation.provider} • ${package.generation.model}\n'
           'Design ${package.generation.requestFingerprint.substring(0, 12)}… • '
           'geometry ${package.contract.lockedRig.geometryHash.substring(0, 12)}…\n'
+          'Locked assets ${package.validation.lockedAssetsValid ? 'passed' : 'failed'} • '
+          'identity ${package.validation.identityValid ? 'passed' : 'failed'} • '
+          'faces ${package.validation.faceProofValid ? 'passed' : 'failed'} • '
+          'poses ${package.validation.poseProofValid ? 'passed' : 'failed'}\n'
           '${package.validation.errors.isEmpty ? 'No validation errors.' : package.validation.errorMessage}',
           style: theme.textTheme.bodySmall,
         );
@@ -1227,7 +1291,8 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
         _CharacterSheetReviewGroup.character => package.neutralProofBytes,
         _CharacterSheetReviewGroup.layers => package.cleanBytes,
         _CharacterSheetReviewGroup.faces =>
-          package.layerBytes['head'] ?? package.neutralProofBytes,
+          package.facePreviewBytesByExpression[_sheetFaceId] ??
+              package.neutralProofBytes,
         _CharacterSheetReviewGroup.hair =>
           package.layerBytes['front_hair'] ?? package.neutralProofBytes,
         _CharacterSheetReviewGroup.poses =>

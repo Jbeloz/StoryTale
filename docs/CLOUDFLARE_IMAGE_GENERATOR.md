@@ -63,9 +63,10 @@ planned route uses SDXL at `1024 x 576` and follows the
 3. Choose `Sheet` for the new contract or `Sprite` only for the legacy master.
 4. Configure Actor, Hair, and Skin in Sprite Studio before a Sheet request.
 5. Generate once only when the deployed Worker and Gemini billing are ready.
-6. Phase 7G.1B.3 now validates, cuts, masks, packages, and locally composes the
-   returned sheet. Phase 7G.1B.4 now adds the four-pose package review and six
-   read-only proof groups; Phase 7G.1C owns the next exact-fidelity gate.
+6. Phase 7G.1B.3 validates, cuts, masks, packages, and locally composes the
+   returned sheet. Phase 7G.1B.4 adds the package review. Phase 7G.1C now
+   hash-locks the runtime base and builds six face plus four pose proofs; the
+   owner must still accept those proofs after one controlled rerun.
 
 The Flutter client is
 `lib/src/features/animated_story/data/story_artwork_service.dart`.
@@ -83,6 +84,10 @@ fix and safe provider error messages are deployed as Worker version
 `ab9b22c9-b94a-4923-ae33-26eb16dbc808`. No automatic or second paid request was
 made; the controlled rerun remains owner-approved work.
 
+Deployment note (2026-08-03): Phase 7G.1C removes the shared limiter from
+sprite requests in Worker version `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
+No Gemini request or automated test was run during this deployment.
+
 For fitted clothing, the Worker forwards the exact versioned guide and semantic
 outfit brief. Flutter owns the crop manifest and local masks; neither the Worker
 nor Gemini discovers cell boundaries. See
@@ -95,17 +100,16 @@ is a small authenticated backend proxy that protects the server-side Gemini
 key. Google recommends a backend proxy because keys embedded in Flutter web or
 mobile applications can be extracted.
 
-The current repository adds two StoryTale-specific limits:
+The repository keeps StoryTale-specific throttling for non-sprite artwork:
 
-- the Worker `IMAGE_RATE_LIMIT` allows three generation calls per 60 seconds
-  using one shared prototype key; and
-- the Flutter volume-preparation coordinator also allows three artwork calls
-  per 60 seconds.
+- the Worker `IMAGE_RATE_LIMIT` still covers background generation; and
+- the Flutter volume-preparation coordinator still spaces background and
+  foreground artwork calls.
 
-These are project choices, not required Cloudflare or Gemini settings. Phase
-7G.1 removes or disables both small private sprite-component bottlenecks while
-keeping one in-flight call, sequential queuing, design-hash deduplication,
-resume from the first missing component, and no automatic paid regeneration.
+Phase 7G.1C removes the shared Worker limiter and Flutter rate-gate wait from
+sprite generation only. Character-sheet requests still keep one in-flight
+call, design-hash deduplication, ready-package reuse, and no automatic paid
+regeneration.
 
 External capacity is still not unlimited. Cloudflare enforces the account's
 Workers plan limits, while Gemini enforces model/project RPM, image-per-minute,

@@ -1,6 +1,6 @@
 # StoryTale Character Sheet V1 Implementation Plan
 
-Status: **Authoritative Phase 7G.1B plan. Phases 7G.1B.1-7G.1B.4 are implemented locally. The first owner-controlled request was attempted on 2026-08-02 but returned a Worker 502 before packaging; no generated package was accepted. The request-format fix is deployed, one owner-approved rerun and the Phase 7G.1C visual gate remain pending.**
+Status: **Authoritative Phase 7G.1 plan. Phases 7G.1B.1-7G.1B.4 and the Phase 7G.1C enforcement are implemented locally. The first owner-controlled request on 2026-08-02 returned a Worker 502 before packaging; no generated package was accepted. The request-format fix is deployed. One owner-approved rerun, manual review, and acceptance of the Phase 7G.1C proof remain pending.**
 
 This document owns the exact character-sheet contract, implementation order,
 validation gate, and handoff rules for Phase 7G.1B. The Master Roadmap still
@@ -332,11 +332,28 @@ Interactions API can return its default PNG; safe provider failure messages are
 also exposed. That fix is deployed as
 `ab9b22c9-b94a-4923-ae33-26eb16dbc808`. A second paid request was not made.
 
-### Phase 7G.1C - Exact-fidelity gate
+### Phase 7G.1C - Exact-fidelity gate — implemented locally
 
 Prove the Little Prince fixture keeps the exact StoryTale base geometry, one
 stable identity, six faces, and all four poses. Phase 7H Story Mode binding
 remains blocked until that proof passes.
+
+The local processor now verifies the approved hashes for `rig.json` and all ten
+runtime head/body assets before composition. Generated head details are
+rejected if they cross the locked head alpha boundary. Neutral, Talking,
+Happy, Sad, Angry, and Surprised are composed from one actor profile and one
+design hash, stored as six read-only full-character proofs, and must all be
+distinct and valid. The four pose proofs reuse that same identity and select
+the matching face set. A matching ready design hash is reused before any
+provider call. The private Worker no longer applies StoryTale's shared
+three-per-minute limiter to sprite generation; Flutter still permits only one
+character-sheet request at a time, rejects duplicates, never retries a paid
+failure, and keeps real Gemini quota or billing errors visible.
+
+This implementation was completed without a provider request or test run at
+the project owner's direction. It is not accepted until the controlled rerun
+and manual six-face/four-pose review pass. The sprite-limiter change is live in
+Worker version `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
 
 ## 15. Acceptance gate
 
@@ -363,6 +380,7 @@ remains blocked until that proof passes.
 ## 16. Phase handoff rule
 
 Future implementation chats must start with the current Phase 7 section of
-`ROADMAP.md`, then this document. They must implement only the active 7G.1B
-subphase, update both documents together, avoid live paid generation unless the
-project owner explicitly requests it, and stop before the next subphase.
+`ROADMAP.md`, then this document. They must update both documents together,
+avoid live paid generation unless the project owner explicitly requests it,
+and keep Phase 7H blocked until one generated package passes the complete
+7G.1C proof.
