@@ -383,11 +383,11 @@ the existing rig hierarchy to render four distinct proof PNGs, records their
 hashes and validation metadata, exposes six read-only proof groups, and cannot
 become `ready` until the four-pose gate passes. The first accepted generated
 package is still pending. **Corrective Phase 7G.1B.R now has a local-only
-`character_sheet_v2` candidate:** it uses a hair-focused `2048 x 2048`
-transport sheet, one selected back-hair slot slightly larger than the head,
-the reviewed head/torso scale, native-size arm and leg cells, explicit
-transport-content rectangles, unchanged runtime output canvases, regenerated
-masks, and a deterministic offline builder. V1 and every rig/hair source remain
+`character_sheet_v2` candidate:** its `2048 x 2048` sheet uses the exact raster
+canvases assembled by Sprite Studio: back hair `429 x 800`, front hair `429 x
+438`, head `357 x 367`, and native-size body pieces. Every crop equals its
+output canvas, with regenerated masks and a deterministic offline builder. V1
+and every rig/hair source remain
 unchanged behind checkpoint `92e6633`. Owner visual approval of the V2 guide is
 the immediate gate; Flutter, the Worker, and the provider still use V1 and must
 not migrate or spend another request before that approval. Phase 7G.1C is
@@ -429,10 +429,9 @@ Implementation order:
    seam masks, and prompt contract. Make no paid provider request in this
    subphase.
 8. **Local candidate complete in corrective Phase 7G.1B.R:** preserve V1 and
-   build `character_sheet_v2` as one hair-focused 2K transport sheet with one
-   selected back-hair slot slightly larger than the head, the reviewed
-   head/torso scale, native-size arm and leg cells, regenerated masks, and no
-   provider request. Stop for owner visual approval.
+   build `character_sheet_v2` as one 2K sheet whose cells exactly match the
+   raster canvases assembled by Sprite Studio. Keep one selected back-hair
+   slot, regenerated masks, and no provider request. Stop for owner approval.
 9. **Implemented locally in Phase 7G.1B.2 for V1:** request one fixed character sheet
    containing aligned face details, front/back hair, and nine fitted-clothing
    regions without automatic paid retries.
@@ -506,9 +505,8 @@ Current Phase 7G.1 work:
   add one exact crop/anchor manifest, assembled reference, allowed/protected/
   seam masks, and prompt contract without making a paid request.
 - [x] **Corrective Phase 7G.1B.R, local candidate:** preserve V1 and generate a
-  hair-focused `2048 x 2048` V2 guide, masks, manifest, prompt, and reference
-  with one selected back-hair slot, reviewed head/torso scale, native-size
-  limbs, and unchanged runtime output canvases.
+  `2048 x 2048` V2 guide, masks, manifest, prompt, and reference whose separated
+  cells equal the exact raster canvases assembled by Sprite Studio.
 - [ ] **Corrective Phase 7G.1B.R owner gate:** visually approve the V2 guide
   before connecting it to Flutter, the Worker, or Gemini.
 - [x] **Phase 7G.1B.2, local implementation:** connect one controlled fixed-sheet provider
@@ -772,7 +770,7 @@ These decisions must be recorded here when resolved.
 | `SPRITE_STUDIO_PLAN.md` | Rig and pose editor behavior |
 | `MODULAR_FACE_SYSTEM_PLAN.md` | Face-part catalogs and set behavior |
 | `GENERATED_CHARACTER_PIPELINE_PLAN.md` | Template-constrained Gemini character, real rig, face/pose proof, and Story Mode binding gate |
-| `CHARACTER_SHEET_PLAN.md` | Authoritative V1/V2 character-sheet contracts, hair-focused transport correction, local proof pipeline, and Phase 7G.1B acceptance gates |
+| `CHARACTER_SHEET_PLAN.md` | Authoritative V1/V2 exact-part contracts, Sprite Studio raster mapping, local proof pipeline, and Phase 7G.1B acceptance gates |
 | `FIXED_HAIR_SLOT_PLAN.md` | Universal per-actor/per-style front/back hair fitting and explicit no-back-hair behavior |
 | `CLOUDFLARE_IMAGE_GENERATOR.md` | Worker routes and provider responsibilities |
 | `UI_IMPLEMENTATION_PLAN.md` | Responsive screen and reusable-widget reference |

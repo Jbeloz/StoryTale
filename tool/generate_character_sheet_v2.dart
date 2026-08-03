@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math' as math;
 
 import 'package:crypto/crypto.dart';
 import 'package:image/image.dart' as image;
@@ -12,6 +11,7 @@ const _v1Root =
 const _v2Root =
     'assets/images/characters/generation_templates/humanoid_v1/'
     'character_sheet_v2';
+const _rigManifestPath = 'assets/images/characters/rigs/humanoid_v1/rig.json';
 
 const _targets = <_TargetSpec>[
   _TargetSpec(
@@ -22,66 +22,71 @@ const _targets = <_TargetSpec>[
       'back_hair_medium',
       'back_hair_long',
     ],
-    crop: _Rect(32, 32, 576, 988),
+    crop: _Rect(32, 32, 429, 800),
   ),
   _TargetSpec(
     id: 'front_hair',
     sourceRegionId: 'front_hair',
-    crop: _Rect(640, 32, 576, 576),
+    crop: _Rect(493, 32, 429, 438),
   ),
   _TargetSpec(
     id: 'head',
     sourceRegionId: 'head',
-    crop: _Rect(1280, 32, 512, 512),
+    crop: _Rect(954, 32, 357, 367),
   ),
   _TargetSpec(
     id: 'torso',
     sourceRegionId: 'torso',
-    crop: _Rect(1280, 608, 360, 512),
+    crop: _Rect(1343, 32, 165, 234),
   ),
   _TargetSpec(
     id: 'upper_arm_right',
     sourceRegionId: 'upper_arm_right',
-    crop: _Rect(1680, 608, 67, 118),
+    crop: _Rect(1540, 32, 67, 118),
   ),
   _TargetSpec(
     id: 'upper_arm_left',
     sourceRegionId: 'upper_arm_left',
-    crop: _Rect(1790, 608, 78, 128),
+    crop: _Rect(1639, 32, 78, 128),
   ),
   _TargetSpec(
     id: 'lower_arm_right',
     sourceRegionId: 'lower_arm_right',
-    crop: _Rect(1680, 768, 77, 145),
+    crop: _Rect(1750, 32, 77, 145),
   ),
   _TargetSpec(
     id: 'lower_arm_left',
     sourceRegionId: 'lower_arm_left',
-    crop: _Rect(1790, 768, 86, 129),
+    crop: _Rect(1860, 32, 86, 129),
   ),
   _TargetSpec(
     id: 'upper_leg_right',
     sourceRegionId: 'upper_leg_right',
-    crop: _Rect(1680, 960, 94, 150),
+    crop: _Rect(1540, 209, 94, 150),
   ),
   _TargetSpec(
     id: 'upper_leg_left',
     sourceRegionId: 'upper_leg_left',
-    crop: _Rect(1800, 960, 85, 141),
+    crop: _Rect(1666, 209, 85, 141),
   ),
   _TargetSpec(
     id: 'lower_leg_right',
     sourceRegionId: 'lower_leg_right',
-    crop: _Rect(1680, 1152, 84, 156),
+    crop: _Rect(1783, 209, 84, 156),
   ),
   _TargetSpec(
     id: 'lower_leg_left',
     sourceRegionId: 'lower_leg_left',
-    crop: _Rect(1800, 1152, 88, 140),
+    crop: _Rect(1899, 209, 88, 140),
   ),
 ];
 
 void main() {
+  final rigManifest =
+      jsonDecode(File(_rigManifestPath).readAsStringSync())
+          as Map<String, dynamic>;
+  _validateTargetSizesAgainstRig(rigManifest);
+
   final v1ManifestFile = File('$_v1Root/crop_manifest.json');
   final v1Manifest =
       jsonDecode(v1ManifestFile.readAsStringSync()) as Map<String, dynamic>;
@@ -102,13 +107,8 @@ void main() {
 
   for (final target in _targets) {
     final sourceRegion = v1Regions[target.sourceRegionId]!;
-    final outputCanvas = sourceRegion['outputCanvas'] as Map<String, dynamic>;
-    final content = _contain(
-      sourceWidth: (outputCanvas['width'] as num).toInt(),
-      sourceHeight: (outputCanvas['height'] as num).toInt(),
-      targetWidth: target.crop.width,
-      targetHeight: target.crop.height,
-    );
+    final sourceCanvas = sourceRegion['outputCanvas'] as Map<String, dynamic>;
+    final content = _Rect(0, 0, target.crop.width, target.crop.height);
 
     final sourceAsset = sourceRegion['sourceAsset'] as String;
     final sourceArtwork = _decode(sourceAsset)..channels = image.Channels.rgba;
@@ -158,10 +158,26 @@ void main() {
 
     final region = Map<String, dynamic>.from(sourceRegion)
       ..['id'] = target.id
+      ..['rigPartId'] = target.rigPartId
       ..['crop'] = target.crop.toJson()
+      ..['sourceCanvas'] = Map<String, dynamic>.from(sourceCanvas)
+      ..['outputCanvas'] = <String, int>{
+        'width': target.crop.width,
+        'height': target.crop.height,
+      }
+      ..['attachmentAnchor'] = _scalePoint(
+        sourceRegion['attachmentAnchor'] as Map<String, dynamic>,
+        sourceCanvas,
+        target.crop,
+      )
+      ..['seamAnchors'] = _scaleSeamAnchors(
+        sourceRegion['seamAnchors'] as List<dynamic>? ?? const <dynamic>[],
+        sourceCanvas,
+        target.crop,
+      )
       ..['maskRegionId'] = target.id
       ..['transportContent'] = content.toJson()
-      ..['resampling'] = 'linear-once-after-masking';
+      ..['resampling'] = 'none-after-provider';
     if (target.id == 'back_hair_selected') {
       region
         ..['sourceAsset'] = v1Regions['back_hair_medium']!['sourceAsset']
@@ -212,10 +228,9 @@ void main() {
     'maskEncoding': v1Manifest['maskEncoding'],
     'lockedRig': v1Manifest['lockedRig'],
     'transport': <String, dynamic>{
-      'purpose':
-          'resize hair transport only while preserving reviewed head and torso sizes and native limb cells',
-      'extractFrom': 'transportContent',
-      'outputPolicy': 'resize once to outputCanvas after masking',
+      'purpose': 'use the exact raster canvases assembled by Sprite Studio',
+      'extractFrom': 'crop',
+      'outputPolicy': 'preserve each crop exactly as outputCanvas',
       'originalRuntimeAssetsRemainImmutable': true,
     },
     'selectionContract': <String, dynamic>{
@@ -225,7 +240,7 @@ void main() {
     },
     'rules': <String, dynamic>{
       'cropCoordinatesAreInclusiveExclusive': true,
-      'resizeRegions': true,
+      'resizeRegions': false,
       'cropToVisiblePixels': false,
       'inactiveOptionalRegionsRemainGreen': true,
       'visibleCellBorders': false,
@@ -240,6 +255,31 @@ void main() {
   stdout.writeln('Canvas: $_canvasSize x $_canvasSize');
   stdout.writeln('Regions: ${manifestRegions.length}');
   stdout.writeln('No network or provider request was used.');
+}
+
+void _validateTargetSizesAgainstRig(Map<String, dynamic> rigManifest) {
+  final rigParts = <String, Map<String, dynamic>>{
+    for (final raw in rigManifest['parts'] as List<dynamic>)
+      (raw as Map<String, dynamic>)['id'] as String: raw,
+  };
+
+  for (final target in _targets) {
+    final rigPart = rigParts[target.rigPartId];
+    if (rigPart == null) {
+      throw StateError('Missing Sprite Studio rig part ${target.rigPartId}.');
+    }
+    final size = rigPart['size'] as Map<String, dynamic>;
+    final expectedWidth = (size['width'] as num).toDouble().round();
+    final expectedHeight = (size['height'] as num).toDouble().round();
+    if (target.crop.width != expectedWidth ||
+        target.crop.height != expectedHeight) {
+      throw StateError(
+        '${target.id} must match Sprite Studio rig part ${target.rigPartId}: '
+        '${expectedWidth}x$expectedHeight, found '
+        '${target.crop.width}x${target.crop.height}.',
+      );
+    }
+  }
 }
 
 image.Image _solidImage(int red, int green, int blue) {
@@ -298,24 +338,40 @@ void _unionMask({
   }
 }
 
-_Rect _contain({
-  required int sourceWidth,
-  required int sourceHeight,
-  required int targetWidth,
-  required int targetHeight,
-}) {
-  final scale = math.min(
-    targetWidth / sourceWidth,
-    targetHeight / sourceHeight,
-  );
-  final width = math.max(1, (sourceWidth * scale).round());
-  final height = math.max(1, (sourceHeight * scale).round());
-  return _Rect(
-    ((targetWidth - width) / 2).round(),
-    ((targetHeight - height) / 2).round(),
-    width,
-    height,
-  );
+Map<String, double> _scalePoint(
+  Map<String, dynamic> point,
+  Map<String, dynamic> sourceCanvas,
+  _Rect outputCanvas,
+) => <String, double>{
+  'x':
+      (point['x'] as num).toDouble() *
+      outputCanvas.width /
+      (sourceCanvas['width'] as num).toDouble(),
+  'y':
+      (point['y'] as num).toDouble() *
+      outputCanvas.height /
+      (sourceCanvas['height'] as num).toDouble(),
+};
+
+List<Map<String, double>> _scaleSeamAnchors(
+  List<dynamic> anchors,
+  Map<String, dynamic> sourceCanvas,
+  _Rect outputCanvas,
+) {
+  final scaleX = outputCanvas.width / (sourceCanvas['width'] as num).toDouble();
+  final scaleY =
+      outputCanvas.height / (sourceCanvas['height'] as num).toDouble();
+  final radiusScale = (scaleX + scaleY) / 2;
+  return anchors
+      .map((raw) {
+        final anchor = raw as Map<String, dynamic>;
+        return <String, double>{
+          'x': (anchor['x'] as num).toDouble() * scaleX,
+          'y': (anchor['y'] as num).toDouble() * scaleY,
+          'radius': (anchor['radius'] as num).toDouble() * radiusScale,
+        };
+      })
+      .toList(growable: false);
 }
 
 void _writePng(String path, image.Image value) {
@@ -337,6 +393,8 @@ class _TargetSpec {
   final String sourceRegionId;
   final List<String> maskSourceRegionIds;
   final _Rect crop;
+
+  String get rigPartId => id == 'back_hair_selected' ? 'back_hair' : id;
 
   List<String> get effectiveMaskSourceRegionIds => maskSourceRegionIds.isEmpty
       ? <String>[sourceRegionId]

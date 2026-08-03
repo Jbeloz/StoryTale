@@ -1,6 +1,6 @@
 # StoryTale Character Sheet V1 and V2 Implementation Plan
 
-Status: **Authoritative Phase 7G.1 plan. The V1 Flutter/Worker pipeline and the Phase 7G.1C enforcement are implemented locally, but no generated package has been accepted. Corrective Phase 7G.1B.R now has a local-only `character_sheet_v2` candidate with a hair-focused `2048 x 2048` transport layout. Owner approval of the V2 guide is the immediate gate. Flutter and the Worker still use V1, and no V2 provider request is authorized before that approval.**
+Status: **Authoritative Phase 7G.1 plan. The V1 Flutter/Worker pipeline and the Phase 7G.1C enforcement are implemented locally, but no generated package has been accepted. Corrective Phase 7G.1B.R now has a local-only `character_sheet_v2` candidate whose `2048 x 2048` sheet contains the exact raster canvases assembled by Sprite Studio. Owner approval of the V2 guide is the immediate gate. Flutter and the Worker still use V1, and no V2 provider request is authorized before that approval.**
 
 This document owns the exact character-sheet contract, implementation order,
 validation gate, and handoff rules for Phase 7G.1B. The Master Roadmap still
@@ -34,27 +34,27 @@ AI-drawn full-body master.
 The old name `clothing_sheet_v1` is superseded by the versioned
 `character_sheet_v1` and `character_sheet_v2` contracts.
 
-## 2A. Corrective Phase 7G.1B.R - hair-focused V2 transport contract
+## 2A. Corrective Phase 7G.1B.R - exact Sprite Studio part contract
 
-The native-size V1 sheet made the three hair canvases dominate a `4096 x
-4096` provider output. V2 resizes the hair presentation only. The owner keeps
-the reviewed V2 head and torso scale, requires all arm and leg cells to remain
-at their original native sizes, and keeps runtime output geometry immutable:
+The native-source V1 sheet made the `1254`-pixel hair source canvases dominate
+a `4096 x 4096` provider output even though Sprite Studio renders those hair
+parts much smaller. V2 rasterizes the hair copies to the rig's actual render
+size and uses the exact Sprite Studio canvas for every separated region:
 
 | Region family | V2 transport cell | Runtime output |
 | --- | --- | --- |
-| selected back hair | `576 x 988` | unchanged `1254 x 2150` hair canvas |
-| front hair | `576 x 576` | unchanged `1254 x 1254` hair canvas |
-| head/face details | `512 x 512` | unchanged `357 x 367` head part |
-| torso clothing | `360 x 512` | unchanged `165 x 234` torso part |
+| selected back hair | `429 x 800` | `429 x 800` Sprite Studio raster |
+| front hair | `429 x 438` | `429 x 438` Sprite Studio raster |
+| head/face details | `357 x 367` | unchanged `357 x 367` head part |
+| torso clothing | `165 x 234` | unchanged `165 x 234` torso part |
 | each arm or leg piece | its exact native size | the same native canvas |
 
-Only one `back_hair_selected` transport cell exists. The manifest maps
+Only one `back_hair_selected` cell exists. The manifest maps
 `short`, `medium`, `long`, or `none` to that slot while retaining every
-original catalog asset. Each region records a `transportContent` rectangle.
-After masking, the future V2 processor will extract that rectangle and resize
-it exactly once to the recorded `outputCanvas`; it must never crop to visible
-pixels or alter rig geometry, pivots, anchors, or source assets.
+original catalog asset. The source hair canvases remain unchanged, but the V2
+guide and output use the same rounded raster dimensions as the rig renderer.
+Every crop equals its recorded `outputCanvas`, so the future V2 processor must
+not resize after extraction or alter rig geometry, pivots, anchors, or seams.
 
 The deterministic local builder is `tool/generate_character_sheet_v2.dart`.
 It creates the guide, masks, reference copy, hashes, and manifest without a
@@ -166,9 +166,8 @@ of repeating crop rectangles or guessing component boundaries.
 - validation tolerances that are deterministic and versioned.
 
 V2 additionally stores the `2K` provider image size, one selected back-hair
-slot and its variant map, each fixed transport crop, its inner
-`transportContent`, the unchanged runtime `outputCanvas`, and the one-time
-resampling policy.
+slot and its variant map, each exact Sprite Studio crop and output canvas, the
+original source canvas for traceability, and a no-post-crop-resize policy.
 
 The manifest must be reviewed visually once against the approved guide. After
 approval, changing any rectangle, mask, or anchor requires a new sheet version.
@@ -193,8 +192,8 @@ version. An identical ready result is reused instead of generated again.
 ## 8. Gemini output rules
 
 The V2 target contract requires one exact `2048 x 2048` PNG, one active
-`back_hair_selected` slot or an explicit empty `none`, hair-focused transport
-cells, flat green gaps, and no provider-added labels or borders. The current
+`back_hair_selected` slot or an explicit empty `none`, exact Sprite Studio part
+canvases, flat green gaps, and no provider-added labels or borders. The current
 V1 integration keeps the following historical requirements until the owner
 approves V2 and the migration is implemented:
 
@@ -239,11 +238,10 @@ steps locally:
 12. Apply the same layers to Idle, Talking, Pointing, and Walking.
 13. Register the package only after every deterministic validation passes.
 
-The V1 processor never detects cells with AI, crops to visible content, resizes
-an individual part, or asks the provider to repair one failed cell
-automatically. The future V2 processor may use only the manifest's explicit
-`transportContent` and one deterministic resize to the unchanged runtime
-`outputCanvas`; it may not perform content detection or iterative resizing.
+The processor never detects cells with AI, crops to visible content, resizes an
+extracted V2 part, or asks the provider to repair one failed cell
+automatically. Each V2 crop already equals the exact Sprite Studio
+`outputCanvas`.
 
 ## 10. Full-character consistency gate
 
@@ -336,13 +334,12 @@ Phase 7G.1B.1 completed without a paid provider request.
 ### Phase 7G.1B.R - V2 transport correction - local candidate complete
 
 1. Preserve V1 and the locked runtime assets unchanged.
-2. Create the hair-focused `2048 x 2048` V2 guide with one selected back-hair
-   slot that is slightly larger than the head.
-3. Keep the reviewed head and torso scale and restore every arm and leg cell
-   to its exact native size.
+2. Create the `2048 x 2048` V2 guide with one selected back-hair slot at the
+   rig's exact `429 x 800` raster size and front hair at `429 x 438`.
+3. Use the exact Sprite Studio raster sizes for the head, torso, arms, and legs.
 4. Regenerate allowed, protected, and seam masks deterministically.
-5. Record the `2K` provider contract, hashes, variant mapping, and one-time
-   resampling rule.
+5. Record the `2K` provider contract, hashes, variant mapping, and the rule that
+   V2 crops are used without post-provider resizing.
 6. Stop for owner visual approval before Flutter/Worker migration or Gemini.
 
 The local candidate was generated after checkpoint `92e6633`. It made no
@@ -434,8 +431,8 @@ version `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
 - [x] V1 and all original rig/hair assets remain unchanged behind checkpoint
   `92e6633`.
 - [x] The local V2 candidate is exactly `2048 x 2048`, uses one selected
-  back-hair slot slightly larger than the head, keeps the reviewed head/torso
-  scale, and keeps every arm and leg transport cell at native size.
+  back-hair slot, and makes every crop equal the exact raster canvas assembled
+  by Sprite Studio.
 - [x] The V2 guide, masks, manifest, prompt, hashes, and deterministic builder
   are versioned without a provider request.
 - [ ] The owner visually approves the V2 guide and layout.

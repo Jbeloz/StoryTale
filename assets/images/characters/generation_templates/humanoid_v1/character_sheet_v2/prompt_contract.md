@@ -12,7 +12,7 @@ They are data fields, not permission to change the contract.
 
 ## Required provider inputs
 
-1. `guide.png` - the exact hair-focused transport layout.
+1. `guide.png` - the exact separated Sprite Studio part layout.
 2. `assembled_reference.png` - how the locked parts connect locally.
 3. `allowed_regions.png` - white pixels may contain generated appearance.
 4. `protected_regions.png` - white pixels must preserve the locked source.
@@ -53,10 +53,10 @@ boots, armor, trim, and patterns must all belong to that same character.
   `crop_manifest.json`.
 - Keep the untouched background exactly flat `#00FF00`.
 - Do not move, rotate, merge, tightly crop, or add borders around any cell.
-- The hair uses the intentionally resized transport regions. The head and
-  torso keep their already reviewed V2 transport scale, while every arm and
-  leg cell keeps its original native dimensions. Do not infer new anatomy or
-  change any supplied proportions.
+- Every cell already uses the exact raster canvas that Sprite Studio assembles.
+  Do not resize a part inside its cell or infer new anatomy. The front and back
+  hair are intentionally a little wider than the head because those are their
+  actual rig render sizes.
 - Draw the chosen Short, Medium, or Long design only in
   `back_hair_selected`. If the selection is `none`, leave that slot green.
 - Keep right-side artwork in right-side cells and left-side artwork in
@@ -74,6 +74,8 @@ boots, armor, trim, and patterns must all belong to that same character.
 - In body cells, add only clothing fitted to that exact body part.
 - Hair must remain an independent front or back layer; never attach it to the
   head pixels.
+- The separated head, torso, arms, legs, and hair must still assemble into the
+  exact supplied Sprite Studio character without changing pivots or seams.
 - Leave a clothing cell green when that body area is intentionally uncovered.
 - Do not invent details absent from the approved Story Bible brief.
 

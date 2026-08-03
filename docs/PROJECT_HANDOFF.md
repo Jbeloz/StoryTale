@@ -330,13 +330,12 @@ single-active-actor JSON shape migrates into the new manifest safely.
 The current implemented provider path still uses fixed `character_sheet_v1`.
 Corrective Phase 7G.1B.R has now produced a local-only
 `character_sheet_v2` candidate for owner review. V2 keeps the same coherent
-character method while separating hair-focused provider transport sizes from the
-unchanged runtime canvases:
+character method while using the exact raster canvases assembled by Sprite
+Studio:
 
-1. StoryTale will supply one locked `2048 x 2048` guide with one selected
-   back-hair slot slightly larger than the head, the reviewed head/torso scale,
-   native-size arm and leg cells, a locally assembled neutral reference, and
-   the source-backed brief.
+1. StoryTale will supply one locked `2048 x 2048` guide with back hair at
+   `429 x 800`, front hair at `429 x 438`, head at `357 x 367`, and every body
+   piece at its exact native Sprite Studio size.
 2. Gemini returns only separated masked face details, front/back hair, and nine
    fitted clothing regions; it does not return another assembled body.
 3. StoryTale removes the flat green locally.
@@ -510,10 +509,10 @@ The [Master Roadmap](ROADMAP.md) is authoritative. As of this handoff:
    read-only review groups; and `ready` requires the full four-pose gate. The
    first accepted owner-controlled generated package remains pending.
 6. **Local corrective candidate: Phase 7G.1B.R** - `character_sheet_v2` is a
-   hair-focused `2048 x 2048` contract with one selected back-hair slot
-   slightly larger than the head, the reviewed head/torso scale, native-size
-   limbs, unchanged runtime output canvases, regenerated masks, and a
-   deterministic offline builder. It made no provider request.
+   `2048 x 2048` exact-part contract whose separated crops equal the raster
+   canvases assembled by Sprite Studio. It has one selected back-hair slot,
+   regenerated masks, and a deterministic offline builder. It made no provider
+   request.
 7. **Immediate gate:** visually approve or reject the V2 guide. Do not connect
    V2 to Flutter/Worker or spend another Gemini request before approval.
 8. **Implemented locally: Phase 7G.1C** — the V1 package now verifies the approved
