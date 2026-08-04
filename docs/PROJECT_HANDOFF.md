@@ -1,6 +1,6 @@
 # StoryTale Complete Project Handoff
 
-Last verified: **2 August 2026**
+Last verified: **5 August 2026**
 
 This document is the starting point for a new StoryTale chat. It summarizes
 the product, implementation, data contracts, decisions, feedback, rejected
@@ -513,7 +513,7 @@ The [Master Roadmap](ROADMAP.md) is authoritative. As of this handoff:
 | Phase | Status | Meaning |
 | --- | --- | --- |
 | 0 Foundation/UI | Done | shell, theme, navigation, reusable screens |
-| 1 EPUB import | Partial | session import works; persistence/volumes missing |
+| 1 EPUB import | Mostly done | durable books, artwork, scroll and page reading; EPUB bytes/volumes/database missing |
 | 2 Sprite Studio | Prototype done | rig/poses/bones/layers/five faces work |
 | 3 Visual-novel runtime | Prototype done | layouts/camera/motion/Gemini contract work with fixtures |
 | 4 Story Bible | Done | entities, auto-approval, location requirements |
@@ -524,6 +524,53 @@ The [Master Roadmap](ROADMAP.md) is authoritative. As of this handoff:
 | 9 Final ChapterStory builder | Planned | generic all-chapter packages and beat actions |
 | 10 DeepL/offline audio | Planned | real translation and mobile ONNX audio |
 | 11 Release validation | Planned | physical Android, failures, accessibility, storage |
+
+### Current thread — read this first
+
+On 4-5 August 2026 the owner **paused Phase 7** and approved a narrow reader
+detour so the Week 4 Local EPUB reader milestone (16 August) is demonstrable.
+That detour is complete and committed on `master`:
+
+| Commit | Work |
+| --- | --- |
+| `555f07c` | offline hash guard over `character_sheet_v1/v2/v3` and the locked rig |
+| `36676e2` | imported books, chapters, progress, bookmarks, and settings survive a restart |
+| `2acfe37` | covers shrunk so they persist; chapter illustrations shown inline with tap-to-zoom |
+| `d9e1895` | artwork recovered from pages the contents omit, 7 of 16 images to 15 of 16 |
+| `c94eae4` | page-by-page reading mode beside the scrolling reader |
+
+**Phase 7 is paused, not abandoned.** It is parked exactly where `555f07c` left
+it, with the V3 migration checklist recorded in
+[Character Sheet Plan](CHARACTER_SHEET_PLAN.md) under "V3 migration surface".
+
+**The next task is to resume Phase 7.** Start with whichever the owner prefers:
+
+1. the pending manual Phase 7G.1A.1 actor/pose/reload verification, which has
+   been open for a while and is the owner's to perform; or
+2. the V3 migration decision, whose Flutter-side surface is six known changes
+   plus five Worker constants that need a deployment.
+
+Do not make a Gemini or other paid request, and do not deploy the Worker,
+without the owner's explicit approval for that exact action.
+
+These reader limits are **deliberate and documented**, not defects to
+re-investigate: the roughly 1.8 MB library image budget, page position being
+restored approximately through the progress fraction, and text on pages the
+table of contents omits being unreachable because chapters come from the EPUB
+navigation.
+
+Two live details that are not in Git history:
+
+- `.claude/settings.json` is **intentionally uncommitted**. The harness rewrote
+  it when permission prompts were accepted; it added an `allow` list and
+  reordered keys while keeping every protective entry. Leave it to the owner.
+- A web preview may still be running on port `52827`. Check before launching
+  another, and replace rather than duplicate it.
+
+`test/sprite_rig_test.dart` "Sprite Studio has responsive editing and undo redo"
+has been failing since before this thread and is unrelated to it. It is a real
+Sprite Studio defect: an AppBar `RenderFlex` overflow plus a missing
+`face-neutral` key.
 
 ### Exact current and next work
 
@@ -925,6 +972,16 @@ Recommended prompt for a new chat:
 > checkpoint first, use targeted validation only, update the existing web
 > preview unless I say not to, and stop after reporting results, testing
 > instructions, missing work, and the next phase.
+
+Short resume prompt after clearing a chat:
+
+> Read `docs/PROJECT_HANDOFF.md`, section 11 "Current thread" first, then the
+> current section of `docs/ROADMAP.md`. Continue from there as usual.
+
+Clearing a chat is safe **because these documents are the memory**. Keep them
+current at the end of every work unit and no context is lost when a session
+ends. If a session is cleared mid-task, the next one starts from the last
+recorded state, so record status before stopping rather than after.
 
 ## 20. Handoff rules for future chats
 
