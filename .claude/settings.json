@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "defaultMode": "default",
+    "disableAutoMode": "disable",
+    "disableBypassPermissionsMode": "disable",
+    "ask": [
+      "WebFetch",
+      "WebSearch",
+      "Bash(curl *)",
+      "PowerShell(Invoke-RestMethod *)",
+      "PowerShell(Invoke-WebRequest *)",
+      "Bash(git commit *)",
+      "PowerShell(git commit *)",
+      "Bash(git push *)",
+      "PowerShell(git push *)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.flutter)",
+      "Read(./cloudflare/image-worker/.dev.vars)",
+      "Edit(./.env)",
+      "Edit(./.env.flutter)",
+      "Edit(./cloudflare/image-worker/.dev.vars)",
+      "Bash(git reset --hard *)",
+      "PowerShell(git reset --hard *)",
+      "Bash(git clean -f*)",
+      "PowerShell(git clean -f*)",
+      "Bash(git push --force*)",
+      "PowerShell(git push --force*)",
+      "Bash(git push -f *)",
+      "PowerShell(git push -f *)"
+    ]
+  }
+}

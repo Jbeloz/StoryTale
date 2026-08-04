@@ -709,6 +709,10 @@ Academic schedule (not the same as live engineering status):
 
 | Path | Responsibility |
 | --- | --- |
+| `AGENTS.md` | shared safety, coordination, validation, and handoff contract for every coding agent |
+| `CLAUDE.md` | concise Claude Code entry point that imports the shared agent contract |
+| `.claude/settings.json` | shared Claude permissions that protect secrets and disable unsafe bypass modes |
+| `StoryTale.code-workspace` | canonical VS Code workspace for opening this checkout with Claude, Dart, and Flutter recommendations |
 | `docs/ROADMAP.md` | only source of truth for current/next phases |
 | `docs/ARCHITECTURE.md` | providers, boundaries, folders, and data flow |
 | `docs/REQUIREMENTS.md` | product acceptance requirements |
@@ -737,6 +741,28 @@ Main Flutter dependencies: `epubx`, `file_picker`, `html`, `http`, `image`,
 `audioplayers`, `shared_preferences`, and Poppins font assets.
 
 ## 18. Running and verification
+
+### Canonical VS Code and Claude Code entry
+
+Open `StoryTale.code-workspace` from this repository instead of selecting a
+StoryTale folder from VS Code's recent-project history. On this PC, the
+canonical checkout is:
+
+```text
+C:\Users\Houro\Desktop\IT Elect 4\storytale
+```
+
+The repository versions `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, and
+the VS Code extension recommendations. Claude Code must start at the repository
+root, obey the normal permission prompts, read this handoff and the current
+roadmap section, and stop at the documented phase gate. Codex and Claude must
+not edit the same checkout concurrently; use separate worktrees if parallel
+work is ever required.
+
+The tracked Claude permission policy prevents access to local secret files,
+requires confirmation for network and Git publication actions, blocks common
+destructive Git cleanup and force-push commands, and disables bypass/auto
+permission modes. Secrets remain local and ignored.
 
 The web preview was checked before this handoff. **Port 52827 was not running,
 the open StoryTale tabs showed connection errors, and the browser-control

@@ -1,0 +1,18 @@
+{
+  "folders": [
+    {
+      "name": "StoryTale (canonical)",
+      "path": "."
+    }
+  ],
+  "extensions": {
+    "recommendations": [
+      "anthropic.claude-code",
+      "dart-code.dart-code",
+      "dart-code.flutter"
+    ]
+  },
+  "settings": {
+    "window.title": "${dirty}${activeEditorShort}${separator}${folderPath}${separator}${appName}"
+  }
+}

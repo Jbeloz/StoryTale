@@ -55,6 +55,10 @@ docs/ui-concepts/ui/*.zip
 docs/ui-concepts/ui/*.epub
 docs/ui-concepts/ui/.docx_qa_*/
 
+# Personal agent settings stay local; shared rules are versioned separately.
+.claude/settings.local.json
+CLAUDE.local.md
+
 # Symbolication related
 app.*.symbols
 
