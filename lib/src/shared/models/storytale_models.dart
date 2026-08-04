@@ -19,6 +19,80 @@ class ChapterTextBlock {
   Map<String, dynamic> toJson() => {'id': id, 'text': text};
 }
 
+/// A running total of how many image bytes a save may still store.
+///
+/// Local storage on the web preview holds only a few megabytes, so artwork is
+/// written until the budget runs out. Text, progress, and covers are never
+/// sacrificed to illustrations.
+class ImageByteBudget {
+  ImageByteBudget(this.remaining);
+
+  int remaining;
+
+  bool take(int bytes) {
+    if (bytes > remaining) return false;
+    remaining -= bytes;
+    return true;
+  }
+}
+
+/// One illustration inside a chapter.
+///
+/// Illustrations are stored apart from [ChapterTextBlock] so Story Mode's
+/// contract that every source block appears exactly once stays untouched.
+/// [afterBlockIndex] is how many text blocks precede the image.
+class ChapterImageData {
+  ChapterImageData({
+    required this.id,
+    required this.afterBlockIndex,
+    this.bytes,
+    this.alt = '',
+  });
+
+  final String id;
+  final int afterBlockIndex;
+  final Uint8List? bytes;
+  final String alt;
+
+  /// True when the image was known at import but its bytes did not fit the
+  /// local storage budget. The reader shows a placeholder instead.
+  bool get isStored => bytes != null && bytes!.isNotEmpty;
+
+  factory ChapterImageData.fromJson(Map<String, dynamic> json) {
+    final raw = json['bytes'];
+    Uint8List? bytes;
+    if (raw is String && raw.isNotEmpty) {
+      try {
+        bytes = base64Decode(raw);
+      } catch (_) {
+        bytes = null;
+      }
+    }
+    return ChapterImageData(
+      id: _string(json['id']),
+      afterBlockIndex: json['afterBlockIndex'] is num
+          ? (json['afterBlockIndex'] as num).toInt()
+          : 0,
+      bytes: bytes,
+      alt: _string(json['alt']),
+    );
+  }
+
+  Map<String, dynamic> toJson({ImageByteBudget? budget}) {
+    final data = bytes;
+    final fits =
+        data != null &&
+        data.isNotEmpty &&
+        (budget == null || budget.take(data.lengthInBytes));
+    return {
+      'id': id,
+      'afterBlockIndex': afterBlockIndex,
+      if (alt.isNotEmpty) 'alt': alt,
+      if (fits) 'bytes': base64Encode(data),
+    };
+  }
+}
+
 class ChapterData {
   ChapterData({
     required this.id,
@@ -26,6 +100,7 @@ class ChapterData {
     required this.originalText,
     this.type = ChapterType.chapter,
     this.sourceBlocks = const [],
+    this.images = const [],
     this.translatedText,
     this.progress = 0,
     this.bookmarked = false,
@@ -36,6 +111,7 @@ class ChapterData {
   final String originalText;
   final ChapterType type;
   final List<ChapterTextBlock> sourceBlocks;
+  final List<ChapterImageData> images;
   String? translatedText;
   double progress;
   bool bookmarked;
@@ -54,6 +130,9 @@ class ChapterData {
           : blocks.map((block) => block.text).join('\n\n'),
       type: _enumByName(ChapterType.values, json['type'], ChapterType.chapter),
       sourceBlocks: blocks,
+      images: _jsonMaps(
+        json['images'],
+      ).map(ChapterImageData.fromJson).toList(growable: false),
       translatedText: json['translatedText'] is String
           ? json['translatedText'] as String
           : null,
@@ -62,7 +141,7 @@ class ChapterData {
     );
   }
 
-  Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toJson({ImageByteBudget? budget}) => {
     'id': id,
     'title': title,
     if (sourceBlocks.isEmpty) 'originalText': originalText,
@@ -70,6 +149,10 @@ class ChapterData {
     'sourceBlocks': sourceBlocks
         .map((block) => block.toJson())
         .toList(growable: false),
+    if (images.isNotEmpty)
+      'images': images
+          .map((item) => item.toJson(budget: budget))
+          .toList(growable: false),
     if (translatedText != null) 'translatedText': translatedText,
     'progress': progress,
     'bookmarked': bookmarked,
@@ -105,10 +188,11 @@ class BookData {
   double progress;
   DateTime lastOpenedAt;
 
-  /// Covers larger than this are dropped rather than persisted. Local storage
-  /// on the web preview is a few megabytes in total, and a missing cover
-  /// already falls back to the shared image placeholder.
-  static const maxPersistedCoverBytes = 300 * 1024;
+  /// Covers are shrunk to a thumbnail at import by `ReaderImageCodec`, so a
+  /// persisted cover is normally well under 100 KB. This is only a guard
+  /// against an absurd value reaching local storage; it is not a display or
+  /// quality limit.
+  static const maxPersistedCoverBytes = 2 * 1024 * 1024;
 
   factory BookData.fromJson(Map<String, dynamic> json) {
     final cover = json['coverBytes'];
@@ -145,7 +229,7 @@ class BookData {
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toJson({ImageByteBudget? budget}) {
     final cover = coverBytes;
     return {
       'id': id,
@@ -155,7 +239,7 @@ class BookData {
       'description': description,
       'tags': tags,
       'chapters': chapters
-          .map((chapter) => chapter.toJson())
+          .map((chapter) => chapter.toJson(budget: budget))
           .toList(growable: false),
       if (coverPath != null) 'coverPath': coverPath,
       if (cover != null && cover.lengthInBytes <= maxPersistedCoverBytes)

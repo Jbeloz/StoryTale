@@ -475,12 +475,19 @@ bookmarks, cached translated text, the current position, and reader settings for
 reading progress changes on every scroll frame. Both are restored by
 `StoryTaleController.restore()` at startup.
 
-Two deliberate limits apply. Parsed chapters are stored rather than raw EPUB
-bytes, and a cover above `BookData.maxPersistedCoverBytes` (300 KB) is dropped,
-because the web preview keeps these values in browser local storage, which holds
-only a few megabytes in total. A failed write sets
-`StoryTaleController.libraryStorageFailed` and is logged; it never throws and
-never loses the in-memory session.
+Parsed chapters are stored rather than raw EPUB bytes, because the web preview
+keeps these values in browser local storage, which holds only a few megabytes in
+total. A failed write sets `StoryTaleController.libraryStorageFailed` and is
+logged; it never throws and never loses the in-memory session.
+
+`ReaderImageCodec` shrinks artwork once at import: covers to 600 px wide JPEG and
+chapter illustrations to 800 px. The repository fixture's 1.9 MB cover becomes
+about 153 KB, and its seven interior illustrations total about 814 KB, so one
+illustrated book fits comfortably. `LibraryRepository.imageByteBudget`
+(1.8 MB) then caps how much artwork the whole library may store, spent in
+reading order. An illustration past the budget keeps its ID and position but
+stores no bytes, and the reader draws a placeholder instead. Chapter text,
+progress, and covers are never dropped for artwork.
 
 Generated image bytes still use a session-only `StoryAssetBinaryStore`, and
 volume jobs and original EPUB bytes remain session-oriented. Therefore an app
@@ -590,12 +597,19 @@ their roadmap gates unless a blocking defect requires a narrow fix.
 
 ### Persistence and reading
 
-- Imported books, chapters, source blocks, reading progress, bookmarks, and
-  reader settings now survive a restart. Original EPUB bytes, preparation
-  progress, and generated images still do not.
+- Imported books, chapters, source blocks, reading progress, bookmarks, reader
+  settings, covers, and chapter illustrations within the image budget now
+  survive a restart. Original EPUB bytes, preparation progress, and generated
+  sprite/background images still do not.
 - Browser local storage is only a few megabytes, so a library of several large
   light-novel EPUBs can exceed it. The write fails softly and the session keeps
   working, but the durable fix is Phase 8 file storage.
+- Only artwork on pages listed in the table of contents is imported, because
+  chapters come from the EPUB navigation rather than the spine. Cover pages and
+  colour galleries are therefore not reachable as chapters, and the fixture
+  yields seven of its sixteen images.
+- Stored illustrations are lossy display copies, not archival originals.
+- The reader is scroll-only. A page-by-page mode is the agreed next reader task.
 - Book IDs are time-based (`book-${microsecondsSinceEpoch}`), so importing the
   same file twice creates two library entries. Content-hash IDs and dedupe
   belong with Phase 8.

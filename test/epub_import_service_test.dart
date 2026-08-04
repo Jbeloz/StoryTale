@@ -36,6 +36,39 @@ void main() {
       );
       expect(book.coverBytes, isNotEmpty);
       expect(book.chapters.first.sourceBlocks.first.id, endsWith('block-0001'));
+
+      // The source cover is 1.9 MB; it is shrunk once at import so it fits
+      // local storage and still draws as a thumbnail.
+      expect(book.coverBytes!.lengthInBytes, lessThan(400 * 1024));
+
+      final images = book.chapters.expand((item) => item.images).toList();
+      // Seven interior illustrations sit inside chapters the table of contents
+      // lists. Image-only pages outside the contents are not chapters, so
+      // their artwork is not reachable yet.
+      expect(images, hasLength(7));
+      for (final illustration in images) {
+        expect(illustration.isStored, isTrue);
+        // Every source illustration is around 1 MB before shrinking.
+        expect(illustration.bytes!.lengthInBytes, lessThan(250 * 1024));
+        expect(illustration.id, contains('-image-'));
+      }
+
+      final withImages = book.chapters.where((item) => item.images.isNotEmpty);
+      for (final chapter in withImages) {
+        for (final illustration in chapter.images) {
+          // An illustration is anchored between the surrounding paragraphs.
+          expect(illustration.afterBlockIndex, greaterThanOrEqualTo(0));
+          expect(
+            illustration.afterBlockIndex,
+            lessThanOrEqualTo(chapter.sourceBlocks.length),
+          );
+        }
+        // Story Mode's source-block contract stays untouched by artwork.
+        expect(
+          chapter.sourceBlocks.map((block) => block.id).toSet(),
+          hasLength(chapter.sourceBlocks.length),
+        );
+      }
     },
     skip: fixture.existsSync() ? false : 'Local EPUB fixture is not available.',
   );

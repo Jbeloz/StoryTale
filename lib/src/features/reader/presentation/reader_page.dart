@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/state/storytale_scope.dart';
 import '../../../shared/models/storytale_models.dart';
 import '../../../shared/widgets/storytale_components.dart';
+import '../../../shared/widgets/storytale_image_placeholder.dart';
 import '../../narration/presentation/audio_pages.dart';
 
 class ReaderPage extends StatefulWidget {
@@ -126,16 +127,23 @@ class _ReaderPageState extends State<ReaderPage> {
             ),
           ),
           Expanded(
+            // A lazy ListView would give an unstable maxScrollExtent and break
+            // the progress save/restore below, so the chapter stays in one
+            // scroll view.
             child: SingleChildScrollView(
               controller: _scrollController,
               padding: const EdgeInsets.all(20),
-              child: Text(
-                content,
+              child: _ChapterBody(
+                chapter: chapter,
+                text: content,
                 style: TextStyle(
                   fontSize: settings.textSize,
                   height: settings.lineSpacing,
                   fontFamily: settings.fontFamily == 'Serif' ? 'serif' : null,
                 ),
+                // Translated text is one block, so interleaving art into it is
+                // not meaningful.
+                showImages: !_translateMode,
               ),
             ),
           ),
@@ -265,6 +273,137 @@ class _ReaderPageState extends State<ReaderPage> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Chapter text with its illustrations kept in their original places.
+class _ChapterBody extends StatelessWidget {
+  const _ChapterBody({
+    required this.chapter,
+    required this.text,
+    required this.style,
+    required this.showImages,
+  });
+
+  final ChapterData chapter;
+  final String text;
+  final TextStyle style;
+  final bool showImages;
+
+  @override
+  Widget build(BuildContext context) {
+    final blocks = chapter.sourceBlocks;
+    if (!showImages || chapter.images.isEmpty || blocks.isEmpty) {
+      return Text(text, style: style);
+    }
+
+    final children = <Widget>[];
+    final pending = <String>[];
+
+    void flushText() {
+      if (pending.isEmpty) return;
+      children.add(Text(pending.join('\n\n'), style: style));
+      pending.clear();
+    }
+
+    for (var index = 0; index <= blocks.length; index++) {
+      for (final image in chapter.images) {
+        if (image.afterBlockIndex != index) continue;
+        flushText();
+        children.add(_ChapterIllustration(image: image));
+      }
+      if (index < blocks.length) pending.add(blocks[index].text);
+    }
+    flushText();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: children,
+    );
+  }
+}
+
+class _ChapterIllustration extends StatelessWidget {
+  const _ChapterIllustration({required this.image});
+
+  final ChapterImageData image;
+
+  /// Illustrations are print sized, so they are capped against the screen
+  /// instead of overflowing the scroll view.
+  static const _viewportFraction = 0.7;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = image.alt.isEmpty ? 'Chapter illustration' : image.alt;
+    final maxHeight = MediaQuery.sizeOf(context).height * _viewportFraction;
+
+    if (!image.isStored) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: StoryTaleImagePlaceholder(
+          label: '$label\n(not stored on this device)',
+          height: 160,
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Semantics(
+        label: label,
+        image: true,
+        child: GestureDetector(
+          onTap: () => _openFullScreen(context, label),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxHeight),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.memory(
+                image.bytes!,
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, _) =>
+                    StoryTaleImagePlaceholder(label: label, height: 160),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openFullScreen(BuildContext context, String label) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => _IllustrationViewerPage(image: image, label: label),
+      ),
+    );
+  }
+}
+
+class _IllustrationViewerPage extends StatelessWidget {
+  const _IllustrationViewerPage({required this.image, required this.label});
+
+  final ChapterImageData image;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          minScale: 1,
+          maxScale: 5,
+          child: Image.memory(image.bytes!, fit: BoxFit.contain),
         ),
       ),
     );

@@ -132,6 +132,14 @@ class LibraryRepository {
   static const importedBooksKey = 'storytale.library.v1.imported_books';
   static const readingStateKey = 'storytale.library.v1.reading_state';
 
+  /// How many illustration bytes the whole library may keep.
+  ///
+  /// Browser local storage holds only a few megabytes, and base64 adds about a
+  /// third on top. Roughly one or two illustrated books keep their artwork;
+  /// past that, images are remembered but their bytes are not stored, and the
+  /// reader shows a placeholder. Chapter text is never dropped for artwork.
+  static const imageByteBudget = 1800 * 1024;
+
   Future<List<BookData>> loadImportedBooks() async {
     final preferences = await SharedPreferences.getInstance();
     final source = preferences.getString(importedBooksKey);
@@ -155,9 +163,16 @@ class LibraryRepository {
   }
 
   Future<LibraryWriteResult> saveImportedBooks(List<BookData> books) {
+    // One budget spans the whole library, spent in reading order, so the books
+    // a reader opened first keep their artwork.
+    final budget = ImageByteBudget(imageByteBudget);
     return _write(
       importedBooksKey,
-      jsonEncode(books.map((book) => book.toJson()).toList(growable: false)),
+      jsonEncode(
+        books
+            .map((book) => book.toJson(budget: budget))
+            .toList(growable: false),
+      ),
     );
   }
 

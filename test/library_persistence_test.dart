@@ -47,6 +47,44 @@ void main() {
     );
   }
 
+  /// One chapter, two text blocks, and two illustrations of a given size.
+  BookData illustratedBook({required int imageBytes}) {
+    const chapterId = 'book-illustrated-chapter-1';
+    final blocks = [
+      const ChapterTextBlock(id: '$chapterId-block-0001', text: 'Before.'),
+      const ChapterTextBlock(id: '$chapterId-block-0002', text: 'After.'),
+    ];
+    return BookData(
+      id: 'book-illustrated',
+      title: 'An Illustrated Book',
+      author: 'A Local Author',
+      description: 'Imported locally for the test.',
+      tags: const ['Imported'],
+      chapters: [
+        ChapterData(
+          id: chapterId,
+          title: 'Chapter 1',
+          originalText: 'Before.\n\nAfter.',
+          sourceBlocks: blocks,
+          images: [
+            ChapterImageData(
+              id: '$chapterId-image-0001',
+              afterBlockIndex: 1,
+              alt: 'A drawing',
+              bytes: Uint8List(imageBytes),
+            ),
+            ChapterImageData(
+              id: '$chapterId-image-0002',
+              afterBlockIndex: 2,
+              bytes: Uint8List(imageBytes),
+            ),
+          ],
+        ),
+      ],
+      sourceFileName: 'illustrated.epub',
+    );
+  }
+
   Future<StoryTaleController> restoredController() async {
     final controller = StoryTaleController();
     await controller.restore();
@@ -147,7 +185,19 @@ void main() {
     expect(second.bookById('book-imported-1'), isNull);
   });
 
-  test('an oversized cover is dropped but the book still loads', () async {
+  test('a shrunk cover survives a restart', () async {
+    // The importer shrinks a print-resolution cover to a thumbnail, so a
+    // realistic persisted cover is well under the guard.
+    final cover = Uint8List.fromList(List<int>.filled(150 * 1024, 7));
+    final controller = StoryTaleController();
+    controller.addImportedBook(importedBook(cover: cover));
+    await pumpEventQueue();
+
+    final restored = await restoredController();
+    expect(restored.bookById('book-imported-1')!.coverBytes, cover);
+  });
+
+  test('an absurd cover is dropped but the book still loads', () async {
     final controller = StoryTaleController();
     controller.addImportedBook(
       importedBook(cover: Uint8List(BookData.maxPersistedCoverBytes + 1024)),
@@ -161,15 +211,42 @@ void main() {
     expect(book.chapters, hasLength(2));
   });
 
-  test('a small cover is kept', () async {
-    final cover = Uint8List.fromList(List<int>.filled(64, 7));
+  test('illustrations within the budget survive a restart', () async {
     final controller = StoryTaleController();
-    controller.addImportedBook(importedBook(cover: cover));
+    controller.addImportedBook(illustratedBook(imageBytes: 80 * 1024));
     await pumpEventQueue();
 
     final restored = await restoredController();
-    expect(restored.bookById('book-imported-1')!.coverBytes, cover);
+    final chapter = restored.bookById('book-illustrated')!.chapters.first;
+    expect(chapter.images, hasLength(2));
+    expect(chapter.images.every((image) => image.isStored), isTrue);
+    expect(chapter.images.first.afterBlockIndex, 1);
+    expect(chapter.images.first.alt, 'A drawing');
   });
+
+  test(
+    'illustrations past the budget keep their place without bytes',
+    () async {
+      final controller = StoryTaleController();
+      // Two images far larger than the whole library budget.
+      controller.addImportedBook(
+        illustratedBook(imageBytes: LibraryRepository.imageByteBudget),
+      );
+      await pumpEventQueue();
+
+      final restored = await restoredController();
+      final book = restored.bookById('book-illustrated');
+      expect(book, isNotNull);
+
+      final chapter = book!.chapters.first;
+      // Text is never sacrificed for artwork.
+      expect(chapter.sourceBlocks, hasLength(2));
+      expect(chapter.images, hasLength(2));
+      expect(chapter.images.first.isStored, isTrue);
+      expect(chapter.images.last.isStored, isFalse);
+      expect(chapter.images.last.afterBlockIndex, 2);
+    },
+  );
 
   test('corrupt stored data falls back to the demo library', () async {
     SharedPreferences.setMockInitialValues({
