@@ -482,12 +482,17 @@ logged; it never throws and never loses the in-memory session.
 
 `ReaderImageCodec` shrinks artwork once at import: covers to 600 px wide JPEG and
 chapter illustrations to 800 px. The repository fixture's 1.9 MB cover becomes
-about 153 KB, and its seven interior illustrations total about 814 KB, so one
-illustrated book fits comfortably. `LibraryRepository.imageByteBudget`
-(1.8 MB) then caps how much artwork the whole library may store, spent in
-reading order. An illustration past the budget keeps its ID and position but
-stores no bytes, and the reader draws a placeholder instead. Chapter text,
-progress, and covers are never dropped for artwork.
+about 153 KB, and its fifteen illustrations total about 1.7 MB.
+`LibraryRepository.imageByteBudget` (1.8 MB) then caps how much artwork the
+whole library may store, spent in reading order. An illustration past the budget
+keeps its ID and position but stores no bytes, and the reader draws a
+placeholder instead. Chapter text, progress, and covers are never dropped for
+artwork.
+
+That fixture therefore consumes nearly the entire budget on its own: one
+illustrated light novel keeps all of its artwork, and a second one will mostly
+fall back to placeholders. This is the expected ceiling until Phase 8 adds real
+file storage.
 
 Generated image bytes still use a session-only `StoryAssetBinaryStore`, and
 volume jobs and original EPUB bytes remain session-oriented. Therefore an app
@@ -604,10 +609,10 @@ their roadmap gates unless a blocking defect requires a narrow fix.
 - Browser local storage is only a few megabytes, so a library of several large
   light-novel EPUBs can exceed it. The write fails softly and the session keeps
   working, but the durable fix is Phase 8 file storage.
-- Only artwork on pages listed in the table of contents is imported, because
-  chapters come from the EPUB navigation rather than the spine. Cover pages and
-  colour galleries are therefore not reachable as chapters, and the fixture
-  yields seven of its sixteen images.
+- Chapters still come from the EPUB navigation, so an unlisted page is not a
+  chapter and its text is not readable. Only its artwork is recovered, by
+  handing it to the chapter it precedes. The fixture yields 15 of its 16 images,
+  the sixteenth being the cover.
 - Stored illustrations are lossy display copies, not archival originals.
 - The reader is scroll-only. A page-by-page mode is the agreed next reader task.
 - Book IDs are time-based (`book-${microsecondsSinceEpoch}`), so importing the

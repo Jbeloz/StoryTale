@@ -99,6 +99,9 @@ Completed:
 - chapter illustrations are extracted at import, shrunk once, anchored between
   the surrounding paragraphs, and drawn inline in the reader at no more than
   about seventy percent of the screen height, with tap-to-zoom
+- artwork on pages the table of contents omits, such as colour galleries, is
+  recovered by walking the spine and handed to the chapter it precedes, without
+  changing chapter identity, IDs, or source blocks
 - covers are shrunk to a thumbnail at import so they always survive a restart
 
 Still missing:
@@ -106,8 +109,6 @@ Still missing:
 - original EPUB byte storage and a chosen local database package
 - durable generated image bytes and saved preparation progress
 - a page-by-page reading mode beside the current scrolling reader
-- artwork on pages the table of contents does not list, such as colour
-  galleries, which are not imported as chapters today
 - `Book -> Volume -> Chapter` models and migration
 - box-set and separately imported volume grouping
 - chapter/volume boundary review for uncertain EPUBs

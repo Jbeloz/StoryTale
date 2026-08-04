@@ -33,7 +33,9 @@ class EpubImportService {
       final epub = await EpubReader.readBook(bytes);
       final metadata = epub.Schema?.Package?.Metadata;
       final id = 'book-${DateTime.now().microsecondsSinceEpoch}';
-      final chapters = _chapters(epub, id);
+      final imageIndex = _imageIndex(epub);
+      final coverKey = _coverKey(imageIndex);
+      final chapters = _chapters(epub, id, imageIndex, coverKey);
       if (chapters.isEmpty) {
         throw const EpubImportException(
           'No readable story chapters were found in this EPUB.',
@@ -53,7 +55,13 @@ class EpubImportService {
             : description,
         tags: ['Imported', ...subjects.take(4)],
         chapters: chapters,
-        coverBytes: _coverBytes(epub),
+        coverBytes: coverKey == null
+            ? null
+            // EPUB covers are print resolution; the reader only ever draws a
+            // thumbnail, and the full size does not fit local storage.
+            : const ReaderImageCodec().shrinkCover(
+                imageIndex[coverKey]?.Content,
+              ),
         sourceFileName: fileName,
       );
     } on EpubImportException {
@@ -65,7 +73,12 @@ class EpubImportService {
     }
   }
 
-  List<ChapterData> _chapters(EpubBook epub, String bookId) {
+  List<ChapterData> _chapters(
+    EpubBook epub,
+    String bookId,
+    Map<String, EpubByteContentFile> imageIndex,
+    String? coverKey,
+  ) {
     final flat = <EpubChapter>[];
 
     void addChapter(EpubChapter chapter) {
@@ -79,10 +92,12 @@ class EpubImportService {
       addChapter(chapter);
     }
 
-    final imageIndex = _imageIndex(epub);
     final shrunk = <String, Uint8List?>{};
-
     final result = <ChapterData>[];
+    // The page each kept chapter came from, so spine pages that no chapter
+    // owns can be matched against it below.
+    final chapterFiles = <String>[];
+
     for (final chapter in flat) {
       final title = _valueOr(chapter.Title, 'Chapter ${result.length + 1}');
       if (_isFrontOrBackMatter(title)) continue;
@@ -105,22 +120,14 @@ class EpubImportService {
 
       final images = <ChapterImageData>[];
       for (final reference in content.images) {
-        final key = _basename(reference.href);
-        final source = imageIndex[key];
-        if (source == null) continue;
-        final bytes = shrunk.putIfAbsent(
-          key,
-          () => const ReaderImageCodec().shrinkIllustration(source.Content),
-        );
-        if (bytes == null || bytes.isEmpty) continue;
+        final artwork = _artwork(reference, imageIndex, shrunk, coverKey);
+        if (artwork == null) continue;
         images.add(
           ChapterImageData(
-            id:
-                '$chapterId-image-'
-                '${(images.length + 1).toString().padLeft(4, '0')}',
+            id: '$chapterId-image-0000',
             afterBlockIndex: reference.afterBlockIndex,
-            bytes: bytes,
-            alt: reference.alt,
+            bytes: artwork.bytes,
+            alt: artwork.alt,
           ),
         );
       }
@@ -135,8 +142,164 @@ class EpubImportService {
           images: images,
         ),
       );
+      chapterFiles.add(_basename(chapter.ContentFileName ?? ''));
+    }
+
+    _attachUnlistedArtwork(
+      epub,
+      result,
+      chapterFiles,
+      imageIndex,
+      shrunk,
+      coverKey,
+    );
+    _numberImages(result);
+    return result;
+  }
+
+  /// Recovers artwork from pages the table of contents does not list.
+  ///
+  /// Chapters come from the EPUB navigation, but colour galleries and other
+  /// illustration pages are usually missing from it, so their artwork would be
+  /// lost. Walking the spine — the real page order — those images are handed to
+  /// the chapter that follows them, which is where a reader meets them anyway.
+  /// Chapter identity, IDs, and source blocks are untouched.
+  void _attachUnlistedArtwork(
+    EpubBook epub,
+    List<ChapterData> chapters,
+    List<String> chapterFiles,
+    Map<String, EpubByteContentFile> imageIndex,
+    Map<String, Uint8List?> shrunk,
+    String? coverKey,
+  ) {
+    if (chapters.isEmpty) return;
+    final htmlIndex = _htmlIndex(epub);
+    final owned = chapterFiles.where((file) => file.isNotEmpty).toSet();
+    final pending = <_Artwork>[];
+
+    void flushInto(ChapterData chapter, int afterBlockIndex, bool atTop) {
+      if (pending.isEmpty) return;
+      final recovered = pending
+          .map(
+            (artwork) => ChapterImageData(
+              id: '${chapter.id}-image-0000',
+              afterBlockIndex: afterBlockIndex,
+              bytes: artwork.bytes,
+              alt: artwork.alt,
+            ),
+          )
+          .toList(growable: false);
+      chapter.images.insertAll(atTop ? 0 : chapter.images.length, recovered);
+      pending.clear();
+    }
+
+    for (final file in _spineFiles(epub)) {
+      final ownerIndex = chapterFiles.indexOf(file);
+      if (ownerIndex != -1) {
+        // The gallery belongs above the text of the chapter it precedes.
+        flushInto(chapters[ownerIndex], 0, true);
+        continue;
+      }
+      if (owned.contains(file)) continue;
+
+      final source = htmlIndex[file];
+      if (source == null || source.trim().isEmpty) continue;
+      for (final reference in _sectionContent(source).images) {
+        final artwork = _artwork(reference, imageIndex, shrunk, coverKey);
+        if (artwork != null) pending.add(artwork);
+      }
+    }
+
+    // Artwork after the last listed chapter still belongs to the book.
+    final last = chapters.last;
+    flushInto(last, last.sourceBlocks.length, false);
+  }
+
+  _Artwork? _artwork(
+    _ImageReference reference,
+    Map<String, EpubByteContentFile> imageIndex,
+    Map<String, Uint8List?> shrunk,
+    String? coverKey,
+  ) {
+    final key = _basename(reference.href);
+    // The cover already has its own slot; it is not a chapter illustration.
+    if (key == coverKey) return null;
+    final source = imageIndex[key];
+    if (source == null) return null;
+    final bytes = shrunk.putIfAbsent(
+      key,
+      () => const ReaderImageCodec().shrinkIllustration(source.Content),
+    );
+    if (bytes == null || bytes.isEmpty) return null;
+    return _Artwork(bytes: bytes, alt: reference.alt);
+  }
+
+  /// Gives every illustration a stable, ordered ID once its chapter is final.
+  void _numberImages(List<ChapterData> chapters) {
+    for (final chapter in chapters) {
+      final ordered = [...chapter.images]
+        ..sort((a, b) => a.afterBlockIndex.compareTo(b.afterBlockIndex));
+      chapter.images
+        ..clear()
+        ..addAll(
+          ordered.indexed.map(
+            (entry) => ChapterImageData(
+              id:
+                  '${chapter.id}-image-'
+                  '${(entry.$1 + 1).toString().padLeft(4, '0')}',
+              afterBlockIndex: entry.$2.afterBlockIndex,
+              bytes: entry.$2.bytes,
+              alt: entry.$2.alt,
+            ),
+          ),
+        );
+    }
+  }
+
+  /// The book's real page order, which includes pages the contents omit.
+  List<String> _spineFiles(EpubBook epub) {
+    final package = epub.Schema?.Package;
+    final hrefById = <String, String>{};
+    for (final item in package?.Manifest?.Items ?? const []) {
+      final id = item.Id;
+      final href = item.Href;
+      if (id != null && href != null && href.isNotEmpty) hrefById[id] = href;
+    }
+
+    final files = <String>[];
+    for (final reference in package?.Spine?.Items ?? const []) {
+      final href = hrefById[reference.IdRef ?? ''];
+      if (href == null || href.isEmpty) continue;
+      files.add(_basename(href));
+    }
+    return files;
+  }
+
+  Map<String, String> _htmlIndex(EpubBook epub) {
+    final result = <String, String>{};
+    final files = epub.Content?.Html ?? const <String, EpubTextContentFile>{};
+    for (final entry in files.entries) {
+      final content = entry.value.Content;
+      if (content == null || content.isEmpty) continue;
+      result.putIfAbsent(_basename(entry.key), () => content);
+      final fileName = entry.value.FileName;
+      if (fileName != null && fileName.isNotEmpty) {
+        result.putIfAbsent(_basename(fileName), () => content);
+      }
     }
     return result;
+  }
+
+  String? _coverKey(Map<String, EpubByteContentFile> imageIndex) {
+    for (final entry in imageIndex.entries) {
+      final content = entry.value.Content;
+      if (entry.key.contains('cover') &&
+          content != null &&
+          content.isNotEmpty) {
+        return entry.key;
+      }
+    }
+    return null;
   }
 
   /// Reads one section in document order so illustrations keep their place
@@ -213,21 +376,6 @@ class EpubImportService {
     }
   }
 
-  Uint8List? _coverBytes(EpubBook epub) {
-    final images =
-        epub.Content?.Images ?? const <String, EpubByteContentFile>{};
-    for (final entry in images.entries) {
-      final name = '${entry.key} ${entry.value.FileName}'.toLowerCase();
-      final content = entry.value.Content;
-      if (name.contains('cover') && content != null && content.isNotEmpty) {
-        // EPUB covers are print resolution; the reader only ever draws a
-        // thumbnail, and the full size does not fit local storage.
-        return const ReaderImageCodec().shrinkCover(content);
-      }
-    }
-    return null;
-  }
-
   bool _isFrontOrBackMatter(String title) => RegExp(
     r'^(cover|color inserts?|title page|copyright|credits?|contents|table of contents|about the author|newsletter|acknowledg|dedication|front matter)',
     caseSensitive: false,
@@ -282,6 +430,14 @@ class _ImageReference {
 
   final String href;
   final int afterBlockIndex;
+  final String alt;
+}
+
+/// One resolved and shrunk illustration, before it is placed in a chapter.
+class _Artwork {
+  const _Artwork({required this.bytes, required this.alt});
+
+  final Uint8List bytes;
   final String alt;
 }
 
