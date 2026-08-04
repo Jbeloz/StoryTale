@@ -388,10 +388,14 @@ cells while packing front hair plus separate Short, Medium, and Long back-hair
 options into one `4096 x 1024` (`4:1`, `2K`) landscape sheet. The checked-in
 guide/reference use actor `default`; the manifest retains identical geometry
 and actor-specific source mapping for future heroine use. V1, V2, and every
-rig/hair source remain unchanged behind their checkpoints. Owner visual
-approval of V3 is the immediate gate; Flutter, the Worker, and the provider
-still use V1 and must not migrate or spend another request before that
-approval. Phase 7G.1C is
+rig/hair source remain unchanged behind their checkpoints. On 2026-08-04 the
+owner selected V3 as the future active contract. Flutter, the Worker, and the
+provider still use V1 because V3 migration and provider work are paused until
+the owner explicitly asks to continue. The `4096 x 1024` `2K` tier remains the
+minimum supported `4:1` output that can preserve the `800`-pixel-tall Long
+back-hair cell without resizing; any smaller-tier reconsideration must first
+prove lower billed usage and exact-cell compatibility without a paid trial.
+Phase 7G.1C is
 implemented locally: the processor
 hash-locks the ten runtime head/body assets, rejects face pixels outside the
 locked head, creates six distinct face proofs plus four face-aware pose proofs,
@@ -436,8 +440,9 @@ Implementation order:
 9. **Latest local candidate in corrective Phase 7G.1B.R2:** preserve V1/V2 and
    build `character_sheet_v3` as a `4096 x 1024` landscape catalog with one
    front-hair cell and separate Short/Medium/Long back-hair cells. Keep the
-   default actor active, record heroine-compatible sources, and stop for owner
-   approval without a provider request.
+   default actor active, record heroine-compatible sources, and stop without a
+   provider request. The owner selected V3 on 2026-08-04; migration is paused
+   until the owner explicitly resumes it.
 10. **Implemented locally in Phase 7G.1B.2 for V1:** request one fixed character sheet
    containing aligned face details, front/back hair, and nine fitted-clothing
    regions without automatic paid retries.
@@ -517,8 +522,9 @@ Current Phase 7G.1 work:
   generate a `4096 x 1024` V3 landscape guide with one front-hair cell,
   separate Short/Medium/Long back-hair cells, exact body cells, and
   default/heroine actor compatibility metadata.
-- [ ] **Corrective Phase 7G.1B.R2 owner gate:** visually approve the V3 guide
-  before connecting it to Flutter, the Worker, or Gemini.
+- [x] **Corrective Phase 7G.1B.R2 owner gate:** V3 is selected and visually
+  approved as the future contract. Do not connect it to Flutter, the Worker,
+  or Gemini until the owner explicitly asks to resume implementation.
 - [x] **Phase 7G.1B.2, local implementation:** connect one controlled fixed-sheet provider
   request and response to the versioned contract without automatic retry.
 - [x] **Phase 7G.1B.3, local implementation:** produce the fixed-manifest

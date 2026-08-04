@@ -329,9 +329,9 @@ single-active-actor JSON shape migrates into the new manifest safely.
 
 The current implemented provider path still uses fixed `character_sheet_v1`.
 V2 established the exact Sprite Studio output-canvas mapping. Corrective Phase
-7G.1B.R2 has now produced a local-only `character_sheet_v3` candidate for owner
-review. V3 keeps the same coherent-character method while using an efficient
-landscape hair catalog:
+7G.1B.R2 has versioned `character_sheet_v3`; on 2026-08-04 the owner selected
+V3 as the future active contract. V3 keeps the same coherent-character method
+while using an efficient landscape hair catalog:
 
 1. StoryTale will supply one locked `4096 x 1024` (`4:1`, `2K`) guide with one
    `429 x 438` front-hair cell; separate Short, Medium, and Long `429 x 800`
@@ -352,8 +352,18 @@ landscape hair catalog:
 
 V1, V2, and all original hair/rig assets remain unchanged behind their
 checkpoints. The V3 guide, masks, manifest, prompt, hashes, and offline builder
-exist locally, but Flutter and the Worker have not been migrated and no V3
-Gemini request has been made. Owner visual approval of V3 is the current gate.
+are versioned in GitHub, but Flutter and the Worker have not been migrated and
+no V3 Gemini request has been made. The guide/layout selection gate is approved;
+migration and provider work are paused until the owner explicitly asks to
+continue.
+
+The preferred provider output remains `4096 x 1024` (`4:1`, `2K`). The current
+supported smaller `4:1` tier is `2048 x 512` (`1K`), which cannot contain V3's
+`429 x 800` Long back-hair cell at native size. Use a smaller output only if a
+future official Gemini option both reduces billed usage and preserves every
+exact V3 cell without resizing. Re-check official generation dimensions and
+pricing before the one controlled request; do not spend a request merely to
+compare sizes.
 
 Accessories use named anchors and relative layer modes such as behind arm,
 behind hand, or front of hand. A held sword may be partly behind the arm and
@@ -516,8 +526,9 @@ The [Master Roadmap](ROADMAP.md) is authoritative. As of this handoff:
    front hair plus separate Short/Medium/Long back-hair cells, exact body cells,
    default actor preview data, and heroine-compatible geometry/source mapping.
    It made no provider request.
-7. **Immediate gate:** visually approve or reject the V3 guide. Do not connect
-   V3 to Flutter/Worker or spend another Gemini request before approval.
+7. **Owner decision recorded:** V3 is selected and visually approved as the
+   future contract. Do not connect V3 to Flutter/Worker or spend another Gemini
+   request until the owner explicitly asks to resume implementation.
 8. **Implemented locally: Phase 7G.1C** — the V1 package now verifies the approved
    rig and ten head/body asset hashes, rejects generated face pixels outside
    the locked head, produces six distinct expression proofs plus four
@@ -525,7 +536,7 @@ The [Master Roadmap](ROADMAP.md) is authoritative. As of this handoff:
    provider request. The private sprite route's shared three-per-minute
    bottleneck is removed while Flutter keeps one sequential request,
    deduplication, no automatic retry, and real provider quota errors. This was
-   implemented without a paid request or test run. After V3 guide approval and
+   implemented without a paid request or test run. After the owner resumes V3
    migration, one controlled 2K request and owner proof acceptance are still
    required. The Worker portion is deployed as version
    `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.

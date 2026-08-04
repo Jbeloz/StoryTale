@@ -1,6 +1,6 @@
 # StoryTale Character Sheet V1, V2, and V3 Implementation Plan
 
-Status: **Authoritative Phase 7G.1 plan. The V1 Flutter/Worker pipeline and the Phase 7G.1C enforcement are implemented locally, but no generated package has been accepted. V2 established exact Sprite Studio raster cells. Corrective Phase 7G.1B.R2 now has a local-only `character_sheet_v3` candidate that packs front hair plus separate Short, Medium, and Long back-hair cells into an efficient `4096 x 1024` landscape sheet. The checked-in guide uses the default actor and keeps heroine-compatible geometry. Owner approval of V3 is the immediate gate. Flutter and the Worker still use V1, and no V3 provider request is authorized before approval.**
+Status: **Authoritative Phase 7G.1 plan. The V1 Flutter/Worker pipeline and the Phase 7G.1C enforcement are implemented locally, but no generated package has been accepted. V2 established exact Sprite Studio raster cells. Corrective Phase 7G.1B.R2 versions `character_sheet_v3`, which packs front hair plus separate Short, Medium, and Long back-hair cells into an efficient `4096 x 1024` landscape sheet. The checked-in guide uses the default actor and keeps heroine-compatible geometry. On 2026-08-04 the owner selected V3 as the future active contract. Migration, Worker changes, and a V3 provider request remain paused until the owner explicitly asks to continue.**
 
 This document owns the exact character-sheet contract, implementation order,
 validation gate, and handoff rules for Phase 7G.1B. The Master Roadmap still
@@ -89,7 +89,28 @@ The deterministic local builder is `tool/generate_character_sheet_v3.dart`.
 It validates every cell against `rig.json`, rejects overlaps or out-of-canvas
 cells, and creates the guide, masks, reference copy, hashes, and manifest
 without a network request. V2 remains versioned as the exact-part checkpoint;
-V3 is the latest owner-review candidate.
+V3 is the owner-selected contract for the next migration, but is not yet the
+active Flutter, Worker, or provider contract.
+
+### V3 output-size and usage decision
+
+The owner prefers `4096 x 1024` unless an officially supported smaller output
+both reduces billed Gemini usage and preserves every exact native-size cell.
+As checked on 2026-08-04, Gemini 3.1 Flash Image documents these `4:1` outputs:
+
+- `1K` is `2048 x 512`;
+- `2K` is `4096 x 1024`; and
+- `4K` is `8192 x 2048`.
+
+The V3 Long back-hair cell is `429 x 800`, so the `1K` canvas is only `512`
+pixels tall and cannot hold the approved native cell without downscaling. That
+would violate the no-post-extraction-resizing and exact Sprite Studio raster
+contract. `2K` is therefore the smallest currently supported `4:1` tier that
+fits the approved V3 layout. Billing is resolution-tiered and may change, so
+re-check the official [Gemini image-generation dimensions](https://ai.google.dev/gemini-api/docs/image-generation)
+and [Gemini API pricing](https://ai.google.dev/gemini-api/docs/pricing)
+immediately before any live request. Do not change tiers, repack cells, or run
+a paid size experiment without renewed owner approval.
 
 ## 3. V1 source layout retained for rollback
 
@@ -182,7 +203,7 @@ assets/images/characters/generation_templates/humanoid_v1/character_sheet_v3/
 
 The V2 exact-part checkpoint and V3 landscape candidate are locally complete,
 but neither is an active Flutter asset contract. V1 remains unchanged for
-rollback until the owner approves V3 and authorizes migration.
+rollback until the owner explicitly resumes and authorizes the V3 migration.
 
 Widgets, services, tests, and Workers must read the versioned manifest instead
 of repeating crop rectangles or guessing component boundaries.
@@ -212,8 +233,9 @@ V3 stores the `4:1` `2K` provider contract, three independent back-hair cells,
 the default actor used by the checked-in guide, default/heroine source mapping,
 and the same no-post-crop-resize exact-output policy.
 
-The manifest must be reviewed visually once against the approved guide. After
-approval, changing any rectangle, mask, or anchor requires a new sheet version.
+The V3 guide/layout selection is approved. Changing any rectangle, mask,
+anchor, output tier, or aspect ratio requires a new sheet version and renewed
+owner approval.
 
 ## 7. Gemini input
 
@@ -238,7 +260,7 @@ The V3 target contract requires one exact `4096 x 1024` PNG, one front-hair
 cell, separate Short/Medium/Long back-hair cells, exact Sprite Studio part
 canvases, flat green gaps, and no provider-added labels or borders. All hair
 options must belong to the same character. The current V1 integration keeps
-the following historical requirements until the owner approves V3 and the
+the following historical requirements until the owner resumes and the V3
 migration is implemented:
 
 The prompt must require Gemini to:
@@ -402,8 +424,9 @@ network or provider request. Owner guide approval is pending.
 7. Stop for owner approval before Flutter/Worker migration or Gemini.
 
 V3 was generated locally without a network or provider request. It supersedes
-V2 only as the latest review candidate; V2 remains the saved exact-part
-checkpoint.
+V2 as the owner-selected future contract; V2 remains the saved exact-part
+checkpoint. The approval gate is satisfied, but migration is paused at the
+owner's direction and no provider request is authorized.
 
 ### Phase 7G.1B.2 - One-sheet generation — implemented locally
 
@@ -480,9 +503,9 @@ character-sheet request at a time, rejects duplicates, never retries a paid
 failure, and keeps real Gemini quota or billing errors visible.
 
 This implementation was completed without a provider request or test run at
-the project owner's direction. After the V3 guide is approved and the V3
-migration is complete, it still requires one controlled request and a manual
-six-face/four-pose review pass. The sprite-limiter change is live in Worker
+the project owner's direction. After the owner explicitly resumes work and the
+V3 migration is complete, it still requires one controlled request and a
+manual six-face/four-pose review pass. The sprite-limiter change is live in Worker
 version `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
 
 ## 15. Acceptance gate
@@ -503,7 +526,8 @@ version `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
   geometry/source mapping without changing the locked rig.
 - [x] The V3 guide, masks, manifest, prompt, hashes, and deterministic builder
   are versioned without a provider request.
-- [ ] The owner visually approves the V3 guide and layout.
+- [x] The owner selects and visually approves the V3 guide/layout as the future
+  active contract; implementation remains paused until a new request to proceed.
 - [ ] Flutter and the private Worker consume V3 without silently falling back
   to V1 or making an automatic paid retry.
 - [x] Every region has one reviewed crop, output canvas, anchor, role, and side.

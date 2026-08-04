@@ -35,8 +35,9 @@ Sprite Studio cells into a `4096 x 1024` (`4:1`, `2K`) landscape catalog with
 one front-hair slot plus separate Short, Medium, and Long back-hair slots. The
 checked-in guide uses the default actor, while its unchanged rig geometry and
 actor-source mapping make the contract reusable for a future heroine request.
-Owner visual approval of V3 is the next gate; Flutter, the Worker, and Gemini
-still use V1 until approval.
+The owner has selected V3 as the contract to use when implementation resumes.
+Flutter, the Worker, and Gemini still use V1 because migration and provider
+work are deliberately paused until the owner explicitly asks to continue.
 Imported books still remain in memory for the app session,
 DeepL uses placeholder text, the mobile ONNX TTS runtime is not connected, and
 final book-specific layered characters are not complete.
