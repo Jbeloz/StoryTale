@@ -30,11 +30,13 @@ protected, and seam masks, stores transparent session layers and metadata, and
 assembles the neutral full-body proof without redrawing the runtime head or
 body. The same accepted package now composes read-only Idle, Talking, Pointing,
 and Walking proofs and exposes Character, Layers, Faces, Hair, Poses, and
-Details review groups. A local-only V2 correction now provides a 2K sheet whose
-separated cells use the exact raster sizes assembled by Sprite Studio: back
-hair `429 x 800`, front hair `429 x 438`, head `357 x 367`, and every body
-piece at its native size. Owner visual approval of that V2 guide is
-the next gate; Flutter, the Worker, and Gemini still use V1 until approval.
+Details review groups. The latest local-only V3 candidate packs the exact
+Sprite Studio cells into a `4096 x 1024` (`4:1`, `2K`) landscape catalog with
+one front-hair slot plus separate Short, Medium, and Long back-hair slots. The
+checked-in guide uses the default actor, while its unchanged rig geometry and
+actor-source mapping make the contract reusable for a future heroine request.
+Owner visual approval of V3 is the next gate; Flutter, the Worker, and Gemini
+still use V1 until approval.
 Imported books still remain in memory for the app session,
 DeepL uses placeholder text, the mobile ONNX TTS runtime is not connected, and
 final book-specific layered characters are not complete.

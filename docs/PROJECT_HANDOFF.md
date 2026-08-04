@@ -328,29 +328,32 @@ single-active-actor JSON shape migrates into the new manifest safely.
 ### Canonical character-sheet plan
 
 The current implemented provider path still uses fixed `character_sheet_v1`.
-Corrective Phase 7G.1B.R has now produced a local-only
-`character_sheet_v2` candidate for owner review. V2 keeps the same coherent
-character method while using the exact raster canvases assembled by Sprite
-Studio:
+V2 established the exact Sprite Studio output-canvas mapping. Corrective Phase
+7G.1B.R2 has now produced a local-only `character_sheet_v3` candidate for owner
+review. V3 keeps the same coherent-character method while using an efficient
+landscape hair catalog:
 
-1. StoryTale will supply one locked `2048 x 2048` guide with back hair at
-   `429 x 800`, front hair at `429 x 438`, head at `357 x 367`, and every body
-   piece at its exact native Sprite Studio size.
-2. Gemini returns only separated masked face details, front/back hair, and nine
-   fitted clothing regions; it does not return another assembled body.
-3. StoryTale removes the flat green locally.
-4. StoryTale cuts fixed, versioned rectangles using a crop/anchor manifest; it
+1. StoryTale will supply one locked `4096 x 1024` (`4:1`, `2K`) guide with one
+   `429 x 438` front-hair cell; separate Short, Medium, and Long `429 x 800`
+   back-hair cells; and exact native Sprite Studio head/body cells.
+2. The checked-in guide and assembled reference use actor `default`. The same
+   immutable geometry and manifest support a future heroine brief with the
+   recorded heroine-specific hair sources.
+3. Gemini returns only separated masked face details, the coherent hair
+   catalog, and nine fitted clothing regions; it does not return another
+   assembled body.
+4. StoryTale removes the flat green locally.
+5. StoryTale cuts fixed, versioned rectangles using a crop/anchor manifest; it
    does not ask AI to detect part boundaries.
-5. Each region is hard-masked against allowed, protected, and seam masks.
-6. Face, hair, and clothing layers are composed locally over the unchanged
+6. Each region is hard-masked against allowed, protected, and seam masks.
+7. Face, hair, and clothing layers are composed locally over the unchanged
    head and nine body pieces.
-7. One outfit is reused for every pose by following the same bones.
+8. One outfit is reused for every pose by following the same bones.
 
-V1 and all original hair/rig assets remain unchanged behind checkpoint
-`92e6633`. The V2 guide, masks, manifest, prompt, hashes, and offline builder
-exist locally, but Flutter and the Worker have not been migrated and no V2
-Gemini request has been made. Owner visual approval of the guide is the current
-gate.
+V1, V2, and all original hair/rig assets remain unchanged behind their
+checkpoints. The V3 guide, masks, manifest, prompt, hashes, and offline builder
+exist locally, but Flutter and the Worker have not been migrated and no V3
+Gemini request has been made. Owner visual approval of V3 is the current gate.
 
 Accessories use named anchors and relative layer modes such as behind arm,
 behind hand, or front of hand. A held sword may be partly behind the arm and
@@ -508,13 +511,13 @@ The [Master Roadmap](ROADMAP.md) is authoritative. As of this handoff:
    validation metadata; Character, Layers, Faces, Hair, Poses, and Details are
    read-only review groups; and `ready` requires the full four-pose gate. The
    first accepted owner-controlled generated package remains pending.
-6. **Local corrective candidate: Phase 7G.1B.R** - `character_sheet_v2` is a
-   `2048 x 2048` exact-part contract whose separated crops equal the raster
-   canvases assembled by Sprite Studio. It has one selected back-hair slot,
-   regenerated masks, and a deterministic offline builder. It made no provider
-   request.
-7. **Immediate gate:** visually approve or reject the V2 guide. Do not connect
-   V2 to Flutter/Worker or spend another Gemini request before approval.
+6. **Latest local corrective candidate: Phase 7G.1B.R2** -
+   `character_sheet_v3` is a `4096 x 1024` landscape exact-part contract with
+   front hair plus separate Short/Medium/Long back-hair cells, exact body cells,
+   default actor preview data, and heroine-compatible geometry/source mapping.
+   It made no provider request.
+7. **Immediate gate:** visually approve or reject the V3 guide. Do not connect
+   V3 to Flutter/Worker or spend another Gemini request before approval.
 8. **Implemented locally: Phase 7G.1C** — the V1 package now verifies the approved
    rig and ten head/body asset hashes, rejects generated face pixels outside
    the locked head, produces six distinct expression proofs plus four
@@ -522,7 +525,7 @@ The [Master Roadmap](ROADMAP.md) is authoritative. As of this handoff:
    provider request. The private sprite route's shared three-per-minute
    bottleneck is removed while Flutter keeps one sequential request,
    deduplication, no automatic retry, and real provider quota errors. This was
-   implemented without a paid request or test run. After V2 guide approval and
+   implemented without a paid request or test run. After V3 guide approval and
    migration, one controlled 2K request and owner proof acceptance are still
    required. The Worker portion is deployed as version
    `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.

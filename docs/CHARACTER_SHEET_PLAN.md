@@ -1,6 +1,6 @@
-# StoryTale Character Sheet V1 and V2 Implementation Plan
+# StoryTale Character Sheet V1, V2, and V3 Implementation Plan
 
-Status: **Authoritative Phase 7G.1 plan. The V1 Flutter/Worker pipeline and the Phase 7G.1C enforcement are implemented locally, but no generated package has been accepted. Corrective Phase 7G.1B.R now has a local-only `character_sheet_v2` candidate whose `2048 x 2048` sheet contains the exact raster canvases assembled by Sprite Studio. Owner approval of the V2 guide is the immediate gate. Flutter and the Worker still use V1, and no V2 provider request is authorized before that approval.**
+Status: **Authoritative Phase 7G.1 plan. The V1 Flutter/Worker pipeline and the Phase 7G.1C enforcement are implemented locally, but no generated package has been accepted. V2 established exact Sprite Studio raster cells. Corrective Phase 7G.1B.R2 now has a local-only `character_sheet_v3` candidate that packs front hair plus separate Short, Medium, and Long back-hair cells into an efficient `4096 x 1024` landscape sheet. The checked-in guide uses the default actor and keeps heroine-compatible geometry. Owner approval of V3 is the immediate gate. Flutter and the Worker still use V1, and no V3 provider request is authorized before approval.**
 
 This document owns the exact character-sheet contract, implementation order,
 validation gate, and handoff rules for Phase 7G.1B. The Master Roadmap still
@@ -32,7 +32,8 @@ AI-drawn full-body master.
   returned parts. It is validation output, not another generated body.
 
 The old name `clothing_sheet_v1` is superseded by the versioned
-`character_sheet_v1` and `character_sheet_v2` contracts.
+`character_sheet_v1`, `character_sheet_v2`, and `character_sheet_v3`
+contracts.
 
 ## 2A. Corrective Phase 7G.1B.R - exact Sprite Studio part contract
 
@@ -61,6 +62,34 @@ It creates the guide, masks, reference copy, hashes, and manifest without a
 network request. Checkpoint `92e6633` marks the state immediately before this
 correction. The V2 assets are review candidates only until the owner approves
 the guide; runtime and Worker migration deliberately stop at that gate.
+
+## 2B. Corrective Phase 7G.1B.R2 - efficient multi-hair catalog
+
+V3 preserves V2's exact output canvases but changes the provider canvas to the
+supported `4:1` `2K` landscape size, exactly `4096 x 1024`. This removes the
+large unused lower area and restores all requested rear-hair choices in one
+fixed sheet:
+
+| Region family | V3 cells | Runtime output per cell |
+| --- | --- | --- |
+| back hair | separate Short, Medium, and Long cells | `429 x 800` each |
+| front hair | one actor-specific cell | `429 x 438` |
+| head/face details | one cell | `357 x 367` |
+| torso clothing | one cell | `165 x 234` |
+| arms and legs | eight separate cells | exact native Sprite Studio canvases |
+
+The checked-in V3 guide and assembled reference use actor `default`, with
+Medium as its preview selection. The manifest also records the heroine front
+hair and heroine-specific Long rear-hair source. Default and heroine share the
+same immutable `humanoid_v1` crop geometry, masks, anchors, seams, and runtime
+part sizes; a heroine request changes only the source-backed actor brief and
+actor-specific hair references.
+
+The deterministic local builder is `tool/generate_character_sheet_v3.dart`.
+It validates every cell against `rig.json`, rejects overlaps or out-of-canvas
+cells, and creates the guide, masks, reference copy, hashes, and manifest
+without a network request. V2 remains versioned as the exact-part checkpoint;
+V3 is the latest owner-review candidate.
 
 ## 3. V1 source layout retained for rollback
 
@@ -126,6 +155,15 @@ assets/images/characters/generation_templates/humanoid_v1/character_sheet_v2/
 |-- seam_allowances.png
 |-- crop_manifest.json
 `-- prompt_contract.md
+
+assets/images/characters/generation_templates/humanoid_v1/character_sheet_v3/
+|-- guide.png
+|-- assembled_reference.png
+|-- allowed_regions.png
+|-- protected_regions.png
+|-- seam_allowances.png
+|-- crop_manifest.json
+`-- prompt_contract.md
 ```
 
 - `guide.png` is the exact approved `4096 x 4096` layout assembled from native
@@ -142,8 +180,9 @@ assets/images/characters/generation_templates/humanoid_v1/character_sheet_v2/
 - `crop_manifest.json` is the single authority for cell geometry and anchors.
 - `prompt_contract.md` contains the exact provider instructions and exclusions.
 
-The V2 folder is locally complete but is not an active Flutter asset contract
-until its owner visual gate passes. V1 remains available unchanged for rollback.
+The V2 exact-part checkpoint and V3 landscape candidate are locally complete,
+but neither is an active Flutter asset contract. V1 remains unchanged for
+rollback until the owner approves V3 and authorizes migration.
 
 Widgets, services, tests, and Workers must read the versioned manifest instead
 of repeating crop rectangles or guessing component boundaries.
@@ -169,6 +208,10 @@ V2 additionally stores the `2K` provider image size, one selected back-hair
 slot and its variant map, each exact Sprite Studio crop and output canvas, the
 original source canvas for traceability, and a no-post-crop-resize policy.
 
+V3 stores the `4:1` `2K` provider contract, three independent back-hair cells,
+the default actor used by the checked-in guide, default/heroine source mapping,
+and the same no-post-crop-resize exact-output policy.
+
 The manifest must be reviewed visually once against the approved guide. After
 approval, changing any rectangle, mask, or anchor requires a new sheet version.
 
@@ -191,11 +234,12 @@ version. An identical ready result is reused instead of generated again.
 
 ## 8. Gemini output rules
 
-The V2 target contract requires one exact `2048 x 2048` PNG, one active
-`back_hair_selected` slot or an explicit empty `none`, exact Sprite Studio part
-canvases, flat green gaps, and no provider-added labels or borders. The current
-V1 integration keeps the following historical requirements until the owner
-approves V2 and the migration is implemented:
+The V3 target contract requires one exact `4096 x 1024` PNG, one front-hair
+cell, separate Short/Medium/Long back-hair cells, exact Sprite Studio part
+canvases, flat green gaps, and no provider-added labels or borders. All hair
+options must belong to the same character. The current V1 integration keeps
+the following historical requirements until the owner approves V3 and the
+migration is implemented:
 
 The prompt must require Gemini to:
 
@@ -345,6 +389,22 @@ Phase 7G.1B.1 completed without a paid provider request.
 The local candidate was generated after checkpoint `92e6633`. It made no
 network or provider request. Owner guide approval is pending.
 
+### Phase 7G.1B.R2 - V3 landscape catalog - local candidate complete
+
+1. Preserve V1, V2, and all locked runtime/source assets unchanged.
+2. Use the supported `4096 x 1024` (`4:1`, `2K`) provider canvas.
+3. Include separate exact-size Short, Medium, and Long back-hair cells plus one
+   exact-size front-hair cell.
+4. Keep the head, torso, arms, and legs at their exact Sprite Studio rasters.
+5. Record the default actor as the current guide/reference actor and retain the
+   identical geometry plus actor-specific source mapping for a future heroine.
+6. Regenerate masks, anchors, hashes, and the prompt deterministically.
+7. Stop for owner approval before Flutter/Worker migration or Gemini.
+
+V3 was generated locally without a network or provider request. It supersedes
+V2 only as the latest review candidate; V2 remains the saved exact-part
+checkpoint.
+
 ### Phase 7G.1B.2 - One-sheet generation — implemented locally
 
 1. Add the character-sheet request/response contract to Flutter and the private
@@ -356,7 +416,8 @@ network or provider request. Owner guide approval is pending.
 
 The V1 Flutter and Worker contracts are implemented and deployed. The first
 owner-controlled request failed before packaging, no output was accepted, and
-no automatic second request was made. V2 is not connected to either side.
+no automatic second request was made. V2 and V3 are not connected to either
+side.
 
 ### Phase 7G.1B.3 - Local cutout and package builder — implemented locally
 
@@ -419,7 +480,7 @@ character-sheet request at a time, rejects duplicates, never retries a paid
 failure, and keeps real Gemini quota or billing errors visible.
 
 This implementation was completed without a provider request or test run at
-the project owner's direction. After the V2 guide is approved and the V2
+the project owner's direction. After the V3 guide is approved and the V3
 migration is complete, it still requires one controlled request and a manual
 six-face/four-pose review pass. The sprite-limiter change is live in Worker
 version `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
@@ -435,8 +496,15 @@ version `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
   by Sprite Studio.
 - [x] The V2 guide, masks, manifest, prompt, hashes, and deterministic builder
   are versioned without a provider request.
-- [ ] The owner visually approves the V2 guide and layout.
-- [ ] Flutter and the private Worker consume V2 without silently falling back
+- [x] The local V3 candidate is exactly `4096 x 1024`, uses the supported `4:1`
+  `2K` provider shape, and includes front hair plus separate exact-size Short,
+  Medium, and Long rear-hair cells.
+- [x] V3 records actor `default` for the current guide and heroine-compatible
+  geometry/source mapping without changing the locked rig.
+- [x] The V3 guide, masks, manifest, prompt, hashes, and deterministic builder
+  are versioned without a provider request.
+- [ ] The owner visually approves the V3 guide and layout.
+- [ ] Flutter and the private Worker consume V3 without silently falling back
   to V1 or making an automatic paid retry.
 - [x] Every region has one reviewed crop, output canvas, anchor, role, and side.
 - [x] Allowed, protected, and seam masks are versioned and deterministic.
