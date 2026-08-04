@@ -5,6 +5,10 @@ enum PreparationStatus { notStarted, preparing, ready, failed }
 
 enum ReaderLanguageMode { english, filipino, dual }
 
+/// How the reader lays a chapter out: one continuous scroll, or fixed pages
+/// turned sideways like a printed book.
+enum ReaderReadingMode { scroll, page }
+
 enum ChapterType { chapter, sideStory, extra, prologue, epilogue, other }
 
 class ChapterTextBlock {
@@ -646,6 +650,7 @@ class ReaderSettingsData {
     this.theme = 'Light',
     this.lineSpacing = 1.5,
     this.languageMode = ReaderLanguageMode.english,
+    this.readingMode = ReaderReadingMode.scroll,
   });
 
   double textSize;
@@ -653,6 +658,7 @@ class ReaderSettingsData {
   String theme;
   double lineSpacing;
   ReaderLanguageMode languageMode;
+  ReaderReadingMode readingMode;
 
   ReaderSettingsData copy() => ReaderSettingsData(
     textSize: textSize,
@@ -660,6 +666,7 @@ class ReaderSettingsData {
     theme: theme,
     lineSpacing: lineSpacing,
     languageMode: languageMode,
+    readingMode: readingMode,
   );
 
   factory ReaderSettingsData.fromJson(Map<String, dynamic> json) {
@@ -676,6 +683,11 @@ class ReaderSettingsData {
         json['languageMode'],
         defaults.languageMode,
       ),
+      readingMode: _enumByName(
+        ReaderReadingMode.values,
+        json['readingMode'],
+        defaults.readingMode,
+      ),
     );
   }
 
@@ -685,6 +697,7 @@ class ReaderSettingsData {
     'theme': theme,
     'lineSpacing': lineSpacing,
     'languageMode': languageMode.name,
+    'readingMode': readingMode.name,
   };
 }
 

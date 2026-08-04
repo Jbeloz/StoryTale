@@ -5,6 +5,7 @@ import '../../../shared/models/storytale_models.dart';
 import '../../../shared/widgets/storytale_components.dart';
 import '../../../shared/widgets/storytale_image_placeholder.dart';
 import '../../narration/presentation/audio_pages.dart';
+import '../data/chapter_paginator.dart';
 
 class ReaderPage extends StatefulWidget {
   const ReaderPage({super.key});
@@ -59,6 +60,11 @@ class _ReaderPageState extends State<ReaderPage> {
 
     final settings = controller.readerSettings;
     final content = _visibleContent(chapter, settings.languageMode);
+    final textStyle = TextStyle(
+      fontSize: settings.textSize,
+      height: settings.lineSpacing,
+      fontFamily: settings.fontFamily == 'Serif' ? 'serif' : null,
+    );
     return StoryTaleAppShell(
       title: book.title,
       actions: [
@@ -127,25 +133,29 @@ class _ReaderPageState extends State<ReaderPage> {
             ),
           ),
           Expanded(
-            // A lazy ListView would give an unstable maxScrollExtent and break
-            // the progress save/restore below, so the chapter stays in one
-            // scroll view.
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(20),
-              child: _ChapterBody(
-                chapter: chapter,
-                text: content,
-                style: TextStyle(
-                  fontSize: settings.textSize,
-                  height: settings.lineSpacing,
-                  fontFamily: settings.fontFamily == 'Serif' ? 'serif' : null,
-                ),
-                // Translated text is one block, so interleaving art into it is
-                // not meaningful.
-                showImages: !_translateMode,
-              ),
-            ),
+            child: settings.readingMode == ReaderReadingMode.page
+                ? _PagedChapterView(
+                    chapter: chapter,
+                    style: textStyle,
+                    // Translated text is one block, so interleaving art into
+                    // it is not meaningful.
+                    overrideText: _translateMode ? content : null,
+                    progress: _progress,
+                    onProgressChanged: _setProgress,
+                  )
+                // A lazy ListView would give an unstable maxScrollExtent and
+                // break the progress save/restore below, so the scrolling
+                // chapter stays in one scroll view.
+                : SingleChildScrollView(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.all(20),
+                    child: _ChapterBody(
+                      chapter: chapter,
+                      text: content,
+                      style: textStyle,
+                      showImages: !_translateMode,
+                    ),
+                  ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
@@ -242,13 +252,27 @@ class _ReaderPageState extends State<ReaderPage> {
     });
   }
 
+  /// Records a position reported by the paged view.
+  void _setProgress(double progress) {
+    if ((progress - _progress).abs() < 0.0001) return;
+    setState(() => _progress = progress);
+    StoryTaleScope.of(context).updateReadingProgress(progress);
+  }
+
   void _seekToProgress(double progress) {
+    final controller = StoryTaleScope.of(context);
+    // Page mode has no scroll extent; the paged view follows this value.
+    if (controller.readerSettings.readingMode == ReaderReadingMode.page) {
+      setState(() => _progress = progress);
+      controller.updateReadingProgress(progress);
+      return;
+    }
     if (!_scrollController.hasClients) return;
     _progress = progress;
     _scrollController.jumpTo(
       _scrollController.position.maxScrollExtent * progress,
     );
-    StoryTaleScope.of(context).updateReadingProgress(progress);
+    controller.updateReadingProgress(progress);
   }
 
   Future<void> _showContents(BuildContext context) async {
@@ -274,6 +298,198 @@ class _ReaderPageState extends State<ReaderPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// The chapter laid out as fixed pages, turned sideways like a printed book.
+class _PagedChapterView extends StatefulWidget {
+  const _PagedChapterView({
+    required this.chapter,
+    required this.style,
+    required this.overrideText,
+    required this.progress,
+    required this.onProgressChanged,
+  });
+
+  final ChapterData chapter;
+  final TextStyle style;
+  final String? overrideText;
+  final double progress;
+  final ValueChanged<double> onProgressChanged;
+
+  @override
+  State<_PagedChapterView> createState() => _PagedChapterViewState();
+}
+
+class _PagedChapterViewState extends State<_PagedChapterView> {
+  static const _padding = EdgeInsets.all(20);
+
+  PageController? _pageController;
+  List<ChapterPage> _pages = const [];
+  String? _layoutKey;
+  int _pageIndex = 0;
+
+  @override
+  void dispose() {
+    _pageController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(_PagedChapterView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // The progress slider moves this view from outside.
+    if (widget.progress != oldWidget.progress) {
+      final target = _indexForProgress(widget.progress);
+      if (target != _pageIndex) _jumpTo(target);
+    }
+  }
+
+  double get _progressForIndex =>
+      _pages.length < 2 ? 1.0 : _pageIndex / (_pages.length - 1);
+
+  int _indexForProgress(double progress) {
+    if (_pages.length < 2) return 0;
+    return (progress * (_pages.length - 1)).round().clamp(0, _pages.length - 1);
+  }
+
+  void _jumpTo(int index) {
+    _pageIndex = index;
+    final controller = _pageController;
+    if (controller != null && controller.hasClients) {
+      controller.jumpToPage(index);
+    }
+  }
+
+  /// Re-paginates only when the chapter, the viewport, or the style changes.
+  void _layout(Size size) {
+    final key = [
+      widget.chapter.id,
+      widget.overrideText?.length ?? -1,
+      size.width.round(),
+      size.height.round(),
+      widget.style.fontSize,
+      widget.style.height,
+      widget.style.fontFamily,
+    ].join('|');
+    if (key == _layoutKey) return;
+
+    final pages = const ChapterPaginator().paginate(
+      items: ChapterPaginator.itemsFor(
+        widget.chapter,
+        includeImages: widget.overrideText == null,
+        overrideText: widget.overrideText,
+      ),
+      pageSize: size,
+      style: widget.style,
+    );
+
+    _layoutKey = key;
+    _pages = pages;
+    // Keep the reader near the same place after a re-flow.
+    _pageIndex = _indexForProgress(widget.progress);
+    final controller = _pageController;
+    if (controller == null) {
+      _pageController = PageController(initialPage: _pageIndex);
+    } else if (controller.hasClients) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && controller.hasClients) controller.jumpToPage(_pageIndex);
+      });
+    }
+  }
+
+  void _turn(int delta) {
+    final target = (_pageIndex + delta).clamp(0, _pages.length - 1);
+    if (target == _pageIndex) return;
+    _pageController?.animateToPage(
+      target,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final available = Size(
+          constraints.maxWidth - _padding.horizontal,
+          constraints.maxHeight - _padding.vertical,
+        );
+        if (available.width <= 0 || available.height <= 0) {
+          return const SizedBox.shrink();
+        }
+        _layout(available);
+
+        if (_pages.isEmpty) {
+          return const Center(
+            child: Text('This chapter has no readable text.'),
+          );
+        }
+
+        return Column(
+          children: [
+            Expanded(
+              child: Stack(
+                children: [
+                  PageView.builder(
+                    controller: _pageController,
+                    itemCount: _pages.length,
+                    onPageChanged: (index) {
+                      setState(() => _pageIndex = index);
+                      widget.onProgressChanged(_progressForIndex);
+                    },
+                    itemBuilder: (context, index) {
+                      final page = _pages[index];
+                      return Padding(
+                        padding: _padding,
+                        child: page.isImage
+                            ? _ChapterIllustration(
+                                image: page.image!,
+                                fullPage: true,
+                              )
+                            : Text(page.text, style: widget.style),
+                      );
+                    },
+                  ),
+                  // Tapping the edges turns pages, as in a normal reader.
+                  Positioned.fill(
+                    child: Row(
+                      children: [
+                        _PageTapTarget(onTap: () => _turn(-1)),
+                        const Spacer(flex: 3),
+                        _PageTapTarget(onTap: () => _turn(1)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              '${_pageIndex + 1} / ${_pages.length}',
+              style: Theme.of(context).textTheme.labelMedium,
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _PageTapTarget extends StatelessWidget {
+  const _PageTapTarget({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: onTap,
+        child: const SizedBox.expand(),
       ),
     );
   }
@@ -327,9 +543,13 @@ class _ChapterBody extends StatelessWidget {
 }
 
 class _ChapterIllustration extends StatelessWidget {
-  const _ChapterIllustration({required this.image});
+  const _ChapterIllustration({required this.image, this.fullPage = false});
 
   final ChapterImageData image;
+
+  /// In page mode an illustration owns the whole page, so it fills it instead
+  /// of being capped against the screen.
+  final bool fullPage;
 
   /// Illustrations are print sized, so they are capped against the screen
   /// instead of overflowing the scroll view.
@@ -345,31 +565,35 @@ class _ChapterIllustration extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: StoryTaleImagePlaceholder(
           label: '$label\n(not stored on this device)',
-          height: 160,
+          height: fullPage ? double.infinity : 160,
         ),
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Semantics(
-        label: label,
-        image: true,
-        child: GestureDetector(
-          onTap: () => _openFullScreen(context, label),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: maxHeight),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.memory(
-                image.bytes!,
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) =>
-                    StoryTaleImagePlaceholder(label: label, height: 160),
-              ),
-            ),
+    final artwork = Semantics(
+      label: label,
+      image: true,
+      child: GestureDetector(
+        onTap: () => _openFullScreen(context, label),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.memory(
+            image.bytes!,
+            fit: BoxFit.contain,
+            errorBuilder: (_, _, _) =>
+                StoryTaleImagePlaceholder(label: label, height: 160),
           ),
         ),
+      ),
+    );
+
+    if (fullPage) return Center(child: artwork);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: artwork,
       ),
     );
   }
@@ -472,6 +696,27 @@ class _ReaderSettingsPageState extends State<ReaderSettingsPage> {
             ],
             onChanged: (value) {
               if (value != null) setState(() => settings.theme = value);
+            },
+          ),
+          const SizedBox(height: 16),
+          const Text('Reading mode'),
+          const SizedBox(height: 8),
+          SegmentedButton<ReaderReadingMode>(
+            segments: const [
+              ButtonSegment(
+                value: ReaderReadingMode.scroll,
+                icon: Icon(Icons.swap_vert),
+                label: Text('Scroll'),
+              ),
+              ButtonSegment(
+                value: ReaderReadingMode.page,
+                icon: Icon(Icons.menu_book_outlined),
+                label: Text('Page'),
+              ),
+            ],
+            selected: {settings.readingMode},
+            onSelectionChanged: (values) {
+              setState(() => settings.readingMode = values.first);
             },
           ),
           const SizedBox(height: 16),

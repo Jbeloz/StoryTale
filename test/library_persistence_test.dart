@@ -141,6 +141,18 @@ void main() {
     expect(second.readerSettings.languageMode, ReaderLanguageMode.dual);
   });
 
+  test('the chosen reading mode survives a restart', () async {
+    final first = StoryTaleController();
+    expect(first.readerSettings.readingMode, ReaderReadingMode.scroll);
+    first.saveReaderSettings(
+      first.readerSettings.copy()..readingMode = ReaderReadingMode.page,
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 900));
+
+    final second = await restoredController();
+    expect(second.readerSettings.readingMode, ReaderReadingMode.page);
+  });
+
   test('demo book progress survives without storing bundled text', () async {
     final first = StoryTaleController();
     final demo = first.books.first;

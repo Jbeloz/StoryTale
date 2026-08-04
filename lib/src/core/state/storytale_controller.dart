@@ -170,7 +170,8 @@ class StoryTaleController extends ChangeNotifier {
         ..fontFamily = settings.fontFamily
         ..theme = settings.theme
         ..lineSpacing = settings.lineSpacing
-        ..languageMode = settings.languageMode;
+        ..languageMode = settings.languageMode
+        ..readingMode = settings.readingMode;
     }
 
     final book = bookById(state.currentBookId);
@@ -334,7 +335,8 @@ class StoryTaleController extends ChangeNotifier {
       ..fontFamily = settings.fontFamily
       ..theme = settings.theme
       ..lineSpacing = settings.lineSpacing
-      ..languageMode = settings.languageMode;
+      ..languageMode = settings.languageMode
+      ..readingMode = settings.readingMode;
     _scheduleReadingStateSave();
     notifyListeners();
   }

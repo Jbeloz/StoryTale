@@ -103,12 +103,15 @@ Completed:
   recovered by walking the spine and handed to the chapter it precedes, without
   changing chapter identity, IDs, or source blocks
 - covers are shrunk to a thumbnail at import so they always survive a restart
+- the reader offers a scrolling mode and a page-by-page mode; pages are packed
+  from the existing source blocks, each illustration takes its own page, and
+  the single progress fraction carries the reading position across both modes,
+  text-size changes, and restarts
 
 Still missing:
 
 - original EPUB byte storage and a chosen local database package
 - durable generated image bytes and saved preparation progress
-- a page-by-page reading mode beside the current scrolling reader
 - `Book -> Volume -> Chapter` models and migration
 - box-set and separately imported volume grouping
 - chapter/volume boundary review for uncertain EPUBs

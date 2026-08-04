@@ -54,6 +54,10 @@ when AI, translation, asset generation, or Story Mode preparation fails.
 - Use Poppins throughout the app.
 - Keep reading progress proportional to the chapter scroll position and reach
   100% at the end.
+- Offer a scrolling reader and a page-by-page reader. `ChapterPaginator` packs
+  source blocks into pages that fit the viewport, gives each illustration its
+  own page, and never loses or duplicates text. One progress fraction serves
+  both modes.
 - Preserve the original English text on every service failure.
 
 ### Translation
@@ -409,7 +413,8 @@ tables.
 - `BookData`: ID, title, author, language, description, tags, chapters, cover
   path/bytes, source filename, progress, last-opened time.
 - `VoiceProfileData`: ID, name, role, model path, preparation status.
-- `ReaderSettingsData`: text size, font, theme, line spacing, language mode.
+- `ReaderSettingsData`: text size, font, theme, line spacing, language mode,
+  reading mode (`scroll` or `page`).
 
 ### Story records
 
@@ -614,7 +619,10 @@ their roadmap gates unless a blocking defect requires a narrow fix.
   handing it to the chapter it precedes. The fixture yields 15 of its 16 images,
   the sixteenth being the cover.
 - Stored illustrations are lossy display copies, not archival originals.
-- The reader is scroll-only. A page-by-page mode is the agreed next reader task.
+- Page mode restores a position through the progress fraction, so after a
+  re-flow the reader returns to the right area rather than the exact word. Page
+  counts also differ between web and Android because `TextPainter` measures the
+  real font.
 - Book IDs are time-based (`book-${microsecondsSinceEpoch}`), so importing the
   same file twice creates two library entries. Content-hash IDs and dedupe
   belong with Phase 8.
