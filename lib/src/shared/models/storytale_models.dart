@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 enum PreparationStatus { notStarted, preparing, ready, failed }
@@ -11,6 +12,11 @@ class ChapterTextBlock {
 
   final String id;
   final String text;
+
+  factory ChapterTextBlock.fromJson(Map<String, dynamic> json) =>
+      ChapterTextBlock(id: _string(json['id']), text: _string(json['text']));
+
+  Map<String, dynamic> toJson() => {'id': id, 'text': text};
 }
 
 class ChapterData {
@@ -33,6 +39,41 @@ class ChapterData {
   String? translatedText;
   double progress;
   bool bookmarked;
+
+  factory ChapterData.fromJson(Map<String, dynamic> json) {
+    final blocks = _jsonMaps(
+      json['sourceBlocks'],
+    ).map(ChapterTextBlock.fromJson).toList(growable: false);
+    return ChapterData(
+      id: _string(json['id']),
+      title: _string(json['title']),
+      // The importer builds originalText by joining the same blocks, so it is
+      // rebuilt here instead of being stored twice.
+      originalText: blocks.isEmpty
+          ? _string(json['originalText'])
+          : blocks.map((block) => block.text).join('\n\n'),
+      type: _enumByName(ChapterType.values, json['type'], ChapterType.chapter),
+      sourceBlocks: blocks,
+      translatedText: json['translatedText'] is String
+          ? json['translatedText'] as String
+          : null,
+      progress: _double(json['progress']).clamp(0, 1),
+      bookmarked: json['bookmarked'] == true,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    if (sourceBlocks.isEmpty) 'originalText': originalText,
+    'type': type.name,
+    'sourceBlocks': sourceBlocks
+        .map((block) => block.toJson())
+        .toList(growable: false),
+    if (translatedText != null) 'translatedText': translatedText,
+    'progress': progress,
+    'bookmarked': bookmarked,
+  };
 }
 
 class BookData {
@@ -63,6 +104,67 @@ class BookData {
   final String? sourceFileName;
   double progress;
   DateTime lastOpenedAt;
+
+  /// Covers larger than this are dropped rather than persisted. Local storage
+  /// on the web preview is a few megabytes in total, and a missing cover
+  /// already falls back to the shared image placeholder.
+  static const maxPersistedCoverBytes = 300 * 1024;
+
+  factory BookData.fromJson(Map<String, dynamic> json) {
+    final cover = json['coverBytes'];
+    Uint8List? coverBytes;
+    if (cover is String && cover.isNotEmpty) {
+      try {
+        coverBytes = base64Decode(cover);
+      } catch (_) {
+        coverBytes = null;
+      }
+    }
+    return BookData(
+      id: _string(json['id']),
+      title: _string(json['title']),
+      author: _string(json['author']),
+      description: _string(json['description']),
+      tags: (json['tags'] as List<dynamic>? ?? const [])
+          .whereType<String>()
+          .toList(),
+      chapters: _jsonMaps(json['chapters']).map(ChapterData.fromJson).toList(),
+      language: json['language'] is String
+          ? json['language'] as String
+          : 'English',
+      coverPath: json['coverPath'] is String
+          ? json['coverPath'] as String
+          : null,
+      coverBytes: coverBytes,
+      sourceFileName: json['sourceFileName'] is String
+          ? json['sourceFileName'] as String
+          : null,
+      progress: _double(json['progress']).clamp(0, 1),
+      lastOpenedAt:
+          DateTime.tryParse(_string(json['lastOpenedAt'])) ?? DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    final cover = coverBytes;
+    return {
+      'id': id,
+      'title': title,
+      'author': author,
+      'language': language,
+      'description': description,
+      'tags': tags,
+      'chapters': chapters
+          .map((chapter) => chapter.toJson())
+          .toList(growable: false),
+      if (coverPath != null) 'coverPath': coverPath,
+      if (cover != null && cover.lengthInBytes <= maxPersistedCoverBytes)
+        'coverBytes': base64Encode(cover),
+      if (sourceFileName != null) 'sourceFileName': sourceFileName,
+      'progress': progress,
+      'lastOpenedAt': lastOpenedAt.toIso8601String(),
+    };
+  }
 }
 
 class VoiceProfileData {
@@ -475,4 +577,41 @@ class ReaderSettingsData {
     lineSpacing: lineSpacing,
     languageMode: languageMode,
   );
+
+  factory ReaderSettingsData.fromJson(Map<String, dynamic> json) {
+    final defaults = ReaderSettingsData();
+    return ReaderSettingsData(
+      textSize: _double(json['textSize'], defaults.textSize),
+      fontFamily: json['fontFamily'] is String
+          ? json['fontFamily'] as String
+          : defaults.fontFamily,
+      theme: json['theme'] is String ? json['theme'] as String : defaults.theme,
+      lineSpacing: _double(json['lineSpacing'], defaults.lineSpacing),
+      languageMode: _enumByName(
+        ReaderLanguageMode.values,
+        json['languageMode'],
+        defaults.languageMode,
+      ),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'textSize': textSize,
+    'fontFamily': fontFamily,
+    'theme': theme,
+    'lineSpacing': lineSpacing,
+    'languageMode': languageMode.name,
+  };
+}
+
+String _string(Object? value) => value is String ? value : '';
+
+double _double(Object? value, [double fallback = 0]) =>
+    value is num ? value.toDouble() : fallback;
+
+T _enumByName<T extends Enum>(List<T> values, Object? name, T fallback) {
+  for (final value in values) {
+    if (value.name == name) return value;
+  }
+  return fallback;
 }

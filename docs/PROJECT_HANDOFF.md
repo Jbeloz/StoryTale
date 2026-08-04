@@ -457,6 +457,8 @@ tables.
 
 Small JSON metadata uses SharedPreferences:
 
+- `storytale.library.v1.imported_books`
+- `storytale.library.v1.reading_state`
 - `sprite_studio.face_profiles.v1`
 - `sprite_studio.<rigId>.custom_poses`
 - `sprite_studio.<rigId>.appearance`
@@ -465,10 +467,24 @@ Small JSON metadata uses SharedPreferences:
 - `storytale.foreground_catalog.v1.<bookId>`
 - `storytale.human_catalog.v1.<bookId>`
 
-Generated image bytes currently use a session-only `StoryAssetBinaryStore`.
-Imported books, volume jobs, and original EPUB bytes are also session-oriented.
-Therefore an app restart can lose imported library state, preparation progress,
-and generated binary images even when small catalog metadata remains. Phase 8
+`LibraryRepository` owns the two library keys. `imported_books` holds the full
+imported book records, chapters, and stable source blocks, and is written only
+on import or removal. `reading_state` holds per-book and per-chapter progress,
+bookmarks, cached translated text, the current position, and reader settings for
+**both** bundled and imported books; it is written on a 600 ms debounce because
+reading progress changes on every scroll frame. Both are restored by
+`StoryTaleController.restore()` at startup.
+
+Two deliberate limits apply. Parsed chapters are stored rather than raw EPUB
+bytes, and a cover above `BookData.maxPersistedCoverBytes` (300 KB) is dropped,
+because the web preview keeps these values in browser local storage, which holds
+only a few megabytes in total. A failed write sets
+`StoryTaleController.libraryStorageFailed` and is logged; it never throws and
+never loses the in-memory session.
+
+Generated image bytes still use a session-only `StoryAssetBinaryStore`, and
+volume jobs and original EPUB bytes remain session-oriented. Therefore an app
+restart still loses preparation progress and generated binary images. Phase 8
 must add durable local files plus an indexed database, atomic metadata/file
 updates, checksums, migrations, interrupted-job recovery, and safe orphan
 cleanup.
@@ -574,8 +590,15 @@ their roadmap gates unless a blocking defect requires a narrow fix.
 
 ### Persistence and reading
 
-- Imported EPUBs and reading/bookmark/preparation progress do not survive all
-  restarts.
+- Imported books, chapters, source blocks, reading progress, bookmarks, and
+  reader settings now survive a restart. Original EPUB bytes, preparation
+  progress, and generated images still do not.
+- Browser local storage is only a few megabytes, so a library of several large
+  light-novel EPUBs can exceed it. The write fails softly and the session keeps
+  working, but the durable fix is Phase 8 file storage.
+- Book IDs are time-based (`book-${microsecondsSinceEpoch}`), so importing the
+  same file twice creates two library entries. Content-hash IDs and dedupe
+  belong with Phase 8.
 - `Book -> Volume -> Chapter` and grouping/migration are missing.
 - The local database package is undecided.
 - Durable generated files, checksums, cleanup, and interrupted job recovery are

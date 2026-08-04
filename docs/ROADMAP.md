@@ -93,11 +93,14 @@ Completed:
 - stable source-block IDs for analysis
 - imported books available to the current Library, Reader, Audio, and Story
   preparation session
+- imported books, chapters, and stable source blocks now survive a restart in
+  local storage, together with reading progress, bookmarks, cached translated
+  text, the last-open position, and reader settings
 
 Still missing:
 
-- permanent local book and original EPUB storage
-- saved reading, bookmark, translation, and preparation progress
+- original EPUB byte storage and a chosen local database package
+- durable generated image bytes and saved preparation progress
 - `Book -> Volume -> Chapter` models and migration
 - box-set and separately imported volume grouping
 - chapter/volume boundary review for uncertain EPUBs
@@ -105,6 +108,13 @@ Still missing:
 
 These items must be complete before Phase 9 can claim persistent ChapterStory
 packages, but they do not block the current locked-template character work.
+
+On 4 August 2026 the owner paused Phase 7 and approved one narrow early slice of
+Phase 8 so the Week 4 Local EPUB reader milestone is demonstrable: imported
+books and reading state are now durable. This slice deliberately stores parsed
+chapters rather than raw EPUB bytes, because the web preview keeps these values
+in browser local storage. The remaining Phase 8 items below are unchanged, and
+Phase 7 resumes from checkpoint `555f07c` afterwards.
 
 ### Phase 2 - Sprite Studio and starter faces
 

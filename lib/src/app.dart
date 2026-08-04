@@ -28,10 +28,16 @@ class _StoryTaleAppState extends State<StoryTaleApp> {
     _ownsController = widget.controller == null;
     _controller = widget.controller ?? StoryTaleController();
     _showStartup = widget.showStartup && !_controller.onboardingCompleted;
+    // Load the locally stored library. This does not block the first frame;
+    // the controller notifies its listeners once the books are back.
+    _controller.restore();
   }
 
   @override
   void dispose() {
+    // Save reading progress that is still waiting behind the debounce, even
+    // when another owner keeps the controller alive.
+    _controller.flushPendingSaves();
     if (_ownsController) _controller.dispose();
     super.dispose();
   }
