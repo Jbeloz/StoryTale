@@ -539,6 +539,13 @@ That detour is complete and committed on `master`:
 | `d9e1895` | artwork recovered from pages the contents omit, 7 of 16 images to 15 of 16 |
 | `c94eae4` | page-by-page reading mode beside the scrolling reader |
 
+Each of those passed targeted automated validation, but **the owner has not yet
+manually verified any of the reader detour**: durable books across a restart,
+covers, inline illustrations, and page mode are implemented and tested in code,
+not owner-accepted. Expect that verification to happen before or alongside the
+next task, and treat a reported reader defect as likely real. None of these
+commits has been pushed; `master` is ahead of `origin/master`.
+
 **Phase 7 is paused, not abandoned.** It is parked exactly where `555f07c` left
 it, with the V3 migration checklist recorded in
 [Character Sheet Plan](CHARACTER_SHEET_PLAN.md) under "V3 migration surface".
