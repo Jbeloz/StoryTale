@@ -391,7 +391,11 @@ and actor-specific source mapping for future heroine use. V1, V2, and every
 rig/hair source remain unchanged behind their checkpoints. On 2026-08-04 the
 owner selected V3 as the future active contract. Flutter, the Worker, and the
 provider still use V1 because V3 migration and provider work are paused until
-the owner explicitly asks to continue. The `4096 x 1024` `2K` tier remains the
+the owner explicitly asks to continue. One offline test,
+`test/character_sheet_contract_test.dart`, now hash-guards the V1, V2, and V3
+guides, masks, prompts, manifests, and locked rig assets against silent edits
+and records the exact remaining V3 migration surface. It registers no asset,
+changes no runtime behavior, and makes no provider request. The `4096 x 1024` `2K` tier remains the
 minimum supported `4:1` output that can preserve the `800`-pixel-tall Long
 back-hair cell without resizing; any smaller-tier reconsideration must first
 prove lower billed usage and exact-cell compatibility without a paid trial.

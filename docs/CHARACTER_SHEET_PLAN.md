@@ -1,6 +1,6 @@
 # StoryTale Character Sheet V1, V2, and V3 Implementation Plan
 
-Status: **Authoritative Phase 7G.1 plan. The V1 Flutter/Worker pipeline and the Phase 7G.1C enforcement are implemented locally, but no generated package has been accepted. V2 established exact Sprite Studio raster cells. Corrective Phase 7G.1B.R2 versions `character_sheet_v3`, which packs front hair plus separate Short, Medium, and Long back-hair cells into an efficient `4096 x 1024` landscape sheet. The checked-in guide uses the default actor and keeps heroine-compatible geometry. On 2026-08-04 the owner selected V3 as the future active contract. Migration, Worker changes, and a V3 provider request remain paused until the owner explicitly asks to continue.**
+Status: **Authoritative Phase 7G.1 plan. The V1 Flutter/Worker pipeline and the Phase 7G.1C enforcement are implemented locally, but no generated package has been accepted. V2 established exact Sprite Studio raster cells. Corrective Phase 7G.1B.R2 versions `character_sheet_v3`, which packs front hair plus separate Short, Medium, and Long back-hair cells into an efficient `4096 x 1024` landscape sheet. The checked-in guide uses the default actor and keeps heroine-compatible geometry. On 2026-08-04 the owner selected V3 as the future active contract. All three contracts are now hash-guarded by one offline test, and the exact remaining V3 migration surface is recorded below. Migration, Worker changes, and a V3 provider request remain paused until the owner explicitly asks to continue.**
 
 This document owns the exact character-sheet contract, implementation order,
 validation gate, and handoff rules for Phase 7G.1B. The Master Roadmap still
@@ -91,6 +91,29 @@ cells, and creates the guide, masks, reference copy, hashes, and manifest
 without a network request. V2 remains versioned as the exact-part checkpoint;
 V3 is the owner-selected contract for the next migration, but is not yet the
 active Flutter, Worker, or provider contract.
+
+### V3 migration surface
+
+`test/character_sheet_contract_test.dart` confirmed that
+`CharacterSheetContract.fromJson` already parses the V3 manifest unchanged: it
+ignores the added `transport`, `actorContract`, `selectionContract`, and
+`maskEncoding` keys and reads all 14 regions. Only these deliberate assertions
+and registrations still separate the approved sheet from the runtime pipeline:
+
+1. `CharacterSheetContract.supportedContractId` and `supportedContractVersion`;
+2. the hard `4096 x 4096` canvas assertion in `validationErrors()`;
+3. `CharacterSheetContractRepository.assetPath`;
+4. the `character_sheet_v1/` folder registered in `pubspec.yaml`, which is why
+   Flutter cannot currently load a V3 asset at all;
+5. the canvas checks in `character_sheet_processor.dart` and the hardcoded
+   `4096x4096` message in `story_artwork_service.dart`; and
+6. `CHARACTER_SHEET_CONTRACT_ID`, `CHARACTER_SHEET_CONTRACT_VERSION`,
+   `CHARACTER_SHEET_GUIDE_SHA256`, `CHARACTER_SHEET_GEOMETRY_HASH`, and the
+   `4096` validation in `cloudflare/image-worker/src/index.ts`.
+
+The Worker half of that list cannot take effect without a deployment. Record
+this list as the migration checklist when the owner resumes; do not act on it
+before then.
 
 ### V3 output-size and usage decision
 
@@ -428,6 +451,34 @@ V2 as the owner-selected future contract; V2 remains the saved exact-part
 checkpoint. The approval gate is satisfied, but migration is paused at the
 owner's direction and no provider request is authorized.
 
+### Contract regression guard — implemented locally
+
+`test/character_sheet_contract_test.dart` is an offline guard over all three
+versioned contracts. It reads the manifests, guides, and masks directly from
+disk rather than the asset bundle, so V2 and V3 stay verifiable while they
+remain unregistered review candidates. For every version it checks that:
+
+- the declared canvas equals the real pixel size of the guide and all three
+  masks;
+- the recorded `assetSha256` values match the on-disk guide, reference, masks,
+  and prompt contract;
+- `rig.json` and the ten locked head/body assets still match the hashes the
+  sheet was built against;
+- the fixed-crop and no-resize rules are unchanged;
+- each version publishes its own region set exactly once — 14 for V1 and V3,
+  and 12 for the V2 single-slot checkpoint;
+- every crop equals its `outputCanvas`, sits inside the canvas, and overlaps no
+  other cell; and
+- every region points at a rig source asset that exists.
+
+V3 additionally proves the `4:1` `2K` shape, the three native `429 x 800`
+back-hair cells plus the `429 x 438` front cell, a valid rear-hair selection
+map including `none`, existing default and heroine hair sources, and a region
+ID set identical to V1 so migration cannot silently renumber cells.
+
+The guard makes no provider request, registers no asset, and changes no runtime
+behavior. It runs with `flutter test test/character_sheet_contract_test.dart`.
+
 ### Phase 7G.1B.2 - One-sheet generation — implemented locally
 
 1. Add the character-sheet request/response contract to Flutter and the private
@@ -528,6 +579,9 @@ version `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
   are versioned without a provider request.
 - [x] The owner selects and visually approves the V3 guide/layout as the future
   active contract; implementation remains paused until a new request to proceed.
+- [x] One offline test hash-guards the V1, V2, and V3 guides, masks, prompts,
+  manifests, and the locked rig against silent edits, and records the exact
+  remaining V3 migration surface.
 - [ ] Flutter and the private Worker consume V3 without silently falling back
   to V1 or making an automatic paid retry.
 - [x] Every region has one reviewed crop, output canvas, anchor, role, and side.

@@ -529,7 +529,17 @@ The [Master Roadmap](ROADMAP.md) is authoritative. As of this handoff:
 7. **Owner decision recorded:** V3 is selected and visually approved as the
    future contract. Do not connect V3 to Flutter/Worker or spend another Gemini
    request until the owner explicitly asks to resume implementation.
-8. **Implemented locally: Phase 7G.1C** — the V1 package now verifies the approved
+8. **Implemented locally: contract regression guard** —
+   `test/character_sheet_contract_test.dart` verifies all three versioned sheets
+   offline: declared canvas versus real guide/mask pixels, recorded SHA-256
+   values versus the on-disk assets, the `rig.json` and ten locked head/body
+   hashes, fixed-crop rules, per-version region sets, exact output canvases,
+   in-canvas non-overlapping cells, and existing rig sources. It also proves
+   V3's `4:1` `2K` shape, its three native back-hair cells, and that its region
+   IDs match V1. The exact remaining V3 migration surface is recorded in
+   [Character Sheet Plan](CHARACTER_SHEET_PLAN.md). No asset was registered, no
+   runtime behavior changed, and no provider request was made.
+9. **Implemented locally: Phase 7G.1C** — the V1 package now verifies the approved
    rig and ten head/body asset hashes, rejects generated face pixels outside
    the locked head, produces six distinct expression proofs plus four
    face-aware pose proofs, and reuses a matching ready design hash before any
@@ -540,10 +550,10 @@ The [Master Roadmap](ROADMAP.md) is authoritative. As of this handoff:
    migration, one controlled 2K request and owner proof acceptance are still
    required. The Worker portion is deployed as version
    `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
-9. **Then: Phase 7H** — register the validated character package and rebuild
+10. **Then: Phase 7H** — register the validated character package and rebuild
    every affected ChapterStory so the correct human appears across chapters
    and volumes.
-10. Continue with Phases 8–11 in roadmap order.
+11. Continue with Phases 8–11 in roadmap order.
 
 Do not start persistence, final Story Mode binding, or audio integration before
 their roadmap gates unless a blocking defect requires a narrow fix.
@@ -587,6 +597,24 @@ their roadmap gates unless a blocking defect requires a narrow fix.
 - The mobile Tagalog ONNX TTS and voice-conversion runtime are not connected.
 - The five current raw voice models need conversion, licensing review,
   physical-device testing, memory benchmarks, and quality approval.
+
+### Known failing checks (pre-existing, found 4 August 2026)
+
+- `flutter test` reports 123 passing and **1 failing**: `test/sprite_rig_test.dart`
+  "Sprite Studio has responsive editing and undo redo". It throws an AppBar
+  `RenderFlex overflowed by 90 pixels` from
+  `lib/src/shared/widgets/storytale_components.dart` and then finds no
+  `face-neutral` key. This predates the contract regression guard and is
+  unrelated to it; it reproduces when that file runs alone.
+- `flutter analyze` reports one info-level `unnecessary_import` for
+  `dart:typed_data` in
+  `lib/src/features/animated_story/data/character_sheet_package.dart`.
+- `dart format --set-exit-if-changed lib test` **rewrites files instead of only
+  reporting them**. It currently reformats three unrelated pre-existing files:
+  `lib/src/generated/voice_manifest.g.dart`,
+  `test/story_generated_human_view_test.dart`, and
+  `test/visual_novel_background_brief_test.dart`. Run it deliberately, then
+  restore anything outside the current phase scope before committing.
 
 ### Release and documentation
 
