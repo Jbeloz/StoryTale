@@ -550,7 +550,39 @@ commits has been pushed; `master` is ahead of `origin/master`.
 it, with the V3 migration checklist recorded in
 [Character Sheet Plan](CHARACTER_SHEET_PLAN.md) under "V3 migration surface".
 
-**The next task is to resume Phase 7.** Start with whichever the owner prefers:
+### Sprite Studio test failure cleared, 5 August 2026
+
+On 5 August 2026 the owner chose to clear the long-standing Sprite Studio test
+failure before resuming Phase 7, so the pending manual 7G.1A.1 verification
+happens on a clean screen and a green suite. Both root causes were found by
+measurement, and neither was what the failure text suggested:
+
+1. **The AppBar overflow was a two-sources-of-truth bug, not a title problem.**
+   The overflowing `RenderFlex` was the toolbar's *trailing* slot. Sprite Studio
+   chose its action layout from `MediaQuery.sizeOf(context).width` while its body
+   chose from `LayoutBuilder` constraints. Under `setSurfaceSize` those two
+   disagree — MediaQuery still reported the unresized view — so the page rendered
+   the wide `Review Story Artwork` text button inside a 390-pixel toolbar. The
+   page now takes both decisions from one outer `LayoutBuilder`.
+2. **`face-neutral` was missing because the shipped default actor is Adult.**
+   `assets/images/characters/rigs/humanoid_v1/appearance.json` sets
+   `"actorId": "adult"`, whose face profile is `adult_deep`, so every chip key is
+   `face-adult_deep-*`. The test had silently assumed the Default actor. The test
+   now seeds that appearance key with `{"actorId":"default"}` instead.
+
+**The shipped Adult default was deliberately left alone** — changing it would
+alter what the owner sees on the exact screen they are about to verify. The
+checked-in `poses/neutral.json` likewise still carries
+`"faceProfileId": "adult_deep"`; it is harmless because the appearance record
+overrides it at load, but it is redundant state copied into a pose and is worth
+removing when Phase 7G.1A.1 is next touched.
+
+`flutter test` is now **150 passing, 0 failing** and `flutter analyze` reports
+no issues. The locked rig, every versioned character sheet, and
+`test/character_sheet_contract_test.dart` were not touched.
+
+**The next task is still to resume Phase 7.** Start with whichever the owner
+prefers:
 
 1. the pending manual Phase 7G.1A.1 actor/pose/reload verification, which has
    been open for a while and is the owner's to perform; or
@@ -571,13 +603,12 @@ Two live details that are not in Git history:
 - `.claude/settings.json` is **intentionally uncommitted**. The harness rewrote
   it when permission prompts were accepted; it added an `allow` list and
   reordered keys while keeping every protective entry. Leave it to the owner.
-- A web preview may still be running on port `52827`. Check before launching
-  another, and replace rather than duplicate it.
+- A web preview **is** running on port `52827` as of 5 August 2026. Check before
+  launching another, and replace rather than duplicate it.
 
 `test/sprite_rig_test.dart` "Sprite Studio has responsive editing and undo redo"
-has been failing since before this thread and is unrelated to it. It is a real
-Sprite Studio defect: an AppBar `RenderFlex` overflow plus a missing
-`face-neutral` key.
+had been failing since before this thread. It was fixed on 5 August 2026; see
+"Sprite Studio test failure cleared" above.
 
 ### Exact current and next work
 
@@ -702,17 +733,11 @@ their roadmap gates unless a blocking defect requires a narrow fix.
 - The five current raw voice models need conversion, licensing review,
   physical-device testing, memory benchmarks, and quality approval.
 
-### Known failing checks (pre-existing, found 4 August 2026)
+### Known failing checks
 
-- `flutter test` reports 123 passing and **1 failing**: `test/sprite_rig_test.dart`
-  "Sprite Studio has responsive editing and undo redo". It throws an AppBar
-  `RenderFlex overflowed by 90 pixels` from
-  `lib/src/shared/widgets/storytale_components.dart` and then finds no
-  `face-neutral` key. This predates the contract regression guard and is
-  unrelated to it; it reproduces when that file runs alone.
-- `flutter analyze` reports one info-level `unnecessary_import` for
-  `dart:typed_data` in
-  `lib/src/features/animated_story/data/character_sheet_package.dart`.
+- **Fixed 5 August 2026.** `flutter test` now reports **150 passing, 0 failing**
+  and `flutter analyze` reports **no issues**. The former `sprite_rig_test.dart`
+  failure and the `unnecessary_import` info are both resolved; see section 11.
 - `dart format --set-exit-if-changed lib test` **rewrites files instead of only
   reporting them**. It currently reformats three unrelated pre-existing files:
   `lib/src/generated/voice_manifest.g.dart`,
@@ -907,9 +932,9 @@ requires confirmation for network and Git publication actions, blocks common
 destructive Git cleanup and force-push commands, and disables bypass/auto
 permission modes. Secrets remain local and ignored.
 
-The web preview was checked before this handoff. **Port 52827 was not running,
-the open StoryTale tabs showed connection errors, and the browser-control
-session was released. No StoryTale web host was left running.**
+**Checked again on 5 August 2026: a web host *is* listening on port 52827.**
+Check the port before launching another host and replace rather than duplicate
+it. The earlier note in this section claimed nothing was running; that was stale.
 
 Stable web-server preview:
 

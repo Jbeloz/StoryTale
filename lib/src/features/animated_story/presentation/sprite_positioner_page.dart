@@ -192,52 +192,56 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
       );
     }
 
-    return StoryTaleAppShell(
-      title: title,
-      actions: [
-        if (MediaQuery.sizeOf(context).width >= 700)
-          TextButton.icon(
-            key: const Key('reviewStoryArtworkButton'),
-            onPressed: () =>
-                Navigator.of(context).pushNamed('/review-story-artwork'),
-            icon: const Icon(Icons.auto_awesome_outlined),
-            label: const Text('Review Story Artwork'),
-          )
-        else
-          IconButton(
-            key: const Key('reviewStoryArtworkButton'),
-            tooltip: 'Review Story Artwork',
-            onPressed: () =>
-                Navigator.of(context).pushNamed('/review-story-artwork'),
-            icon: const Icon(Icons.auto_awesome_outlined),
+    return LayoutBuilder(
+      builder: (context, pageConstraints) {
+        return StoryTaleAppShell(
+          title: title,
+          actions: [
+            if (pageConstraints.maxWidth >= 700)
+              TextButton.icon(
+                key: const Key('reviewStoryArtworkButton'),
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/review-story-artwork'),
+                icon: const Icon(Icons.auto_awesome_outlined),
+                label: const Text('Review Story Artwork'),
+              )
+            else
+              IconButton(
+                key: const Key('reviewStoryArtworkButton'),
+                tooltip: 'Review Story Artwork',
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/review-story-artwork'),
+                icon: const Icon(Icons.auto_awesome_outlined),
+              ),
+            IconButton(
+              key: const Key('undoButton'),
+              tooltip: 'Undo last pose change',
+              onPressed: _undoStack.isEmpty ? null : _undo,
+              icon: const Icon(Icons.undo),
+            ),
+            IconButton(
+              key: const Key('redoButton'),
+              tooltip: 'Redo last pose change',
+              onPressed: _redoStack.isEmpty ? null : _redo,
+              icon: const Icon(Icons.redo),
+            ),
+            IconButton(
+              tooltip: 'Reset selected pose',
+              onPressed: _reset,
+              icon: const Icon(Icons.restart_alt),
+            ),
+          ],
+          body: LayoutBuilder(
+            builder: (context, constraints) {
+              final desktop =
+                  constraints.maxWidth >= 900 && constraints.maxHeight >= 600;
+              return desktop
+                  ? _desktopEditor(rig, pose)
+                  : _mobileEditor(rig, pose, constraints);
+            },
           ),
-        IconButton(
-          key: const Key('undoButton'),
-          tooltip: 'Undo last pose change',
-          onPressed: _undoStack.isEmpty ? null : _undo,
-          icon: const Icon(Icons.undo),
-        ),
-        IconButton(
-          key: const Key('redoButton'),
-          tooltip: 'Redo last pose change',
-          onPressed: _redoStack.isEmpty ? null : _redo,
-          icon: const Icon(Icons.redo),
-        ),
-        IconButton(
-          tooltip: 'Reset selected pose',
-          onPressed: _reset,
-          icon: const Icon(Icons.restart_alt),
-        ),
-      ],
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final desktop =
-              constraints.maxWidth >= 900 && constraints.maxHeight >= 600;
-          return desktop
-              ? _desktopEditor(rig, pose)
-              : _mobileEditor(rig, pose, constraints);
-        },
-      ),
+        );
+      },
     );
   }
 

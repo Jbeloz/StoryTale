@@ -250,6 +250,11 @@ void main() {
   testWidgets('Sprite Studio has responsive editing and undo redo', (
     tester,
   ) async {
+    // Pin the Default actor. Without this the studio falls back to the project
+    // appearance asset, whose actor decides the face chip keys.
+    SharedPreferences.setMockInitialValues({
+      'sprite_studio.humanoid_v1.appearance': '{"actorId":"default"}',
+    });
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
