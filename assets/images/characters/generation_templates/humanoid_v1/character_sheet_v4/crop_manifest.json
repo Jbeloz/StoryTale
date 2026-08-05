@@ -23,7 +23,7 @@
     "allowedRegions": "872878efbdf8ff92c2198d4e21a258c87a8cf05e5995007c709ed6dcfb5c5af2",
     "protectedRegions": "a3cd13865e1ccb542fc5bdcf837bca22f63d36fc9f7ee242894acf15cab7e083",
     "seamAllowances": "6799388091ded0ebf9591c0a8e9ee7d2f082794f652152560f8accdceadddb8c",
-    "promptContract": "17ee3d759f467e12e649eed3964f5574e7d8461e990d1e50d3742680895794d3"
+    "promptContract": "79aa8979dd880d014d5b0049fa033a6a6567606a8d9cc0f07a7193616671dd37"
   },
   "maskEncoding": {
     "allowedRegions": "white pixels may contain generated appearance; black pixels are discarded",
@@ -96,7 +96,27 @@
     "canonicalBackHairId": "medium",
     "rule": "send the guide whose rear-hair silhouette matches BACK_HAIR_SELECTION; every variant shares the same cells, masks, anchors, and seams",
     "noneUsesGuide": "medium",
-    "noneLeavesRegionGreen": true
+    "noneLeavesRegionGreen": true,
+    "referenceContentByBackHairId": {
+      "short": {
+        "x": 24,
+        "y": 43,
+        "width": 381,
+        "height": 376
+      },
+      "medium": {
+        "x": 19,
+        "y": 23,
+        "width": 394,
+        "height": 508
+      },
+      "long": {
+        "x": 38,
+        "y": 25,
+        "width": 363,
+        "height": 729
+      }
+    }
   },
   "guideVariantSha256": {
     "short": "303dc1762eec5bb5dad197d8302d07f2033919bf9c63ad59cf456cf1b1fbf08c",
@@ -153,7 +173,14 @@
         "width": 429,
         "height": 800
       },
-      "resampling": "none-after-provider"
+      "resampling": "none-after-provider",
+      "referenceContent": {
+        "x": 19,
+        "y": 23,
+        "width": 394,
+        "height": 508,
+        "coverage": 0.5832
+      }
     },
     {
       "id": "front_hair",
@@ -190,7 +217,14 @@
         "width": 429,
         "height": 438
       },
-      "resampling": "none-after-provider"
+      "resampling": "none-after-provider",
+      "referenceContent": {
+        "x": 5,
+        "y": 4,
+        "width": 424,
+        "height": 389,
+        "coverage": 0.8778
+      }
     },
     {
       "id": "head",
@@ -233,7 +267,14 @@
         "width": 357,
         "height": 367
       },
-      "resampling": "none-after-provider"
+      "resampling": "none-after-provider",
+      "referenceContent": {
+        "x": 1,
+        "y": 0,
+        "width": 356,
+        "height": 366,
+        "coverage": 0.9945
+      }
     },
     {
       "id": "torso",
@@ -296,7 +337,14 @@
         "width": 165,
         "height": 234
       },
-      "resampling": "none-after-provider"
+      "resampling": "none-after-provider",
+      "referenceContent": {
+        "x": 0,
+        "y": 0,
+        "width": 165,
+        "height": 234,
+        "coverage": 1.0
+      }
     },
     {
       "id": "upper_arm_right",
@@ -344,7 +392,14 @@
         "width": 67,
         "height": 118
       },
-      "resampling": "none-after-provider"
+      "resampling": "none-after-provider",
+      "referenceContent": {
+        "x": 0,
+        "y": 0,
+        "width": 67,
+        "height": 118,
+        "coverage": 1.0
+      }
     },
     {
       "id": "lower_arm_right",
@@ -387,7 +442,14 @@
         "width": 77,
         "height": 145
       },
-      "resampling": "none-after-provider"
+      "resampling": "none-after-provider",
+      "referenceContent": {
+        "x": 0,
+        "y": 6,
+        "width": 77,
+        "height": 138,
+        "coverage": 0.9517
+      }
     },
     {
       "id": "upper_arm_left",
@@ -435,7 +497,14 @@
         "width": 78,
         "height": 128
       },
-      "resampling": "none-after-provider"
+      "resampling": "none-after-provider",
+      "referenceContent": {
+        "x": 0,
+        "y": 0,
+        "width": 78,
+        "height": 128,
+        "coverage": 1.0
+      }
     },
     {
       "id": "lower_arm_left",
@@ -478,7 +547,14 @@
         "width": 86,
         "height": 129
       },
-      "resampling": "none-after-provider"
+      "resampling": "none-after-provider",
+      "referenceContent": {
+        "x": 0,
+        "y": 1,
+        "width": 86,
+        "height": 128,
+        "coverage": 0.9922
+      }
     },
     {
       "id": "upper_leg_left",
@@ -526,7 +602,14 @@
         "width": 85,
         "height": 141
       },
-      "resampling": "none-after-provider"
+      "resampling": "none-after-provider",
+      "referenceContent": {
+        "x": 0,
+        "y": 1,
+        "width": 85,
+        "height": 140,
+        "coverage": 0.9929
+      }
     },
     {
       "id": "lower_leg_left",
@@ -569,7 +652,14 @@
         "width": 88,
         "height": 140
       },
-      "resampling": "none-after-provider"
+      "resampling": "none-after-provider",
+      "referenceContent": {
+        "x": 0,
+        "y": 0,
+        "width": 88,
+        "height": 140,
+        "coverage": 1.0
+      }
     },
     {
       "id": "upper_leg_right",
@@ -617,7 +707,14 @@
         "width": 94,
         "height": 150
       },
-      "resampling": "none-after-provider"
+      "resampling": "none-after-provider",
+      "referenceContent": {
+        "x": 0,
+        "y": 0,
+        "width": 94,
+        "height": 150,
+        "coverage": 1.0
+      }
     },
     {
       "id": "lower_leg_right",
@@ -660,7 +757,14 @@
         "width": 84,
         "height": 156
       },
-      "resampling": "none-after-provider"
+      "resampling": "none-after-provider",
+      "referenceContent": {
+        "x": 1,
+        "y": 0,
+        "width": 82,
+        "height": 156,
+        "coverage": 0.9762
+      }
     }
   ]
 }

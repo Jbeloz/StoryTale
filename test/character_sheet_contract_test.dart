@@ -358,6 +358,85 @@ void main() {
       );
     });
 
+    test('publishes how much of each cell the template actually fills', () {
+      // A cell is a container, not a target. Body cells are nearly cell sized,
+      // but the rear-hair cell is sized for the longest style, so telling a
+      // provider to fill it would return oversized hair.
+      for (final region in _regions(manifest)) {
+        final crop = _Rect.fromJson(region['crop'] as Map<String, dynamic>);
+        final content = region['referenceContent'] as Map<String, dynamic>;
+        final bounds = _Rect.fromJson(content);
+        expect(
+          bounds.x >= 0 &&
+              bounds.y >= 0 &&
+              bounds.x + bounds.width <= crop.width &&
+              bounds.y + bounds.height <= crop.height,
+          isTrue,
+          reason: '${region['id']} content escapes its own cell',
+        );
+        expect(
+          (content['coverage'] as num).toDouble(),
+          closeTo(
+            bounds.width * bounds.height / (crop.width * crop.height),
+            0.001,
+          ),
+          reason: '${region['id']} coverage does not match its bounds',
+        );
+      }
+    });
+
+    test('records the rear-hair cell as deliberately oversized', () {
+      final byId = {
+        for (final region in _regions(manifest)) region['id'] as String: region,
+      };
+      double coverage(String id) =>
+          ((byId[id]!['referenceContent'] as Map<String, dynamic>)['coverage']
+                  as num)
+              .toDouble();
+
+      // If this ever approaches 1.0 the cell stopped being oversized and the
+      // "do not fill the cell" rule in the prompt contract needs revisiting.
+      expect(coverage('back_hair_selected'), lessThan(0.7));
+      expect(coverage('torso'), greaterThan(0.9));
+
+      final extents =
+          (manifest['selectionContract']!['referenceContentByBackHairId']
+                  as Map<String, dynamic>)
+              .cast<String, dynamic>();
+      expect(extents.keys.toSet(), {'short', 'medium', 'long'});
+      final heights = {
+        for (final entry in extents.entries)
+          entry.key: (entry.value as Map<String, dynamic>)['height'] as int,
+      };
+      expect(
+        heights['short']!,
+        lessThan(heights['medium']!),
+        reason: 'short rear hair must be shorter than medium',
+      );
+      expect(
+        heights['medium']!,
+        lessThan(heights['long']!),
+        reason: 'medium rear hair must be shorter than long',
+      );
+      // The tallest style still has to fit the cell it was sized for.
+      expect(heights['long']!, lessThanOrEqualTo(800));
+    });
+
+    test('keeps rear hair no wider than front hair, as the template does', () {
+      final byId = {
+        for (final region in _regions(manifest)) region['id'] as String: region,
+      };
+      int contentWidth(String id) =>
+          (byId[id]!['referenceContent'] as Map<String, dynamic>)['width']
+              as int;
+      // Rear hair sits behind the head instead of wrapping the face, so it is
+      // narrower in the template. Generated hair must not invert that.
+      expect(
+        contentWidth('back_hair_selected'),
+        lessThan(contentWidth('front_hair')),
+      );
+    });
+
     test('maps every rear-hair length to a real source asset', () {
       final byActor =
           (manifest['backHairSourceByIdForActor'] as Map<String, dynamic>)

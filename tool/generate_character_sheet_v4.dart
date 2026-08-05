@@ -165,6 +165,7 @@ void main() {
   final manifestRegions = <Map<String, dynamic>>[];
 
   _TargetSpec? backHairTarget;
+  final referenceContent = <String, _Rect>{};
   for (final target in _targets) {
     final sourceRegion = v1Regions[target.sourceRegionId]!;
     final sourceCanvas = sourceRegion['outputCanvas'] as Map<String, dynamic>;
@@ -173,7 +174,7 @@ void main() {
       // Drawn once per variant below, not into the shared base guide.
       backHairTarget = target;
     } else {
-      _drawCell(guide, sourceAsset, target.crop);
+      referenceContent[target.id] = _drawCell(guide, sourceAsset, target.crop);
     }
 
     final sourceCrop = _Rect.fromJson(
@@ -238,12 +239,34 @@ void main() {
   // identical, so the variants are the same sheet with a different silhouette
   // in the slot the request is asking the provider to draw.
   final guidePathByBackHairId = <String, String>{};
+  final backHairContentById = <String, _Rect>{};
   for (final variant in _backHairVariants) {
     final variantGuide = image.Image.from(guide);
-    _drawCell(variantGuide, variant.sourceAsset, backHairTarget.crop);
+    backHairContentById[variant.id] = _drawCell(
+      variantGuide,
+      variant.sourceAsset,
+      backHairTarget.crop,
+    );
     final fileName = variant.guideFileName(_guideActorId);
     _writePng('${outputDirectory.path}/$fileName', variantGuide);
     guidePathByBackHairId[variant.id] = '$_v4Root/$fileName';
+  }
+  referenceContent[backHairTarget.id] =
+      backHairContentById[_canonicalBackHairId]!;
+
+  // How much of each cell the template artwork actually occupies. Several cells
+  // are deliberately larger than their content, so "fill the cell" is the wrong
+  // instruction and this records the right one.
+  for (final region in manifestRegions) {
+    final bounds = referenceContent[region['id'] as String]!;
+    final crop = _Rect.fromJson(region['crop'] as Map<String, dynamic>);
+    region['referenceContent'] = <String, dynamic>{
+      ...bounds.toJson(),
+      'coverage': double.parse(
+        (bounds.width * bounds.height / (crop.width * crop.height))
+            .toStringAsFixed(4),
+      ),
+    };
   }
 
   _writePng('${outputDirectory.path}/allowed_regions.png', allowed);
@@ -337,6 +360,10 @@ void main() {
           'anchors, and seams',
       'noneUsesGuide': _canonicalBackHairId,
       'noneLeavesRegionGreen': true,
+      'referenceContentByBackHairId': <String, dynamic>{
+        for (final entry in backHairContentById.entries)
+          entry.key: entry.value.toJson(),
+      },
     },
     'guideVariantSha256': <String, String>{
       for (final entry in guidePathByBackHairId.entries)
@@ -429,8 +456,15 @@ void _validateTargetLayout() {
   }
 }
 
-/// Draws one source PNG into its cell at the cell's exact native size.
-void _drawCell(image.Image destination, String sourceAsset, _Rect crop) {
+/// Draws one source PNG into its cell at the cell's exact native size, and
+/// returns the opaque part's bounds in cell-local coordinates.
+///
+/// The bounds matter because several cells are deliberately larger than the
+/// artwork they hold. The rear-hair cell is sized for the longest style, so a
+/// short style leaves most of the cell empty. A provider told only "here is a
+/// cell" would fill it and return hair far larger than the template intends, so
+/// the measured extent is published in the manifest and in the prompt contract.
+_Rect _drawCell(image.Image destination, String sourceAsset, _Rect crop) {
   final artwork = _decode(sourceAsset)..channels = image.Channels.rgba;
   final resized = image.copyResize(
     artwork,
@@ -439,6 +473,27 @@ void _drawCell(image.Image destination, String sourceAsset, _Rect crop) {
     interpolation: image.Interpolation.linear,
   );
   image.drawImage(destination, resized, dstX: crop.x, dstY: crop.y);
+  return _opaqueBounds(resized);
+}
+
+/// Smallest rectangle covering every pixel with any alpha, or the whole image
+/// when it is fully transparent.
+_Rect _opaqueBounds(image.Image value) {
+  var minX = value.width;
+  var minY = value.height;
+  var maxX = -1;
+  var maxY = -1;
+  for (var y = 0; y < value.height; y++) {
+    for (var x = 0; x < value.width; x++) {
+      if (image.getAlpha(value.getPixel(x, y)) == 0) continue;
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+    }
+  }
+  if (maxX < 0) return _Rect(0, 0, value.width, value.height);
+  return _Rect(minX, minY, maxX - minX + 1, maxY - minY + 1);
 }
 
 image.Image _solidImage(int red, int green, int blue) {

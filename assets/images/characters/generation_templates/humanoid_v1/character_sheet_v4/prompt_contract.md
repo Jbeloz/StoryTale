@@ -50,6 +50,30 @@ They are data fields, not permission to change the geometry contract.
 - Preserve the white pixels in `protected_regions.png` exactly.
 - Keep every required connection covered through its seam marker.
 
+## Cell size is not target size
+
+A cell is a container, not a target. Several cells are deliberately larger than
+the artwork they hold, so **do not fill a cell to its edges.** Match the extent
+of the reference silhouette already drawn in that cell.
+
+The rear-hair cell is the clearest case. It is `429 x 800` because it must be
+able to hold the longest style, so shorter styles leave most of it green:
+
+| Rear-hair length | Reference occupies | Share of the cell |
+| --- | --- | --- |
+| short | `381 x 375` | 42% |
+| medium | `394 x 507` | 58% |
+| long | `364 x 730` | 78% |
+
+Front hair, by contrast, fills `424 x 389` of its `429 x 438` cell, so it is
+nearly cell sized. Rear hair is also slightly **narrower** than front hair in the
+template, because it sits behind the head rather than wrapping the face. Keep
+that relationship: generated rear hair must not become wider than the front hair.
+
+Every region publishes `referenceContent` in `crop_manifest.json` with the exact
+bounds and coverage its template artwork occupies, and the rear-hair variants
+publish `referenceContentByBackHairId`. Use those, not the cell bounds.
+
 ## Hair rules
 
 - Draw one front-hair layer in `front_hair`.
