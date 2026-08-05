@@ -35,6 +35,38 @@ const _v4Root =
     'character_sheet_v4';
 const _rigManifestPath = 'assets/images/characters/rigs/humanoid_v1/rig.json';
 
+/// One guide per rear-hair length, per actor.
+///
+/// V4 carries a single `back_hair_selected` cell, so the guide has to show the
+/// silhouette the request actually wants. Rather than pack three alternatives
+/// into one sheet and leave two of them green, the same layout is published
+/// three times with a different rear-hair source in that one cell. Every other
+/// cell, mask, anchor, and seam is identical across the variants.
+const _backHairVariants = <_BackHairVariant>[
+  _BackHairVariant(
+    id: 'short',
+    sourceAsset:
+        'assets/images/characters/rigs/humanoid_v1/hair/back_short.png',
+  ),
+  _BackHairVariant(
+    id: 'medium',
+    sourceAsset:
+        'assets/images/characters/rigs/humanoid_v1/hair/back_default.png',
+  ),
+  _BackHairVariant(
+    id: 'long',
+    sourceAsset: 'assets/images/characters/rigs/humanoid_v1/hair/back_long.png',
+  ),
+];
+
+/// The actor the checked-in guides depict. Other actors reuse the identical
+/// geometry and only swap their hair sources; see `actorContract` below.
+const _guideActorId = 'default';
+
+/// The variant `assets.guide` points at, so the six required contract hashes
+/// keep their existing shape.
+const _canonicalBackHairId = 'medium';
+
 /// One back-hair cell, matching V2's `back_hair_selected` contract. V1 and V3
 /// carry three back-hair cells but a request only ever activates one, so the
 /// other two are green waste rather than extra capability.
@@ -132,23 +164,17 @@ void main() {
   final v1Seams = _decode('$_v1Root/seam_allowances.png');
   final manifestRegions = <Map<String, dynamic>>[];
 
+  _TargetSpec? backHairTarget;
   for (final target in _targets) {
     final sourceRegion = v1Regions[target.sourceRegionId]!;
     final sourceCanvas = sourceRegion['outputCanvas'] as Map<String, dynamic>;
     final sourceAsset = sourceRegion['sourceAsset'] as String;
-    final sourceArtwork = _decode(sourceAsset)..channels = image.Channels.rgba;
-    final resizedArtwork = image.copyResize(
-      sourceArtwork,
-      width: target.crop.width,
-      height: target.crop.height,
-      interpolation: image.Interpolation.linear,
-    );
-    image.drawImage(
-      guide,
-      resizedArtwork,
-      dstX: target.crop.x,
-      dstY: target.crop.y,
-    );
+    if (sourceRegion['kind'] == 'backHair') {
+      // Drawn once per variant below, not into the shared base guide.
+      backHairTarget = target;
+    } else {
+      _drawCell(guide, sourceAsset, target.crop);
+    }
 
     final sourceCrop = _Rect.fromJson(
       sourceRegion['crop'] as Map<String, dynamic>,
@@ -202,8 +228,24 @@ void main() {
     manifestRegions.add(region);
   }
 
+  if (backHairTarget == null) {
+    throw StateError('V4 must contain exactly one back-hair cell.');
+  }
+
   final outputDirectory = Directory(_v4Root)..createSync(recursive: true);
-  _writePng('${outputDirectory.path}/guide.png', guide);
+
+  // One guide per rear-hair length. Everything except that single cell is
+  // identical, so the variants are the same sheet with a different silhouette
+  // in the slot the request is asking the provider to draw.
+  final guidePathByBackHairId = <String, String>{};
+  for (final variant in _backHairVariants) {
+    final variantGuide = image.Image.from(guide);
+    _drawCell(variantGuide, variant.sourceAsset, backHairTarget.crop);
+    final fileName = variant.guideFileName(_guideActorId);
+    _writePng('${outputDirectory.path}/$fileName', variantGuide);
+    guidePathByBackHairId[variant.id] = '$_v4Root/$fileName';
+  }
+
   _writePng('${outputDirectory.path}/allowed_regions.png', allowed);
   _writePng('${outputDirectory.path}/protected_regions.png', protected);
   _writePng('${outputDirectory.path}/seam_allowances.png', seams);
@@ -214,7 +256,7 @@ void main() {
   ).copySync('${outputDirectory.path}/assembled_reference.png');
 
   final assetPaths = <String, String>{
-    'guide': '$_v4Root/guide.png',
+    'guide': guidePathByBackHairId[_canonicalBackHairId]!,
     'assembledReference': '$_v4Root/assembled_reference.png',
     'allowedRegions': '$_v4Root/allowed_regions.png',
     'protectedRegions': '$_v4Root/protected_regions.png',
@@ -287,6 +329,24 @@ void main() {
       'acceptedValues': <String>['short', 'medium', 'long', 'none'],
       'noneMeansEmptyRegion': true,
       'frontHairRegionId': 'front_hair',
+      'guideByBackHairId': guidePathByBackHairId,
+      'canonicalBackHairId': _canonicalBackHairId,
+      'rule':
+          'send the guide whose rear-hair silhouette matches '
+          'BACK_HAIR_SELECTION; every variant shares the same cells, masks, '
+          'anchors, and seams',
+      'noneUsesGuide': _canonicalBackHairId,
+      'noneLeavesRegionGreen': true,
+    },
+    'guideVariantSha256': <String, String>{
+      for (final entry in guidePathByBackHairId.entries)
+        entry.key: _sha256(entry.value),
+    },
+    'backHairSourceByIdForActor': <String, dynamic>{
+      _guideActorId: <String, String>{
+        for (final variant in _backHairVariants)
+          variant.id: variant.sourceAsset,
+      },
     },
     'rules': <String, dynamic>{
       'cropCoordinatesAreInclusiveExclusive': true,
@@ -307,6 +367,10 @@ void main() {
   stdout.writeln('Regions: ${manifestRegions.length}');
   stdout.writeln('Cell padding: $_cellPadding px');
   stdout.writeln('Cell fill: ${fill.toStringAsFixed(1)}%');
+  stdout.writeln(
+    'Guides for $_guideActorId: '
+    '${_backHairVariants.map((variant) => variant.id).join(', ')}',
+  );
   stdout.writeln('No network or provider request was used.');
 }
 
@@ -363,6 +427,18 @@ void _validateTargetLayout() {
       }
     }
   }
+}
+
+/// Draws one source PNG into its cell at the cell's exact native size.
+void _drawCell(image.Image destination, String sourceAsset, _Rect crop) {
+  final artwork = _decode(sourceAsset)..channels = image.Channels.rgba;
+  final resized = image.copyResize(
+    artwork,
+    width: crop.width,
+    height: crop.height,
+    interpolation: image.Interpolation.linear,
+  );
+  image.drawImage(destination, resized, dstX: crop.x, dstY: crop.y);
 }
 
 image.Image _solidImage(int red, int green, int blue) {
@@ -460,6 +536,15 @@ void _writePng(String path, image.Image value) {
 
 String _sha256(String path) =>
     sha256.convert(File(path).readAsBytesSync()).toString();
+
+class _BackHairVariant {
+  const _BackHairVariant({required this.id, required this.sourceAsset});
+
+  final String id;
+  final String sourceAsset;
+
+  String guideFileName(String actorId) => 'guide_${actorId}_$id.png';
+}
 
 class _TargetSpec {
   const _TargetSpec({

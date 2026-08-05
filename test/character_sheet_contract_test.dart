@@ -317,6 +317,70 @@ void main() {
       expect(selection['noneMeansEmptyRegion'], isTrue);
     });
 
+    test('publishes one guide per rear-hair length', () {
+      final selection = manifest['selectionContract'] as Map<String, dynamic>;
+      final guides = (selection['guideByBackHairId'] as Map<String, dynamic>)
+          .cast<String, String>();
+      expect(guides.keys.toSet(), {'short', 'medium', 'long'});
+
+      final hashes = (manifest['guideVariantSha256'] as Map<String, dynamic>)
+          .cast<String, String>();
+      expect(hashes.keys.toSet(), guides.keys.toSet());
+
+      final seenHashes = <String>{};
+      for (final entry in guides.entries) {
+        final file = _repoFile(entry.value);
+        expect(file.existsSync(), isTrue, reason: '${entry.key} guide missing');
+        expect(_readPngSize(file), (width: 1024, height: 1024));
+        expect(
+          _sha256(file),
+          hashes[entry.key],
+          reason: '${entry.key} guide no longer matches its approved hash',
+        );
+        // Three lengths must be three genuinely different pictures.
+        expect(
+          seenHashes.add(hashes[entry.key]!),
+          isTrue,
+          reason: '${entry.key} guide is a duplicate of another length',
+        );
+      }
+
+      // The six required contract hashes must keep their exact shape, so the
+      // variant hashes live in their own map.
+      expect(
+        (manifest['assetSha256'] as Map<String, dynamic>).keys.toSet(),
+        CharacterSheetContract.requiredHashIds,
+      );
+      expect(
+        manifest['assets']!['guide'],
+        guides[selection['canonicalBackHairId']],
+        reason: 'assets.guide must point at the canonical variant',
+      );
+    });
+
+    test('maps every rear-hair length to a real source asset', () {
+      final byActor =
+          (manifest['backHairSourceByIdForActor'] as Map<String, dynamic>)
+              .cast<String, dynamic>();
+      expect(byActor.keys, contains('default'));
+      final sources = (byActor['default'] as Map<String, dynamic>)
+          .cast<String, String>();
+      expect(sources.keys.toSet(), {'short', 'medium', 'long'});
+      final seen = <String>{};
+      for (final entry in sources.entries) {
+        expect(
+          _repoFile(entry.value).existsSync(),
+          isTrue,
+          reason: '${entry.key} points at a missing ${entry.value}',
+        );
+        expect(
+          seen.add(entry.value),
+          isTrue,
+          reason: '${entry.key} reuses another length\'s artwork',
+        );
+      }
+    });
+
     test('dresses all nine body parts and keeps the head for face details', () {
       final regions = _regions(manifest);
       expect(

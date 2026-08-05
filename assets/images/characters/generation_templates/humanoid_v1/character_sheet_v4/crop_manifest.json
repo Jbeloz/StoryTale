@@ -10,7 +10,7 @@
     "backgroundColor": "#00FF00"
   },
   "assets": {
-    "guide": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/guide.png",
+    "guide": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/guide_default_medium.png",
     "assembledReference": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/assembled_reference.png",
     "allowedRegions": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/allowed_regions.png",
     "protectedRegions": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/protected_regions.png",
@@ -23,7 +23,7 @@
     "allowedRegions": "872878efbdf8ff92c2198d4e21a258c87a8cf05e5995007c709ed6dcfb5c5af2",
     "protectedRegions": "a3cd13865e1ccb542fc5bdcf837bca22f63d36fc9f7ee242894acf15cab7e083",
     "seamAllowances": "6799388091ded0ebf9591c0a8e9ee7d2f082794f652152560f8accdceadddb8c",
-    "promptContract": "8a3fa874ab7598bff063cc1cad74c2546dcf03b27d4205dfbe6e7dc5b95b0102"
+    "promptContract": "17ee3d759f467e12e649eed3964f5574e7d8461e990d1e50d3742680895794d3"
   },
   "maskEncoding": {
     "allowedRegions": "white pixels may contain generated appearance; black pixels are discarded",
@@ -87,7 +87,28 @@
       "none"
     ],
     "noneMeansEmptyRegion": true,
-    "frontHairRegionId": "front_hair"
+    "frontHairRegionId": "front_hair",
+    "guideByBackHairId": {
+      "short": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/guide_default_short.png",
+      "medium": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/guide_default_medium.png",
+      "long": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/guide_default_long.png"
+    },
+    "canonicalBackHairId": "medium",
+    "rule": "send the guide whose rear-hair silhouette matches BACK_HAIR_SELECTION; every variant shares the same cells, masks, anchors, and seams",
+    "noneUsesGuide": "medium",
+    "noneLeavesRegionGreen": true
+  },
+  "guideVariantSha256": {
+    "short": "303dc1762eec5bb5dad197d8302d07f2033919bf9c63ad59cf456cf1b1fbf08c",
+    "medium": "45f221c5b25e1d7761dd1de92b10817a6f368e956c2f2be7aa058532769e3c4f",
+    "long": "3670f00840478117ab9d5ee9d8d1fb0c23bbc585c7a5bb66ddf6681bcaa8e845"
+  },
+  "backHairSourceByIdForActor": {
+    "default": {
+      "short": "assets/images/characters/rigs/humanoid_v1/hair/back_short.png",
+      "medium": "assets/images/characters/rigs/humanoid_v1/hair/back_default.png",
+      "long": "assets/images/characters/rigs/humanoid_v1/hair/back_long.png"
+    }
   },
   "rules": {
     "cropCoordinatesAreInclusiveExclusive": true,

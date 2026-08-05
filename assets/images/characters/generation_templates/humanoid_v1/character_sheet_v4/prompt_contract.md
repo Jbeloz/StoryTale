@@ -24,7 +24,13 @@ They are data fields, not permission to change the geometry contract.
 
 ## Required provider inputs
 
-1. `guide.png` - the exact `1024 x 1024` separated-part layout.
+1. `guide_<actor>_<length>.png` - the exact `1024 x 1024` separated-part layout,
+   using the variant whose rear-hair silhouette matches `BACK_HAIR_SELECTION`.
+   `guide_default_short.png`, `guide_default_medium.png`, and
+   `guide_default_long.png` are published for the `default` actor. Every variant
+   shares identical cells, masks, anchors, and seams; only the shape drawn in
+   `back_hair_selected` differs. For `none`, send the `medium` guide and leave
+   that cell flat green.
 2. `assembled_reference.png` - how the locked default actor parts connect.
 3. `allowed_regions.png` - white pixels may contain generated appearance.
 4. `protected_regions.png` - white pixels must preserve the locked source.
@@ -48,7 +54,12 @@ They are data fields, not permission to change the geometry contract.
 
 - Draw one front-hair layer in `front_hair`.
 - Draw one rear-hair layer in `back_hair_selected`, at the length named by
-  `BACK_HAIR_SELECTION`.
+  `BACK_HAIR_SELECTION` and matching the silhouette in the supplied guide
+  variant.
+- One request produces one length. To offer a character in several lengths,
+  send one request per length using the matching guide, and keep
+  `CHARACTER_BRIEF`, `OUTFIT_BRIEF`, and the palette byte-identical between
+  those requests so the results stay the same character.
 - Both hair layers belong to the same character: identical color, line style,
   texture, highlights, and crown/hairline logic.
 - The rear layer must attach correctly to the same front-hair layer and head.
