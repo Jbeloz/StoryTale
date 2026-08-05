@@ -41,6 +41,12 @@ try {
     & "$PSScriptRoot\sync_voices.ps1"
 
     if ($Device -eq 'web-server') {
+        # The child inherits this. The key stays in the local admin server so it
+        # never reaches the browser bundle; DeepL is called from there.
+        $env:DEEPL_API_KEY = Get-EnvValue 'DEEPL_API_KEY'
+        if (-not $env:DEEPL_API_KEY) {
+            Write-Host 'DEEPL_API_KEY is not set in .env; translation will be unavailable.'
+        }
         $poseAdmin = Start-Process -FilePath 'dart' `
             -ArgumentList @('run', 'tool/pose_admin_server.dart') `
             -WorkingDirectory $root `

@@ -128,6 +128,8 @@ class _ReaderPageState extends State<ReaderPage> {
                       controller.saveReaderSettings(copy);
                     },
                   ),
+                  const SizedBox(height: 8),
+                  _TranslationControls(chapter: chapter),
                 ],
               ],
             ),
@@ -218,8 +220,15 @@ class _ReaderPageState extends State<ReaderPage> {
     if (!_translateMode || mode == ReaderLanguageMode.english) {
       return chapter.originalText;
     }
+    final controller = StoryTaleScope.of(context);
     final filipino =
-        chapter.translatedText ?? 'Preparing the Filipino translation…';
+        chapter.translatedText ??
+        switch (controller.translationStatus(chapter)) {
+          TranslationStatus.translating => 'Translating with DeepL…',
+          TranslationStatus.failed =>
+            controller.translationError(chapter) ?? 'Translation failed.',
+          TranslationStatus.idle => 'Press Translate now to start.',
+        };
     if (mode == ReaderLanguageMode.filipino) return filipino;
     return 'ENGLISH\n\n${chapter.originalText}\n\nFILIPINO\n\n$filipino';
   }
@@ -299,6 +308,68 @@ class _ReaderPageState extends State<ReaderPage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Re-translate and delete for one chapter's cached translation.
+///
+/// Create is triggered by the Translate toggle; this exposes the rest so the
+/// owner can refresh a translation or drop it without leaving the reader.
+class _TranslationControls extends StatelessWidget {
+  const _TranslationControls({required this.chapter});
+
+  final ChapterData chapter;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = StoryTaleScope.of(context);
+    final status = controller.translationStatus(chapter);
+    final busy = status == TranslationStatus.translating;
+    final has = controller.hasTranslation(chapter);
+    final error = controller.translationError(chapter);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (busy)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 4),
+            child: LinearProgressIndicator(key: Key('translationProgress')),
+          ),
+        if (error != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              error,
+              key: const Key('translationError'),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ),
+          ),
+        Wrap(
+          spacing: 8,
+          children: [
+            OutlinedButton.icon(
+              key: const Key('retranslateChapterButton'),
+              onPressed: busy
+                  ? null
+                  : () => controller.retranslateChapter(chapter),
+              icon: const Icon(Icons.refresh, size: 18),
+              label: Text(has ? 'Re-translate' : 'Translate now'),
+            ),
+            OutlinedButton.icon(
+              key: const Key('deleteTranslationButton'),
+              onPressed: busy || !has
+                  ? null
+                  : () => controller.deleteTranslation(chapter),
+              icon: const Icon(Icons.delete_outline, size: 18),
+              label: const Text('Delete translation'),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

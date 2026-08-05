@@ -672,13 +672,24 @@ Implementation order:
 
 ### Phase 10 - DeepL and offline audio
 
+Status: **Partly delivered early.** On 5 August 2026 the owner asked for working
+translation ahead of the roadmap order. Real DeepL text translation now runs
+through a local dev proxy, with per-chapter create/read/update/delete and
+caching. The remaining DeepL items below and all offline audio are still open.
+
 DeepL:
 
-- use DeepL as the only English-to-Filipino provider
-- send target code `TL`
-- cache translations by source-text hash
-- count usage and avoid repeated requests
-- keep original text available on every failure
+- [x] use DeepL as the only English-to-Filipino provider
+- [x] send target code `TL`
+- [x] keep original text available on every failure
+- [x] avoid repeated requests by caching the chapter translation
+- [ ] cache by source-text hash so an edited chapter re-translates
+- [ ] count usage against the account quota
+- [ ] route through the Worker so a real Android build can translate; the local
+  `tool/pose_admin_server.dart` proxy is a dev-only path
+
+The key stays in the local proxy process and never enters the web bundle. DeepL
+sends no CORS headers, so a browser cannot call it directly in any case.
 
 Offline audio:
 

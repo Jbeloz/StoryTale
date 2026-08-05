@@ -1,8 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:storytale/src/app.dart';
 import 'package:storytale/src/core/state/storytale_controller.dart';
+import 'package:storytale/src/features/reader/data/translation_service.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -64,7 +69,27 @@ void main() {
     tester,
   ) async {
     await _usePhoneSize(tester);
-    await _pumpStoryTale(tester);
+    // A fake DeepL proxy: the reader must show whatever the provider returns,
+    // not a hardcoded string, and no real request may leave the test.
+    await _pumpStoryTale(
+      tester,
+      controller: StoryTaleController(
+        translationService: TranslationService(
+          endpoint: 'http://127.0.0.1:52828',
+          client: MockClient((request) async {
+            final texts =
+                (jsonDecode(request.body) as Map<String, dynamic>)['texts']
+                    as List<dynamic>;
+            return http.Response(
+              jsonEncode({
+                'translations': [for (final text in texts) 'Salin: $text'],
+              }),
+              200,
+            );
+          }),
+        ),
+      ),
+    );
 
     await tester.tap(find.text('The Little Prince').first);
     await tester.pumpAndSettle();
@@ -79,7 +104,15 @@ void main() {
     expect(find.text('Filipino'), findsOneWidget);
     await tester.tap(find.text('Filipino'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Noong unang panahon'), findsOneWidget);
+    expect(find.textContaining('Salin: '), findsOneWidget);
+
+    // Delete returns the reader to English and disables itself.
+    await tester.ensureVisible(
+      find.byKey(const Key('deleteTranslationButton')),
+    );
+    await tester.tap(find.byKey(const Key('deleteTranslationButton')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Salin: '), findsNothing);
   });
 
   testWidgets('volume Story Mode preparation completes every chapter', (

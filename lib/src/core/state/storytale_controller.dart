@@ -6,10 +6,12 @@ import '../../generated/voice_manifest.g.dart';
 import '../../features/animated_story/data/subtitle_beat_splitter.dart';
 import '../../features/animated_story/data/volume_preparation_models.dart';
 import '../../features/library/data/library_repository.dart';
+import '../../features/reader/data/translation_service.dart';
 import '../../shared/models/storytale_models.dart';
 
 class StoryTaleController extends ChangeNotifier {
-  StoryTaleController() {
+  StoryTaleController({TranslationService? translationService})
+    : _translation = translationService ?? TranslationService() {
     books.addAll(_demoBooks());
     for (final book in books) {
       _updateBookProgress(book);
@@ -87,7 +89,12 @@ class StoryTaleController extends ChangeNotifier {
   bool libraryStorageFailed = false;
 
   final LibraryRepository _library = LibraryRepository();
+  final TranslationService _translation;
   final Set<String> _importedBookIds = {};
+
+  /// Per-chapter translation state, keyed by chapter ID. Absent means idle.
+  final Map<String, TranslationStatus> _translationStatus = {};
+  final Map<String, String> _translationErrors = {};
   Timer? _readingStateTimer;
   bool _userChangedReadingState = false;
   bool _disposed = false;
@@ -282,6 +289,30 @@ class StoryTaleController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Update: edits one book's details.
+  ///
+  /// Persistence mirrors [removeBook]: only imported books are written back, so
+  /// an edit to a built-in demo book lasts for the session but is not saved.
+  /// A blank title is rejected because the library lists books by title.
+  bool updateBookDetails(
+    BookData book, {
+    String? title,
+    String? author,
+    String? language,
+    String? description,
+  }) {
+    final nextTitle = (title ?? book.title).trim();
+    if (nextTitle.isEmpty) return false;
+    book
+      ..title = nextTitle
+      ..author = (author ?? book.author).trim()
+      ..language = (language ?? book.language).trim()
+      ..description = (description ?? book.description).trim();
+    if (_importedBookIds.contains(book.id)) _saveImportedBooks();
+    notifyListeners();
+    return true;
+  }
+
   void clearReadingProgress(BookData book) {
     book.progress = 0;
     for (final chapter in book.chapters) {
@@ -320,13 +351,56 @@ class StoryTaleController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void translateChapter(ChapterData chapter) {
-    chapter.translatedText ??=
-        'Noong unang panahon, may isang munting prinsipe na nakatira '
-        'sa isang maliit na planeta. Minahal niya ang panonood ng paglubog '
-        'ng araw at inalagaan niya ang kanyang bulaklak.';
+  TranslationStatus translationStatus(ChapterData chapter) =>
+      _translationStatus[chapter.id] ?? TranslationStatus.idle;
+
+  String? translationError(ChapterData chapter) =>
+      _translationErrors[chapter.id];
+
+  bool hasTranslation(ChapterData chapter) =>
+      (chapter.translatedText ?? '').isNotEmpty;
+
+  /// Create: translates once and caches the result.
+  ///
+  /// A chapter that already has a translation is not sent again, so reopening a
+  /// book costs no DeepL quota. Use [retranslateChapter] to force a refresh.
+  Future<void> translateChapter(ChapterData chapter) {
+    if (hasTranslation(chapter)) return Future<void>.value();
+    return _runTranslation(chapter);
+  }
+
+  /// Update: discards the cached text and translates again.
+  Future<void> retranslateChapter(ChapterData chapter) =>
+      _runTranslation(chapter);
+
+  /// Delete: drops the cached translation and returns the reader to English.
+  void deleteTranslation(ChapterData chapter) {
+    chapter.translatedText = null;
+    _translationStatus.remove(chapter.id);
+    _translationErrors.remove(chapter.id);
     _scheduleReadingStateSave();
     notifyListeners();
+  }
+
+  Future<void> _runTranslation(ChapterData chapter) async {
+    if (translationStatus(chapter) == TranslationStatus.translating) return;
+    _translationStatus[chapter.id] = TranslationStatus.translating;
+    _translationErrors.remove(chapter.id);
+    notifyListeners();
+    try {
+      final text = await _translation.translateChapter(chapter);
+      if (_disposed) return;
+      chapter.translatedText = text;
+      _translationStatus[chapter.id] = TranslationStatus.idle;
+      _scheduleReadingStateSave();
+    } on TranslationException catch (error) {
+      if (_disposed) return;
+      // Show the real provider message; never retry automatically.
+      _translationStatus[chapter.id] = TranslationStatus.failed;
+      _translationErrors[chapter.id] = error.message;
+    } finally {
+      if (!_disposed) notifyListeners();
+    }
   }
 
   void saveReaderSettings(ReaderSettingsData settings) {

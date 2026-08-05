@@ -19,6 +19,11 @@ const _partNames = {
   'front_hair',
   'back_hair',
 };
+
+/// DeepL accepts up to 50 `text` values per request.
+const _maxTranslateTexts = 50;
+const _maxTranslateBytes = 131072;
+final _safeLangCode = RegExp(r'^[A-Z]{2}(-[A-Z]{2})?$');
 const _actorIds = {'default', 'hero', 'heroine', 'elder', 'adult'};
 const _hairStyleIds = {'none', 'short', 'medium', 'long'};
 const _origins = {
@@ -51,6 +56,9 @@ Future<void> _handle(HttpRequest request) async {
   }
   if (request.method == 'POST' && request.uri.path == '/appearance') {
     return _saveAppearance(request);
+  }
+  if (request.method == 'POST' && request.uri.path == '/translate') {
+    return _translate(request);
   }
 
   final segments = request.uri.pathSegments;
@@ -128,6 +136,102 @@ Future<void> _saveAppearance(HttpRequest request) async {
     return _reply(request, HttpStatus.badRequest, {
       'error': 'Invalid appearance.',
     });
+  }
+}
+
+/// Forwards one batch of text to DeepL.
+///
+/// The API key stays in this process. Flutter never receives it, so it never
+/// reaches the web bundle where anyone could read it out of devtools. DeepL also
+/// sends no CORS headers, so the browser could not call it directly anyway.
+Future<void> _translate(HttpRequest request) async {
+  final key = Platform.environment['DEEPL_API_KEY']?.trim() ?? '';
+  if (key.isEmpty) {
+    return _reply(request, HttpStatus.serviceUnavailable, {
+      'error':
+          'DEEPL_API_KEY is not set. Add it to .env and restart the launcher.',
+    });
+  }
+  if (request.contentLength > _maxTranslateBytes) {
+    return _reply(request, HttpStatus.badRequest, {
+      'error': 'Translation request is too big.',
+    });
+  }
+
+  final List<String> texts;
+  final String targetLang;
+  try {
+    final source = await utf8.decoder.bind(request).join();
+    final value = jsonDecode(source);
+    if (value is! Map<String, dynamic>) throw const FormatException();
+    texts = (value['texts'] as List<dynamic>? ?? const [])
+        .whereType<String>()
+        .toList();
+    targetLang = (value['targetLang'] as String? ?? 'TL').toUpperCase();
+  } catch (_) {
+    return _reply(request, HttpStatus.badRequest, {'error': 'Invalid JSON.'});
+  }
+  if (texts.isEmpty) {
+    return _reply(request, HttpStatus.badRequest, {
+      'error': 'Send at least one text.',
+    });
+  }
+  if (texts.length > _maxTranslateTexts) {
+    return _reply(request, HttpStatus.badRequest, {
+      'error': 'Send at most $_maxTranslateTexts texts per request.',
+    });
+  }
+  if (!_safeLangCode.hasMatch(targetLang)) {
+    return _reply(request, HttpStatus.badRequest, {
+      'error': 'Invalid target language.',
+    });
+  }
+
+  // A free-tier key ends with ":fx" and must use the api-free host.
+  final host = key.endsWith(':fx') ? 'api-free.deepl.com' : 'api.deepl.com';
+  final client = HttpClient();
+  try {
+    final upstream = await client.postUrl(Uri.https(host, '/v2/translate'));
+    upstream.headers
+      ..set(HttpHeaders.authorizationHeader, 'DeepL-Auth-Key $key')
+      ..contentType = ContentType.json;
+    upstream.write(jsonEncode({'text': texts, 'target_lang': targetLang}));
+
+    final response = await upstream.close();
+    final body = await utf8.decoder.bind(response).join();
+    if (response.statusCode != HttpStatus.ok) {
+      // Surface the real provider status and message; never retry here.
+      return _reply(request, response.statusCode, {
+        'error': 'DeepL returned ${response.statusCode}.',
+        'detail': body.isEmpty ? null : body,
+      });
+    }
+
+    final decoded = jsonDecode(body);
+    if (decoded is! Map<String, dynamic>) throw const FormatException();
+    final translations = (decoded['translations'] as List<dynamic>? ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map((item) => item['text'])
+        .whereType<String>()
+        .toList();
+    if (translations.length != texts.length) {
+      return _reply(request, HttpStatus.badGateway, {
+        'error':
+            'DeepL returned ${translations.length} translations '
+            'for ${texts.length} texts.',
+      });
+    }
+    return _reply(request, HttpStatus.ok, {'translations': translations});
+  } on SocketException catch (error) {
+    return _reply(request, HttpStatus.badGateway, {
+      'error': 'Could not reach DeepL: ${error.message}',
+    });
+  } catch (_) {
+    return _reply(request, HttpStatus.badGateway, {
+      'error': 'DeepL sent an unreadable response.',
+    });
+  } finally {
+    client.close();
   }
 }
 

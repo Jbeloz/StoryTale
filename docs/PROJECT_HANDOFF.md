@@ -581,6 +581,42 @@ removing when Phase 7G.1A.1 is next touched.
 no issues. The locked rig, every versioned character sheet, and
 `test/character_sheet_contract_test.dart` were not touched.
 
+### Translation and CRUD pulled forward, 5 August 2026
+
+Later the same day the owner paused the Phase 7 thread again and asked for two
+things: working DeepL translation using the existing `DEEPL_API_KEY`, and CRUD in
+the app — specifically translation CRUD and editing an uploaded EPUB. This is
+ahead of the roadmap, where translation is Phase 10; it is the owner's call and
+`docs/ROADMAP.md` Phase 10 now records what landed early.
+
+What shipped:
+
+- **Real DeepL translation.** `translateChapter` was a hardcoded Little Prince
+  Tagalog paragraph, which also broke the no-book-specific-behaviour rule. It now
+  calls DeepL for real. Verified against DeepL's docs that Tagalog is target code
+  `TL`.
+- **Translation CRUD** on `StoryTaleController`: `translateChapter` (create,
+  cached so reopening a book costs no quota), `retranslateChapter` (update),
+  `deleteTranslation` (delete). Per-chapter status and the **real** provider
+  error are exposed; nothing retries automatically.
+- **Book Update.** The library's "Edit metadata" row was a placeholder snackbar;
+  it is now a real dialog for title, author, language, and description. With
+  import, the library list, and "Remove from library", books have full CRUD.
+- **A local DeepL proxy.** `tool/pose_admin_server.dart` gained `POST /translate`
+  and `tool/run_storytale.ps1` passes `DEEPL_API_KEY` into that process only.
+
+Two limits to know:
+
+- **The key is never in the web bundle** — it lives in the local proxy process.
+  That is deliberate: DeepL sends no CORS headers so a browser cannot call it
+  directly, and a bundled key would be readable in devtools.
+- **Translation is dev-only right now.** On a physical Android device
+  `127.0.0.1:52828` is the phone, not the PC. The Worker route fixes that and is
+  not built.
+
+No live DeepL request was made while implementing this; all tests use a fake
+client. The first real request is the owner's to trigger in the app.
+
 **The next task is still to resume Phase 7.** Start with whichever the owner
 prefers:
 
@@ -727,8 +763,13 @@ their roadmap gates unless a blocking defect requires a narrow fix.
 
 ### Translation and audio
 
-- DeepL UI currently uses placeholder behavior; real service/cache/usage
-  integration is missing.
+- DeepL text translation is real as of 5 August 2026, but only through the local
+  dev proxy. On a physical Android device `127.0.0.1:52828` is the phone itself,
+  so translation does not work there. A Worker `/translate` route is the durable
+  cross-platform fix and is not built.
+- Translations are cached per chapter and persist, but there is no usage counter
+  and no cache keyed by source-text hash, so editing a chapter's source would
+  not invalidate its translation.
 - The mobile Tagalog ONNX TTS and voice-conversion runtime are not connected.
 - The five current raw voice models need conversion, licensing review,
   physical-device testing, memory benchmarks, and quality approval.

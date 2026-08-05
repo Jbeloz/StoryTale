@@ -5,6 +5,10 @@ enum PreparationStatus { notStarted, preparing, ready, failed }
 
 enum ReaderLanguageMode { english, filipino, dual }
 
+/// Where one chapter's translation currently stands. `idle` covers both "never
+/// translated" and "already cached"; check `translatedText` to tell them apart.
+enum TranslationStatus { idle, translating, failed }
+
 /// How the reader lays a chapter out: one continuous scroll, or fixed pages
 /// turned sideways like a printed book.
 enum ReaderReadingMode { scroll, page }

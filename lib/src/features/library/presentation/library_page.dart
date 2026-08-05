@@ -258,16 +258,13 @@ Future<void> showBookOptionsSheet(BuildContext context, BookData book) async {
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
+            key: const Key('editBookMetadata'),
             leading: const Icon(Icons.edit_outlined),
-            title: const Text('Edit metadata'),
-            subtitle: const Text('Prototype placeholder'),
+            title: const Text('Edit details'),
+            subtitle: const Text('Title, author, language, description'),
             onTap: () {
               Navigator.pop(sheetContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Metadata editing will use parsed EPUB data.'),
-                ),
-              );
+              showBookEditDialog(context, book);
             },
           ),
           ListTile(
@@ -290,4 +287,86 @@ Future<void> showBookOptionsSheet(BuildContext context, BookData book) async {
       ),
     ),
   );
+}
+
+/// Edits one book's details. This is the Update half of the library's CRUD;
+/// import creates, the library lists, and "Remove from library" deletes.
+Future<void> showBookEditDialog(BuildContext context, BookData book) async {
+  final controller = StoryTaleScope.of(context);
+  final title = TextEditingController(text: book.title);
+  final author = TextEditingController(text: book.author);
+  final language = TextEditingController(text: book.language);
+  final description = TextEditingController(text: book.description);
+  final formKey = GlobalKey<FormState>();
+
+  final saved = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Edit book details'),
+      content: SingleChildScrollView(
+        child: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                key: const Key('editBookTitle'),
+                controller: title,
+                decoration: const InputDecoration(labelText: 'Title'),
+                textCapitalization: TextCapitalization.words,
+                validator: (value) => (value ?? '').trim().isEmpty
+                    ? 'Give the book a title.'
+                    : null,
+              ),
+              TextFormField(
+                key: const Key('editBookAuthor'),
+                controller: author,
+                decoration: const InputDecoration(labelText: 'Author'),
+                textCapitalization: TextCapitalization.words,
+              ),
+              TextFormField(
+                key: const Key('editBookLanguage'),
+                controller: language,
+                decoration: const InputDecoration(labelText: 'Language'),
+              ),
+              TextFormField(
+                key: const Key('editBookDescription'),
+                controller: description,
+                decoration: const InputDecoration(labelText: 'Description'),
+                maxLines: 3,
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          key: const Key('saveBookDetails'),
+          onPressed: () {
+            if (formKey.currentState?.validate() != true) return;
+            Navigator.pop(dialogContext, true);
+          },
+          child: const Text('Save'),
+        ),
+      ],
+    ),
+  );
+
+  if (saved == true) {
+    controller.updateBookDetails(
+      book,
+      title: title.text,
+      author: author.text,
+      language: language.text,
+      description: description.text,
+    );
+  }
+  title.dispose();
+  author.dispose();
+  language.dispose();
+  description.dispose();
 }
