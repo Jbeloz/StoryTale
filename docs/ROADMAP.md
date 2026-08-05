@@ -416,10 +416,15 @@ the owner explicitly asks to continue. One offline test,
 `test/character_sheet_contract_test.dart`, now hash-guards the V1, V2, and V3
 guides, masks, prompts, manifests, and locked rig assets against silent edits
 and records the exact remaining V3 migration surface. It registers no asset,
-changes no runtime behavior, and makes no provider request. The `4096 x 1024` `2K` tier remains the
-minimum supported `4:1` output that can preserve the `800`-pixel-tall Long
-back-hair cell without resizing; any smaller-tier reconsideration must first
-prove lower billed usage and exact-cell compatibility without a paid trial.
+changes no runtime behavior, and makes no provider request. The `4096 x 1024`
+`2K` tier remains the minimum supported `4:1` output that preserves the
+`800`-pixel-tall Long back-hair cell without resizing. **Corrective Phase
+7G.1B.R3 now has a local-only `character_sheet_v4` experiment:** at the owner's
+direction it uses `2048 x 512` (`4:1`, `1K`) and uniformly scales all 14
+transport cells to `58%` while retaining their exact V3 runtime outputs,
+anchors, and seams. V3 remains the exact-size quality fallback. V4 requires
+owner guide approval and later full package-fidelity proof; it is not connected
+to Flutter, Worker, or Gemini.
 Phase 7G.1C is
 implemented locally: the processor
 hash-locks the ten runtime head/body assets, rejects face pixels outside the
@@ -468,21 +473,25 @@ Implementation order:
    default actor active, record heroine-compatible sources, and stop without a
    provider request. The owner selected V3 on 2026-08-04; migration is paused
    until the owner explicitly resumes it.
-10. **Implemented locally in Phase 7G.1B.2 for V1:** request one fixed character sheet
+10. **Local 1K experiment in corrective Phase 7G.1B.R3:** preserve V1-V3 and
+   build `character_sheet_v4` as `2048 x 512` with uniformly `58%` transport
+   cells that map back to exact V3 outputs. Stop for owner guide approval with
+   no provider request or runtime migration.
+11. **Implemented locally in Phase 7G.1B.2 for V1:** request one fixed character sheet
    containing aligned face details, front/back hair, and nine fitted-clothing
    regions without automatic paid retries.
-11. **Implemented locally in Phase 7G.1B.3 for V1:** remove green, cut the 14 fixed
+12. **Implemented locally in Phase 7G.1B.3 for V1:** remove green, cut the 14 fixed
    cells, apply allowed/protected/seam masks, register the session package, and
    assemble the neutral full-body proof. Gemini never redraws the body.
-12. **Implemented locally in Phase 7G.1B.4 for V1:** compose Idle, Talking, Pointing,
+13. **Implemented locally in Phase 7G.1B.4 for V1:** compose Idle, Talking, Pointing,
    and Walking from the same layers and add the read-only Character, Layers,
    Faces, Hair, Poses, and Details package proof groups.
-13. **Implemented locally in Phase 7G.1C:** compose and validate six faces and four poses on the
+14. **Implemented locally in Phase 7G.1C:** compose and validate six faces and four poses on the
    locked rig, then expose Character, Layers, Faces, Poses, and Details proof.
-14. **Implemented locally in Phase 7G.1C:** reuse completed components by design hash, remove the
+15. **Implemented locally in Phase 7G.1C:** reuse completed components by design hash, remove the
    private sprite route's shared three-per-minute app bottleneck, and keep one
    sequential request active without automatic paid regeneration.
-15. **Blocked Phase 7H:** register the validated layered package and rebuild
+16. **Blocked Phase 7H:** register the validated layered package and rebuild
    every affected ChapterStory so Story Mode uses it across chapters and
    volumes.
 
@@ -550,6 +559,11 @@ Current Phase 7G.1 work:
 - [x] **Corrective Phase 7G.1B.R2 owner gate:** V3 is selected and visually
   approved as the future contract. Do not connect it to Flutter, the Worker,
   or Gemini until the owner explicitly asks to resume implementation.
+- [x] **Corrective Phase 7G.1B.R3, local candidate:** generate a `2048 x 512`
+  V4 1K guide with 14 uniformly `58%` transport cells mapped to exact V3
+  runtime outputs, without provider or runtime changes.
+- [ ] **Corrective Phase 7G.1B.R3 owner gate:** visually approve V4 and retain
+  V3 as the fallback until later package-fidelity proof passes.
 - [x] **Phase 7G.1B.2, local implementation:** connect one controlled fixed-sheet provider
   request and response to the versioned contract without automatic retry.
 - [x] **Phase 7G.1B.3, local implementation:** produce the fixed-manifest
@@ -811,7 +825,7 @@ These decisions must be recorded here when resolved.
 | `SPRITE_STUDIO_PLAN.md` | Rig and pose editor behavior |
 | `MODULAR_FACE_SYSTEM_PLAN.md` | Face-part catalogs and set behavior |
 | `GENERATED_CHARACTER_PIPELINE_PLAN.md` | Template-constrained Gemini character, real rig, face/pose proof, and Story Mode binding gate |
-| `CHARACTER_SHEET_PLAN.md` | Authoritative V1/V2/V3 exact-part contracts, landscape hair catalog, Sprite Studio raster mapping, local proof pipeline, and Phase 7G.1B acceptance gates |
+| `CHARACTER_SHEET_PLAN.md` | Authoritative V1/V2/V3/V4 contracts, 1K transport experiment, landscape hair catalog, Sprite Studio output mapping, local proof pipeline, and Phase 7G.1B acceptance gates |
 | `FIXED_HAIR_SLOT_PLAN.md` | Universal per-actor/per-style front/back hair fitting and explicit no-back-hair behavior |
 | `CLOUDFLARE_IMAGE_GENERATOR.md` | Worker routes and provider responsibilities |
 | `UI_IMPLEMENTATION_PLAN.md` | Responsive screen and reusable-widget reference |

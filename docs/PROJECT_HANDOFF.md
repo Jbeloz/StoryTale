@@ -361,13 +361,12 @@ no V3 Gemini request has been made. The guide/layout selection gate is approved;
 migration and provider work are paused until the owner explicitly asks to
 continue.
 
-The preferred provider output remains `4096 x 1024` (`4:1`, `2K`). The current
-supported smaller `4:1` tier is `2048 x 512` (`1K`), which cannot contain V3's
-`429 x 800` Long back-hair cell at native size. Use a smaller output only if a
-future official Gemini option both reduces billed usage and preserves every
-exact V3 cell without resizing. Re-check official generation dimensions and
-pricing before the one controlled request; do not spend a request merely to
-compare sizes.
+V3 remains the exact-size `4096 x 1024` (`4:1`, `2K`) quality fallback. On
+2026-08-05 the owner requested a separate V4 experiment at `2048 x 512`
+(`4:1`, `1K`). V4 records deterministic uniform `58%` transport scaling and
+restores every final exact V3 output with one local cubic resize plus a hard
+output mask. Re-check official generation dimensions and pricing before a
+controlled request; the local V4 guide does not authorize one.
 
 Accessories use named anchors and relative layer modes such as behind arm,
 behind hand, or front of hand. A held sword may be partly behind the arm and
@@ -644,9 +643,11 @@ had been failing since before this thread. It was fixed on 5 August 2026; see
    front hair plus separate Short/Medium/Long back-hair cells, exact body cells,
    default actor preview data, and heroine-compatible geometry/source mapping.
    It made no provider request.
-7. **Owner decision recorded:** V3 is selected and visually approved as the
-   future contract. Do not connect V3 to Flutter/Worker or spend another Gemini
-   request until the owner explicitly asks to resume implementation.
+7. **Owner decision recorded:** V3 is the approved exact-size fallback. V4 is a
+   local-only 1K review candidate with 14 uniformly scaled transport cells.
+   Do not connect either contract to Flutter/Worker or spend another Gemini
+   request until V4 is visually reviewed and the owner explicitly authorizes
+   migration or one exact provider request.
 8. **Implemented locally: contract regression guard** —
    `test/character_sheet_contract_test.dart` verifies all three versioned sheets
    offline: declared canvas versus real guide/mask pixels, recorded SHA-256
@@ -654,7 +655,9 @@ had been failing since before this thread. It was fixed on 5 August 2026; see
    hashes, fixed-crop rules, per-version region sets, exact output canvases,
    in-canvas non-overlapping cells, and existing rig sources. It also proves
    V3's `4:1` `2K` shape, its three native back-hair cells, and that its region
-   IDs match V1. The exact remaining V3 migration surface is recorded in
+   IDs match V1. V4 is validated separately by its deterministic local builder
+   and has not been added to the runtime regression guard. The exact remaining
+   migration surface is recorded in
    [Character Sheet Plan](CHARACTER_SHEET_PLAN.md). No asset was registered, no
    runtime behavior changed, and no provider request was made.
 9. **Implemented locally: Phase 7G.1C** — the V1 package now verifies the approved

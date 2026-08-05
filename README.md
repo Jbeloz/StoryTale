@@ -30,14 +30,14 @@ protected, and seam masks, stores transparent session layers and metadata, and
 assembles the neutral full-body proof without redrawing the runtime head or
 body. The same accepted package now composes read-only Idle, Talking, Pointing,
 and Walking proofs and exposes Character, Layers, Faces, Hair, Poses, and
-Details review groups. The latest local-only V3 candidate packs the exact
-Sprite Studio cells into a `4096 x 1024` (`4:1`, `2K`) landscape catalog with
-one front-hair slot plus separate Short, Medium, and Long back-hair slots. The
-checked-in guide uses the default actor, while its unchanged rig geometry and
-actor-source mapping make the contract reusable for a future heroine request.
-The owner has selected V3 as the contract to use when implementation resumes.
-Flutter, the Worker, and Gemini still use V1 because migration and provider
-work are deliberately paused until the owner explicitly asks to continue.
+Details review groups. V3 remains the owner-selected exact-size `4096 x 1024`
+(`4:1`, `2K`) fallback. The latest local-only V4 experiment uses a true
+`2048 x 512` (`4:1`, `1K`) transport sheet with front hair plus separate Short,
+Medium, and Long back-hair slots. Every transport cell is uniformly `58%` of
+its V3 runtime canvas and maps back to the exact Sprite Studio output size. The
+checked-in guide uses the default actor and retains heroine-compatible source
+mapping. Owner visual approval of V4 is pending; Flutter, the Worker, and
+Gemini still use V1, and no V4 provider request is authorized yet.
 Imported books still remain in memory for the app session,
 DeepL uses placeholder text, the mobile ONNX TTS runtime is not connected, and
 final book-specific layered characters are not complete.

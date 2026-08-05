@@ -1,6 +1,6 @@
-# StoryTale Character Sheet V1, V2, and V3 Implementation Plan
+# StoryTale Character Sheet V1, V2, V3, and V4 Implementation Plan
 
-Status: **Authoritative Phase 7G.1 plan. The V1 Flutter/Worker pipeline and the Phase 7G.1C enforcement are implemented locally, but no generated package has been accepted. V2 established exact Sprite Studio raster cells. Corrective Phase 7G.1B.R2 versions `character_sheet_v3`, which packs front hair plus separate Short, Medium, and Long back-hair cells into an efficient `4096 x 1024` landscape sheet. The checked-in guide uses the default actor and keeps heroine-compatible geometry. On 2026-08-04 the owner selected V3 as the future active contract. All three contracts are now hash-guarded by one offline test, and the exact remaining V3 migration surface is recorded below. Migration, Worker changes, and a V3 provider request remain paused until the owner explicitly asks to continue.**
+Status: **Authoritative Phase 7G.1 plan. The V1 Flutter/Worker pipeline and Phase 7G.1C enforcement are implemented locally, but no generated package has been accepted. V3 remains the owner-selected exact-size `2K` fallback. Corrective Phase 7G.1B.R3 now has a local-only `character_sheet_v4` experiment: a `2048 x 512` (`4:1`, `1K`) sheet whose 14 transport cells are uniformly `58%` of the V3 runtime canvases and map back to the exact Sprite Studio outputs. The checked-in guide uses the default actor and keeps heroine-compatible source mapping. Owner visual approval of V4 is the immediate gate. Flutter, Worker, and provider migration remain paused, and no V4 provider request is authorized.**
 
 This document owns the exact character-sheet contract, implementation order,
 validation gate, and handoff rules for Phase 7G.1B. The Master Roadmap still
@@ -32,8 +32,8 @@ AI-drawn full-body master.
   returned parts. It is validation output, not another generated body.
 
 The old name `clothing_sheet_v1` is superseded by the versioned
-`character_sheet_v1`, `character_sheet_v2`, and `character_sheet_v3`
-contracts.
+`character_sheet_v1`, `character_sheet_v2`, `character_sheet_v3`, and
+`character_sheet_v4` contracts.
 
 ## 2A. Corrective Phase 7G.1B.R - exact Sprite Studio part contract
 
@@ -115,7 +115,7 @@ The Worker half of that list cannot take effect without a deployment. Record
 this list as the migration checklist when the owner resumes; do not act on it
 before then.
 
-### V3 output-size and usage decision
+### V3 output-size and V4 usage decision
 
 The owner prefers `4096 x 1024` unless an officially supported smaller output
 both reduces billed Gemini usage and preserves every exact native-size cell.
@@ -125,15 +125,33 @@ As checked on 2026-08-04, Gemini 3.1 Flash Image documents these `4:1` outputs:
 - `2K` is `4096 x 1024`; and
 - `4K` is `8192 x 2048`.
 
-The V3 Long back-hair cell is `429 x 800`, so the `1K` canvas is only `512`
-pixels tall and cannot hold the approved native cell without downscaling. That
-would violate the no-post-extraction-resizing and exact Sprite Studio raster
-contract. `2K` is therefore the smallest currently supported `4:1` tier that
-fits the approved V3 layout. Billing is resolution-tiered and may change, so
-re-check the official [Gemini image-generation dimensions](https://ai.google.dev/gemini-api/docs/image-generation)
+The V3 Long back-hair cell is `429 x 800`, so the `1K` canvas cannot contain it
+at native size. On 2026-08-05 the owner explicitly resumed a smaller-tier
+experiment. V4 therefore creates a new transport contract instead of changing
+V3: every axis is reduced uniformly to `58%`, then the future local processor
+must mask the full crop, upscale exactly once to the recorded exact
+`outputCanvas`, and reapply the hard output mask. V3 remains the quality
+fallback if V4 loses facial detail, hair edges, clothing seams, or pose
+fidelity.
+
+V4 uses these fixed transport-to-runtime mappings:
+
+| Region | V4 transport | Exact runtime output |
+| --- | --- | --- |
+| each Short/Medium/Long back hair | `249 x 464` | `429 x 800` |
+| front hair | `249 x 254` | `429 x 438` |
+| head | `207 x 213` | `357 x 367` |
+| torso | `96 x 136` | `165 x 234` |
+| upper arm right / left | `39 x 68` / `45 x 74` | `67 x 118` / `78 x 128` |
+| lower arm right / left | `45 x 84` / `50 x 75` | `77 x 145` / `86 x 129` |
+| upper leg right / left | `55 x 87` / `49 x 82` | `94 x 150` / `85 x 141` |
+| lower leg right / left | `49 x 90` / `51 x 81` | `84 x 156` / `88 x 140` |
+
+Billing is resolution-tiered and may change, so re-check the official
+[Gemini image-generation dimensions](https://ai.google.dev/gemini-api/docs/image-generation)
 and [Gemini API pricing](https://ai.google.dev/gemini-api/docs/pricing)
-immediately before any live request. Do not change tiers, repack cells, or run
-a paid size experiment without renewed owner approval.
+immediately before any live request. V4 local assets do not authorize a paid
+trial.
 
 ## 3. V1 source layout retained for rollback
 
@@ -208,6 +226,15 @@ assets/images/characters/generation_templates/humanoid_v1/character_sheet_v3/
 |-- seam_allowances.png
 |-- crop_manifest.json
 `-- prompt_contract.md
+
+assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/
+|-- guide.png
+|-- assembled_reference.png
+|-- allowed_regions.png
+|-- protected_regions.png
+|-- seam_allowances.png
+|-- crop_manifest.json
+`-- prompt_contract.md
 ```
 
 - `guide.png` is the exact approved `4096 x 4096` layout assembled from native
@@ -224,9 +251,9 @@ assets/images/characters/generation_templates/humanoid_v1/character_sheet_v3/
 - `crop_manifest.json` is the single authority for cell geometry and anchors.
 - `prompt_contract.md` contains the exact provider instructions and exclusions.
 
-The V2 exact-part checkpoint and V3 landscape candidate are locally complete,
-but neither is an active Flutter asset contract. V1 remains unchanged for
-rollback until the owner explicitly resumes and authorizes the V3 migration.
+V2, V3, and the V4 1K experiment are not active Flutter contracts. V1 remains
+unchanged for rollback. V3 remains the exact-size quality fallback until V4
+passes owner review and later package-fidelity proof.
 
 Widgets, services, tests, and Workers must read the versioned manifest instead
 of repeating crop rectangles or guessing component boundaries.
@@ -256,7 +283,13 @@ V3 stores the `4:1` `2K` provider contract, three independent back-hair cells,
 the default actor used by the checked-in guide, default/heroine source mapping,
 and the same no-post-crop-resize exact-output policy.
 
-The V3 guide/layout selection is approved. Changing any rectangle, mask,
+V4 stores the `4:1` `1K` provider contract, uniform `58%` transport scale,
+transport and output anchors/seams, exact final Sprite Studio canvases, and the
+single cubic-resize-plus-hard-mask policy. Its transport crops intentionally do
+not equal their runtime `outputCanvas` values.
+
+The V3 guide/layout selection is approved. V4 is a separate unapproved review
+candidate. Changing any rectangle, mask,
 anchor, output tier, or aspect ratio requires a new sheet version and renewed
 owner approval.
 
@@ -279,12 +312,11 @@ version. An identical ready result is reused instead of generated again.
 
 ## 8. Gemini output rules
 
-The V3 target contract requires one exact `4096 x 1024` PNG, one front-hair
-cell, separate Short/Medium/Long back-hair cells, exact Sprite Studio part
+The V4 target contract requires one exact `2048 x 512` PNG, one front-hair
+cell, separate Short/Medium/Long back-hair cells, uniformly reduced transport
 canvases, flat green gaps, and no provider-added labels or borders. All hair
 options must belong to the same character. The current V1 integration keeps
-the following historical requirements until the owner resumes and the V3
-migration is implemented:
+the following historical requirements until the owner approves a migration:
 
 The prompt must require Gemini to:
 
@@ -451,6 +483,23 @@ V2 as the owner-selected future contract; V2 remains the saved exact-part
 checkpoint. The approval gate is satisfied, but migration is paused at the
 owner's direction and no provider request is authorized.
 
+### Phase 7G.1B.R3 - V4 1K transport experiment - local candidate complete
+
+1. Preserve V1, V2, V3, and all locked runtime/source assets unchanged.
+2. Use `2048 x 512` (`4:1`, `1K`) with all 14 V3 region IDs.
+3. Scale each transport axis uniformly to `58%` with recorded nearest-integer
+   dimensions; never crop to visible content.
+4. Keep every exact V3 runtime canvas, attachment anchor, and seam anchor as the
+   final `outputCanvas` contract.
+5. Record transport anchors/seams separately and allow exactly one cubic
+   upscale after masking, followed by the hard output mask.
+6. Keep actor `default` in the guide/reference and retain heroine mapping.
+7. Stop for owner visual approval; do not connect Flutter/Worker or call Gemini.
+
+The deterministic builder is `tool/generate_character_sheet_v4.dart`. V4 was
+generated locally without a provider request. V3 remains the fallback until a
+future controlled V4 result passes the complete face/hair/seam/pose gate.
+
 ### Contract regression guard — implemented locally
 
 `test/character_sheet_contract_test.dart` is an offline guard over all three
@@ -490,8 +539,8 @@ behavior. It runs with `flutter test test/character_sheet_contract_test.dart`.
 
 The V1 Flutter and Worker contracts are implemented and deployed. The first
 owner-controlled request failed before packaging, no output was accepted, and
-no automatic second request was made. V2 and V3 are not connected to either
-side.
+no automatic second request was made. V2, V3, and V4 are not connected to
+either side.
 
 ### Phase 7G.1B.3 - Local cutout and package builder — implemented locally
 
@@ -582,8 +631,16 @@ version `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
 - [x] One offline test hash-guards the V1, V2, and V3 guides, masks, prompts,
   manifests, and the locked rig against silent edits, and records the exact
   remaining V3 migration surface.
-- [ ] Flutter and the private Worker consume V3 without silently falling back
-  to V1 or making an automatic paid retry.
+- [x] The local V4 candidate is exactly `2048 x 512`, has 14 uniformly scaled
+  transport cells, and maps each one to its exact V3 runtime output.
+- [x] V4 contains front hair plus separate Short/Medium/Long back-hair cells,
+  default actor metadata, and heroine-compatible source mapping.
+- [x] V4 was built deterministically without a network or provider request.
+- [ ] The owner visually approves the V4 1K guide.
+- [ ] A future controlled V4 package proves its upscaled face, hair edges,
+  clothing seams, and four poses are not visibly worse than V3.
+- [ ] Flutter and the private Worker consume the owner-selected contract
+  without silently falling back to V1 or making an automatic paid retry.
 - [x] Every region has one reviewed crop, output canvas, anchor, role, and side.
 - [x] Allowed, protected, and seam masks are versioned and deterministic.
 - [ ] Gemini receives one coherent-character brief and returns only the
