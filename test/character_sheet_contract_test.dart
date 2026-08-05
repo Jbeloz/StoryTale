@@ -422,19 +422,82 @@ void main() {
       expect(heights['long']!, lessThanOrEqualTo(800));
     });
 
-    test('keeps rear hair no wider than front hair, as the template does', () {
+    test('matches rear-hair width to front-hair width', () {
       final byId = {
         for (final region in _regions(manifest)) region['id'] as String: region,
       };
       int contentWidth(String id) =>
           (byId[id]!['referenceContent'] as Map<String, dynamic>)['width']
               as int;
-      // Rear hair sits behind the head instead of wrapping the face, so it is
-      // narrower in the template. Generated hair must not invert that.
+
+      // The rear-hair source carries more transparent padding than the front,
+      // so at equal cell width its art came out narrower and the front hair
+      // overhung it. The builder enlarges the rear artwork inside its unchanged
+      // cell until the two widths match.
+      final front = contentWidth('front_hair');
+      final rear = contentWidth('back_hair_selected');
       expect(
-        contentWidth('back_hair_selected'),
-        lessThan(contentWidth('front_hair')),
+        rear,
+        closeTo(front, front * 0.02),
+        reason: 'rear hair should be the same width as front hair',
       );
+
+      final scale =
+          (manifest['selectionContract']!['rearHairReferenceScale'] as num)
+              .toDouble();
+      expect(scale, greaterThan(1.0));
+      // Only the artwork grows. The cell is a rig box and must not change.
+      final crop = byId['back_hair_selected']!['crop'] as Map<String, dynamic>;
+      expect((crop['width'], crop['height']), (429, 800));
+    });
+
+    test('separates the limb cells into a leg block and an arm block', () {
+      // Eight similar pale shapes in one row invite the provider to mix up which
+      // cell is which, so legs and arms sit in two blocks with a wide channel.
+      final rects = {
+        for (final region in _regions(manifest))
+          region['id'] as String: _Rect.fromJson(
+            region['crop'] as Map<String, dynamic>,
+          ),
+      };
+      const legs = [
+        'upper_leg_right',
+        'lower_leg_right',
+        'upper_leg_left',
+        'lower_leg_left',
+      ];
+      const arms = [
+        'upper_arm_right',
+        'lower_arm_right',
+        'upper_arm_left',
+        'lower_arm_left',
+      ];
+
+      final legRight = legs
+          .map((id) => rects[id]!.x + rects[id]!.width)
+          .reduce((a, b) => a > b ? a : b);
+      final armLeft = arms
+          .map((id) => rects[id]!.x)
+          .reduce((a, b) => a < b ? a : b);
+      expect(
+        armLeft - legRight,
+        greaterThan(_v4CellPadding * 2),
+        reason: 'the two limb blocks must read as separate groups',
+      );
+
+      // Each block keeps its own cells adjacent rather than interleaved.
+      for (final block in [legs, arms]) {
+        final xs = block.map((id) => rects[id]!.x).toList()..sort();
+        final other = block == legs ? arms : legs;
+        for (final id in other) {
+          final x = rects[id]!.x;
+          expect(
+            x > xs.last || x < xs.first,
+            isTrue,
+            reason: '$id sits inside the other limb block',
+          );
+        }
+      }
     });
 
     test('maps every rear-hair length to a real source asset', () {

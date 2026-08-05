@@ -92,50 +92,56 @@ const _targets = <_TargetSpec>[
     sourceRegionId: 'torso',
     crop: _Rect(840, 474, 165, 234),
   ),
-  // Bottom row, read left to right in limb order: right arm, left arm, left leg.
-  // Side ownership is a contract rule, so cells are grouped by side rather than
-  // packed in whatever order fits best.
-  _TargetSpec(
-    id: 'upper_arm_right',
-    sourceRegionId: 'upper_arm_right',
-    crop: _Rect(18, 859, 67, 118),
-  ),
-  _TargetSpec(
-    id: 'lower_arm_right',
-    sourceRegionId: 'lower_arm_right',
-    crop: _Rect(103, 859, 77, 145),
-  ),
-  _TargetSpec(
-    id: 'upper_arm_left',
-    sourceRegionId: 'upper_arm_left',
-    crop: _Rect(198, 859, 78, 128),
-  ),
-  _TargetSpec(
-    id: 'lower_arm_left',
-    sourceRegionId: 'lower_arm_left',
-    crop: _Rect(294, 859, 86, 129),
-  ),
-  _TargetSpec(
-    id: 'upper_leg_left',
-    sourceRegionId: 'upper_leg_left',
-    crop: _Rect(398, 859, 85, 141),
-  ),
-  _TargetSpec(
-    id: 'lower_leg_left',
-    sourceRegionId: 'lower_leg_left',
-    crop: _Rect(501, 859, 88, 140),
-  ),
-  // The two right-leg cells are 150 and 156 tall, which the bottom row cannot
-  // take, so they occupy the right-hand strip in hip-to-ankle order.
+  // Limbs sit in two clearly separated blocks so the provider is never asked to
+  // tell eight similar white shapes apart from position alone. Each block reads
+  // right limb first, then left, and hip/shoulder before knee/elbow.
+  //
+  // Legs take the space under the back-hair column and arms the space under the
+  // head column, not the other way round: the tallest leg cell is 156 px and
+  // only 147 px is free under the head, while 170 px is free under the hair.
+  //
+  // Legs block, lower left.
   _TargetSpec(
     id: 'upper_leg_right',
     sourceRegionId: 'upper_leg_right',
-    crop: _Rect(912, 18, 94, 150),
+    crop: _Rect(18, 836, 94, 150),
   ),
   _TargetSpec(
     id: 'lower_leg_right',
     sourceRegionId: 'lower_leg_right',
-    crop: _Rect(912, 186, 84, 156),
+    crop: _Rect(130, 836, 84, 156),
+  ),
+  _TargetSpec(
+    id: 'upper_leg_left',
+    sourceRegionId: 'upper_leg_left',
+    crop: _Rect(232, 836, 85, 141),
+  ),
+  _TargetSpec(
+    id: 'lower_leg_left',
+    sourceRegionId: 'lower_leg_left',
+    crop: _Rect(335, 836, 88, 140),
+  ),
+  // Arms block, lower right. The 42 px channel between the blocks is more than
+  // twice the normal cell gap, so the split reads as deliberate.
+  _TargetSpec(
+    id: 'upper_arm_right',
+    sourceRegionId: 'upper_arm_right',
+    crop: _Rect(465, 859, 67, 118),
+  ),
+  _TargetSpec(
+    id: 'lower_arm_right',
+    sourceRegionId: 'lower_arm_right',
+    crop: _Rect(550, 859, 77, 145),
+  ),
+  _TargetSpec(
+    id: 'upper_arm_left',
+    sourceRegionId: 'upper_arm_left',
+    crop: _Rect(645, 859, 78, 128),
+  ),
+  _TargetSpec(
+    id: 'lower_arm_left',
+    sourceRegionId: 'lower_arm_left',
+    crop: _Rect(741, 859, 86, 129),
   ),
 ];
 
@@ -238,6 +244,16 @@ void main() {
   // One guide per rear-hair length. Everything except that single cell is
   // identical, so the variants are the same sheet with a different silhouette
   // in the slot the request is asking the provider to draw.
+  // The rear-hair artwork is narrower than the front hair because its source
+  // PNG carries more transparent padding, so at equal cell width the visible
+  // hair comes out smaller and the front hair overhangs it. Scale the rear hair
+  // up until the two match. Derived from the drawn cells rather than hardcoded,
+  // so it stays correct if either source is ever replaced.
+  final backHairScale = _rearHairScale(
+    frontContent: referenceContent['front_hair']!,
+    backHairCrop: backHairTarget.crop,
+  );
+
   final guidePathByBackHairId = <String, String>{};
   final backHairContentById = <String, _Rect>{};
   for (final variant in _backHairVariants) {
@@ -246,6 +262,7 @@ void main() {
       variantGuide,
       variant.sourceAsset,
       backHairTarget.crop,
+      scale: backHairScale,
     );
     final fileName = variant.guideFileName(_guideActorId);
     _writePng('${outputDirectory.path}/$fileName', variantGuide);
@@ -364,6 +381,12 @@ void main() {
         for (final entry in backHairContentById.entries)
           entry.key: entry.value.toJson(),
       },
+      'rearHairReferenceScale': backHairScale,
+      'rearHairReferenceScaleReason':
+          'the rear-hair source carries more transparent padding than the '
+          'front-hair source, so at equal cell width its visible art was '
+          'narrower and the front hair overhung it; the artwork is enlarged '
+          'inside the unchanged cell until the two widths match',
     },
     'guideVariantSha256': <String, String>{
       for (final entry in guidePathByBackHairId.entries)
@@ -464,16 +487,99 @@ void _validateTargetLayout() {
 /// short style leaves most of the cell empty. A provider told only "here is a
 /// cell" would fill it and return hair far larger than the template intends, so
 /// the measured extent is published in the manifest and in the prompt contract.
-_Rect _drawCell(image.Image destination, String sourceAsset, _Rect crop) {
+_Rect _drawCell(
+  image.Image destination,
+  String sourceAsset,
+  _Rect crop, {
+  double scale = 1,
+}) {
+  final fitted = _fittedArtwork(sourceAsset, crop);
+  if (scale == 1) {
+    image.drawImage(destination, fitted, dstX: crop.x, dstY: crop.y);
+    return _opaqueBounds(fitted);
+  }
+
+  // Enlarging happens inside the existing cell: the rig box does not change, so
+  // the locked geometry and every recorded hash stay untouched. Only the
+  // artwork inside the box grows.
+  final before = _opaqueBounds(fitted);
+  final grown = image.copyResize(
+    fitted,
+    width: (crop.width * scale).round(),
+    height: (crop.height * scale).round(),
+    interpolation: image.Interpolation.linear,
+  );
+  final after = _opaqueBounds(grown);
+
+  // Keep the crown where it was and widen symmetrically, then pull back inside
+  // the cell if the taller styles would spill past its edges.
+  var dx = (before.x + before.width / 2) - (after.x + after.width / 2);
+  var dy = before.y.toDouble() - after.y;
+  dx = dx.clamp(-after.x.toDouble(), (crop.width - after.right).toDouble());
+  dy = dy.clamp(-after.y.toDouble(), (crop.height - after.bottom).toDouble());
+
+  // Compose through a cell-sized buffer so nothing can bleed into a neighbour.
+  final cell = image.Image(crop.width, crop.height)
+    ..channels = image.Channels.rgba;
+  image.fill(cell, image.getColor(0, 0, 0, 0));
+  // dstW/dstH must be explicit: drawImage otherwise shrinks a source larger
+  // than the destination back down to fit, which would undo the enlargement.
+  image.drawImage(
+    cell,
+    grown,
+    dstX: dx.round(),
+    dstY: dy.round(),
+    dstW: grown.width,
+    dstH: grown.height,
+  );
+  final placed = _opaqueBounds(cell);
+  if (placed.x < 0 ||
+      placed.y < 0 ||
+      placed.right > crop.width ||
+      placed.bottom > crop.height) {
+    throw StateError('Scaled artwork for $sourceAsset does not fit its cell.');
+  }
+  image.drawImage(destination, cell, dstX: crop.x, dstY: crop.y);
+  return placed;
+}
+
+/// How much to enlarge the rear hair so it matches the front hair's width.
+///
+/// Capped so the longest style still fits its cell: the cell was sized for the
+/// long style, which already reaches near the bottom, so there is far less room
+/// to grow vertically than horizontally.
+double _rearHairScale({
+  required _Rect frontContent,
+  required _Rect backHairCrop,
+}) {
+  final contentByVariant = <String, _Rect>{
+    for (final variant in _backHairVariants)
+      variant.id: _opaqueBounds(
+        _fittedArtwork(variant.sourceAsset, backHairCrop),
+      ),
+  };
+  final canonical = contentByVariant[_canonicalBackHairId]!;
+  final wanted = frontContent.width / canonical.width;
+
+  var limit = double.infinity;
+  for (final content in contentByVariant.values) {
+    final byWidth = backHairCrop.width / content.width;
+    final byHeight = backHairCrop.height / content.height;
+    final smaller = byWidth < byHeight ? byWidth : byHeight;
+    if (smaller < limit) limit = smaller;
+  }
+  final scale = wanted < limit ? wanted : limit;
+  return scale < 1 ? 1 : double.parse(scale.toStringAsFixed(4));
+}
+
+image.Image _fittedArtwork(String sourceAsset, _Rect crop) {
   final artwork = _decode(sourceAsset)..channels = image.Channels.rgba;
-  final resized = image.copyResize(
+  return image.copyResize(
     artwork,
     width: crop.width,
     height: crop.height,
     interpolation: image.Interpolation.linear,
   );
-  image.drawImage(destination, resized, dstX: crop.x, dstY: crop.y);
-  return _opaqueBounds(resized);
 }
 
 /// Smallest rectangle covering every pixel with any alpha, or the whole image

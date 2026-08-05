@@ -33,6 +33,10 @@ They are data fields, not permission to change the geometry contract.
    that cell flat green.
 2. `assembled_reference.png` - how the locked default actor parts connect.
 3. `allowed_regions.png` - white pixels may contain generated appearance.
+   Note the limb cells sit in two separated blocks: **legs lower left, arms
+   lower right**, split by a channel more than twice the normal cell gap. Within
+   each block the order is right limb then left, and shoulder/hip before
+   elbow/knee. Use the manifest IDs, not position, to decide which cell is which.
 4. `protected_regions.png` - white pixels must preserve the locked source.
 5. `seam_allowances.png` - white markers identify required connection points.
 6. `crop_manifest.json` - the only valid cells, sizes, anchors, and role data.
@@ -57,18 +61,18 @@ the artwork they hold, so **do not fill a cell to its edges.** Match the extent
 of the reference silhouette already drawn in that cell.
 
 The rear-hair cell is the clearest case. It is `429 x 800` because it must be
-able to hold the longest style, so shorter styles leave most of it green:
+able to hold the longest style, so shorter styles leave much of it green:
 
 | Rear-hair length | Reference occupies | Share of the cell |
 | --- | --- | --- |
-| short | `381 x 375` | 42% |
-| medium | `394 x 507` | 58% |
-| long | `364 x 730` | 78% |
+| short | `412 x 404` | 49% |
+| medium | `425 x 546` | 68% |
+| long | `390 x 784` | 89% |
 
-Front hair, by contrast, fills `424 x 389` of its `429 x 438` cell, so it is
-nearly cell sized. Rear hair is also slightly **narrower** than front hair in the
-template, because it sits behind the head rather than wrapping the face. Keep
-that relationship: generated rear hair must not become wider than the front hair.
+Front hair fills `424 x 389` of its `429 x 438` cell. **Front and rear hair are
+deliberately the same width** so the two layers sit together on the head: rear
+hair is `425` wide against front hair's `424`. Keep that match. Rear hair must
+be neither narrower, which lets the front hair overhang it, nor much wider.
 
 Every region publishes `referenceContent` in `crop_manifest.json` with the exact
 bounds and coverage its template artwork occupies, and the rear-hair variants

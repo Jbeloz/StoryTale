@@ -18,12 +18,12 @@
     "promptContract": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/prompt_contract.md"
   },
   "assetSha256": {
-    "guide": "45f221c5b25e1d7761dd1de92b10817a6f368e956c2f2be7aa058532769e3c4f",
+    "guide": "b230a82f466ed710538fb6804a062508605ac15a7a43347a3dc119dd27d3dd3e",
     "assembledReference": "0247225e7e8a9584961ce795c0f3e1e9bf0e61450e5cb151d0c02d042319fa50",
-    "allowedRegions": "872878efbdf8ff92c2198d4e21a258c87a8cf05e5995007c709ed6dcfb5c5af2",
-    "protectedRegions": "a3cd13865e1ccb542fc5bdcf837bca22f63d36fc9f7ee242894acf15cab7e083",
-    "seamAllowances": "6799388091ded0ebf9591c0a8e9ee7d2f082794f652152560f8accdceadddb8c",
-    "promptContract": "79aa8979dd880d014d5b0049fa033a6a6567606a8d9cc0f07a7193616671dd37"
+    "allowedRegions": "71095d01b2f18ecc1cfed6fcfb41dbc70261579fdaa17f14f5a2cc2cdf26791b",
+    "protectedRegions": "86ca4572740d65d0858059130be88f0f04a97c24d2980f98e1d44b9332fd593e",
+    "seamAllowances": "c1924879c8365f2d691b5079f036a8b6a4cecdca46534317d714ac6e4ed5d2f0",
+    "promptContract": "5f38ce477d1c66a090c44d0eaa69c2b76d71280d6d6d66f207a14bcfa619d790"
   },
   "maskEncoding": {
     "allowedRegions": "white pixels may contain generated appearance; black pixels are discarded",
@@ -99,29 +99,31 @@
     "noneLeavesRegionGreen": true,
     "referenceContentByBackHairId": {
       "short": {
-        "x": 24,
+        "x": 8,
         "y": 43,
-        "width": 381,
-        "height": 376
+        "width": 412,
+        "height": 404
       },
       "medium": {
-        "x": 19,
+        "x": 3,
         "y": 23,
-        "width": 394,
-        "height": 508
+        "width": 425,
+        "height": 546
       },
       "long": {
-        "x": 38,
-        "y": 25,
-        "width": 363,
-        "height": 729
+        "x": 25,
+        "y": 16,
+        "width": 390,
+        "height": 784
       }
-    }
+    },
+    "rearHairReferenceScale": 1.0761,
+    "rearHairReferenceScaleReason": "the rear-hair source carries more transparent padding than the front-hair source, so at equal cell width its visible art was narrower and the front hair overhung it; the artwork is enlarged inside the unchanged cell until the two widths match"
   },
   "guideVariantSha256": {
-    "short": "303dc1762eec5bb5dad197d8302d07f2033919bf9c63ad59cf456cf1b1fbf08c",
-    "medium": "45f221c5b25e1d7761dd1de92b10817a6f368e956c2f2be7aa058532769e3c4f",
-    "long": "3670f00840478117ab9d5ee9d8d1fb0c23bbc585c7a5bb66ddf6681bcaa8e845"
+    "short": "5c2ce717369fc8358b0d6664ae40dbbee02ec58810a9d4287559a24b892f4c22",
+    "medium": "b230a82f466ed710538fb6804a062508605ac15a7a43347a3dc119dd27d3dd3e",
+    "long": "10e796cd3d6e1a6f53ba3253981487b11f6c0e343c8dd1230ab7a8c07c646c48"
   },
   "backHairSourceByIdForActor": {
     "default": {
@@ -175,11 +177,11 @@
       },
       "resampling": "none-after-provider",
       "referenceContent": {
-        "x": 19,
+        "x": 3,
         "y": 23,
-        "width": 394,
-        "height": 508,
-        "coverage": 0.5832
+        "width": 425,
+        "height": 546,
+        "coverage": 0.6761
       }
     },
     {
@@ -347,10 +349,220 @@
       }
     },
     {
-      "id": "upper_arm_right",
+      "id": "upper_leg_right",
       "kind": "fittedClothing",
       "crop": {
         "x": 18,
+        "y": 836,
+        "width": 94,
+        "height": 150
+      },
+      "outputCanvas": {
+        "width": 94,
+        "height": 150
+      },
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/upper_leg_right.png",
+      "parentPart": "upper_leg_right",
+      "side": "right",
+      "attachmentAnchor": {
+        "x": 44.60000000000001,
+        "y": 12.56
+      },
+      "seamAnchors": [
+        {
+          "x": 44.6,
+          "y": 12.56,
+          "radius": 9.0
+        },
+        {
+          "x": 40.0,
+          "y": 122.71,
+          "radius": 9.0
+        }
+      ],
+      "defaultLayerOrder": 8,
+      "maskRegionId": "upper_leg_right",
+      "requirement": "optional",
+      "rigPartId": "upper_leg_right",
+      "sourceCanvas": {
+        "width": 94,
+        "height": 150
+      },
+      "transportContent": {
+        "x": 0,
+        "y": 0,
+        "width": 94,
+        "height": 150
+      },
+      "resampling": "none-after-provider",
+      "referenceContent": {
+        "x": 0,
+        "y": 0,
+        "width": 94,
+        "height": 150,
+        "coverage": 1.0
+      }
+    },
+    {
+      "id": "lower_leg_right",
+      "kind": "fittedClothing",
+      "crop": {
+        "x": 130,
+        "y": 836,
+        "width": 84,
+        "height": 156
+      },
+      "outputCanvas": {
+        "width": 84,
+        "height": 156
+      },
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/lower_leg_right.png",
+      "parentPart": "lower_leg_right",
+      "side": "right",
+      "attachmentAnchor": {
+        "x": 44.0,
+        "y": 14.71
+      },
+      "seamAnchors": [
+        {
+          "x": 44.0,
+          "y": 14.71,
+          "radius": 9.0
+        }
+      ],
+      "defaultLayerOrder": 7,
+      "maskRegionId": "lower_leg_right",
+      "requirement": "optional",
+      "rigPartId": "lower_leg_right",
+      "sourceCanvas": {
+        "width": 84,
+        "height": 156
+      },
+      "transportContent": {
+        "x": 0,
+        "y": 0,
+        "width": 84,
+        "height": 156
+      },
+      "resampling": "none-after-provider",
+      "referenceContent": {
+        "x": 1,
+        "y": 0,
+        "width": 82,
+        "height": 156,
+        "coverage": 0.9762
+      }
+    },
+    {
+      "id": "upper_leg_left",
+      "kind": "fittedClothing",
+      "crop": {
+        "x": 232,
+        "y": 836,
+        "width": 85,
+        "height": 141
+      },
+      "outputCanvas": {
+        "width": 85,
+        "height": 141
+      },
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/upper_leg_left.png",
+      "parentPart": "upper_leg_left",
+      "side": "left",
+      "attachmentAnchor": {
+        "x": 46.29,
+        "y": 7.0
+      },
+      "seamAnchors": [
+        {
+          "x": 46.29,
+          "y": 7.0,
+          "radius": 9.0
+        },
+        {
+          "x": 42.29,
+          "y": 120.0,
+          "radius": 9.0
+        }
+      ],
+      "defaultLayerOrder": 6,
+      "maskRegionId": "upper_leg_left",
+      "requirement": "optional",
+      "rigPartId": "upper_leg_left",
+      "sourceCanvas": {
+        "width": 85,
+        "height": 141
+      },
+      "transportContent": {
+        "x": 0,
+        "y": 0,
+        "width": 85,
+        "height": 141
+      },
+      "resampling": "none-after-provider",
+      "referenceContent": {
+        "x": 0,
+        "y": 1,
+        "width": 85,
+        "height": 140,
+        "coverage": 0.9929
+      }
+    },
+    {
+      "id": "lower_leg_left",
+      "kind": "fittedClothing",
+      "crop": {
+        "x": 335,
+        "y": 836,
+        "width": 88,
+        "height": 140
+      },
+      "outputCanvas": {
+        "width": 88,
+        "height": 140
+      },
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/lower_leg_left.png",
+      "parentPart": "lower_leg_left",
+      "side": "left",
+      "attachmentAnchor": {
+        "x": 39.29,
+        "y": 16.0
+      },
+      "seamAnchors": [
+        {
+          "x": 39.29,
+          "y": 16.0,
+          "radius": 9.0
+        }
+      ],
+      "defaultLayerOrder": 5,
+      "maskRegionId": "lower_leg_left",
+      "requirement": "optional",
+      "rigPartId": "lower_leg_left",
+      "sourceCanvas": {
+        "width": 88,
+        "height": 140
+      },
+      "transportContent": {
+        "x": 0,
+        "y": 0,
+        "width": 88,
+        "height": 140
+      },
+      "resampling": "none-after-provider",
+      "referenceContent": {
+        "x": 0,
+        "y": 0,
+        "width": 88,
+        "height": 140,
+        "coverage": 1.0
+      }
+    },
+    {
+      "id": "upper_arm_right",
+      "kind": "fittedClothing",
+      "crop": {
+        "x": 465,
         "y": 859,
         "width": 67,
         "height": 118
@@ -405,7 +617,7 @@
       "id": "lower_arm_right",
       "kind": "fittedClothing",
       "crop": {
-        "x": 103,
+        "x": 550,
         "y": 859,
         "width": 77,
         "height": 145
@@ -455,7 +667,7 @@
       "id": "upper_arm_left",
       "kind": "fittedClothing",
       "crop": {
-        "x": 198,
+        "x": 645,
         "y": 859,
         "width": 78,
         "height": 128
@@ -510,7 +722,7 @@
       "id": "lower_arm_left",
       "kind": "fittedClothing",
       "crop": {
-        "x": 294,
+        "x": 741,
         "y": 859,
         "width": 86,
         "height": 129
@@ -554,216 +766,6 @@
         "width": 86,
         "height": 128,
         "coverage": 0.9922
-      }
-    },
-    {
-      "id": "upper_leg_left",
-      "kind": "fittedClothing",
-      "crop": {
-        "x": 398,
-        "y": 859,
-        "width": 85,
-        "height": 141
-      },
-      "outputCanvas": {
-        "width": 85,
-        "height": 141
-      },
-      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/upper_leg_left.png",
-      "parentPart": "upper_leg_left",
-      "side": "left",
-      "attachmentAnchor": {
-        "x": 46.29,
-        "y": 7.0
-      },
-      "seamAnchors": [
-        {
-          "x": 46.29,
-          "y": 7.0,
-          "radius": 9.0
-        },
-        {
-          "x": 42.29,
-          "y": 120.0,
-          "radius": 9.0
-        }
-      ],
-      "defaultLayerOrder": 6,
-      "maskRegionId": "upper_leg_left",
-      "requirement": "optional",
-      "rigPartId": "upper_leg_left",
-      "sourceCanvas": {
-        "width": 85,
-        "height": 141
-      },
-      "transportContent": {
-        "x": 0,
-        "y": 0,
-        "width": 85,
-        "height": 141
-      },
-      "resampling": "none-after-provider",
-      "referenceContent": {
-        "x": 0,
-        "y": 1,
-        "width": 85,
-        "height": 140,
-        "coverage": 0.9929
-      }
-    },
-    {
-      "id": "lower_leg_left",
-      "kind": "fittedClothing",
-      "crop": {
-        "x": 501,
-        "y": 859,
-        "width": 88,
-        "height": 140
-      },
-      "outputCanvas": {
-        "width": 88,
-        "height": 140
-      },
-      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/lower_leg_left.png",
-      "parentPart": "lower_leg_left",
-      "side": "left",
-      "attachmentAnchor": {
-        "x": 39.29,
-        "y": 16.0
-      },
-      "seamAnchors": [
-        {
-          "x": 39.29,
-          "y": 16.0,
-          "radius": 9.0
-        }
-      ],
-      "defaultLayerOrder": 5,
-      "maskRegionId": "lower_leg_left",
-      "requirement": "optional",
-      "rigPartId": "lower_leg_left",
-      "sourceCanvas": {
-        "width": 88,
-        "height": 140
-      },
-      "transportContent": {
-        "x": 0,
-        "y": 0,
-        "width": 88,
-        "height": 140
-      },
-      "resampling": "none-after-provider",
-      "referenceContent": {
-        "x": 0,
-        "y": 0,
-        "width": 88,
-        "height": 140,
-        "coverage": 1.0
-      }
-    },
-    {
-      "id": "upper_leg_right",
-      "kind": "fittedClothing",
-      "crop": {
-        "x": 912,
-        "y": 18,
-        "width": 94,
-        "height": 150
-      },
-      "outputCanvas": {
-        "width": 94,
-        "height": 150
-      },
-      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/upper_leg_right.png",
-      "parentPart": "upper_leg_right",
-      "side": "right",
-      "attachmentAnchor": {
-        "x": 44.60000000000001,
-        "y": 12.56
-      },
-      "seamAnchors": [
-        {
-          "x": 44.6,
-          "y": 12.56,
-          "radius": 9.0
-        },
-        {
-          "x": 40.0,
-          "y": 122.71,
-          "radius": 9.0
-        }
-      ],
-      "defaultLayerOrder": 8,
-      "maskRegionId": "upper_leg_right",
-      "requirement": "optional",
-      "rigPartId": "upper_leg_right",
-      "sourceCanvas": {
-        "width": 94,
-        "height": 150
-      },
-      "transportContent": {
-        "x": 0,
-        "y": 0,
-        "width": 94,
-        "height": 150
-      },
-      "resampling": "none-after-provider",
-      "referenceContent": {
-        "x": 0,
-        "y": 0,
-        "width": 94,
-        "height": 150,
-        "coverage": 1.0
-      }
-    },
-    {
-      "id": "lower_leg_right",
-      "kind": "fittedClothing",
-      "crop": {
-        "x": 912,
-        "y": 186,
-        "width": 84,
-        "height": 156
-      },
-      "outputCanvas": {
-        "width": 84,
-        "height": 156
-      },
-      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/lower_leg_right.png",
-      "parentPart": "lower_leg_right",
-      "side": "right",
-      "attachmentAnchor": {
-        "x": 44.0,
-        "y": 14.71
-      },
-      "seamAnchors": [
-        {
-          "x": 44.0,
-          "y": 14.71,
-          "radius": 9.0
-        }
-      ],
-      "defaultLayerOrder": 7,
-      "maskRegionId": "lower_leg_right",
-      "requirement": "optional",
-      "rigPartId": "lower_leg_right",
-      "sourceCanvas": {
-        "width": 84,
-        "height": 156
-      },
-      "transportContent": {
-        "x": 0,
-        "y": 0,
-        "width": 84,
-        "height": 156
-      },
-      "resampling": "none-after-provider",
-      "referenceContent": {
-        "x": 1,
-        "y": 0,
-        "width": 82,
-        "height": 156,
-        "coverage": 0.9762
       }
     }
   ]
