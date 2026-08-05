@@ -92,19 +92,20 @@ without a network request. V2 remains versioned as the exact-part checkpoint;
 V3 is the owner-selected contract for the next migration, but is not yet the
 active Flutter, Worker, or provider contract.
 
-### V3 migration surface
+### Migration surface, shared by V3 and V4
 
 `test/character_sheet_contract_test.dart` confirmed that
-`CharacterSheetContract.fromJson` already parses the V3 manifest unchanged: it
-ignores the added `transport`, `actorContract`, `selectionContract`, and
-`maskEncoding` keys and reads all 14 regions. Only these deliberate assertions
-and registrations still separate the approved sheet from the runtime pipeline:
+`CharacterSheetContract.fromJson` already parses both the V3 and V4 manifests
+unchanged: it ignores the added `transport`, `actorContract`,
+`selectionContract`, `maskEncoding`, and `layout` keys and reads all regions
+(14 for V3, 12 for V4). Only these deliberate assertions and registrations still
+separate an approved sheet from the runtime pipeline:
 
 1. `CharacterSheetContract.supportedContractId` and `supportedContractVersion`;
 2. the hard `4096 x 4096` canvas assertion in `validationErrors()`;
 3. `CharacterSheetContractRepository.assetPath`;
 4. the `character_sheet_v1/` folder registered in `pubspec.yaml`, which is why
-   Flutter cannot currently load a V3 asset at all;
+   Flutter cannot currently load a V3 or V4 asset at all;
 5. the canvas checks in `character_sheet_processor.dart` and the hardcoded
    `4096x4096` message in `story_artwork_service.dart`; and
 6. `CHARACTER_SHEET_CONTRACT_ID`, `CHARACTER_SHEET_CONTRACT_VERSION`,
@@ -115,25 +116,75 @@ The Worker half of that list cannot take effect without a deployment. Record
 this list as the migration checklist when the owner resumes; do not act on it
 before then.
 
-### V3 output-size and usage decision
+**Prefer V4 over V3 when migrating.** V4 is `1:1`, which the provider documents;
+V3 is `4:1`, which it does not. Migrating to V4 also costs `$0.067` per request
+instead of `$0.101`.
 
-The owner prefers `4096 x 1024` unless an officially supported smaller output
-both reduces billed Gemini usage and preserves every exact native-size cell.
-As checked on 2026-08-04, Gemini 3.1 Flash Image documents these `4:1` outputs:
+### Output-size and usage decision
 
-- `1K` is `2048 x 512`;
-- `2K` is `4096 x 1024`; and
-- `4K` is `8192 x 2048`.
+**Corrected on 2026-08-05.** The earlier note in this section claimed Gemini
+3.1 Flash Image documents `4:1` outputs at `1K` `2048 x 512`, `2K`
+`4096 x 1024`, and `4K` `8192 x 2048`. Re-checking the official documentation
+found no `4:1` aspect ratio at all. The documented ratios are:
 
-The V3 Long back-hair cell is `429 x 800`, so the `1K` canvas is only `512`
-pixels tall and cannot hold the approved native cell without downscaling. That
-would violate the no-post-extraction-resizing and exact Sprite Studio raster
-contract. `2K` is therefore the smallest currently supported `4:1` tier that
-fits the approved V3 layout. Billing is resolution-tiered and may change, so
-re-check the official [Gemini image-generation dimensions](https://ai.google.dev/gemini-api/docs/image-generation)
+`1:1`, `3:2`, `2:3`, `3:4`, `4:3`, `4:5`, `5:4`, `9:16`, `16:9`, `21:9`
+
+The widest is `21:9`, roughly `2.33:1`. **V3's `4096 x 1024` canvas is exactly
+`4:1` and therefore may not be requestable.** Treat V3 as unverified until the
+supported ratios for the exact configured model are confirmed; the ratio list
+found was on a page section naming Gemini 3.1 Flash *Lite* Image, while
+`.env.example` configures `gemini-3.1-flash-image`.
+
+`1:1` is documented for every image model, and its tiers are `1K`
+`1024 x 1024`, `2K` `2048 x 2048`, `4K` `4096 x 4096`. V1 (`4096 x 4096`), V2
+(`2048 x 2048`), and V4 (`1024 x 1024`) are all `1:1` and therefore safe.
+
+Per-image cost as checked on 2026-08-05, at $60 per 1,000,000 output tokens:
+
+| Tier | Dimensions | Tokens | Cost |
+| --- | --- | --- | --- |
+| `0.5K` | `512` | 747 | $0.045 |
+| `1K` | `1024 x 1024` | 1,120 | $0.067 |
+| `2K` | `2048 x 2048` | 1,680 | $0.101 |
+| `4K` | `4096 x 4096` | 2,520 | $0.151 |
+
+`0.5K` is impossible for any version: the back-hair cell is `429 x 800` and a
+`512`-tall canvas cannot hold it without downscaling, which would violate the
+no-post-extraction-resizing rule. `1K` is the floor, and
+`test/character_sheet_contract_test.dart` asserts that reasoning so nobody
+retries a cheaper tier later.
+
+Billing and supported sizes may change, so re-check the official
+[Gemini image-generation dimensions](https://ai.google.dev/gemini-api/docs/image-generation)
 and [Gemini API pricing](https://ai.google.dev/gemini-api/docs/pricing)
 immediately before any live request. Do not change tiers, repack cells, or run
 a paid size experiment without renewed owner approval.
+
+### V4, the `1:1` `1K` square sheet
+
+Built locally on 2026-08-05 by `tool/generate_character_sheet_v4.dart`. V4 is
+V2's cell set repacked onto `1024 x 1024`:
+
+- **`1:1` at `1K`**, the safest documented shape, removing V3's aspect-ratio risk.
+- **One `back_hair_selected` cell** instead of three alternatives, matching V2's
+  `selectionContract`. Nothing is lost: a request only ever activates one rear
+  length, so V1 and V3's extra two cells are green waste, not capability.
+- **Cells keep their native size.** The canvas shrinks by deleting green, not by
+  scaling artwork, so every extracted part has the same pixels it has in V2 and
+  V3. Fill rises from V2's `18.9%` to `75.6%`, so more of the model's fixed
+  token budget lands on content that is actually kept.
+- **`18` pixel green gap** around every cell and against the canvas edge. Found
+  by search, not by hand: this cell set packs at `18` and fails at `20`. Both the
+  builder and the contract test re-prove it.
+- **Cells are grouped by side**, arms then legs, because side ownership is a
+  contract rule and an interleaved layout invites the model to swap sides.
+- **Seam anchors are preserved**: torso 5, each upper limb 2, each lower limb 1,
+  head 1. Clothing continuity across joints is the known risk, so the V4 prompt
+  contract states it explicitly.
+
+V1, V2, and V3 are untouched behind their recorded hashes. V4 is **not**
+registered with Flutter, the Worker, or the provider; it is a local candidate
+with the same migration surface as V3.
 
 ## 3. V1 source layout retained for rollback
 

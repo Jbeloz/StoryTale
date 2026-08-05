@@ -416,10 +416,14 @@ the owner explicitly asks to continue. One offline test,
 `test/character_sheet_contract_test.dart`, now hash-guards the V1, V2, and V3
 guides, masks, prompts, manifests, and locked rig assets against silent edits
 and records the exact remaining V3 migration surface. It registers no asset,
-changes no runtime behavior, and makes no provider request. The `4096 x 1024` `2K` tier remains the
-minimum supported `4:1` output that can preserve the `800`-pixel-tall Long
-back-hair cell without resizing; any smaller-tier reconsideration must first
-prove lower billed usage and exact-cell compatibility without a paid trial.
+changes no runtime behavior, and makes no provider request. **Corrected on 2026-08-05: `4:1` is not a documented provider aspect ratio.**
+The documented set is `1:1, 3:2, 2:3, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9`, so
+V3's `4096 x 1024` canvas may not be requestable at all. `character_sheet_v4`
+was built the same day as the `1:1` answer: `1024 x 1024` at the `1K` tier,
+one selected back-hair cell, native-size cells, an `18` pixel green gap, and
+sides grouped. It costs `$0.067` against V3's `$0.101`, and `0.5K` is impossible
+for any version because the back-hair cell is `800` pixels tall. Details and the
+corrected size table are in [Character Sheet Plan](CHARACTER_SHEET_PLAN.md).
 Phase 7G.1C is
 implemented locally: the processor
 hash-locks the ten runtime head/body assets, rejects face pixels outside the
@@ -550,6 +554,13 @@ Current Phase 7G.1 work:
 - [x] **Corrective Phase 7G.1B.R2 owner gate:** V3 is selected and visually
   approved as the future contract. Do not connect it to Flutter, the Worker,
   or Gemini until the owner explicitly asks to resume implementation.
+- [x] **Corrective Phase 7G.1B.R3, local candidate:** preserve V1/V2/V3 and
+  generate `character_sheet_v4`, a `1024 x 1024` `1:1` `1K` square sheet with one
+  `back_hair_selected` cell, nine fitted-clothing cells, an `18` pixel green gap
+  proven by search, and cells grouped by side. Built by
+  `tool/generate_character_sheet_v4.dart` with no provider request.
+- [ ] **V4 owner gate:** review the V4 guide, then decide whether V4 replaces V3
+  as the migration target. V4 is the safer shape and the cheaper tier.
 - [x] **Phase 7G.1B.2, local implementation:** connect one controlled fixed-sheet provider
   request and response to the versioned contract without automatic retry.
 - [x] **Phase 7G.1B.3, local implementation:** produce the fixed-manifest

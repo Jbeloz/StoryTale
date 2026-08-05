@@ -617,6 +617,42 @@ Two limits to know:
 No live DeepL request was made while implementing this; all tests use a fake
 client. The first real request is the owner's to trigger in the app.
 
+### character_sheet_v4 built, 5 August 2026
+
+The owner asked whether a `1K` `2048 x 512` sheet was possible. It is not, for
+two independent reasons, and checking turned up a bigger problem:
+
+1. **`4:1` is not a documented provider aspect ratio.** The documented set is
+   `1:1, 3:2, 2:3, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9`. **V3 is `4096 x 1024`,
+   exactly `4:1`, so the owner-approved sheet may not be requestable.** The
+   earlier note in `CHARACTER_SHEET_PLAN.md` claiming documented `4:1` tiers was
+   wrong and has been corrected. Caveat: the ratio list appeared under a section
+   naming Gemini 3.1 Flash *Lite* Image, while `.env.example` configures
+   `gemini-3.1-flash-image`. Confirm before spending on V3.
+2. **The cells do not fit `2048 x 512` anyway.** The back-hair cell is `800`
+   pixels tall against a `512`-tall canvas, and all 12 cells need `1,478,789`
+   px² against the canvas's `1,048,576` px².
+
+`character_sheet_v4` was built as the `1:1` answer: `1024 x 1024` at `1K`, one
+`back_hair_selected` cell matching V2's contract, nine fitted-clothing cells,
+native-size crops, an `18` pixel green gap, and cells grouped by side because
+side ownership is a contract rule. Cost is `$0.067` versus V3's `$0.101`, and
+cell fill rises from V2's `18.9%` to `75.6%` with pixel-identical cells, so more
+of the model's fixed token budget lands on content that is kept.
+
+The `18` pixel gap was found by search, not by hand: this cell set packs at `18`
+and fails at `20`. A first hand layout was rejected by the builder's own margin
+check, and the automatic packer's result was rejected for interleaving left and
+right cells. Both the builder and `test/character_sheet_contract_test.dart`
+re-prove the geometry, and the test also records why `0.5K` is impossible.
+
+V1, V2, and V3 are untouched behind their hashes. **V4 is a local candidate
+only** — not registered with Flutter, the Worker, or the provider, and no
+provider request was made. It shares V3's migration surface.
+
+Owner decisions still open: review the V4 guide, and choose whether V4 replaces
+V3 as the migration target.
+
 **The next task is still to resume Phase 7.** Start with whichever the owner
 prefers:
 
