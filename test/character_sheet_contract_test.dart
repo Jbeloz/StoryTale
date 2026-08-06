@@ -871,6 +871,17 @@ void main() {
         reason: 'the requested tier is what StoryTale is billed for',
       );
 
+      expect(
+        RegExp(
+          r'mime_type:\s*mode === "character-sheet"\s*\?\s*"([\w/]+)"',
+        ).firstMatch(worker)?.group(1),
+        contract.canvas.mimeType,
+        reason:
+            'the first live V4 request came back image/jpeg because this was '
+            'left unset; the processor needs lossless pixels to find exact '
+            '#00FF00 and to cut cells against per-pixel masks',
+      );
+
       final workerGuides = RegExp(r'^\s+(short|medium|long): "([a-f0-9]{64})"',
         multiLine: true,
       ).allMatches(worker);

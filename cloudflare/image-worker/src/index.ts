@@ -1369,11 +1369,18 @@ async function generateSprite(
       input,
       response_format: {
         type: "image",
-        // Gemini returns PNG by default. The current Interactions API schema
-        // only enumerates JPEG when mime_type is supplied, so leave it unset
-        // for the lossless character-sheet contract instead of sending a
-        // provider-rejected PNG override.
-        ...(mode === "character-sheet" ? {} : { mime_type: "image/jpeg" }),
+        // Ask for PNG explicitly. This previously left mime_type unset for the
+        // character sheet, on the belief that Gemini defaults to PNG and that
+        // the schema only enumerates JPEG. The first live V4 request disproved
+        // both: it returned a 1024x1024 image/jpeg, and the documentation lists
+        // image/png as an accepted value.
+        //
+        // Lossless is not a preference here. The processor keys on exact
+        // #00FF00 to find the background and validates every cut cell against
+        // per-pixel masks, so JPEG chroma subsampling would smear cell edges
+        // and make green detection unreliable. Converting a returned JPEG to
+        // PNG would preserve those artifacts, not remove them.
+        mime_type: mode === "character-sheet" ? "image/png" : "image/jpeg",
         aspect_ratio: mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "front-hair" || mode === "foreground" || mode === "master" || mode === "character-sheet"
           ? "1:1"
           : mode === "body-pose" ? "9:16" : "3:4",

@@ -788,10 +788,27 @@ Worker's `tsc --noEmit` are clean.
 V4. `GET /health` reports `authConfigured` and `geminiConfigured`, and the
 sprite route rejects an unauthenticated call with 401.
 
-**No provider request has been made.** The first controlled V4 request costs
-roughly `$0.067` and is the owner's to trigger. V4 contract enforcement has only
-been proven offline, against the Worker source, because verifying it live needs
-`APP_TOKEN` and a paid call.
+**The first live V4 request was made on 6 August 2026 and failed on format.**
+Gemini returned a `1024 x 1024` **image/jpeg**; the Worker rejected it with a 502
+before packaging, so the request was billed and produced nothing usable. It was
+not retried.
+
+The cause was a wrong assumption recorded in the Worker: the character-sheet
+`response_format` left `mime_type` unset, believing Gemini defaults to PNG and
+that the schema only enumerates JPEG. The documentation lists `image/png` as
+accepted, and the omitted field yielded JPEG. Fixed and deployed as version
+`d0311926-e0f8-403c-9251-7b3a99b3d75d`, with a test asserting the Worker asks
+for the contract's MIME type.
+
+Do not "fix" a future JPEG by converting it. The processor keys on exact
+`#00FF00` and validates each cut cell against per-pixel masks, so JPEG chroma
+subsampling smears cell edges; converting preserves those artifacts.
+
+**What the failure did prove:** the whole chain runs — Flutter picks the guide
+variant, the Worker accepts the V4 contract and the guide hash, Gemini answers,
+and validation catches a bad result before packaging. The `1K` tier is confirmed
+exactly `1024 x 1024`. **A second controlled request is still the owner's to
+trigger**, and nothing about the sheet's content has been seen yet.
 
 A test now parses `cloudflare/image-worker/src/index.ts` and compares its
 contract ID, version, geometry hash, canvas, requested tier, and three guide

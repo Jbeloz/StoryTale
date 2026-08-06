@@ -94,6 +94,22 @@ Deployment note (2026-08-03): Phase 7G.1C removes the shared limiter from
 sprite requests in Worker version `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
 No Gemini request or automated test was run during this deployment.
 
+Deployment note (2026-08-06, second): the first live V4 request returned a
+`1024 x 1024` **image/jpeg** and the Worker rejected it with a 502 before any
+packaging. The character-sheet `response_format` had deliberately left
+`mime_type` unset, on the belief that Gemini defaults to PNG and that the
+Interactions API schema only enumerates JPEG. Both beliefs were wrong: the
+documentation lists `image/png` as an accepted value, and the omitted field
+yielded JPEG. The Worker now asks for `image/png` explicitly, deployed as
+version `d0311926-e0f8-403c-9251-7b3a99b3d75d`.
+
+Lossless is a hard requirement, not a preference: the processor keys on exact
+`#00FF00` to find the background and validates each cut cell against per-pixel
+masks, so JPEG chroma subsampling would smear cell edges. Converting a returned
+JPEG to PNG would preserve those artifacts rather than remove them.
+
+The `1K` tier itself is proven — the provider returned exactly `1024 x 1024`.
+
 Deployment note (2026-08-06): the Worker moved to `character_sheet_v4` —
 contract ID and version, geometry hash, a `1024` canvas check, the `1K`
 requested tier, the `back_hair_selected` region set, and three accepted guide
