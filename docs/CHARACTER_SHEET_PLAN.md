@@ -180,12 +180,30 @@ following each limb silhouette. Anything between cells lands in the padding.
 
 This is a prompt defect. **Do not loosen the stray-pixel rule to make it pass:**
 content in the gap is the exact failure the gap exists to catch, and a layer cut
-from a shifted cell contains the wrong pixels. The four wording changes to try,
-and the cost of iterating on them, are in
-[Project Handoff](PROJECT_HANDOFF.md).
+from a shifted cell contains the wrong pixels.
 
-**Still open:** the prompt fix, an accepted paid V4 request with the proof pass
-enabled, and guides for actors other than `default`.
+### V4 prompt contract rewritten to paint in place, 2026-08-06
+
+Offline, no request made. The rewrite is recorded in full in
+[Project Handoff](PROJECT_HANDOFF.md); the load-bearing part is that
+`crop_manifest.json` is **never uploaded** — the request carries exactly five
+images — while the old prompt deferred to it for every crop coordinate and cell
+ID. The model had no layout to preserve. The twelve cell rectangles are now
+inlined in the prompt text, the five images are identified by position rather
+than by filenames Gemini never sees, the `256,187` px gap is named as
+result-voiding, and clothing is defined as paint on a body part rather than as an
+object placed near one.
+
+The Worker's `12,000`-character prompt cap is the binding constraint, so the
+rewrite trims legacy prose to pay for the additions: `9,226` characters before,
+`8,869` after. `test/character_sheet_prompt_test.dart` now enforces the cap on
+the built prompt.
+
+Only `assetSha256.promptContract` moved in the manifest. The guides are untouched
+and the Worker's constants are unaffected, so **no redeploy**.
+
+**Still open:** a sixth paid request to evaluate the rewrite, an accepted paid V4
+request with the proof pass enabled, and guides for actors other than `default`.
 
 ### Output-size and usage decision
 
@@ -503,9 +521,19 @@ One character-sheet request receives:
 7. the allowed and protected rules; and
 8. one approved StoryTale character-sheet example when available.
 
+**What is actually sent, corrected 2026-08-06.** The list above describes the
+information, not the payload. A V4 request carries **five images and one text
+prompt**, and the Worker rejects any other count: the guide variant, the
+assembled reference, and the allowed, protected, and seam masks. Items 3 to 6
+reach the provider only as text inside the prompt contract, and `crop_manifest.json`
+is **not** sent at all — anything the provider needs from it must be written into
+the prompt. Filenames are not sent either; the images are identified by order.
+
 The request is fingerprinted by character identity, design brief, template
 version/hash, skin tone, face/hair/outfit choices, provider, model, and sheet
-version. An identical ready result is reused instead of generated again.
+version. An identical ready result is reused instead of generated again. The
+prompt contract is **not** part of the fingerprint, so editing it does not
+invalidate the in-memory cache.
 
 ## 8. Gemini output rules
 

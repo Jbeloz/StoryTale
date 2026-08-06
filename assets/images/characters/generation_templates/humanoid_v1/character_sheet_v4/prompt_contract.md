@@ -1,13 +1,96 @@
 # StoryTale Character Sheet V4 Provider Contract
 
-This is a strict fixed-layout image-edit request for one coherent StoryTale
-character. It is not a request for a second full-body illustration.
+## What this request is
 
-V4 is V2's cell set on the smallest supported square canvas. It differs from V3
-in exactly two ways: the canvas is `1024 x 1024` at the `1:1` aspect ratio
-instead of `4096 x 1024` at `4:1`, and there is one selected rear-hair cell
-instead of three alternatives. Every cell keeps its native size, so each
-extracted part has the same pixels it would have in V2 or V3.
+This is an **edit of image 1**, not a new illustration. Image 1 already contains
+twelve separate shapes on a flat green background. Return that same image at
+exactly `1024 x 1024`, `1:1` aspect ratio, `1K` size, with paint added to those
+shapes and nothing else changed.
+
+- Twelve shapes go in and twelve shapes come out.
+- Every shape keeps its exact position, size, and outline. Nothing moves,
+  rotates, scales, or is recentered.
+- Do not add a thirteenth shape. Do not merge, split, or reorder shapes.
+- Do not re-lay-out, rearrange, or tidy the sheet. The layout is fixed.
+- Do not draw the assembled character anywhere on this canvas.
+
+If you would change where something sits in order to compose a better picture,
+that is the failure this contract exists to prevent.
+
+## The five supplied images, in order
+
+1. **The sheet to edit and return.** The only image whose pixels you output.
+2. **The assembled reference** - how the separated parts connect on a finished
+   character. Context for style and continuity only; never copy it into image 1.
+3. **Allowed mask** - white pixels may receive new paint.
+4. **Protected mask** - white pixels must keep the pixels already in image 1.
+5. **Seam mask** - white markers show where neighbouring parts join.
+
+Images 3 to 5 share image 1's `1024 x 1024` canvas, pixel for pixel.
+
+## The twelve cells, in canvas coordinates
+
+Each line is `cell_id  left,top  width x height`. These rectangles are fixed and
+are the only places paint may appear.
+
+```
+back_hair_selected   18,18     429x800
+front_hair          465,18     429x438
+head                465,474    357x367
+torso               840,474    165x234
+upper_leg_right      18,836     94x150
+lower_leg_right     130,836     84x156
+upper_leg_left      232,836     85x141
+lower_leg_left      335,836     88x140
+upper_arm_right     465,859     67x118
+lower_arm_right     550,859     77x145
+upper_arm_left      645,859     78x128
+lower_arm_left      741,859     86x129
+```
+
+The eight limb cells form two blocks: **legs on the left**, spanning `x` 18 to
+423, and **arms on the right**, spanning `x` 465 to 827, separated by a channel
+wider than the normal gap. Within each block the order is right limb first, then
+left, and hip or shoulder before knee or elbow. Match each shape to its cell by
+these coordinates, not by what the shape looks like.
+
+## The green gap is untouchable
+
+Every pixel outside the twelve rectangles above is background: an `18` pixel gap
+around every cell and around the canvas edge. That is **256,187 pixels**, a
+quarter of the canvas.
+
+It must come back exactly flat `#00FF00`. **Any mark in the gap voids the
+result** - a stray line, a shadow, an overhanging sleeve, a garment placed
+between cells, or artwork nudged a few pixels outside its rectangle. Nothing
+legitimate is ever drawn there.
+
+## Clothing is paint on a body part, never a separate object
+
+Each cell holds exactly one body part, and the clothing worn on that part is
+painted onto it, inside its silhouette.
+
+- A boot is **not** a boot-shaped object placed near a leg. It is paint on the
+  lower end of `lower_leg_right` and `lower_leg_left`, following the leg outline
+  already in that cell and stopping where that outline stops.
+- The same is true of sleeves, gloves, a coat, trousers, and a collar.
+- No garment is drawn on its own, floating free of a body part.
+- No garment spans two cells or bridges the gap between them.
+
+## Cell size is not target size
+
+A cell is a container, not a target. Several cells are larger than the artwork
+they hold, so **do not fill a cell to its edges.** Match the extent of the shape
+already drawn in that cell.
+
+The rear-hair cell is the clearest case. It is `429 x 800` because it must be
+able to hold the longest style, so shorter styles leave much of it green: short
+occupies `412 x 404`, medium `425 x 546`, and long `390 x 784`.
+
+Front hair fills `424 x 389` of its `429 x 438` cell. **Front and rear hair are
+deliberately the same width** so the two layers sit together on the head: rear
+hair is `425` wide against front hair's `424`. Keep that match. Rear hair must be
+neither narrower, which lets the front hair overhang it, nor much wider.
 
 ## This request
 
@@ -16,9 +99,8 @@ sent. They are data fields, not permission to change the geometry contract. If
 any of them still reads as a brace placeholder when you receive this, reject the
 request rather than inventing a character.
 
-Create the separated appearance sheet for one coherent StoryTale character.
-First reason about the character as one complete front-facing person, then draw
-only the permitted separated appearance artwork into the supplied guide cells.
+First reason about the character as one complete front-facing person, then paint
+only that character's appearance into the cells listed above.
 
 Character identity: `{{character_name}}`  
 Source-backed design brief: `{{character_design_brief}}`  
@@ -29,99 +111,30 @@ Selected rear-hair cell: `{{selected_back_hair_region}}`
 Outfit requirements: `{{outfit_requirements}}`  
 Approved accessories for this request: `{{approved_accessories_or_none}}`
 
-The rear-hair value is either `back_hair_selected`, meaning draw the one rear
-length described in the hair requirements, or `none`, meaning leave that cell
-flat green. V4 carries a single rear-hair cell, so there is no other valid value.
-
-The checked-in guide depicts the `default` actor. The same geometry may later be
-used for other actors with their own brief and actor-specific hair references,
-without changing any crop, mask, anchor, seam, or output size.
-
-## Required provider inputs
-
-1. `guide_<actor>_<length>.png` - the exact `1024 x 1024` separated-part layout,
-   using the variant whose rear-hair silhouette matches `BACK_HAIR_SELECTION`.
-   `guide_default_short.png`, `guide_default_medium.png`, and
-   `guide_default_long.png` are published for the `default` actor. Every variant
-   shares identical cells, masks, anchors, and seams; only the shape drawn in
-   `back_hair_selected` differs. For `none`, send the `medium` guide and leave
-   that cell flat green.
-2. `assembled_reference.png` - how the locked default actor parts connect.
-3. `allowed_regions.png` - white pixels may contain generated appearance.
-   Note the limb cells sit in two separated blocks: **legs lower left, arms
-   lower right**, split by a channel more than twice the normal cell gap. Within
-   each block the order is right limb then left, and shoulder/hip before
-   elbow/knee. Use the manifest IDs, not position, to decide which cell is which.
-4. `protected_regions.png` - white pixels must preserve the locked source.
-5. `seam_allowances.png` - white markers identify required connection points.
-6. `crop_manifest.json` - the only valid cells, sizes, anchors, and role data.
-
-## Exact output contract
-
-- Return one PNG at exactly `1024 x 1024` using the `1:1` aspect ratio and `1K`
-  provider size.
-- Keep every crop at the exact coordinates and dimensions in the manifest.
-- Keep the untouched background exactly flat `#00FF00`, including the `18` pixel
-  gap around every cell.
-- Do not move, rotate, merge, tightly crop, resize, label, or border any cell.
-- Every crop already equals the exact raster canvas assembled by Sprite Studio.
-- Do not draw outside the white pixels in `allowed_regions.png`.
-- Preserve the white pixels in `protected_regions.png` exactly.
-- Keep every required connection covered through its seam marker.
-
-## Cell size is not target size
-
-A cell is a container, not a target. Several cells are deliberately larger than
-the artwork they hold, so **do not fill a cell to its edges.** Match the extent
-of the reference silhouette already drawn in that cell.
-
-The rear-hair cell is the clearest case. It is `429 x 800` because it must be
-able to hold the longest style, so shorter styles leave much of it green:
-
-| Rear-hair length | Reference occupies | Share of the cell |
-| --- | --- | --- |
-| short | `412 x 404` | 49% |
-| medium | `425 x 546` | 68% |
-| long | `390 x 784` | 89% |
-
-Front hair fills `424 x 389` of its `429 x 438` cell. **Front and rear hair are
-deliberately the same width** so the two layers sit together on the head: rear
-hair is `425` wide against front hair's `424`. Keep that match. Rear hair must
-be neither narrower, which lets the front hair overhang it, nor much wider.
-
-Every region publishes `referenceContent` in `crop_manifest.json` with the exact
-bounds and coverage its template artwork occupies, and the rear-hair variants
-publish `referenceContentByBackHairId`. Use those, not the cell bounds.
+The rear-hair value is either `back_hair_selected`, meaning paint the one rear
+length described in the hair requirements onto the shape already in that cell, or
+`none`, meaning leave that cell flat green. There is no other valid value.
 
 ## The head cell
 
-The `head` cell shows the exact head StoryTale composes at runtime: bald,
-faceless, with only an ear outline. That is not a placeholder to complete.
+`head` shows the exact head StoryTale composes at runtime: bald, faceless, with
+only an ear outline. **That is not a placeholder to complete.**
 
 Eyes, eyebrows, nose, and mouth are **not generated**. StoryTale draws them
 locally from its own modular face parts, once per expression, over whatever this
 cell returns. Anything drawn where a face belongs is either overwritten or
 rejected, and a face drawn outside the allowed window fails the request.
 
-What the allowed window is for is character-specific *detail* on the skin —
-freckles, a birthmark, a scar, blush, a face marking — that belongs to this
-character and stays valid across every expression.
-
-Every V4 cell now draws the same asset the rig composes, so what the guide shows
-and what the runtime assembles are the same artwork. The head content sits
-slightly inside its cell rather than filling it; `referenceContent` for `head`
-in `crop_manifest.json` gives the exact bounds.
+What the allowed window is for is character-specific *detail* on the skin -
+freckles, a birthmark, a scar, blush, a face marking - that belongs to this
+character and stays valid across every expression. The head content sits slightly
+inside its cell, occupying `325 x 343` of the `357 x 367` rectangle.
 
 ## Hair rules
 
-- Draw one front-hair layer in `front_hair`.
-- Draw one rear-hair layer in `back_hair_selected`, at the length named by
-  `BACK_HAIR_SELECTION` and matching the silhouette in the supplied guide
-  variant.
-- One request produces one length. To offer a character in several lengths,
-  send one request per length using the matching guide, and keep
-  `CHARACTER_BRIEF`, `OUTFIT_BRIEF`, and the palette byte-identical between
-  those requests so the results stay the same character.
+- Paint one front-hair layer onto the shape in `front_hair`.
+- Paint one rear-hair layer onto the shape in `back_hair_selected`, at the length
+  named above, keeping that shape's existing silhouette.
 - Both hair layers belong to the same character: identical color, line style,
   texture, highlights, and crown/hairline logic.
 - The rear layer must attach correctly to the same front-hair layer and head.
@@ -131,32 +144,25 @@ in `crop_manifest.json` gives the exact bounds.
 
 ## Character and clothing rules
 
-- Use the request's actor role and source-backed brief. The checked-in guide and
-  assembled reference currently use the `default` actor.
-- The same fixed layout is heroine-compatible because the heroine uses the
-  same `humanoid_v1` geometry. Before a heroine provider request, StoryTale must
-  supply the heroine brief and actor-specific hair references without changing
-  any crop, mask, anchor, seam, or output size.
 - Keep one identity across the face details, hair, palette, and outfit.
-- In `head`, modify only the allowed facial-detail area. Do not redraw the
-  locked head silhouette, ears, neck edge, or protected pixels.
+- In `head`, modify only the allowed facial-detail area. Do not redraw the locked
+  head silhouette, ears, neck edge, or protected pixels.
 - **The head is bald and faceless on purpose, and must stay that way.** Do not
-  draw eyes, eyebrows, a nose, or a mouth. See "The head cell" below.
-- In body cells, draw only clothing fitted to that exact body part.
+  draw eyes, eyebrows, a nose, or a mouth.
 - Right-side artwork stays in right-side cells and left-side artwork stays in
   left-side cells.
-- The separated head, torso, arms, legs, and selected hair option must assemble
-  into the supplied Sprite Studio character without changing pivots or seams.
-- Do not add scenery, shadows, text, props, extra characters, or unrelated
-  objects.
+- The separated head, torso, arms, legs, and hair must assemble into the supplied
+  assembled reference without changing pivots or seams.
+- Do not add scenery, shadows, text, labels, borders, props, extra characters, or
+  unrelated objects.
 
 ## Clothing continuity across joints
 
 This is the part most likely to fail, so it is stated explicitly.
 
-Garments are drawn in separate cells but must read as one outfit on the
-assembled character. Each body cell carries seam markers at the joints it shares
-with its neighbour:
+Garments are painted in separate cells but must read as one outfit on the
+assembled character. Seam markers sit at the joints each cell shares with its
+neighbour:
 
 - `torso` meets `head` at the neck, both upper arms at the shoulders, and both
   upper legs at the hips.
@@ -168,12 +174,18 @@ Where a garment crosses one of those joints, its edge colour, thickness, trim,
 fold direction, and shading must match on both sides of the seam, so the two
 cells line up when the rig is posed. A sleeve that ends at the elbow in
 `upper_arm_right` must continue at the same width and colour where
-`lower_arm_right` begins.
+`lower_arm_right` begins. Matching across a seam never means drawing across the
+gap between the two cells.
 
-## Rejection conditions
+## Check before returning
 
-Reject the result if its format or dimensions differ, a cell moves or resizes,
-green background is altered outside allowed pixels, locked geometry changes,
-front and rear hair describe different characters, clothing fails to match
-across a seam, or the separated parts cannot reproduce the supplied assembled
-character.
+1. Exactly `1024 x 1024`.
+2. Twelve shapes, each still at its listed rectangle and its original size.
+3. Every pixel outside those rectangles flat `#00FF00`.
+4. No free-standing garment anywhere.
+5. The head still bald and faceless.
+6. Front and rear hair the same character.
+
+Reject the result if any of those fails, if the format or dimensions differ, if
+locked geometry changed, if clothing fails to match across a seam, or if the
+separated parts cannot reproduce the supplied assembled character.

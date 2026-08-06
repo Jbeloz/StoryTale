@@ -63,7 +63,31 @@ void main() {
     expect(prompt, contains('#F2C9A0'));
     expect(prompt, contains(_request.selectedBackHairRegion(contract)));
   });
+
+  test('a built prompt fits inside the Worker character-sheet limit', () {
+    final prompt = _request.buildPrompt(template, contract);
+
+    expect(
+      prompt.length,
+      lessThan(_workerMaxPromptLength),
+      reason:
+          'the Worker rejects a longer character-sheet prompt with a 400, so '
+          'growing the contract has to be paid for by trimming it',
+    );
+  });
 }
+
+/// `maxPromptLength` for `mode=character-sheet` in
+/// `cloudflare/image-worker/src/index.ts`.
+///
+/// The contract is a file that only grows, and nothing on this side of the
+/// request enforced the cap, so an edit could have shipped a prompt the Worker
+/// refuses. That failure is free rather than billed, but it still blocks a
+/// request the owner has already approved.
+///
+/// The margin left over is not spare room: every `{{token}}` is replaced by a
+/// value, and `{{character_design_brief}}` is unbounded book text.
+const _workerMaxPromptLength = 12000;
 
 const _request = CharacterSheetGenerationRequest(
   brief: CharacterDesignBrief(

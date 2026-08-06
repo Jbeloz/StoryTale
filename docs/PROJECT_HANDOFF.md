@@ -944,15 +944,75 @@ descending order of likely effect:
    Skin-toned parts may invite dressing rather than replacing; that is a guide
    change and needs a rebuild plus new Worker hashes, so try the wording first.
 
-Re-running after a prompt edit **does** cost a new request, because the prompt is
-not part of the fingerprint but the manifest hash is, and editing the prompt file
-changes `assetSha256.promptContract` on the next build. Budget one request per
-prompt iteration.
+Re-running after a prompt edit **does** cost a new request: nothing about the
+returned sheet is reusable once the prompt changes. Budget one request per prompt
+iteration. Note the fingerprint itself does *not* move — see the correction in
+the next section, which matters for the in-tab cache.
 
 **Cost so far: five billed requests, roughly `$0.34`.** Four were mine — three
 plumbing defects reproducible offline, and one legacy-path run after an app
 restart reset the mode selector. Only the fifth bought information about the
 artwork.
+
+### The V4 prompt was rewritten to paint in place — 6 August 2026
+
+Done offline, no request made. Reading the request path first turned up three
+reasons the provider **could not** have complied, which matter more than any
+wording weakness:
+
+1. **`crop_manifest.json` was never sent.** `story_artwork_service.dart` uploads
+   exactly five references — guide, assembled reference, and the three masks —
+   and the Worker enforces "exactly five". But the prompt listed the manifest as
+   required input 6 and then deferred to it four times, for the crop
+   coordinates, the cell IDs, and the `referenceContent` bounds. **The model had
+   never been given a single coordinate.** Asked to preserve a layout it could
+   not read, it re-derived one. That is the best available explanation for the
+   re-layout, better than "the wording was too weak".
+2. **The five images arrive unnamed.** `generateSprite` appends them as bare
+   image parts after the text; the multipart filenames never reach Gemini. The
+   prompt referred to them only as `allowed_regions.png` and so on, so mapping a
+   name to a picture was guesswork.
+3. **Three token names in the prompt did not exist** — `BACK_HAIR_SELECTION`,
+   `CHARACTER_BRIEF`, `OUTFIT_BRIEF`, left over from an older contract. The real
+   tokens are the `{{...}}` fields in `promptFields`.
+
+What the contract now says, in the order it says it: this is an **edit of image
+1** and twelve shapes go in and twelve come out at the same pixels; the five
+images identified by position; **the twelve cell rectangles inlined as text**;
+the gap named as `256,187` pixels that void the result if marked; and clothing
+defined as paint on a body part, with a boot called out explicitly as paint on
+`lower_leg_*` rather than a boot-shaped object. A six-point self-check closes it.
+
+The rectangles are checked against `crop_manifest.json` rather than trusted:
+all twelve match, as does the gap figure.
+
+**The size cap is the binding constraint and was previously unguarded.** The
+Worker caps character-sheet prompts at `12,000` characters. The old contract was
+`9,226` before substitution, so this had to be a rewrite that trims as much as it
+adds, not an append; the result is `8,869`, about `9,300` once a typical brief is
+substituted. Legacy prose paid for the additions: the V3 comparison, the
+future-actor and heroine policy, and StoryTale's own multi-length workflow, none
+of which are instructions for painting this image.
+`test/character_sheet_prompt_test.dart` now fails if a built prompt crosses the
+cap, so the next editor finds out in `flutter test` rather than at the Worker.
+The one unbounded input is `sourceDescription`, which would need to exceed
+roughly `2,800` characters to overflow; that failure is a free 400, not a bill.
+
+Only `assetSha256.promptContract` in the manifest changed with it. Nothing else
+in the manifest derives from the prompt, the guide bytes are untouched, and the
+Worker holds only guide and geometry hashes — **so there is no Worker change and
+no redeploy.**
+
+**One correction to the note above, which matters before the next test.** The
+request fingerprint contains the *guide* hash, not the manifest hash, and a
+prompt edit changes neither. So a prompt edit does **not** invalidate the
+in-memory cache: within a browser tab that has already generated, re-pressing
+Generate returns the old sheet. Reload the tab before testing the new prompt.
+
+Nothing here is verified. A prompt's effect cannot be unit-tested, and the guide
+rebuild — handoff item 4, whether the white silhouettes read as "empty slots to
+fill" — was deliberately left alone, because changing the wording and the guide
+in the same request would make the result uninterpretable.
 
 ### Faces are an unsolved design question, 6 August 2026
 
@@ -1025,12 +1085,15 @@ had been failing since before this thread. It was fixed on 5 August 2026; see
 
 ### Exact current and next work
 
-**The next task is the prompt.** V4 is live end to end and the fifth request
-produced a real, mostly-correct sheet. The one substantial defect is that the
-provider re-lays-out the lower half and draws free-standing garments, putting
-`21,459` pixels — 8.4% of the gap area — in the padding between cells. Read "The
-first real V4 sheet, and what Gemini gets wrong" above for the numbers and the
-four wording changes to try. Each prompt edit costs one paid request to evaluate.
+**The next task is a sixth request, to evaluate the rewritten prompt.** V4 is
+live end to end and the fifth request produced a real, mostly-correct sheet whose
+one substantial defect was that the provider re-laid-out the lower half and drew
+free-standing garments, putting `21,459` pixels — 8.4% of the gap area — into the
+padding. The prompt contract was rewritten on 6 August 2026 to address that; see
+"The V4 prompt was rewritten to paint in place" above for what changed and why.
+Nothing about it is proven. The number to watch is the stray-pixel count against
+that `21,459` baseline; per-cell drift is the secondary signal. Reload the browser
+tab first, because a prompt edit does not change the request fingerprint.
 
 Two things that make iterating cheaper, both worth knowing before touching
 anything:
@@ -1038,8 +1101,9 @@ anything:
 - **Within one browser tab, re-pressing Generate is free.** `generateCharacterSheet`
   caches the result by request fingerprint and returns it regardless of validity,
   so local processing can be re-run as often as needed. Reloading the tab loses
-  it, and so does changing the manifest, because the guide hash is part of the
-  fingerprint.
+  it, and so does changing the guide or the geometry, whose hashes are part of
+  the fingerprint. **Editing the prompt does not**, so reload the tab after a
+  prompt change or you will re-inspect the old sheet.
 - **The testing switch on Sprite Review skips the six face and four pose
   compositions**, which is most of the run cost. It is on by default and a
   package built with it can never be accepted; turn it off for an acceptance run.
