@@ -160,8 +160,32 @@ sheet shaped like a compliant reply reaches a valid package with six face proofs
 and four pose proofs, while a redrawn head and torso, content in the padding, and
 a rear-hair cell that should have stayed green are each rejected.
 
-**Still open, and deliberately so:** the first accepted paid V4 request, and
-guides for actors other than `default`.
+### First real V4 result, 2026-08-06
+
+The fifth billed request returned a `1024 x 1024` JPEG, `517 KB`, that the
+pipeline cut into layers without incident. The character matches the brief and
+the head came back bald and faceless as the contract asks.
+
+| Measure | Value | Reading |
+| --- | --- | --- |
+| Stray pixels in the padding | `21,459` | 8.4% of the `256,187` px gap area — the real defect |
+| Locked geometry repainted | 4.11% | small; an earlier sheet scored 50.69% under the same rule |
+| Locked area drawn over in cells | 1.81% | small |
+| Worst cells | `lower_arm_right` 746, `head` 477, `lower_arm_left` 379 | totals about `2,354`, an order of magnitude under the stray count |
+
+The provider **re-lays-out the lower half** rather than painting in place. The
+template carries one row of eight limb cells; the reply reorganises that area and
+draws garments — boots especially — as free-standing objects instead of clothing
+following each limb silhouette. Anything between cells lands in the padding.
+
+This is a prompt defect. **Do not loosen the stray-pixel rule to make it pass:**
+content in the gap is the exact failure the gap exists to catch, and a layer cut
+from a shifted cell contains the wrong pixels. The four wording changes to try,
+and the cost of iterating on them, are in
+[Project Handoff](PROJECT_HANDOFF.md).
+
+**Still open:** the prompt fix, an accepted paid V4 request with the proof pass
+enabled, and guides for actors other than `default`.
 
 ### Output-size and usage decision
 

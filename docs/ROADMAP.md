@@ -595,8 +595,19 @@ Current Phase 7G.1 work:
 - [x] **Worker deployed, 2026-08-06** as version
   `964439e3-4a04-48c2-9b30-a68d176fc604`, at the owner's explicit request.
   Flutter and the live Worker are both on V4.
-- [ ] **One controlled V4 request**, then the existing package, six-face, and
-  four-pose gates. Owner-triggered; roughly `$0.067`.
+- [x] **First real V4 sheet returned, 2026-08-06.** Gemini produced a
+  recognisable character on the V4 layout: golden hair in both hair cells, a
+  blue coat on the torso, cream trousers, brown boots, and the head left bald
+  and faceless. The pipeline cut it and built a package.
+- [ ] **Fix what the provider draws.** The sheet is re-laid-out rather than
+  painted in place: `21,459` pixels, 8.4% of the gap area, land in the padding
+  between cells, mostly free-standing garments such as boots drawn as objects
+  instead of clothing on a limb silhouette. Locked-geometry drift is only 4.11%,
+  so this is a prompt problem and not a validator one. Do not loosen the
+  stray-pixel rule. See [Project Handoff](PROJECT_HANDOFF.md), "The first real
+  V4 sheet, and what Gemini gets wrong".
+- [ ] **Then the acceptance run** with the testing switch off, so the six-face
+  and four-pose gates actually run.
 - [ ] **Guides for actors other than `default`.** Each actor has its own front
   hair, so each needs generated, checked-in, hashed guides before it can be
   requested. Free and offline; defer until an actor is actually needed.

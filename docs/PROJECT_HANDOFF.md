@@ -890,6 +890,70 @@ contract ID, version, geometry hash, canvas, requested tier, and three guide
 hashes against the manifest, so a hand-copied constant cannot drift into a 409
 after the money is committed.
 
+### The first real V4 sheet, and what Gemini gets wrong — 6 August 2026
+
+**Start here. This is the open problem.** Everything below the plumbing is now
+working; what remains is the artwork the provider draws.
+
+The pipeline delivered. Gemini returned a `1024 x 1024` JPEG, `517 KB`, cut into
+layers, and the package built. The character is recognisably the brief — golden
+hair in both hair cells, a blue coat in the torso cell, cream trousers, brown
+boots, and the head left bald and faceless as asked.
+
+Recorded validation from that run:
+
+| Measure | Value |
+| --- | --- |
+| Stray pixels in the padding between cells | **21,459** |
+| Locked geometry repainted | 4.11% |
+| Locked area drawn over inside cells | 1.81% |
+| Rejected by cell | `lower_arm_right` 746, `head` 477, `lower_arm_left` 379, `torso` 317, `lower_leg_left` 243, `upper_leg_left` 192 |
+
+**Read those numbers in proportion.** The padding is `256,187` px of the
+`1,048,576` canvas, so `21,459` stray pixels means **8.4% of the gap area has
+artwork in it**. That single number dwarfs everything else: the per-cell
+rejections total about `2,354`, an order of magnitude smaller. The earlier
+50.69% drift was a worse sheet, not a worse rule — the same validator scored this
+one at 4.11%.
+
+**So the diagnosis is not "the provider redrew the body". It is "the provider
+re-laid-out the sheet."** Comparing the returned sheet against
+`guide_default_medium.png`, the lower half does not match cell for cell: the
+template carries one row of eight limb cells, four legs left and four arms right,
+and the reply reorganises that area and draws garment objects — boots in
+particular — as free-standing items rather than as clothing painted onto each
+limb silhouette in its own cell. Anything drawn between cells lands in the
+padding, which is exactly what the stray count measures.
+
+**That makes it a prompt problem, not a validator problem.** Do not loosen the
+stray-pixel rule to make this pass; content in the gap is precisely the failure
+the gap exists to catch, and a layer cut from a shifted cell is the wrong pixels.
+
+Concrete changes to try in `character_sheet_v4/prompt_contract.md`, in
+descending order of likely effect:
+
+1. **Say it is an edit, not a drawing.** The output must be the supplied guide
+   with paint added and nothing moved. State that the number, position, and size
+   of separate shapes must not change.
+2. **Forbid free-standing garments.** Each cell holds exactly one body part;
+   clothing is painted onto that part, following its silhouette. A boot is not a
+   boot-shaped object placed near a leg, it is paint on the lower-leg cell.
+3. **Name the gap explicitly as untouchable**, with the pixel figure, and say
+   that any mark there voids the result.
+4. Consider whether the white body silhouettes read as "empty slots to fill".
+   Skin-toned parts may invite dressing rather than replacing; that is a guide
+   change and needs a rebuild plus new Worker hashes, so try the wording first.
+
+Re-running after a prompt edit **does** cost a new request, because the prompt is
+not part of the fingerprint but the manifest hash is, and editing the prompt file
+changes `assetSha256.promptContract` on the next build. Budget one request per
+prompt iteration.
+
+**Cost so far: five billed requests, roughly `$0.34`.** Four were mine — three
+plumbing defects reproducible offline, and one legacy-path run after an app
+restart reset the mode selector. Only the fifth bought information about the
+artwork.
+
 ### Faces are an unsolved design question, 6 August 2026
 
 The owner raised this before clearing the chat and it is **not yet decided**. The
@@ -960,6 +1024,27 @@ had been failing since before this thread. It was fixed on 5 August 2026; see
 "Sprite Studio test failure cleared" above.
 
 ### Exact current and next work
+
+**The next task is the prompt.** V4 is live end to end and the fifth request
+produced a real, mostly-correct sheet. The one substantial defect is that the
+provider re-lays-out the lower half and draws free-standing garments, putting
+`21,459` pixels — 8.4% of the gap area — in the padding between cells. Read "The
+first real V4 sheet, and what Gemini gets wrong" above for the numbers and the
+four wording changes to try. Each prompt edit costs one paid request to evaluate.
+
+Two things that make iterating cheaper, both worth knowing before touching
+anything:
+
+- **Within one browser tab, re-pressing Generate is free.** `generateCharacterSheet`
+  caches the result by request fingerprint and returns it regardless of validity,
+  so local processing can be re-run as often as needed. Reloading the tab loses
+  it, and so does changing the manifest, because the guide hash is part of the
+  fingerprint.
+- **The testing switch on Sprite Review skips the six face and four pose
+  compositions**, which is most of the run cost. It is on by default and a
+  package built with it can never be accepted; turn it off for an acceptance run.
+
+Older phase history follows.
 
 1. **Implemented: Phase 7G.1A.1** — per-actor front hair, optional back hair
    (`None` included), skin tone, and each style's X/Y/scale fit now restore and
