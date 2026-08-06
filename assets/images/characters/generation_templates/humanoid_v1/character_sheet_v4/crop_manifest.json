@@ -12,7 +12,7 @@
   "assets": {
     "guide": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/guide_default_medium.png",
     "assembledReference": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/assembled_reference.png",
-    "allowedRegions": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/allowed_regions.png",
+    "allowedRegions": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/allowed_regions_medium.png",
     "protectedRegions": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/protected_regions.png",
     "seamAllowances": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/seam_allowances.png",
     "promptContract": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/prompt_contract.md"
@@ -20,7 +20,7 @@
   "assetSha256": {
     "guide": "32f922741c98dae4c25b1a93f4fa16b199f12471d7e2dd7ae598af2e6034e81c",
     "assembledReference": "0247225e7e8a9584961ce795c0f3e1e9bf0e61450e5cb151d0c02d042319fa50",
-    "allowedRegions": "bb0313bcf674fff6a140f63efb96290a334c3383e0b637a5f84d9c2058c1a2b0",
+    "allowedRegions": "95211a0e6ff69cc02b3e59470ef0bff3f1456e811906a1db65207605588c85cc",
     "protectedRegions": "dee6725823447c6bd18ab93ffa1b09884e3adbb91a088ca23a7c95b56f318716",
     "seamAllowances": "a727c769962c7c77c7ac7857b8bbb55c8a1e00668fbea90e5115db15fd6a048e",
     "promptContract": "50f2eaa179aa93d454267a123ad6f21c823a9fecf9fb00aaecad1a150beffcf7"
@@ -120,6 +120,11 @@
       "medium": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/guide_default_medium.png",
       "long": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/guide_default_long.png"
     },
+    "allowedRegionsByBackHairId": {
+      "short": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/allowed_regions_short.png",
+      "medium": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/allowed_regions_medium.png",
+      "long": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/allowed_regions_long.png"
+    },
     "canonicalBackHairId": "medium",
     "rule": "send the guide whose rear-hair silhouette matches BACK_HAIR_SELECTION; every variant shares the same cells, masks, anchors, and seams",
     "noneUsesGuide": "medium",
@@ -151,6 +156,19 @@
     "short": "b63e5f721f6f48bfa501bc623f00db18b0b7aa60d34b729775b18bcf00fc4b79",
     "medium": "32f922741c98dae4c25b1a93f4fa16b199f12471d7e2dd7ae598af2e6034e81c",
     "long": "150ce5bcec68a68f09588c63da40fa0e6fc1d94bc4532ea21f464480dbe13816"
+  },
+  "allowedVariantSha256": {
+    "short": "5cdbf52cde272b5e63ee37169e5258fb040c0b989f19aca0ab8c5555d51b985e",
+    "medium": "95211a0e6ff69cc02b3e59470ef0bff3f1456e811906a1db65207605588c85cc",
+    "long": "5027b401783e0ff9ae9520f72a7e15554c42734d7a661aa5e57abe1fef9cd92b"
+  },
+  "hairAllowance": {
+    "marginPixels": 16,
+    "appliesTo": [
+      "front_hair",
+      "back_hair_selected"
+    ],
+    "rule": "the allowed window in a hair cell is the template silhouette grown by marginPixels, not the whole cell; anything drawn beyond it is dropped from the layer and counted as overspill"
   },
   "backHairSourceByIdForActor": {
     "default": {

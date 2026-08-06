@@ -67,6 +67,26 @@ const _guideActorId = 'default';
 /// keep their existing shape.
 const _canonicalBackHairId = 'medium';
 
+/// How far generated hair may reach past the template silhouette before it
+/// stops counting as hair.
+///
+/// V1 gave both hair cells the whole cell as their allowed window, which left
+/// `back_hair_selected` 57% permitted empty green — more permitted empty space
+/// than the entire `256,187` px padding. Three consecutive provider sheets used
+/// it: a hood wrapped around the front hair, and a spare pair of garment objects
+/// dropped into the empty lower half of the rear-hair cell, which
+/// `cropToVisiblePixels: false` then cut straight into the rear-hair layer.
+/// Neither tripped a single gate, because a mask that permits everything cannot
+/// report anything, so no amount of prompt wording could have caught them.
+///
+/// Narrowing the window to the silhouette plus this margin makes that content
+/// land outside `allowed`, where the processor drops it from the layer and
+/// counts it. The margin has to be generous enough that a character's own
+/// hairstyle is not clipped where it legitimately differs from the template's,
+/// and small enough that the empty region stays excluded. `_reportHairAllowance`
+/// prints both sides of that trade on every build.
+const _hairAllowanceMargin = 16;
+
 /// One back-hair cell, matching V2's `back_hair_selected` contract. V1 and V3
 /// carry three back-hair cells but a request only ever activates one, so the
 /// other two are green waste rather than extra capability.
@@ -323,8 +343,21 @@ void main() {
     backHairCrop: backHairTarget.crop,
   );
 
+  // Narrow the front-hair window to the hair itself. Every non-back-hair cell is
+  // drawn by now, so the guide carries the silhouette to measure.
+  final frontHairTarget = _targets.firstWhere(
+    (target) => target.id == 'front_hair',
+  );
+  _replaceCellMask(
+    allowed,
+    _artworkSilhouette(guide, frontHairTarget.crop, _hairAllowanceMargin),
+    frontHairTarget.crop,
+  );
+
   final guidePathByBackHairId = <String, String>{};
+  final allowedPathByBackHairId = <String, String>{};
   final backHairContentById = <String, _Rect>{};
+  image.Image? canonicalAllowed;
   for (final variant in _backHairVariants) {
     final variantGuide = image.Image.from(guide);
     backHairContentById[variant.id] = _drawCell(
@@ -336,7 +369,35 @@ void main() {
     final fileName = variant.guideFileName(_guideActorId);
     _writePng('${outputDirectory.path}/$fileName', variantGuide);
     guidePathByBackHairId[variant.id] = '$_v4Root/$fileName';
+
+    // One allowed mask per length, for the same reason there is one guide per
+    // length. The three silhouettes fill 404, 546, and 784 px of the same
+    // 800-tall cell, so a single shared window narrowed to the longest would
+    // still leave the shorter two with most of their empty space permitted —
+    // and medium is the length that has been failing.
+    final variantAllowed = image.Image.from(allowed);
+    _replaceCellMask(
+      variantAllowed,
+      _artworkSilhouette(
+        variantGuide,
+        backHairTarget.crop,
+        _hairAllowanceMargin,
+      ),
+      backHairTarget.crop,
+    );
+    final allowedName = 'allowed_regions_${variant.id}.png';
+    _writePng('${outputDirectory.path}/$allowedName', variantAllowed);
+    allowedPathByBackHairId[variant.id] = '$_v4Root/$allowedName';
+    if (variant.id == _canonicalBackHairId) canonicalAllowed = variantAllowed;
   }
+  _reportHairAllowance(
+    allowed: canonicalAllowed!,
+    guide: _decode(guidePathByBackHairId[_canonicalBackHairId]!),
+    cells: {
+      'front_hair': frontHairTarget.crop,
+      'back_hair_selected': backHairTarget.crop,
+    },
+  );
   referenceContent[backHairTarget.id] =
       backHairContentById[_canonicalBackHairId]!;
 
@@ -355,7 +416,10 @@ void main() {
     };
   }
 
-  _writePng('${outputDirectory.path}/allowed_regions.png', allowed);
+  // No separate canonical `allowed_regions.png`: `assets.allowedRegions` points
+  // at the medium variant, exactly as `assets.guide` points at the medium guide.
+  // A duplicate file is one more thing that can drift out of step with the
+  // variant it is supposed to equal.
   _writePng('${outputDirectory.path}/protected_regions.png', protected);
   _writePng('${outputDirectory.path}/seam_allowances.png', seams);
   // The assembled reference is an actor-neutral full-body render, not a sheet,
@@ -367,7 +431,7 @@ void main() {
   final assetPaths = <String, String>{
     'guide': guidePathByBackHairId[_canonicalBackHairId]!,
     'assembledReference': '$_v4Root/assembled_reference.png',
-    'allowedRegions': '$_v4Root/allowed_regions.png',
+    'allowedRegions': allowedPathByBackHairId[_canonicalBackHairId]!,
     'protectedRegions': '$_v4Root/protected_regions.png',
     'seamAllowances': '$_v4Root/seam_allowances.png',
     'promptContract': '$_v4Root/prompt_contract.md',
@@ -460,6 +524,10 @@ void main() {
       'noneMeansEmptyRegion': true,
       'frontHairRegionId': 'front_hair',
       'guideByBackHairId': guidePathByBackHairId,
+      // The allowed window is narrowed to the hair silhouette, and the three
+      // silhouettes differ, so the mask varies with the length exactly as the
+      // guide does. Validation must read the variant that matches the request.
+      'allowedRegionsByBackHairId': allowedPathByBackHairId,
       'canonicalBackHairId': _canonicalBackHairId,
       'rule':
           'send the guide whose rear-hair silhouette matches '
@@ -481,6 +549,18 @@ void main() {
     'guideVariantSha256': <String, String>{
       for (final entry in guidePathByBackHairId.entries)
         entry.key: _sha256(entry.value),
+    },
+    'allowedVariantSha256': <String, String>{
+      for (final entry in allowedPathByBackHairId.entries)
+        entry.key: _sha256(entry.value),
+    },
+    'hairAllowance': <String, dynamic>{
+      'marginPixels': _hairAllowanceMargin,
+      'appliesTo': <String>['front_hair', 'back_hair_selected'],
+      'rule':
+          'the allowed window in a hair cell is the template silhouette grown '
+          'by marginPixels, not the whole cell; anything drawn beyond it is '
+          'dropped from the layer and counted as overspill',
     },
     'backHairSourceByIdForActor': <String, dynamic>{
       _guideActorId: <String, String>{
@@ -799,6 +879,140 @@ image.Image _invertedMask(image.Image mask) {
     }
   }
   return result;
+}
+
+/// Prints both sides of the [_hairAllowanceMargin] trade so the constant is
+/// chosen against numbers rather than taste.
+///
+/// Too tight clips a character's own hairstyle where it legitimately differs
+/// from the template's, which is a visible bite out of the artwork. Too loose
+/// leaves the empty space that three sheets have now filled with objects. The
+/// clearance line is the one that matters: it is how far a stray object has to
+/// sit from the hair before the mask starts rejecting it.
+void _reportHairAllowance({
+  required image.Image allowed,
+  required image.Image guide,
+  required Map<String, _Rect> cells,
+}) {
+  stdout.writeln('Hair allowance at margin $_hairAllowanceMargin px:');
+  for (final entry in cells.entries) {
+    final cell = entry.value;
+    var permitted = 0;
+    var artwork = 0;
+    var lowestArtwork = -1;
+    var lowestPermitted = -1;
+    for (var y = 0; y < cell.height; y++) {
+      for (var x = 0; x < cell.width; x++) {
+        if (image.getRed(allowed.getPixel(cell.x + x, cell.y + y)) >= 250) {
+          permitted++;
+          lowestPermitted = y;
+        }
+        final pixel = guide.getPixel(cell.x + x, cell.y + y);
+        if (image.getRed(pixel) == 0 &&
+            image.getGreen(pixel) == 255 &&
+            image.getBlue(pixel) == 0) {
+          continue;
+        }
+        artwork++;
+        lowestArtwork = y;
+      }
+    }
+    final area = cell.width * cell.height;
+    stdout.writeln(
+      '  ${entry.key.padRight(20)} '
+      'permitted ${(permitted / area * 100).toStringAsFixed(1)}% '
+      '(was 100%), artwork ${(artwork / area * 100).toStringAsFixed(1)}%, '
+      'excluded ${area - permitted} px, '
+      'clearance below the artwork ${cell.height - lowestPermitted - 1} px '
+      '(artwork ends at y $lowestArtwork of ${cell.height})',
+    );
+  }
+}
+
+/// The silhouette of whatever is drawn in [cell] of [sheet], grown by [margin].
+///
+/// Taken from the sheet the provider is actually sent rather than from a
+/// recorded bounding box, so the window follows the shape of the hair instead of
+/// the rectangle around it. The rear-hair cell is `429 x 800` holding a spiky
+/// `425 x 546` silhouette, so the difference between the two is most of the
+/// problem this exists to solve.
+///
+/// Growing runs as two separable passes, which gives a square structuring
+/// element. That is marginally more generous than a circular one at the
+/// diagonals, which is the safe direction to be wrong in.
+image.Image _artworkSilhouette(image.Image sheet, _Rect cell, int margin) {
+  // Anything that is not exactly the background colour is artwork, including the
+  // antialiased fringe, because the guide is drawn by compositing PNGs with
+  // alpha onto flat #00FF00.
+  var covered = List<bool>.generate(cell.width * cell.height, (index) {
+    final pixel = sheet.getPixel(
+      cell.x + index % cell.width,
+      cell.y + index ~/ cell.width,
+    );
+    return !(image.getRed(pixel) == 0 &&
+        image.getGreen(pixel) == 255 &&
+        image.getBlue(pixel) == 0);
+  });
+
+  for (final horizontal in const [true, false]) {
+    final grown = List<bool>.filled(covered.length, false);
+    final outer = horizontal ? cell.height : cell.width;
+    final inner = horizontal ? cell.width : cell.height;
+    for (var a = 0; a < outer; a++) {
+      for (var b = 0; b < inner; b++) {
+        final from = b - margin < 0 ? 0 : b - margin;
+        final to = b + margin >= inner ? inner - 1 : b + margin;
+        for (var c = from; c <= to; c++) {
+          final index = horizontal ? a * cell.width + c : c * cell.width + a;
+          if (!covered[index]) continue;
+          grown[horizontal ? a * cell.width + b : b * cell.width + a] = true;
+          break;
+        }
+      }
+    }
+    covered = grown;
+  }
+
+  final result = image.Image(cell.width, cell.height)
+    ..channels = image.Channels.rgb;
+  for (var y = 0; y < cell.height; y++) {
+    for (var x = 0; x < cell.width; x++) {
+      final white = covered[y * cell.width + x];
+      result.setPixelRgba(
+        x,
+        y,
+        white ? 255 : 0,
+        white ? 255 : 0,
+        white ? 255 : 0,
+        255,
+      );
+    }
+  }
+  return result;
+}
+
+/// Replaces a cell's mask outright, black included.
+///
+/// [_writeCellMask] only ever adds white, so it cannot take an area away. The
+/// hair windows are being narrowed, not widened, so they need this instead.
+void _replaceCellMask(
+  image.Image destination,
+  image.Image cellMask,
+  _Rect cell,
+) {
+  for (var y = 0; y < cellMask.height; y++) {
+    for (var x = 0; x < cellMask.width; x++) {
+      final white = image.getRed(cellMask.getPixel(x, y)) >= 250;
+      destination.setPixelRgba(
+        cell.x + x,
+        cell.y + y,
+        white ? 255 : 0,
+        white ? 255 : 0,
+        white ? 255 : 0,
+        255,
+      );
+    }
+  }
 }
 
 void _writeCellMask(image.Image destination, image.Image cellMask, _Rect cell) {

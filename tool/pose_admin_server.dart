@@ -4,6 +4,10 @@ import 'dart:io';
 const _port = 52828;
 const _builtInPoses = {'neutral', 'talking', 'pointing', 'walking'};
 final _safePoseId = RegExp(r'^[a-z][a-z0-9_]{1,39}$');
+
+/// A provider request ID, used as a directory name, so it may not carry a path
+/// separator or traversal.
+final _safeDiagnosticsId = RegExp(r'^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$');
 const _faceNames = {'neutral', 'talking', 'happy', 'sad', 'angry'};
 const _partNames = {
   'head',
@@ -59,6 +63,10 @@ Future<void> _handle(HttpRequest request) async {
   }
   if (request.method == 'POST' && request.uri.path == '/translate') {
     return _translate(request);
+  }
+  if (request.method == 'POST' &&
+      request.uri.path == '/character-sheet-diagnostics') {
+    return _saveCharacterSheetDiagnostics(request);
   }
 
   final segments = request.uri.pathSegments;
@@ -135,6 +143,79 @@ Future<void> _saveAppearance(HttpRequest request) async {
   } catch (_) {
     return _reply(request, HttpStatus.badRequest, {
       'error': 'Invalid appearance.',
+    });
+  }
+}
+
+/// Writes one returned character sheet, its prompt, and its validation report to
+/// disk so a failed sheet can be re-examined without buying it again.
+///
+/// Every character-sheet request costs money and, before this, the result lived
+/// only in the browser tab that made it. A defect could therefore only be
+/// diagnosed from a screenshot, and re-measuring one meant paying for another
+/// request. Three of the seven sheets bought so far were spent discovering
+/// things a saved file would have answered for free.
+///
+/// The directory is git-ignored: these are provider outputs for local analysis,
+/// not project assets.
+Future<void> _saveCharacterSheetDiagnostics(HttpRequest request) async {
+  // A 1024x1024 JPEG runs about 500 KB, roughly 700 KB once base64 encoded, and
+  // the prompt adds ~10 KB. Four megabytes leaves room without inviting an
+  // arbitrary upload.
+  if (request.contentLength > 4 * 1024 * 1024) {
+    return _reply(request, HttpStatus.badRequest, {
+      'error': 'Diagnostics payload is too big.',
+    });
+  }
+  try {
+    final source = await utf8.decoder.bind(request).join();
+    final value = jsonDecode(source);
+    if (value is! Map<String, dynamic>) {
+      return _reply(request, HttpStatus.badRequest, {
+        'error': 'Invalid diagnostics.',
+      });
+    }
+    final sheet = value['sheetBase64'];
+    final requestId = value['requestId'];
+    if (sheet is! String ||
+        sheet.isEmpty ||
+        requestId is! String ||
+        !_safeDiagnosticsId.hasMatch(requestId)) {
+      return _reply(request, HttpStatus.badRequest, {
+        'error': 'Invalid diagnostics.',
+      });
+    }
+
+    final stamp = DateTime.now()
+        .toUtc()
+        .toIso8601String()
+        .replaceAll(RegExp(r'[:.]'), '-');
+    final sep = Platform.pathSeparator;
+    final directory = Directory(
+      '${Directory.current.path}${sep}diagnostics${sep}character_sheets$sep'
+      '${stamp}_$requestId',
+    );
+    await directory.create(recursive: true);
+
+    final extension = value['mimeType'] == 'image/png' ? 'png' : 'jpg';
+    await File('${directory.path}${sep}sheet.$extension')
+        .writeAsBytes(base64Decode(sheet));
+    final prompt = value['prompt'];
+    if (prompt is String && prompt.isNotEmpty) {
+      await File('${directory.path}${sep}prompt.txt').writeAsString(prompt);
+    }
+    final report = Map<String, dynamic>.from(value)
+      ..remove('sheetBase64')
+      ..remove('prompt');
+    await File('${directory.path}${sep}report.json').writeAsString(
+      '${const JsonEncoder.withIndent('  ').convert(report)}\n',
+    );
+
+    stdout.writeln('Saved character-sheet diagnostics: ${directory.path}');
+    return _reply(request, HttpStatus.ok, {'saved': directory.path});
+  } catch (_) {
+    return _reply(request, HttpStatus.badRequest, {
+      'error': 'Invalid diagnostics.',
     });
   }
 }

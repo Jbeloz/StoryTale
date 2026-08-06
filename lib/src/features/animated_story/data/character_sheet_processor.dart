@@ -86,9 +86,16 @@ class CharacterSheetProcessor {
       );
     }
 
+    // The same mask variant the request was sent, so validation judges the sheet
+    // against the window the provider was actually given. Reading the canonical
+    // file here instead would clip a long rear-hair layer against the medium
+    // silhouette.
+    final allowedVariant = contract.selection.allowedRegionsFor(
+      request.backHairId,
+    );
     final allowed = await _loadMask(
-      contract.assets.allowedRegions,
-      contract.assetSha256['allowedRegions']!,
+      allowedVariant.path,
+      allowedVariant.sha256,
       contract,
     );
     final protected = await _loadMask(
@@ -136,12 +143,22 @@ class CharacterSheetProcessor {
       allowed: allowed,
       protected: protected,
       seams: seams,
+      regions: contract.regions,
     );
     if (deviation.strayPixels > 0) {
       seamValid = false;
       errors.add(
         'The sheet contains ${deviation.strayPixels} generated pixels in the '
         'padding between cells.',
+      );
+    }
+    if (deviation.drewOutsideItsWindow) {
+      seamValid = false;
+      final percent = (deviation.overspill * 100).toStringAsFixed(2);
+      errors.add(
+        'The sheet drew ${deviation.overspillPixels} pixels outside the '
+        'permitted area of their own cells, $percent% of the paintable area. '
+        'They were removed from the layers.',
       );
     }
     if (deviation.redrewLockedGeometry) {
@@ -572,14 +589,27 @@ class CharacterSheetProcessor {
     required image.Image allowed,
     required image.Image protected,
     required image.Image seams,
+    required List<CharacterSheetRegion> regions,
   }) {
+    final insideACell = Uint8List(source.width * source.height);
+    for (final region in regions) {
+      for (var y = region.crop.y; y < region.crop.y + region.crop.height; y++) {
+        for (var x = region.crop.x; x < region.crop.x + region.crop.width; x++) {
+          insideACell[y * source.width + x] = 1;
+        }
+      }
+    }
+
     var stray = 0;
+    var overspill = 0;
+    var allowedTotal = 0;
     var protectedTotal = 0;
     var protectedChanged = 0;
     for (var y = 0; y < source.height; y++) {
       for (var x = 0; x < source.width; x++) {
         final protectedPixel = _isWhite(protected.getPixel(x, y));
         final pixel = source.getPixel(x, y);
+        if (_isWhite(allowed.getPixel(x, y))) allowedTotal++;
         if (protectedPixel) {
           protectedTotal++;
           if (!_matchesGuide(pixel, guide.getPixel(x, y))) protectedChanged++;
@@ -588,11 +618,21 @@ class CharacterSheetProcessor {
         if (_isBackground(pixel)) continue;
         if (_isWhite(allowed.getPixel(x, y))) continue;
         if (_isWhite(seams.getPixel(x, y))) continue;
-        stray++;
+        // Outside every window. Where it landed decides how bad it is: content
+        // in the padding crossed a cell boundary, so a neighbouring layer is
+        // already contaminated. Content inside a cell, past that cell's own
+        // window, is one layer's problem and `_cleanRegion` drops it.
+        if (insideACell[y * source.width + x] == 1) {
+          overspill++;
+        } else {
+          stray++;
+        }
       }
     }
     return _SheetDeviation(
       strayPixels: stray,
+      overspillPixels: overspill,
+      allowedTotalPixels: allowedTotal,
       protectedChangedPixels: protectedChanged,
       protectedTotalPixels: protectedTotal,
     );
@@ -1203,14 +1243,47 @@ class _RigData {
 class _SheetDeviation {
   const _SheetDeviation({
     required this.strayPixels,
+    required this.overspillPixels,
+    required this.allowedTotalPixels,
     required this.protectedChangedPixels,
     required this.protectedTotalPixels,
   });
 
   /// Content in the green padding, which belongs to no cell.
   final int strayPixels;
+
+  /// Content inside a cell but outside that cell's own allowed window.
+  ///
+  /// Split out from [strayPixels] when the hair windows were narrowed from the
+  /// whole cell to the hair silhouette. Before that the two hair cells permitted
+  /// everything, so a hood or a spare limb drawn in their empty space produced
+  /// no measurement at all and shipped into the layer; now it lands here.
+  ///
+  /// It is a lesser failure than a stray pixel, and deliberately not fatal.
+  /// Padding content means a cell boundary was crossed, so a neighbouring layer
+  /// is already wrong. This is contained to one cell and `_cleanRegion` removes
+  /// it, so what remains is a question of degree.
+  final int overspillPixels;
+  final int allowedTotalPixels;
   final int protectedChangedPixels;
   final int protectedTotalPixels;
+
+  /// Share of the paintable area that landed outside it.
+  double get overspill =>
+      allowedTotalPixels == 0 ? 0 : overspillPixels / allowedTotalPixels;
+
+  /// How much overspill counts as drawing something else.
+  ///
+  /// Measured rather than guessed: re-encoding the untouched guide as JPEG at
+  /// quality 95, the format the provider emits, puts **zero** pixels outside the
+  /// windows, because the silhouette margin already absorbs the ringing. So
+  /// unlike the drift budget this is not a compression allowance at all — the
+  /// whole of it is headroom for a character's hair differing from the
+  /// template's, and 0.5% is about a 47x47 blob against a hood or a limb, which
+  /// are an order of magnitude larger.
+  static const overspillBudget = 0.005;
+
+  bool get drewOutsideItsWindow => overspill > overspillBudget;
 
   /// Share of the locked area the provider repainted.
   double get protectedDrift => protectedTotalPixels == 0

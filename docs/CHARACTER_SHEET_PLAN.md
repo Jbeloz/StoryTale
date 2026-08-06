@@ -230,8 +230,41 @@ region of the hair cells so a hood or a spare limb is rejected rather than
 discouraged. That is a guide and mask rebuild with new hashes and a Worker
 redeploy.
 
-**Still open:** a seventh paid request, an accepted paid V4 request with the proof
-pass enabled, and guides for actors other than `default`.
+### Seventh request: the hair window narrowed to the hair, 2026-08-07
+
+The seventh sheet lost the hood but kept two garment objects in the empty lower
+half of `back_hair_selected`. Tracing them proved **neither defect was ever
+measured**: both hair cells were 100% allowed, so `_measureSheet` skipped them and
+`_cleanRegion` kept them as `visiblePixels`. They shipped into the hair layers and
+nothing reported it. A prompt cannot be iterated against a defect nothing detects,
+so the fix moved into the contract.
+
+- **The allowed window in a hair cell is now the template silhouette grown by a
+  `16` px margin**, published as `hairAllowance` in the manifest. That excludes
+  `212,485` px of formerly free canvas across the two cells while leaving `215` px
+  of clearance below the medium rear-hair silhouette.
+- **One allowed mask per rear-hair length**, `allowedRegionsByBackHairId` and
+  `allowedVariantSha256`, resolved by `selection.allowedRegionsFor(backHairId)`
+  exactly as guides are by `guideFor`. The three silhouettes fill `404`, `546`,
+  and `784` px of the same `800`-tall cell, so a single shared mask would clip the
+  long style or leave the short one most of its cell free.
+  `assets.allowedRegions` points at the medium variant rather than a duplicate.
+- **Stray is split.** Padding content stays zero-tolerance; content inside a cell
+  but outside its own window is `overspillPixels`, dropped from the layer and
+  judged against 0.5% of the paintable area. JPEG at quality 95 on the untouched
+  guide produces **zero** overspill, so the whole budget is headroom for hairstyle
+  variation rather than compression noise.
+- **Every returned sheet is saved to disk** through the pose admin server, with
+  its prompt and validation report, so the next failure is diagnosed offline for
+  free instead of from a screenshot.
+
+**No Worker redeploy.** The Worker hash-checks only the guide. Verified after
+regeneration: all three guides, both other masks, and the assembled reference are
+byte-identical, so only the allowed-mask hashes moved.
+
+**Still open:** an eighth paid request, drift at 2.71% against a 1% budget, an
+accepted paid V4 request with the proof pass enabled, and guides for actors other
+than `default`.
 
 ### Output-size and usage decision
 

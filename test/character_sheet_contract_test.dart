@@ -400,6 +400,56 @@ void main() {
       );
     });
 
+    test('publishes one allowed mask per rear-hair length', () {
+      // The allowed window in a hair cell is the hair silhouette, not the whole
+      // cell, and the three silhouettes fill 404, 546, and 784 px of the same
+      // 800-tall cell. One shared mask would either clip the long style or leave
+      // the short one most of its cell free, which is the hole a hood and a pair
+      // of spare garment objects were drawn through on three live sheets.
+      final selection = manifest['selectionContract'] as Map<String, dynamic>;
+      final masks =
+          (selection['allowedRegionsByBackHairId'] as Map<String, dynamic>)
+              .cast<String, String>();
+      expect(masks.keys.toSet(), {'short', 'medium', 'long'});
+
+      final hashes = (manifest['allowedVariantSha256'] as Map<String, dynamic>)
+          .cast<String, String>();
+      expect(hashes.keys.toSet(), masks.keys.toSet());
+
+      final seenHashes = <String>{};
+      for (final entry in masks.entries) {
+        final file = _repoFile(entry.value);
+        expect(file.existsSync(), isTrue, reason: '${entry.key} mask missing');
+        expect(_readPngSize(file), (width: 1024, height: 1024));
+        expect(
+          _sha256(file),
+          hashes[entry.key],
+          reason: '${entry.key} mask no longer matches its approved hash',
+        );
+        expect(
+          seenHashes.add(hashes[entry.key]!),
+          isTrue,
+          reason: '${entry.key} mask is a duplicate of another length',
+        );
+      }
+
+      expect(
+        manifest['assets']!['allowedRegions'],
+        masks[selection['canonicalBackHairId']],
+        reason: 'assets.allowedRegions must point at the canonical variant',
+      );
+
+      // The window must actually be narrower than the cell it sits in, or the
+      // whole change is cosmetic. Guarding the margin rather than a pixel count
+      // keeps this readable when the hair sources change.
+      final allowance = manifest['hairAllowance'] as Map<String, dynamic>;
+      expect(allowance['marginPixels'], isPositive);
+      expect(
+        (allowance['appliesTo'] as List<dynamic>).cast<String>().toSet(),
+        {'front_hair', 'back_hair_selected'},
+      );
+    });
+
     test('publishes how much of each cell the template actually fills', () {
       // A cell is a container, not a target. Body cells are nearly cell sized,
       // but the rear-hair cell is sized for the longest style, so telling a

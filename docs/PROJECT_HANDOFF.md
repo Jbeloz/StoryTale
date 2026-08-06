@@ -1084,6 +1084,82 @@ and the spare arms *rejected* rather than merely discouraged. That is a guide an
 mask rebuild with new hashes and a Worker redeploy, so wording gets one more try
 first.
 
+### The seventh sheet, and why the fix moved from the prompt to the mask — 7 August 2026
+
+The seventh sheet went **one for two**. The hood is gone: `front_hair` came back
+as hair only, and the hair is cleaner and less streaked. But two garment-shaped
+objects still sit in the empty lower half of `back_hair_selected`, where the
+guide is flat green.
+
+That is the pattern across three sheets. **Prompting wins where the offence has a
+name and loses where the model has a large permitted empty area to use.** "A hood
+is not hair" is checkable. "Green inside a cell stays green" is not.
+
+**The decisive finding is that neither defect was ever measured.** Traced through
+`character_sheet_processor.dart`:
+
+- `_measureSheet` counted a pixel as stray only if it was not protected, not
+  background, **not allowed**, and not seam. Both hair cells were 100% allowed,
+  so the hood and the objects hit `if (_isWhite(allowed…)) continue`.
+- `_cleanRegion` keeps any pixel where `allowedPixel && !protectedPixel` — true
+  for both — so they were **kept in the layer** and counted as `visiblePixels`.
+
+So they tripped no gate, shipped into the hair layers, and the only detector in
+the system was the owner looking at a screenshot. **Prompt iteration against a
+defect nothing measures cannot converge**, which is the real answer to "will this
+take forever".
+
+Three changes, all offline, no request bought to build or prove any of them:
+
+1. **Every returned sheet is now saved to disk.** `POST
+   /character-sheet-diagnostics` on the existing pose admin server writes the
+   sheet exactly as returned, the prompt that bought it, and the full validation
+   report to `diagnostics/character_sheets/<stamp>_<requestId>/`, which is
+   git-ignored. It also fires when the processor throws, because a sheet that
+   breaks the processor is the most useful one to keep. It never fails a run: the
+   result is already paid for, so an offline admin server must not turn it into
+   an error. Before this, seven paid sheets left nothing behind but screenshots.
+2. **The allowed window in a hair cell is now the hair silhouette**, grown by a
+   `16` px margin, instead of the whole cell. That excludes `147,055` px in
+   `back_hair_selected` and `65,430` px in `front_hair` — `212,485` px of
+   formerly free canvas — while leaving `215` px of clearance below the medium
+   silhouette, far more than the objects needed. Anything drawn there is now
+   dropped from the layer by the existing `_cleanRegion` logic **whatever the
+   provider does**, with no prompt compliance required.
+3. **Stray is split into two measures**, because change 2 would otherwise turn
+   one stray hair wisp into a total failure. Content in the **padding** stays
+   zero-tolerance: it crossed a cell boundary, so a neighbouring layer is already
+   contaminated. Content **inside a cell but outside its own window** is
+   `overspillPixels`, removed from the layer and judged against
+   `overspillBudget`, 0.5% of the paintable area.
+
+**The overspill budget was measured, not guessed.** Re-encoding the untouched
+guide as JPEG at quality 95 — the only format the provider emits — puts **zero**
+pixels outside the windows, because the 16 px margin already absorbs the ringing.
+Unlike the drift budget, none of it is a compression allowance; all of it is
+headroom for a character's hair differing from the template's.
+
+**One mask is not enough**, and missing that would have made this a half-fix. The
+three rear-hair silhouettes fill `404`, `546`, and `784` px of the same `800`-tall
+cell, so there is now **one allowed mask per length**, selected by
+`selection.allowedRegionsFor(backHairId)` exactly as the guide is by `guideFor`.
+The service uploads the matching variant and the processor validates against the
+same one. `assets.allowedRegions` points at the medium file rather than a
+duplicate canonical copy, mirroring `assets.guide`.
+
+**Correcting what this document said yesterday: a mask change needs no Worker
+redeploy.** The Worker hash-checks `references[0]` against `guide_sha256` and
+holds no mask hash, and the request fingerprint carries the guide hash. Verified
+after regenerating: all three guides, the protected mask, the seam mask, and the
+assembled reference are **byte-identical**, so only `assetSha256.allowedRegions`
+and the new `allowedVariantSha256` map moved.
+
+`test/character_sheet_end_to_end_test.dart` now paints a garment into the empty
+part of the rear-hair cell and asserts it is counted **and** absent from the
+layer; the blob is `19,200` px and entirely outside the new window, where under
+the old whole-cell mask every one of those pixels would have been kept. A
+companion case proves a compliant sheet still passes the new rule. 218 tests pass.
+
 ### Faces are an unsolved design question, 6 August 2026
 
 The owner raised this before clearing the chat and it is **not yet decided**. The
@@ -1155,22 +1231,36 @@ had been failing since before this thread. It was fixed on 5 August 2026; see
 
 ### Exact current and next work
 
-**The next task is a seventh request.** The sixth proved the re-layout fix — stray
-pixels fell from `21,459` to `129` — and exposed two different failures: the
-provider fills the unprotected empty space in the hair cells (a hood, and a spare
-pair of arms in the rear-hair cell) and re-inks the limb outlines while dressing
-them. Both are recorded with measurements in "The sixth request: the re-layout is
-fixed, and what replaced it" above, along with the four new rules aimed at them
-and the mask-rebuild fallback if wording fails again.
+**The next task is an eighth request, and it is the first one that cannot teach
+the same lesson twice.** The hair-cell hole is closed in the mask rather than the
+prompt, so a hood or a spare limb is now removed from the layer and reported
+instead of silently shipped, and the returned sheet is saved to disk so the next
+failure can be measured offline for free. See "The seventh sheet, and why the fix
+moved from the prompt to the mask" above.
 
-Watch three numbers, all of which must reach their gate together: stray pixels
-must be `0` (`129` last time), locked geometry repainted must be under 1%
-(`2.71%`), and locked area drawn over inside cells under 1% (`1.74%`).
+Watch four numbers now, all of which must reach their gate together:
 
-**Restart the app, do not just reload the tab.** A prompt edit changes an asset,
-and a running `flutter run -d web-server` keeps serving the bundle it started
-with. It also does not change the request fingerprint. Reloading alone can
-therefore spend a request re-sending the previous prompt and look like a result.
+| Measure | Last seen | Gate |
+| --- | --- | --- |
+| Stray pixels in the padding | `129` | `0` |
+| Overspill outside a cell's window | not yet measured | under 0.5% |
+| Locked geometry repainted | `2.71%` | under 1% |
+| Locked area drawn over inside cells | `1.74%` | under 1% |
+
+**Drift is the one still unaddressed by anything structural.** It is the provider
+re-inking limb outlines while dressing them. The wording rule added in `d04e28c`
+targets it and is untested. Once a sheet is on disk, measure how much of that
+drift is paint legitimately abutting the locked outline versus real redrawing
+before touching the budget — the same class of question as the validator bug
+already found and fixed. Do not loosen a gate to make a sheet pass.
+
+**Restart the app, do not just reload the tab.** Prompt and mask edits change
+assets, and a running `flutter run -d web-server` keeps serving the bundle it
+started with. Neither changes the request fingerprint. Reloading alone can
+therefore spend a request re-sending the previous contract and look like a result.
+
+After the run, the sheet, prompt, and report are in
+`diagnostics/character_sheets/`. Read them rather than a screenshot.
 
 Two things that make iterating cheaper, both worth knowing before touching
 anything:

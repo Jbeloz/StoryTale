@@ -143,10 +143,9 @@ class StoryArtworkService {
         path: contract.assets.assembledReference,
         sha256: contract.assetSha256['assembledReference']!,
       ),
-      (
-        path: contract.assets.allowedRegions,
-        sha256: contract.assetSha256['allowedRegions']!,
-      ),
+      // The allowed window is the hair silhouette, which differs per length, so
+      // this tracks the guide variant rather than staying on the canonical file.
+      contract.selection.allowedRegionsFor(request.backHairId),
       (
         path: contract.assets.protectedRegions,
         sha256: contract.assetSha256['protectedRegions']!,

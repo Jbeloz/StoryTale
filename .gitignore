@@ -33,6 +33,8 @@ migrate_working_dir/
 /build/
 /coverage/
 /tmp/
+# Returned provider sheets saved for local analysis, not project assets.
+/diagnostics/
 **/node_modules/
 **/.cache/
 **/.mf/

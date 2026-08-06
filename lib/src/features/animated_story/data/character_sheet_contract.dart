@@ -121,10 +121,18 @@ class CharacterSheetContract {
       selection: CharacterSheetSelection.fromJson(
         json['selectionContract'] as Map<String, dynamic>?,
         guideVariantSha256: json['guideVariantSha256'] as Map<String, dynamic>?,
+        allowedVariantSha256:
+            json['allowedVariantSha256'] as Map<String, dynamic>?,
         fallbackGuide: (json['assets'] as Map<String, dynamic>)['guide']
             as String,
         fallbackGuideSha256:
             (json['assetSha256'] as Map<String, dynamic>)['guide'] as String,
+        fallbackAllowedRegions:
+            (json['assets'] as Map<String, dynamic>)['allowedRegions']
+                as String,
+        fallbackAllowedRegionsSha256:
+            (json['assetSha256'] as Map<String, dynamic>)['allowedRegions']
+                as String,
       ),
     );
   }
@@ -334,9 +342,13 @@ class CharacterSheetSelection {
     required this.acceptedValues,
     required this.guideByBackHairId,
     required this.guideSha256ByBackHairId,
+    required this.allowedRegionsByBackHairId,
+    required this.allowedRegionsSha256ByBackHairId,
     required this.canonicalBackHairId,
     required this.fallbackGuide,
     required this.fallbackGuideSha256,
+    required this.fallbackAllowedRegions,
+    required this.fallbackAllowedRegionsSha256,
   });
 
   /// The single cell every length shares, or `null` on a sheet that publishes
@@ -345,15 +357,28 @@ class CharacterSheetSelection {
   final Set<String> acceptedValues;
   final Map<String, String> guideByBackHairId;
   final Map<String, String> guideSha256ByBackHairId;
+
+  /// The allowed window varies with the rear-hair length, because it is now the
+  /// hair silhouette rather than the whole cell, and the three silhouettes fill
+  /// `404`, `546`, and `784` px of the same `800`-tall cell. Sending or
+  /// validating against the wrong one would either clip real hair or re-open the
+  /// empty space this narrowing exists to close.
+  final Map<String, String> allowedRegionsByBackHairId;
+  final Map<String, String> allowedRegionsSha256ByBackHairId;
   final String? canonicalBackHairId;
   final String fallbackGuide;
   final String fallbackGuideSha256;
+  final String fallbackAllowedRegions;
+  final String fallbackAllowedRegionsSha256;
 
   factory CharacterSheetSelection.fromJson(
     Map<String, dynamic>? json, {
     required Map<String, dynamic>? guideVariantSha256,
+    required Map<String, dynamic>? allowedVariantSha256,
     required String fallbackGuide,
     required String fallbackGuideSha256,
+    required String fallbackAllowedRegions,
+    required String fallbackAllowedRegionsSha256,
   }) {
     Map<String, String> stringMap(Object? value) => switch (value) {
       final Map<String, dynamic> map => map.map(
@@ -370,9 +395,15 @@ class CharacterSheetSelection {
           const {'short', 'medium', 'long', 'none'},
       guideByBackHairId: stringMap(json?['guideByBackHairId']),
       guideSha256ByBackHairId: stringMap(guideVariantSha256),
+      allowedRegionsByBackHairId: stringMap(
+        json?['allowedRegionsByBackHairId'],
+      ),
+      allowedRegionsSha256ByBackHairId: stringMap(allowedVariantSha256),
       canonicalBackHairId: json?['canonicalBackHairId'] as String?,
       fallbackGuide: fallbackGuide,
       fallbackGuideSha256: fallbackGuideSha256,
+      fallbackAllowedRegions: fallbackAllowedRegions,
+      fallbackAllowedRegionsSha256: fallbackAllowedRegionsSha256,
     );
   }
 
@@ -398,6 +429,25 @@ class CharacterSheetSelection {
     final hash = guideSha256ByBackHairId[variantId];
     if (path == null || hash == null) {
       return (path: fallbackGuide, sha256: fallbackGuideSha256);
+    }
+    return (path: path, sha256: hash);
+  }
+
+  /// The allowed mask matching the chosen length, with its hash.
+  ///
+  /// Resolved exactly like [guideFor], including the fallback, so a contract
+  /// that publishes no variants — V1 and V3 — keeps working on its single mask.
+  ({String path, String sha256}) allowedRegionsFor(String backHairId) {
+    final variantId = backHairId == 'none'
+        ? (canonicalBackHairId ?? backHairId)
+        : backHairId;
+    final path = allowedRegionsByBackHairId[variantId];
+    final hash = allowedRegionsSha256ByBackHairId[variantId];
+    if (path == null || hash == null) {
+      return (
+        path: fallbackAllowedRegions,
+        sha256: fallbackAllowedRegionsSha256,
+      );
     }
     return (path: path, sha256: hash);
   }

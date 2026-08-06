@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import '../../../core/state/storytale_scope.dart';
 import '../../../shared/models/storytale_models.dart';
@@ -780,6 +782,10 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
   /// blocks this thread, and because it cannot hide a bad result: a package
   /// without proofs can never be `ready`, and it says so in its own errors.
   bool _skipSheetProofs = true;
+
+  /// The local admin server `tool/run_storytale.ps1` starts beside the app, the
+  /// same one Sprite Studio saves poses and appearance through.
+  static const _adminUrl = 'http://127.0.0.1:52828';
   Uint8List? _generatedImage;
   CharacterSheetGenerationResult? _characterSheetResult;
   CharacterSheetPackage? _characterSheetPackage;
@@ -872,6 +878,7 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
           generation: result,
           composeProofs: !_skipSheetProofs,
         );
+        await _saveSheetDiagnostics(result, package.validation.toJson());
         if (mounted) {
           setState(() {
             _characterSheetPackage = package;
@@ -896,6 +903,13 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
     } on ArtworkGenerationException catch (error) {
       if (mounted) setState(() => _error = error.message);
     } on CharacterSheetProcessingException catch (error) {
+      // The sheet was still paid for, so keep it even though it never reached a
+      // package. A sheet that breaks the processor is the most useful one to
+      // have on disk, not the least.
+      final result = _characterSheetResult;
+      if (result != null) {
+        await _saveSheetDiagnostics(result, {'processingError': error.message});
+      }
       if (mounted) setState(() => _error = error.message);
     } catch (_) {
       if (mounted) {
@@ -903,6 +917,46 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
       }
     } finally {
       if (mounted) setState(() => _generating = false);
+    }
+  }
+
+  /// Writes the paid sheet, the prompt that bought it, and its validation report
+  /// to disk through the local admin server.
+  ///
+  /// Every character-sheet request costs money, and until this the result lived
+  /// only in the browser tab that made it: a defect could be diagnosed from a
+  /// screenshot or not at all, and re-measuring one meant paying again.
+  ///
+  /// Never fails the run. The sheet is already on screen and already paid for,
+  /// so a missing admin server must not turn a usable result into an error —
+  /// the same rule the pose and appearance saves follow.
+  Future<void> _saveSheetDiagnostics(
+    CharacterSheetGenerationResult result,
+    Map<String, dynamic> report,
+  ) async {
+    try {
+      await http.post(
+        Uri.parse('$_adminUrl/character-sheet-diagnostics'),
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'requestId': result.requestId.isEmpty
+              ? result.requestFingerprint
+              : result.requestId,
+          'requestFingerprint': result.requestFingerprint,
+          'contract': '${result.contractId}@${result.contractVersion}',
+          'provider': result.provider,
+          'model': result.model,
+          'generatedAt': result.generatedAt,
+          'mimeType': result.mimeType,
+          'width': result.width,
+          'height': result.height,
+          'prompt': result.prompt,
+          'sheetBase64': base64Encode(result.bytes),
+          'report': report,
+        }),
+      );
+    } catch (_) {
+      // Local admin offline. The result stays on screen either way.
     }
   }
 

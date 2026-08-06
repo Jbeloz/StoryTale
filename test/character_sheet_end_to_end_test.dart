@@ -115,6 +115,69 @@ void main() {
     );
   });
 
+  test('drops and counts a garment left in a hair cell\'s empty space', () async {
+    // Three consecutive live sheets drew something into the empty lower half of
+    // the rear-hair cell: a hood, then a pair of free-standing garment objects.
+    // None of them produced a single measurement, because that cell's allowed
+    // window was the whole cell, so they were kept and cut straight into the
+    // rear-hair layer. Narrowing the window to the hair silhouette is what makes
+    // this detectable at all; without it every expectation below fails.
+    final clean = await CharacterSheetProcessor().process(
+      request: request,
+      generation: fixture.resultFor(request, await compliantSheet()),
+    );
+
+    final sheet = await compliantSheet();
+    final cell = contract.regionsById['back_hair_selected']!.crop;
+    // Well below the medium silhouette, which ends 215 px above the cell floor.
+    var painted = 0;
+    for (var y = cell.y + cell.height - 140; y < cell.y + cell.height - 20; y++) {
+      for (var x = cell.x + 40; x < cell.x + 200; x++) {
+        sheet.setPixelRgba(x, y, 40, 60, 200, 255);
+        painted++;
+      }
+    }
+    expect(painted, greaterThan(0));
+
+    final package = await CharacterSheetProcessor().process(
+      request: request,
+      generation: fixture.resultFor(request, sheet),
+    );
+
+    expect(
+      package.validation.errors.join(' '),
+      contains('outside the permitted area'),
+      reason: 'the sheet drew a garment where only hair may go',
+    );
+    expect(
+      package.validation.errors.join(' '),
+      isNot(contains('padding between cells')),
+      reason: 'it stayed inside the cell, so it is not a padding failure',
+    );
+    expect(
+      package.validation.visiblePixelsByRegion['back_hair_selected'],
+      clean.validation.visiblePixelsByRegion['back_hair_selected'],
+      reason: 'the garment must not reach the rear-hair layer',
+    );
+  });
+
+  test('keeps a compliant sheet clear of the overspill rule', () async {
+    // The counterpart to the case above: narrowing the hair windows must not
+    // start rejecting hair that follows the template. JPEG at quality 95, the
+    // only format this provider emits, puts zero pixels outside the windows on
+    // the untouched guide, so a compliant sheet has the entire budget spare.
+    final package = await CharacterSheetProcessor().process(
+      request: request,
+      generation: fixture.resultFor(request, await compliantSheet()),
+    );
+
+    expect(
+      package.validation.errors.join(' '),
+      isNot(contains('outside the permitted area')),
+    );
+    expect(package.validation.seamValid, isTrue);
+  });
+
   test('rejects a rear-hair cell that should have stayed green', () async {
     // `none` means the runtime hides rear hair. Artwork in that cell would be
     // cut and stored as a layer nobody asked for.
