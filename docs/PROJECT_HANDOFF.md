@@ -783,13 +783,15 @@ The full table is in [Character Sheet Plan](CHARACTER_SHEET_PLAN.md), "Migration
 to V4". `flutter test` is **204 passing, 0 failing**; `flutter analyze` and the
 Worker's `tsc --noEmit` are clean.
 
-**Two things are deliberately not done, and they matter in this order:**
+**Deployed on 6 August 2026 at the owner's explicit request** as Worker version
+`964439e3-4a04-48c2-9b30-a68d176fc604`. Flutter and the live Worker are both on
+V4. `GET /health` reports `authConfigured` and `geminiConfigured`, and the
+sprite route rejects an unauthenticated call with 401.
 
-1. **The Worker is not deployed.** Flutter is on V4 and the live Worker is still
-   on V1, so any character-sheet request right now returns 409. Deploying is an
-   external action and needs the owner's explicit approval.
-2. **No provider request has been made.** After the deployment, one controlled
-   request costs roughly `$0.067` and is the owner's to trigger.
+**No provider request has been made.** The first controlled V4 request costs
+roughly `$0.067` and is the owner's to trigger. V4 contract enforcement has only
+been proven offline, against the Worker source, because verifying it live needs
+`APP_TOKEN` and a paid call.
 
 A test now parses `cloudflare/image-worker/src/index.ts` and compares its
 contract ID, version, geometry hash, canvas, requested tier, and three guide
@@ -835,10 +837,10 @@ rediscovered: face parts are full-canvas `1254 x 1254` PNGs, so the roughly
 fourteen of them cannot be packed into a `1K` sheet without introducing per-part
 crop rectangles. Designing that is a planning task in its own right.
 
-**The next task is to deploy the Worker.** Flutter is on V4 and the live Worker
-is on V1, so character-sheet generation returns 409 until that happens. It is an
-external action and needs the owner's explicit approval. After it, one controlled
-`$0.067` request is the owner's to trigger.
+**The next task is the first controlled V4 request.** Flutter and the deployed
+Worker are both on V4, so the path is open. Sprite Review, character-sheet mode,
+roughly `$0.067`. Nothing retries automatically, and provider success alone is
+not acceptance: the package, six-face, and four-pose gates still apply.
 
 The pending manual Phase 7G.1A.1 actor/pose/reload verification is still open
 and still the owner's to perform. It is independent of the deployment; nothing

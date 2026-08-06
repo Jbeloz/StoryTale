@@ -94,13 +94,16 @@ Deployment note (2026-08-03): Phase 7G.1C removes the shared limiter from
 sprite requests in Worker version `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
 No Gemini request or automated test was run during this deployment.
 
-Pending deployment (2026-08-06): the Worker source moved to `character_sheet_v4`
-— contract ID and version, geometry hash, a `1024` canvas check, the `1K`
+Deployment note (2026-08-06): the Worker moved to `character_sheet_v4` —
+contract ID and version, geometry hash, a `1024` canvas check, the `1K`
 requested tier, the `back_hair_selected` region set, and three accepted guide
-hashes. **It is not deployed.** Flutter is already on V4, so a character-sheet
-request returns 409 until it is. `test/character_sheet_contract_test.dart`
-compares these constants against the manifest so a hand-copied value cannot
-drift.
+hashes. Deployed as Worker version `964439e3-4a04-48c2-9b30-a68d176fc604`.
+`GET /health` returns `authConfigured` and `geminiConfigured`, and the sprite
+route rejects an unauthenticated call with 401. No Gemini request was made
+during this deployment, so V4 contract enforcement is proven by
+`test/character_sheet_contract_test.dart` against the Worker source rather than
+against a live paid call. That test compares the hand-copied constants with the
+manifest so a stale value cannot drift into a 409.
 
 For fitted clothing, the Worker forwards the exact versioned guide and semantic
 outfit brief. Flutter owns the crop manifest and local masks; neither the Worker

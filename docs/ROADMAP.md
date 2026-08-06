@@ -434,7 +434,8 @@ and `test/character_sheet_processor_test.dart` covers that class for the first
 time. **V4 became the active contract the same day.** Flutter loads it, the
 Worker source targets it, and the requested provider tier dropped from `4K` to
 `1K` — that Worker line, not the manifest, is what StoryTale is billed for. The
-Worker is not deployed and no provider request has been made. Details and the
+Worker was deployed as version `964439e3-4a04-48c2-9b30-a68d176fc604`; no
+provider request has been made. Details and the
 corrected size table are in [Character Sheet Plan](CHARACTER_SHEET_PLAN.md).
 Phase 7G.1C is
 implemented locally: the processor
@@ -591,8 +592,9 @@ Current Phase 7G.1 work:
   which were missing from the recorded checklist; three of those five would have
   spent a paid request rather than failed. See
   [Character Sheet Plan](CHARACTER_SHEET_PLAN.md), "Migration to V4".
-- [ ] **Deploy the Worker.** Flutter is on V4 and the live Worker is still on V1,
-  so any request before that deployment returns 409. Needs owner approval.
+- [x] **Worker deployed, 2026-08-06** as version
+  `964439e3-4a04-48c2-9b30-a68d176fc604`, at the owner's explicit request.
+  Flutter and the live Worker are both on V4.
 - [ ] **One controlled V4 request**, then the existing package, six-face, and
   four-pose gates. Owner-triggered; roughly `$0.067`.
 - [ ] **Guides for actors other than `default`.** Each actor has its own front

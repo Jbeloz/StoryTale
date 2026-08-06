@@ -94,8 +94,8 @@ active Flutter, Worker, or provider contract.
 
 ### Migration to V4 — implemented locally on 2026-08-06
 
-V4 is the active contract in Flutter and in the Worker source. The Worker is
-**not deployed**, and no provider request has been made.
+V4 is the active contract in Flutter and in the deployed Worker. No provider
+request has been made.
 
 The checklist recorded before this work had six items. Tracing the code found
 five more, and three of those would have wasted a paid request rather than
@@ -134,8 +134,11 @@ geometry hash, canvas, requested tier, and three guide hashes against the
 manifest. Those constants are hand-copied and only take effect on deploy, so a
 stale copy would otherwise surface as a 409 after the money was committed.
 
-**Still open, and deliberately so:** the Worker deployment, the first paid V4
-request, and guides for actors other than `default`.
+The Worker was deployed on 2026-08-06 as version
+`964439e3-4a04-48c2-9b30-a68d176fc604`, at the owner's explicit request.
+
+**Still open, and deliberately so:** the first paid V4 request, and guides for
+actors other than `default`.
 
 ### Output-size and usage decision
 
@@ -312,8 +315,8 @@ V3 is owner-approved artwork and regenerating it would invalidate that review.
 explicit expectation so it stays visible rather than silently passing.
 
 V4 became the active contract on 2026-08-06; see "Migration to V4" above. The
-Worker source is updated but **not deployed**, and no provider request has been
-made.
+Worker was deployed the same day as version
+`964439e3-4a04-48c2-9b30-a68d176fc604`. No provider request has been made.
 
 ## 3. V1 source layout retained for rollback
 
@@ -793,8 +796,9 @@ throw and corrects which head is used.
   a test fails if the active contract drops one.
 - [x] The Worker source matches the active manifest, proven by a test that reads
   the Worker rather than by a manual diff.
-- [ ] **The Worker is deployed.** Flutter is on V4 and the live Worker is still
-  on V1, so a request made before that deployment returns 409.
+- [x] The Worker is deployed on V4 as version
+  `964439e3-4a04-48c2-9b30-a68d176fc604`. Live contract enforcement is still
+  unproven, because checking it needs `APP_TOKEN` and a paid call.
 - [x] Every region has one reviewed crop, output canvas, anchor, role, and side.
 - [x] Allowed, protected, and seam masks are versioned and deterministic.
 - [x] In V4, every cell draws the asset the rig composes, and the head cell's
