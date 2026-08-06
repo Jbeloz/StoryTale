@@ -895,6 +895,12 @@ void main() {
         reason: 'the Worker must accept the format the contract declares',
       );
 
+      expect(
+        worker,
+        contains('"${contract.selection.backHairRegionId}"'),
+        reason: 'the Worker must accept the rear-hair region V4 actually sends',
+      );
+
       final workerGuides = RegExp(r'^\s+(short|medium|long): "([a-f0-9]{64})"',
         multiLine: true,
       ).allMatches(worker);

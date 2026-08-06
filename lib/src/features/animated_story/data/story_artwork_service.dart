@@ -194,7 +194,7 @@ class StoryArtworkService {
         'Gemini returned a corrupt character sheet.',
       );
     }
-    if (worker.mimeType != 'image/png' ||
+    if (worker.mimeType != contract.canvas.mimeType ||
         decoded.width != contract.canvas.width ||
         decoded.height != contract.canvas.height) {
       throw ArtworkGenerationException(

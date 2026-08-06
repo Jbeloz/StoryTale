@@ -860,7 +860,28 @@ artwork returns a solid rectangle of "hair" that covers the face, and the six
 face proofs stop being distinct. That is exactly what the prompt contract's "a
 cell is a container, not a target" rule exists to prevent.
 
-**A third controlled request is the owner's to trigger.** Nothing about the real
+### The request layer had no test, and that cost a third request
+
+The third live request returned a correct `1024 x 1024` JPEG and Flutter rejected
+it with *"Gemini returned 1024x1024 image/jpeg; StoryTale requires one 1024x1024
+image/jpeg."* The message read from the contract while the condition beside it
+still hardcoded `image/png`: an edit that changed the text and not the test.
+
+The processor tests could not catch it because they start after this point.
+`test/character_sheet_request_test.dart` now drives the real
+`StoryArtworkService` against a faked Worker and covers the whole
+request/response layer: the JPEG is accepted, the guide variant uploaded matches
+the requested length and the declared hash, a wrong format is refused, and a
+reply belonging to another request is refused. Three of its four cases fail if
+the hardcoded `image/png` is restored, which was checked rather than assumed.
+
+A sweep of the character-sheet path for other values the contract should own
+found none left. The Worker's hand-copied constants — contract ID, version,
+geometry hash, canvas, requested tier, MIME type, rear-hair region, and the three
+guide hashes — are all now compared against the manifest by
+`test/character_sheet_contract_test.dart`.
+
+**A fourth controlled request is the owner's to trigger.** Nothing about the real
 sheet's *content* has been seen yet — only that the plumbing and the validator
 now agree on what a good sheet looks like.
 
@@ -1072,7 +1093,7 @@ their roadmap gates unless a blocking defect requires a narrow fix.
 
 ### Known failing checks
 
-- **None.** As of 6 August 2026 `flutter test` reports **209 passing, 0 failing**
+- **None.** As of 6 August 2026 `flutter test` reports **213 passing, 0 failing**
   and `flutter analyze` reports **no issues**. The `sprite_rig_test.dart` failure
   and the `unnecessary_import` info were resolved on 5 August; see section 11.
 - `dart format --set-exit-if-changed lib test` **rewrites files instead of only
