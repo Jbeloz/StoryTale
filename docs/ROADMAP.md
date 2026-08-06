@@ -556,11 +556,21 @@ Current Phase 7G.1 work:
   or Gemini until the owner explicitly asks to resume implementation.
 - [x] **Corrective Phase 7G.1B.R3, local candidate:** preserve V1/V2/V3 and
   generate `character_sheet_v4`, a `1024 x 1024` `1:1` `1K` square sheet with one
-  `back_hair_selected` cell, nine fitted-clothing cells, an `18` pixel green gap
-  proven by search, and cells grouped by side. Built by
+  `back_hair_selected` cell, nine fitted-clothing cells, and an `18` pixel green
+  gap proven by search. Refined on 5–6 August 2026 with one guide per rear-hair
+  length, a published `referenceContent` per region so a cell reads as a
+  container rather than a target, limbs split into a leg block and an arm block
+  separated by a `42` pixel channel, and rear-hair artwork enlarged inside its
+  unchanged cell until its width matches the front hair. Built by
   `tool/generate_character_sheet_v4.dart` with no provider request.
 - [ ] **V4 owner gate:** review the V4 guide, then decide whether V4 replaces V3
   as the migration target. V4 is the safer shape and the cheaper tier.
+- [ ] **Faces direction, undecided:** eyes, nose, and mouth come from shared
+  local parts under `assets/images/characters/face_profiles/`, so every character
+  on a profile has the same face. Decide between keeping shared parts and
+  generating a per-character face component sheet, and fix the `base/head.png`
+  versus locked `faces/head_base.png` mismatch in every sheet's `head` region
+  either way. See [Project Handoff](PROJECT_HANDOFF.md) section 11.
 - [x] **Phase 7G.1B.2, local implementation:** connect one controlled fixed-sheet provider
   request and response to the versioned contract without automatic retry.
 - [x] **Phase 7G.1B.3, local implementation:** produce the fixed-manifest

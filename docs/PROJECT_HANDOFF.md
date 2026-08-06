@@ -646,12 +646,92 @@ check, and the automatic packer's result was rejected for interleaving left and
 right cells. Both the builder and `test/character_sheet_contract_test.dart`
 re-prove the geometry, and the test also records why `0.5K` is impossible.
 
+V4 was then refined three times on 5–6 August 2026, all local and free:
+
+- **One guide per rear-hair length.** `guide_default_short.png`,
+  `guide_default_medium.png`, and `guide_default_long.png`. Only the
+  `back_hair_selected` cell differs; cells, masks, anchors, and seams are
+  identical. The manifest records `guideByBackHairId`, a separate
+  `guideVariantSha256` map so the six required contract hashes keep their exact
+  shape, and `backHairSourceByIdForActor` keyed by actor. One request produces
+  one length, so several lengths for one character means several requests with a
+  byte-identical brief, outfit, and palette.
+- **A cell is a container, not a target.** Every region publishes
+  `referenceContent` with the bounds and coverage its template artwork occupies,
+  and the rear-hair variants publish `referenceContentByBackHairId`. Body cells
+  sit at 95–100% and front hair at 88%, but the rear-hair cell is sized for the
+  longest style, so telling a provider to fill it would return oversized hair.
+  Both hair cells are `100%` allowed and `0%` protected, so nothing else
+  constrains them. The prompt contract states the rule and the per-length table.
+- **Limbs split into two blocks, and hair widths matched.** Eight similar pale
+  cells in one row invite the provider to confuse them, so legs now sit lower
+  left and arms lower right, split by a `42` pixel channel. That is mirrored from
+  the owner's sketch because geometry forces it: the tallest leg cell is `156`
+  pixels and only `147` is free under the head column against `170` under the
+  back-hair column. Rear hair was visibly narrower than front hair because its
+  source PNG carries more transparent padding, so the artwork is enlarged
+  **inside its unchanged `429 x 800` cell** by `1.0761` until the widths match
+  (`425` against `424`). The scale is derived from the drawn cells at build time,
+  not hardcoded, and is capped so the long style still fits. The rig box, the
+  locked geometry, and every recorded hash are untouched.
+
+One trap worth remembering: `image.drawImage` shrinks a source larger than its
+destination back down to fit unless `dstW` and `dstH` are passed explicitly. That
+silently undid the first enlargement attempt, and only measuring the result
+caught it.
+
 V1, V2, and V3 are untouched behind their hashes. **V4 is a local candidate
 only** — not registered with Flutter, the Worker, or the provider, and no
 provider request was made. It shares V3's migration surface.
 
 Owner decisions still open: review the V4 guide, and choose whether V4 replaces
 V3 as the migration target.
+
+### Faces are an unsolved design question, 6 August 2026
+
+The owner raised this before clearing the chat and it is **not yet decided**. The
+findings below come from reading the code; do not re-derive them.
+
+**Two head assets exist and the sheet points at the wrong one.**
+
+- The rig renders
+  `assets/images/characters/rigs/humanoid_v1/faces/head_base.png`. It is
+  **faceless** — a bald head with only an ear outline, `1254 x 1254` — and it is
+  one of the ten hash-locked parts.
+- Every sheet's `head` region instead points at
+  `assets/images/characters/rigs/humanoid_v1/base/head.png`, which has a face
+  drawn on it. That is why the guide's head cell shows eyes and a mouth.
+- So the guide shows the provider a head that is **not** what the runtime
+  composes. This is inherited from V1, so V1, V2, V3, and V4 all share it. It
+  should be fixed whichever direction faces take.
+
+**Two face mechanisms exist, and the processor already combines them.**
+
+`_buildFaceArtwork` in `character_sheet_processor.dart` takes the extracted head
+layer as a base and, for each of the six expressions in
+`_requiredFaceExpressions`, overlays a composition built from the **local**
+modular parts under `assets/images/characters/face_profiles/<profileId>/`
+(`eyes/`, `noses/`, `mouths/`, `details/`, assembled through `sets.json`). So
+today:
+
+- eyes, nose, and mouth come from **shared local parts**, identical for every
+  character on that profile;
+- the provider contributes only what fits the head cell's allowed window, which
+  is **21.4% allowed against 78.6% protected**;
+- the six expressions work precisely *because* they are local, not generated.
+
+**The open decision.** Since face parts are shared, two different book characters
+on the same profile have the same eyes and mouth. Character identity currently
+comes from hair, clothing, skin tone, and that small detail window. If
+book-specific faces are wanted, the natural fit for the existing architecture is
+a **face component sheet** generating per-character parts into a new
+`face_profiles/<characterId>/` directory, leaving `sets.json` and the six
+expressions intact.
+
+The sizing problem that makes this non-trivial, recorded so it is not
+rediscovered: face parts are full-canvas `1254 x 1254` PNGs, so the roughly
+fourteen of them cannot be packed into a `1K` sheet without introducing per-part
+crop rectangles. Designing that is a planning task in its own right.
 
 **The next task is still to resume Phase 7.** Start with whichever the owner
 prefers:
@@ -1086,6 +1166,14 @@ Short resume prompt after clearing a chat:
 
 > Read `docs/PROJECT_HANDOFF.md`, section 11 "Current thread" first, then the
 > current section of `docs/ROADMAP.md`. Continue from there as usual.
+
+As of 6 August 2026 the next work unit is the **free `character_sheet_v4`
+round-trip**: feed `guide_default_medium.png` back through
+`character_sheet_processor.dart` as if it were the provider's reply and confirm
+it cuts, masks, validates, and composes four poses. That proves the whole
+pipeline for `$0.00` and leaves provider art quality as the only unknown. After
+it, decide the faces direction recorded in section 11. Do not make a paid
+request before both are done.
 
 Clearing a chat is safe **because these documents are the memory**. Keep them
 current at the end of every work unit and no context is lost when a session

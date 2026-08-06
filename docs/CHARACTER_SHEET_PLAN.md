@@ -176,11 +176,76 @@ V2's cell set repacked onto `1024 x 1024`:
 - **`18` pixel green gap** around every cell and against the canvas edge. Found
   by search, not by hand: this cell set packs at `18` and fails at `20`. Both the
   builder and the contract test re-prove it.
-- **Cells are grouped by side**, arms then legs, because side ownership is a
-  contract rule and an interleaved layout invites the model to swap sides.
+- **Limbs sit in two blocks**, legs lower left and arms lower right, split by a
+  `42` pixel channel — more than twice the normal cell gap. Eight similar pale
+  cells in one row invite the provider to confuse them. The block sides are
+  mirrored from the owner's sketch because geometry forces it: the tallest leg
+  cell is `156` pixels and only `147` is free under the head column, against
+  `170` under the back-hair column. Within each block the order is right limb
+  then left, and shoulder/hip before elbow/knee.
 - **Seam anchors are preserved**: torso 5, each upper limb 2, each lower limb 1,
   head 1. Clothing continuity across joints is the known risk, so the V4 prompt
   contract states it explicitly.
+
+### V4 rear-hair guides, one per length
+
+V4 has a single `back_hair_selected` cell, so the guide must show the silhouette
+the request actually wants. The same layout is published three times for the
+`default` actor — `guide_default_short.png`, `guide_default_medium.png`,
+`guide_default_long.png` — differing only in that one cell. The manifest records
+`guideByBackHairId`, a separate `guideVariantSha256` map so the six required
+contract hashes keep their exact shape, and `backHairSourceByIdForActor` keyed by
+actor so other actors drop in without touching geometry.
+
+**One request produces one length.** Offering a character in several lengths
+means several requests, which costs more than V3's single `2K` sheet
+(`3 x $0.067` against `$0.101`) and does not guarantee the three results are the
+same character. Keep `CHARACTER_BRIEF`, `OUTFIT_BRIEF`, and the palette
+byte-identical across them. If several lengths per character become a real
+requirement, generating the body once and the hair variants together on a
+separate component sheet is the better structure.
+
+### V4 reference content: a cell is a container, not a target
+
+Every region publishes `referenceContent` — the exact bounds and coverage its
+template artwork occupies — and the rear-hair variants publish
+`referenceContentByBackHairId`. Body cells sit at 95–100% coverage and front
+hair at 88%, but the rear-hair cell is sized for the longest style:
+
+| Rear-hair length | Reference occupies | Share of the cell |
+| --- | --- | --- |
+| short | `412 x 404` | 49% |
+| medium | `425 x 546` | 68% |
+| long | `390 x 784` | 89% |
+
+Both hair cells are `100%` allowed and `0%` protected, so nothing else stops a
+provider filling them. Told "here is a cell", it would return hair far larger
+than the template intends. The prompt contract states the rule and this table.
+
+### V4 rear-hair scale
+
+The rear-hair sources carry more transparent padding than the front-hair source,
+so at equal cell width the visible rear hair came out 7% narrower for medium,
+10% for short, and 14% for long, and the front hair overhung it. V1, V2, and V3
+share the same sources and the same relationship, and the assembled reference
+composes correctly, so the rig is not at fault.
+
+The artwork is now enlarged **inside its unchanged `429 x 800` cell** by
+`rearHairReferenceScale` `1.0761`, until the rear hair's visible width matches
+the front hair's: `425` against `424`. The scale is derived from the drawn cells
+at build time rather than hardcoded, so it stays correct if a source is replaced,
+and it is capped so the long style still fits. Because only the artwork grows,
+the rig box, the locked geometry, and every recorded hash are untouched.
+
+Implementation note: `image.drawImage` shrinks a source larger than its
+destination back down to fit unless `dstW` and `dstH` are passed explicitly. That
+silently undid the first attempt; only measuring the result caught it.
+
+The template character in Sprite Studio still shows the **old** smaller rear
+hair. Matching it would mean setting the `back_hair` `hairFit` scale in
+`assets/images/characters/rigs/humanoid_v1/appearance.json` to the same value.
+That is deliberately not done, because it would change what the owner sees during
+the pending Phase 7G.1A.1 verification.
 
 V1, V2, and V3 are untouched behind their recorded hashes. V4 is **not**
 registered with Flutter, the Worker, or the provider; it is a local candidate
