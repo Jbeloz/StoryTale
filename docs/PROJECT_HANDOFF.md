@@ -1014,6 +1014,76 @@ rebuild — handoff item 4, whether the white silhouettes read as "empty slots t
 fill" — was deliberately left alone, because changing the wording and the guide
 in the same request would make the result uninterpretable.
 
+### The sixth request: the re-layout is fixed, and what replaced it — 6 August 2026
+
+The rewrite worked, and by a wide margin.
+
+| Measure | Fifth request | Sixth request | Gate |
+| --- | --- | --- | --- |
+| Stray pixels in the padding | `21,459` | **`129`** | must be `0` |
+| Locked geometry repainted | 4.11% | **2.71%** | 1% |
+| Locked area drawn over inside cells | 1.81% | **1.74%** | 1% |
+
+**Stray pixels fell by a factor of 166.** The provider now keeps the layout: the
+cells stay where they are and the limb blocks are no longer reorganised. Inlining
+the twelve rectangles was the fix, and the diagnosis that it could not read a
+manifest it was never sent is confirmed rather than merely plausible.
+
+What the sheet got wrong is a different failure, and measuring the masks explains
+why the prompt could not have prevented it:
+
+| Cell | Allowed | Protected | Green inside the cell |
+| --- | --- | --- | --- |
+| `back_hair_selected` | **100%** | **0%** | 57.0% |
+| `front_hair` | **100%** | **0%** | 57.5% |
+| `head` | 18.4% | 81.6% | 29.9% |
+| body cells | 57-87% | 22-54% | 14-45% |
+
+**The two hair cells are wholly unprotected and more than half empty.** There are
+`374,553` green pixels *inside* cells — more than the `256,187` px padding. The
+masks therefore permit painting in all of it, and the provider did: it drew a
+blue hood around the front hair, and **a spare pair of arms into the empty lower
+half of the rear-hair cell**, which `cropToVisiblePixels: false` then cut into the
+rear-hair layer. Only prose forbade either, and the prose said "do not fill a cell
+to its edges", which is not the same instruction as "do not add a second object".
+
+The drift has a matching structural explanation. Measured against guide
+luminance, the protected mask on every body cell covers **the dark outline and
+its anti-aliased edge band, and 0% of the pale interior**:
+
+| Cell | Protected px | Of which line art or edge |
+| --- | --- | --- |
+| `head` | `106,977` | 39% (the rest is protected face fill) |
+| `torso` | `8,448` | 100% |
+| eight limbs | `33,254` total | 100% |
+
+So the limbs hold 22% of the protected area but contributed roughly `2,062` of the
+`2,587` rejected pixels: the provider re-inks each limb outline while dressing it.
+The budget is 1% of `148,679`, so `1,487` pixels, against `4,029` drifted.
+
+The contract now carries four rules aimed at exactly these:
+
+1. **Green inside a cell stays green** — it is not free canvas, with the rear-hair
+   cell's empty lower part named explicitly.
+2. **One shape per cell** — never a second object, and the hair cells take hair
+   only, with hood, cowl, hat, collar, and scarf named.
+3. **The outline is locked; paint inside it** — do not re-ink, thicken, recolour,
+   or redraw an outline, and do not reshape a part to suit a garment.
+4. **Do not restyle the hair** — recolour and shade the shape that is there,
+   simple cel shading rather than many dark streaks. This one answers the owner's
+   "graspy, lots of dark" note and is the only one of the four not backed by a
+   measurement.
+
+Trimming paid for it again: `9,822` characters, about `10,220` built, against the
+`12,000` cap.
+
+**Whether rules 1 to 3 are enough is unknown, and there is a fallback if they are
+not.** Both failures are permitted by the masks, so the durable fix is a mask
+change — protecting the empty region of the hair cells, which would make the hood
+and the spare arms *rejected* rather than merely discouraged. That is a guide and
+mask rebuild with new hashes and a Worker redeploy, so wording gets one more try
+first.
+
 ### Faces are an unsolved design question, 6 August 2026
 
 The owner raised this before clearing the chat and it is **not yet decided**. The
@@ -1085,15 +1155,22 @@ had been failing since before this thread. It was fixed on 5 August 2026; see
 
 ### Exact current and next work
 
-**The next task is a sixth request, to evaluate the rewritten prompt.** V4 is
-live end to end and the fifth request produced a real, mostly-correct sheet whose
-one substantial defect was that the provider re-laid-out the lower half and drew
-free-standing garments, putting `21,459` pixels — 8.4% of the gap area — into the
-padding. The prompt contract was rewritten on 6 August 2026 to address that; see
-"The V4 prompt was rewritten to paint in place" above for what changed and why.
-Nothing about it is proven. The number to watch is the stray-pixel count against
-that `21,459` baseline; per-cell drift is the secondary signal. Reload the browser
-tab first, because a prompt edit does not change the request fingerprint.
+**The next task is a seventh request.** The sixth proved the re-layout fix — stray
+pixels fell from `21,459` to `129` — and exposed two different failures: the
+provider fills the unprotected empty space in the hair cells (a hood, and a spare
+pair of arms in the rear-hair cell) and re-inks the limb outlines while dressing
+them. Both are recorded with measurements in "The sixth request: the re-layout is
+fixed, and what replaced it" above, along with the four new rules aimed at them
+and the mask-rebuild fallback if wording fails again.
+
+Watch three numbers, all of which must reach their gate together: stray pixels
+must be `0` (`129` last time), locked geometry repainted must be under 1%
+(`2.71%`), and locked area drawn over inside cells under 1% (`1.74%`).
+
+**Restart the app, do not just reload the tab.** A prompt edit changes an asset,
+and a running `flutter run -d web-server` keeps serving the bundle it started
+with. It also does not change the request fingerprint. Reloading alone can
+therefore spend a request re-sending the previous prompt and look like a result.
 
 Two things that make iterating cheaper, both worth knowing before touching
 anything:

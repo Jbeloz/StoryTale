@@ -77,20 +77,52 @@ painted onto it, inside its silhouette.
 - No garment is drawn on its own, floating free of a body part.
 - No garment spans two cells or bridges the gap between them.
 
-## Cell size is not target size
+## Green inside a cell stays green
 
-A cell is a container, not a target. Several cells are larger than the artwork
-they hold, so **do not fill a cell to its edges.** Match the extent of the shape
-already drawn in that cell.
+A cell is a container, not a target. Every cell is bigger than the shape it
+holds, and the leftover green inside it is **not free canvas**. It is not space
+to fill, balance, decorate, or add anything to.
 
-The rear-hair cell is the clearest case. It is `429 x 800` because it must be
-able to hold the longest style, so shorter styles leave much of it green: short
-occupies `412 x 404`, medium `425 x 546`, and long `390 x 784`.
+Paint only the one shape already drawn in the cell. Green inside a cell that the
+shape does not cover must come back green.
 
-Front hair fills `424 x 389` of its `429 x 438` cell. **Front and rear hair are
-deliberately the same width** so the two layers sit together on the head: rear
-hair is `425` wide against front hair's `424`. Keep that match. Rear hair must be
-neither narrower, which lets the front hair overhang it, nor much wider.
+- `back_hair_selected` is `429 x 800`, but the hair fills only the top of it:
+  `412 x 404` for short, `425 x 546` for medium, `390 x 784` for long. **The
+  empty lower part of that cell stays green.** Do not put an arm, a hand, a
+  garment, or anything else in it.
+- `front_hair` is `429 x 438` and the hair fills `424 x 389`. The green around
+  the locks, and between them, stays green.
+
+**Front and rear hair are deliberately the same width** so the two layers sit
+together on the head: rear hair is `425` wide against front hair's `424`. Keep
+that match. Rear hair must be neither narrower, which lets the front hair
+overhang it, nor much wider.
+
+## One shape per cell
+
+Each cell contains exactly one shape and comes back with exactly one shape.
+
+- Never add a second object to a cell. No extra arm, hand, leg, foot, or
+  duplicate of any part, anywhere on the sheet.
+- The two hair cells take **hair only**. No hood, cowl, hat, cap, headband,
+  bandana, helmet, collar, or scarf. A hood is not hair; if the character wears
+  one, it is not drawn on this sheet.
+- Body cells take the body part and the clothing worn on it, nothing else.
+
+## The outline is locked; paint inside it
+
+Every body part is a dark outline around a pale interior. **That outline, and the
+pixels immediately inside it, are locked geometry.**
+
+- Paint the clothing into the interior, up to the outline and never over it.
+- Do not re-ink, thicken, thin, soften, recolour, or redraw any outline.
+- Do not let colour spill across an outline.
+- Do not reshape a part to suit a garment. The silhouette is fixed.
+
+The hair shapes work the same way: recolour and shade the shape that is there.
+Do not add spikes, strands, wisps, or tips beyond its outline, and do not restyle
+it. Keep shading simple - the base colour, one shadow, and one highlight - rather
+than many dark streaks.
 
 ## This request
 
@@ -130,61 +162,47 @@ freckles, a birthmark, a scar, blush, a face marking - that belongs to this
 character and stays valid across every expression. The head content sits slightly
 inside its cell, occupying `325 x 343` of the `357 x 367` rectangle.
 
-## Hair rules
+## Hair and character rules
 
-- Paint one front-hair layer onto the shape in `front_hair`.
-- Paint one rear-hair layer onto the shape in `back_hair_selected`, at the length
-  named above, keeping that shape's existing silhouette.
-- Both hair layers belong to the same character: identical color, line style,
-  texture, highlights, and crown/hairline logic.
-- The rear layer must attach correctly to the same front-hair layer and head.
-- Hair stays independent from the head and body pixels.
-- `none` means leave `back_hair_selected` flat green; it is a runtime visibility
-  choice and needs no artwork.
-
-## Character and clothing rules
-
+- Both hair layers belong to the same character: identical colour, line style,
+  texture, highlights, and crown/hairline logic, and the rear layer must sit
+  correctly behind that same front layer and head.
+- Hair stays independent of the head and body pixels.
+- `none` means leave `back_hair_selected` flat green; it needs no artwork.
 - Keep one identity across the face details, hair, palette, and outfit.
-- In `head`, modify only the allowed facial-detail area. Do not redraw the locked
-  head silhouette, ears, neck edge, or protected pixels.
-- **The head is bald and faceless on purpose, and must stay that way.** Do not
-  draw eyes, eyebrows, a nose, or a mouth.
+- In `head`, paint only inside the allowed facial-detail area. Do not redraw the
+  locked head silhouette, ears, or neck edge.
 - Right-side artwork stays in right-side cells and left-side artwork stays in
   left-side cells.
-- The separated head, torso, arms, legs, and hair must assemble into the supplied
-  assembled reference without changing pivots or seams.
 - Do not add scenery, shadows, text, labels, borders, props, extra characters, or
   unrelated objects.
 
 ## Clothing continuity across joints
 
-This is the part most likely to fail, so it is stated explicitly.
+Garments are painted in separate cells but must read as one outfit once the parts
+are assembled. `torso` meets `head` at the neck, both upper arms at the
+shoulders, and both upper legs at the hips; each `upper_arm_*` meets its
+`lower_arm_*` at the elbow, and each `upper_leg_*` meets its `lower_leg_*` at the
+knee.
 
-Garments are painted in separate cells but must read as one outfit on the
-assembled character. Seam markers sit at the joints each cell shares with its
-neighbour:
-
-- `torso` meets `head` at the neck, both upper arms at the shoulders, and both
-  upper legs at the hips.
-- each `upper_arm_*` meets `torso` at the shoulder and its `lower_arm_*` at the
-  elbow.
-- each `upper_leg_*` meets `torso` at the hip and its `lower_leg_*` at the knee.
-
-Where a garment crosses one of those joints, its edge colour, thickness, trim,
-fold direction, and shading must match on both sides of the seam, so the two
-cells line up when the rig is posed. A sleeve that ends at the elbow in
-`upper_arm_right` must continue at the same width and colour where
-`lower_arm_right` begins. Matching across a seam never means drawing across the
-gap between the two cells.
+Where a garment crosses one of those joints its edge colour, thickness, trim,
+fold direction, and shading must match on both sides, so the two cells line up
+when the rig is posed. A sleeve ending at the elbow in `upper_arm_right` must
+continue at the same width and colour where `lower_arm_right` begins. Matching
+across a seam never means drawing across the gap between the two cells.
 
 ## Check before returning
 
 1. Exactly `1024 x 1024`.
 2. Twelve shapes, each still at its listed rectangle and its original size.
 3. Every pixel outside those rectangles flat `#00FF00`.
-4. No free-standing garment anywhere.
-5. The head still bald and faceless.
-6. Front and rear hair the same character.
+4. Green left over inside a cell still green; nothing added to empty space.
+5. Exactly one shape per cell. No extra limbs, and nothing but hair in the two
+   hair cells.
+6. Every outline unchanged in shape, thickness, and colour.
+7. No free-standing garment anywhere.
+8. The head still bald and faceless.
+9. Front and rear hair the same character.
 
 Reject the result if any of those fails, if the format or dimensions differ, if
 locked geometry changed, if clothing fails to match across a seam, or if the

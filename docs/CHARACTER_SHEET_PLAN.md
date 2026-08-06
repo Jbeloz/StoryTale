@@ -202,8 +202,36 @@ the built prompt.
 Only `assetSha256.promptContract` moved in the manifest. The guides are untouched
 and the Worker's constants are unaffected, so **no redeploy**.
 
-**Still open:** a sixth paid request to evaluate the rewrite, an accepted paid V4
-request with the proof pass enabled, and guides for actors other than `default`.
+### Sixth request: layout fixed, mask gaps exposed, 2026-08-06
+
+Stray pixels in the padding fell from `21,459` to **`129`**, so the provider now
+preserves the layout. Drift fell from 4.11% to 2.71% and in-cell overdraw from
+1.81% to 1.74%; both gates are 1%, so the package still needs attention.
+
+Measuring the masks explains what replaced the re-layout, and it is a **contract
+weakness, not only a wording one**:
+
+- `back_hair_selected` and `front_hair` are **100% allowed and 0% protected**, and
+  each is roughly 57% green. `374,553` green pixels sit *inside* cells, more than
+  the `256,187` px padding. The provider filled that permitted space with a hood
+  around the front hair and a spare pair of arms in the rear-hair cell, which
+  `cropToVisiblePixels: false` cut straight into the rear-hair layer.
+- On every body cell the protected mask covers **the outline and its edge band and
+  0% of the interior**. The eight limbs hold 22% of the `148,679` px protected
+  area but produced about `2,062` of `2,587` rejected pixels, because the provider
+  re-inks each outline while dressing it.
+
+The prompt now adds: green inside a cell stays green; one shape per cell with the
+hair cells taking hair only; the outline is locked and clothing is painted inside
+it; and the hair shape is recoloured, not restyled.
+
+**If wording fails again the durable fix is the mask**, protecting the empty
+region of the hair cells so a hood or a spare limb is rejected rather than
+discouraged. That is a guide and mask rebuild with new hashes and a Worker
+redeploy.
+
+**Still open:** a seventh paid request, an accepted paid V4 request with the proof
+pass enabled, and guides for actors other than `default`.
 
 ### Output-size and usage decision
 

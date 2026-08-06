@@ -23,7 +23,7 @@
     "allowedRegions": "bb0313bcf674fff6a140f63efb96290a334c3383e0b637a5f84d9c2058c1a2b0",
     "protectedRegions": "dee6725823447c6bd18ab93ffa1b09884e3adbb91a088ca23a7c95b56f318716",
     "seamAllowances": "a727c769962c7c77c7ac7857b8bbb55c8a1e00668fbea90e5115db15fd6a048e",
-    "promptContract": "d301054fe26ad862d918c47ce56d412c3d25eec41f6807a30ecc7bbf9f85cf4f"
+    "promptContract": "50f2eaa179aa93d454267a123ad6f21c823a9fecf9fb00aaecad1a150beffcf7"
   },
   "maskEncoding": {
     "allowedRegions": "white pixels may contain generated appearance; black pixels are discarded",
