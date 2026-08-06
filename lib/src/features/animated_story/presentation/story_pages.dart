@@ -767,7 +767,11 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
         'a moonlit rose garden on a tiny asteroid with a gentle purple-blue '
         'sky and room for two character sprites',
   );
-  _ArtworkMode _mode = _ArtworkMode.sprite;
+  // Character Sheet is the live contract. Sprite is the Phase 7G whole-character
+  // master, which was rejected because splitting it cannot recover the exact
+  // StoryTale geometry, and both cost the same paid request. Landing on the
+  // rejected one is how a restart turns a Character Sheet run into a legacy one.
+  _ArtworkMode _mode = _ArtworkMode.characterSheet;
 
   /// Skips the six face and four pose compositions while we are iterating on
   /// what the provider draws.
@@ -962,9 +966,11 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
           if (_mode == _ArtworkMode.sprite) ...[
             const SizedBox(height: 8),
             const Text(
-              'Gemini makes one master using all three references. StoryTale '
-              'then removes the green background and splits that same image, '
-              'so the head and body always fit when rejoined.',
+              'Legacy Phase 7G path, kept for comparison only. Gemini draws a '
+              'whole character and StoryTale splits it, which means the head '
+              'and body are generated rather than the locked rig parts. It was '
+              'rejected for exactly that reason, and it still costs a paid '
+              'request. Use Character Sheet for real work.',
             ),
           ],
           if (_mode == _ArtworkMode.characterSheet) ...[
