@@ -100,6 +100,15 @@ class CharacterSheetProcessor {
       contract.assetSha256['seamAllowances']!,
       contract,
     );
+    // The guide variant this request sent. Protected pixels are judged against
+    // it rather than against "must be absent", because the prompt asks for them
+    // to be preserved.
+    final guideVariant = contract.selection.guideFor(request.backHairId);
+    final guide = await _loadMask(
+      guideVariant.path,
+      guideVariant.sha256,
+      contract,
+    );
     final rigData = await _loadRigData(contract);
     final placements = rigData.placements;
 
@@ -120,17 +129,26 @@ class CharacterSheetProcessor {
       }
     }
 
-    final unexpectedGapPixels = _unexpectedGapPixels(
-      decoded,
-      allowed,
-      protected,
-      seams,
+    final deviation = _measureSheet(
+      source: decoded,
+      guide: guide,
+      allowed: allowed,
+      protected: protected,
+      seams: seams,
     );
-    if (unexpectedGapPixels > 0) {
+    if (deviation.strayPixels > 0) {
       seamValid = false;
       errors.add(
-        'The sheet contains $unexpectedGapPixels generated pixels outside '
-        'the approved appearance and seam masks.',
+        'The sheet contains ${deviation.strayPixels} generated pixels in the '
+        'padding between cells.',
+      );
+    }
+    if (deviation.redrewLockedGeometry) {
+      geometryValid = false;
+      final percent = (deviation.protectedDrift * 100).toStringAsFixed(2);
+      errors.add(
+        'The provider repainted $percent% of the locked geometry instead of '
+        'preserving it.',
       );
     }
 
@@ -144,6 +162,7 @@ class CharacterSheetProcessor {
     final visiblePixels = <String, int>{};
     final rejectedPixels = <String, int>{};
     final greenPixelsRemoved = <String, int>{};
+    var totalRejectedPixels = 0;
     final packageId = _packageId(request);
     final outfitId =
         'primary-${generation.requestFingerprint.substring(0, 12)}';
@@ -177,11 +196,19 @@ class CharacterSheetProcessor {
         region.crop.width,
         region.crop.height,
       );
+      final guideCrop = image.copyCrop(
+        guide,
+        region.crop.x,
+        region.crop.y,
+        region.crop.width,
+        region.crop.height,
+      );
       final cleaned = _cleanRegion(
         sourceCrop,
         allowedCrop,
         protectedCrop,
         seamCrop,
+        guideCrop,
       );
       final isBackHair = region.kind == 'backHair';
       final shouldBeActive = !isBackHair || region.id == selectedBackHair;
@@ -203,9 +230,12 @@ class CharacterSheetProcessor {
         slotValid = false;
         errors.add('The required ${region.id} appearance layer is empty.');
       }
-      if (cleaned.rejectedPixels > 0) {
-        seamValid = false;
-      }
+      // Counted per region for review, but judged once against the same drift
+      // budget below. A zero-tolerance rule here would fail on JPEG ringing
+      // alone: the provider only emits JPEG, and its artifacts against the
+      // black line art exceed any usable per-pixel tolerance on roughly 0.06%
+      // of the locked area.
+      totalRejectedPixels += cleaned.rejectedPixels;
 
       visiblePixels[region.id] = cleaned.visiblePixels;
       rejectedPixels[region.id] = cleaned.rejectedPixels;
@@ -237,6 +267,21 @@ class CharacterSheetProcessor {
         visiblePixelCount: cleaned.visiblePixels,
         sha256: bytes == null ? null : sha256.convert(bytes).toString(),
         empty: bytes == null,
+      );
+    }
+
+    // One judgement on how much of the locked artwork the provider disturbed,
+    // whether it showed up as whole-sheet drift or as pixels rejected inside a
+    // cell. Both are the same failure seen from two angles.
+    if (deviation.protectedTotalPixels > 0 &&
+        totalRejectedPixels / deviation.protectedTotalPixels >
+            _SheetDeviation.driftBudget) {
+      seamValid = false;
+      final percent =
+          (totalRejectedPixels / deviation.protectedTotalPixels * 100)
+              .toStringAsFixed(2);
+      errors.add(
+        'The sheet drew over $percent% of the locked area inside its cells.',
       );
     }
 
@@ -483,24 +528,70 @@ class CharacterSheetProcessor {
     return _RigData(rig: rig, placements: Map.unmodifiable(placements));
   }
 
-  int _unexpectedGapPixels(
-    image.Image source,
-    image.Image allowed,
-    image.Image protected,
-    image.Image seams,
-  ) {
-    var count = 0;
+  /// Separates the two things the sheet can get wrong, which one counter used
+  /// to conflate.
+  ///
+  /// The prompt tells the provider to **preserve** the protected pixels, so a
+  /// compliant sheet returns them rather than leaving them green. Counting
+  /// every protected pixel as a violation therefore rejected the very thing the
+  /// contract asked for: measured against the untouched guide, that was 77,653
+  /// pixels, so no compliant sheet could ever have been accepted.
+  ///
+  /// What actually matters is different for each area:
+  ///
+  /// * **Stray pixels** — content in the green padding between cells, which
+  ///   belongs to no cell at all. Any of it means content bled across a cell
+  ///   boundary, so it stays a hard failure.
+  /// * **Protected drift** — protected pixels that no longer match the guide.
+  ///   This is the Phase 7G failure, where the provider redrew the body instead
+  ///   of dressing it, and it is a question of degree rather than presence.
+  _SheetDeviation _measureSheet({
+    required image.Image source,
+    required image.Image guide,
+    required image.Image allowed,
+    required image.Image protected,
+    required image.Image seams,
+  }) {
+    var stray = 0;
+    var protectedTotal = 0;
+    var protectedChanged = 0;
     for (var y = 0; y < source.height; y++) {
       for (var x = 0; x < source.width; x++) {
-        final pixel = source.getPixel(x, y);
-        if (_isBackground(pixel)) continue;
-        final allowedPixel = _isWhite(allowed.getPixel(x, y));
         final protectedPixel = _isWhite(protected.getPixel(x, y));
-        final seamPixel = _isWhite(seams.getPixel(x, y));
-        if (!((allowedPixel && !protectedPixel) || seamPixel)) count++;
+        final pixel = source.getPixel(x, y);
+        if (protectedPixel) {
+          protectedTotal++;
+          if (!_matchesGuide(pixel, guide.getPixel(x, y))) protectedChanged++;
+          continue;
+        }
+        if (_isBackground(pixel)) continue;
+        if (_isWhite(allowed.getPixel(x, y))) continue;
+        if (_isWhite(seams.getPixel(x, y))) continue;
+        stray++;
       }
     }
-    return count;
+    return _SheetDeviation(
+      strayPixels: stray,
+      protectedChangedPixels: protectedChanged,
+      protectedTotalPixels: protectedTotal,
+    );
+  }
+
+  /// Whether a returned pixel is close enough to the guide to count as
+  /// preserved.
+  ///
+  /// The tolerance is wide because it has to survive JPEG, which is the only
+  /// format this provider emits. Measured on the V4 guide at quality 95, ringing
+  /// against the black line art reaches a per-channel delta of 97, so exact
+  /// comparison is impossible. At a delta of 64 only 92 pixels differ, which is
+  /// 0.06% of the protected area — sixteen times under the drift budget below.
+  bool _matchesGuide(int pixel, int guidePixel) {
+    const tolerance = 64;
+    return (image.getRed(pixel) - image.getRed(guidePixel)).abs() <=
+            tolerance &&
+        (image.getGreen(pixel) - image.getGreen(guidePixel)).abs() <=
+            tolerance &&
+        (image.getBlue(pixel) - image.getBlue(guidePixel)).abs() <= tolerance;
   }
 
   _CleanedRegion _cleanRegion(
@@ -508,6 +599,7 @@ class CharacterSheetProcessor {
     image.Image allowed,
     image.Image protected,
     image.Image seams,
+    image.Image guide,
   ) {
     final output = image.Image.from(source)..channels = image.Channels.rgba;
     final background = _connectedBackground(output);
@@ -530,7 +622,15 @@ class CharacterSheetProcessor {
         final protectedPixel = _isWhite(protected.getPixel(x, y));
         final seamPixel = _isWhite(seams.getPixel(x, y));
         if (!((allowedPixel && !protectedPixel) || seamPixel)) {
-          if (image.getAlpha(pixel) > 0 && !_isBackground(pixel)) {
+          // Protected pixels always leave the layer: the runtime composes over
+          // the locked base, so it supplies them itself. They only count as
+          // rejected when the provider changed them, because a preserved one is
+          // the contract being obeyed rather than broken.
+          final preserved =
+              protectedPixel && _matchesGuide(pixel, guide.getPixel(x, y));
+          if (!preserved &&
+              image.getAlpha(pixel) > 0 &&
+              !_isBackground(pixel)) {
             rejectedPixels++;
           }
           output.setPixelRgba(x, y, 0, 0, 0, 0);
@@ -1077,6 +1177,33 @@ class _RigData {
 
   final SpriteRigDefinition rig;
   final Map<String, _RigPlacement> placements;
+}
+
+class _SheetDeviation {
+  const _SheetDeviation({
+    required this.strayPixels,
+    required this.protectedChangedPixels,
+    required this.protectedTotalPixels,
+  });
+
+  /// Content in the green padding, which belongs to no cell.
+  final int strayPixels;
+  final int protectedChangedPixels;
+  final int protectedTotalPixels;
+
+  /// Share of the locked area the provider repainted.
+  double get protectedDrift => protectedTotalPixels == 0
+      ? 0
+      : protectedChangedPixels / protectedTotalPixels;
+
+  /// How much repainting counts as redrawing rather than compression noise.
+  ///
+  /// JPEG accounts for 0.06% of the protected area at the tolerance used, so
+  /// this leaves a sixteenfold margin while still catching a provider that
+  /// redrew the body instead of dressing it.
+  static const driftBudget = 0.01;
+
+  bool get redrewLockedGeometry => protectedDrift > driftBudget;
 }
 
 class _ProofArtwork {

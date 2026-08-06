@@ -815,11 +815,54 @@ tests now use a JPEG fixture and their exact pixel-count assertions still hold.
 accepted, and declared are the same value. Deployed as
 `1e29b40a-8a56-45b8-8d73-caed666ddf41`.
 
-**What the failure did prove:** the whole chain runs — Flutter picks the guide
+**What the failures proved:** the whole chain runs — Flutter picks the guide
 variant, the Worker accepts the V4 contract and the guide hash, Gemini answers,
 and validation catches a bad result before packaging. The `1K` tier is confirmed
-exactly `1024 x 1024`. **A second controlled request is still the owner's to
-trigger**, and nothing about the sheet's content has been seen yet.
+exactly `1024 x 1024`.
+
+### The validator could not have accepted any compliant sheet
+
+Found on 2026-08-06 while simulating a reply offline, after two paid requests had
+been spent discovering problems that were all reproducible for free.
+
+`_unexpectedGapPixels` counted **every** non-background pixel outside
+`allowed && !protected` as a violation. But the prompt tells the provider to
+*preserve* the protected pixels, so a compliant sheet returns them. Measured
+against the untouched guide that was **77,653 pixels**, so no correct sheet could
+ever have passed. `_cleanRegion` rejected the same pixels a second time.
+
+The counter conflated two unrelated failures, which is why it could not be tuned.
+They are now separate:
+
+- **Stray pixels** — content in the green padding between cells, which belongs to
+  no cell. Zero tolerance; nothing legitimate is ever drawn there.
+- **Protected drift** — protected pixels that no longer match the guide. This is
+  the Phase 7G failure, where the provider redrew the body instead of dressing
+  it, and it is a matter of degree.
+
+Drift needs a tolerance because the provider only emits JPEG. Measured on the V4
+guide at quality 95, ringing against the black line art reaches a per-channel
+delta of **97**, so "preserved exactly" is unachievable. At a delta of 64 only 92
+pixels differ, **0.06% of the locked area**, so the budget is 1% — a sixteenfold
+margin that still catches a redraw.
+
+### The pipeline is now proven offline
+
+`test/character_sheet_end_to_end_test.dart` builds a sheet shaped like a
+compliant reply — the guide with its artwork recoloured inside the allowed
+windows, JPEG encoded — and runs the real processor over it. It reaches a fully
+valid package with six face proofs and four pose proofs. Three companion cases
+prove the guards still bite: a redrawn head and torso, content in the padding,
+and a rear-hair cell that should have stayed green.
+
+One trap the simulation caught: filling a whole cell rather than recolouring its
+artwork returns a solid rectangle of "hair" that covers the face, and the six
+face proofs stop being distinct. That is exactly what the prompt contract's "a
+cell is a container, not a target" rule exists to prevent.
+
+**A third controlled request is the owner's to trigger.** Nothing about the real
+sheet's *content* has been seen yet — only that the plumbing and the validator
+now agree on what a good sheet looks like.
 
 A test now parses `cloudflare/image-worker/src/index.ts` and compares its
 contract ID, version, geometry hash, canvas, requested tier, and three guide
@@ -1029,7 +1072,7 @@ their roadmap gates unless a blocking defect requires a narrow fix.
 
 ### Known failing checks
 
-- **None.** As of 6 August 2026 `flutter test` reports **204 passing, 0 failing**
+- **None.** As of 6 August 2026 `flutter test` reports **209 passing, 0 failing**
   and `flutter analyze` reports **no issues**. The `sprite_rig_test.dart` failure
   and the `unnecessary_import` info were resolved on 5 August; see section 11.
 - `dart format --set-exit-if-changed lib test` **rewrites files instead of only

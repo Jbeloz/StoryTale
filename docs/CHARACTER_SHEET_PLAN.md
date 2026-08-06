@@ -137,8 +137,31 @@ stale copy would otherwise surface as a 409 after the money was committed.
 The Worker was deployed on 2026-08-06 as version
 `964439e3-4a04-48c2-9b30-a68d176fc604`, at the owner's explicit request.
 
-**Still open, and deliberately so:** the first paid V4 request, and guides for
-actors other than `default`.
+### The validator rejected the contract it published
+
+Corrected on 2026-08-06. `_unexpectedGapPixels` counted every non-background
+pixel outside `allowed && !protected` as a violation, but the prompt asks the
+provider to *preserve* the protected pixels. Measured against the untouched
+guide that was 77,653 pixels, so no compliant sheet could ever have been
+accepted. It is now two separate measures:
+
+| Failure | Rule | Why |
+| --- | --- | --- |
+| Content in the padding between cells | zero tolerance | nothing legitimate is drawn there, and it means one part bled into another |
+| Protected pixels no longer matching the guide | 1% of the locked area | this is the Phase 7G redraw, a matter of degree |
+
+The drift tolerance is forced by JPEG. On the V4 guide at quality 95, ringing
+against the black line art reaches a per-channel delta of 97, so "preserved
+exactly" is unachievable. At a delta of 64 only 92 pixels differ, 0.06% of the
+locked area, so a 1% budget leaves a sixteenfold margin.
+
+`test/character_sheet_end_to_end_test.dart` proves the whole pipeline offline: a
+sheet shaped like a compliant reply reaches a valid package with six face proofs
+and four pose proofs, while a redrawn head and torso, content in the padding, and
+a rear-hair cell that should have stayed green are each rejected.
+
+**Still open, and deliberately so:** the first accepted paid V4 request, and
+guides for actors other than `default`.
 
 ### Output-size and usage decision
 

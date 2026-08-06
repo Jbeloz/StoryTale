@@ -1,16 +1,14 @@
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as image;
-import 'package:storytale/src/features/animated_story/data/character_design_brief.dart';
 import 'package:storytale/src/features/animated_story/data/character_sheet_contract.dart';
-import 'package:storytale/src/features/animated_story/data/character_sheet_generation.dart';
 import 'package:storytale/src/features/animated_story/data/character_sheet_processor.dart';
+
+import 'character_sheet_fixtures.dart';
 
 /// Local packaging checks for whichever contract is registered.
 ///
-/// Nothing here contacts a provider. Each "generated" sheet is built in the
-/// test from the contract's own canvas and masks, which is enough to exercise
-/// the parts of the pipeline that read the locked runtime assets.
+/// Nothing here contacts a provider. Sheets are built from the contract's own
+/// guide and masks, which is enough to exercise every check a live sheet hits.
 ///
 /// The head is the reason this file exists. Every other locked part is stored
 /// trimmed to its rig box, but the head is a `1254 x 1254` canvas the rig fits
@@ -20,52 +18,31 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late CharacterSheetContract contract;
+  late CharacterSheetFixture fixture;
 
   setUpAll(() async {
     contract = await CharacterSheetContractRepository().load();
+    fixture = await CharacterSheetFixture.load(
+      contract: contract,
+      backHairId: 'medium',
+    );
   });
 
-  CharacterSheetGenerationResult resultFor(
-    CharacterSheetGenerationRequest request,
-    image.Image sheet,
-  ) {
-    // Encoded the way the provider actually answers. The Interactions API only
-    // emits JPEG, so a PNG fixture would exercise a path production never sees.
-    return CharacterSheetGenerationResult(
-      bytes: Uint8List.fromList(image.encodeJpg(sheet, quality: 95)),
-      mimeType: contract.canvas.mimeType,
-      width: sheet.width,
-      height: sheet.height,
-      provider: 'test',
-      model: 'test',
-      requestId: 'test-request',
-      requestFingerprint: request.fingerprint(contract),
-      contractId: contract.contractId,
-      contractVersion: contract.contractVersion,
-      prompt: 'test',
-      generatedAt: '2026-08-06T00:00:00.000Z',
-    );
-  }
-
-  image.Image greenSheet() {
-    final sheet = image.Image(contract.canvas.width, contract.canvas.height)
-      ..channels = image.Channels.rgb;
-    image.fill(sheet, image.getColor(0, 255, 0));
-    return sheet;
-  }
-
-  test('packages a sheet without rejecting the locked head geometry', () async {
+  test('packages a preserved sheet without rejecting the locked head', () async {
+    // The provider returned the reference untouched, which is the minimum a
+    // compliant reply can be. The run must get all the way to the proofs
+    // instead of failing on the locked head, which is what an unfitted
+    // 1254 x 1254 head base did before it was fitted to its 357 x 367 cell.
+    final request = testRequest(backHairId: 'medium');
     final package = await CharacterSheetProcessor().process(
-      request: _request,
-      generation: resultFor(_request, greenSheet()),
+      request: request,
+      generation: fixture.resultFor(request, fixture.preservedSheet()),
     );
 
-    // An all-green sheet legitimately reports one empty layer per region. What
-    // it must not do is fail on the locked head before reading a single
-    // generated pixel, which is what an unfitted `1254 x 1254` head base did.
     expect(
       package.validation.errors,
-      everyElement(contains('appearance layer is empty')),
+      isEmpty,
+      reason: 'an untouched reference breaks no rule',
     );
     expect(package.validation.geometryValid, isTrue);
     expect(package.previewBytesByPose, hasLength(4));
@@ -73,17 +50,17 @@ void main() {
   });
 
   test('keeps face detail drawn inside the head allowed window', () async {
-    // The allowed window is where a character's own skin detail may go. Filling
-    // it stands in for a provider that respected the contract, and the result
+    // The allowed window is where a character's own skin detail may go, and it
     // has to survive the locked-head alpha check rather than be rejected as
     // pixels outside the head.
-    final sheet = greenSheet();
-    final painted = await _paintAllowedWindow(contract, sheet, 'head');
+    final request = testRequest(backHairId: 'medium');
+    final sheet = fixture.preservedSheet();
+    final painted = fixture.paintAppearance(sheet, const ['head']);
     expect(painted, greaterThan(0), reason: 'the head has an allowed window');
 
     final package = await CharacterSheetProcessor().process(
-      request: _request,
-      generation: resultFor(_request, sheet),
+      request: request,
+      generation: fixture.resultFor(request, sheet),
     );
 
     expect(
@@ -92,29 +69,35 @@ void main() {
       reason: 'contract-respecting face detail must not be rejected',
     );
     expect(package.validation.geometryValid, isTrue);
-    expect(package.validation.visiblePixelsByRegion['head'], painted);
-    expect(package.validation.rejectedPixelsByRegion['head'], 0);
+    expect(
+      package.validation.visiblePixelsByRegion['head'],
+      closeTo(painted, painted * 0.02),
+      reason: 'JPEG moves the window edge slightly; the layer is still the same',
+    );
+    expect(package.layerBytes.containsKey('head'), isTrue);
   });
 
   test('extracts the rear-hair layer the selected length activates', () async {
     // V4 collapses V1's three rear-hair cells into one, so the region a length
     // activates has to come from the contract. Hardcoding V1's IDs would leave
     // this layer silently unextracted on a paid sheet.
-    const request = _rearHairRequest;
+    final request = testRequest(backHairId: 'medium');
     final regionId = request.selectedBackHairRegion(contract);
-    expect(regionId, isNot('none'));
-    expect(contract.regionsById.containsKey(regionId), isTrue);
+    expect(regionId, 'back_hair_selected');
 
-    final sheet = greenSheet();
-    final painted = await _paintAllowedWindow(contract, sheet, regionId);
+    final sheet = fixture.preservedSheet();
+    final painted = fixture.paintAppearance(sheet, [regionId]);
     expect(painted, greaterThan(0));
 
     final package = await CharacterSheetProcessor().process(
       request: request,
-      generation: resultFor(request, sheet),
+      generation: fixture.resultFor(request, sheet),
     );
 
-    expect(package.validation.visiblePixelsByRegion[regionId], painted);
+    expect(
+      package.validation.visiblePixelsByRegion[regionId],
+      closeTo(painted, painted * 0.02),
+    );
     expect(package.layerBytes.containsKey(regionId), isTrue);
     expect(
       package.validation.errors.where((error) => error.contains(regionId)),
@@ -122,64 +105,25 @@ void main() {
       reason: 'the selected rear-hair cell must not read as empty or stray',
     );
   });
-}
 
-const _request = CharacterSheetGenerationRequest(
-  brief: CharacterDesignBrief(
-    bookId: 'book-test',
-    characterId: 'character-test',
-    canonicalName: 'Test Character',
-    actorProfileId: 'default',
-    sourceDescription: 'A plainly described test character.',
-  ),
-  skinTone: '#F2C9A0',
-  frontHairId: 'front_default',
-  backHairId: 'none',
-  outfitRequirements: 'One plain coat, trousers, and boots.',
-);
+  test('rejects a sheet that wiped the locked geometry', () async {
+    // A blank green sheet is not a neutral input. It is a provider that erased
+    // everything it was told to preserve, and it must be caught rather than
+    // packaged as an empty character.
+    final request = testRequest(backHairId: 'medium');
+    final blank = image.Image(contract.canvas.width, contract.canvas.height)
+      ..channels = image.Channels.rgb;
+    image.fill(blank, image.getColor(0, 255, 0));
 
-/// A rear-hair length, so the selected cell is active rather than left green.
-const _rearHairRequest = CharacterSheetGenerationRequest(
-  brief: CharacterDesignBrief(
-    bookId: 'book-test',
-    characterId: 'character-test-hair',
-    canonicalName: 'Test Character',
-    actorProfileId: 'default',
-    sourceDescription: 'A plainly described test character.',
-  ),
-  skinTone: '#F2C9A0',
-  frontHairId: 'front_default',
-  backHairId: 'medium',
-  outfitRequirements: 'One plain coat, trousers, and boots.',
-);
+    final package = await CharacterSheetProcessor().process(
+      request: request,
+      generation: fixture.resultFor(request, blank),
+    );
 
-/// Fills a region's writable window, standing in for a provider that respected
-/// the masks. Returns how many pixels were painted.
-Future<int> _paintAllowedWindow(
-  CharacterSheetContract contract,
-  image.Image sheet,
-  String regionId,
-) async {
-  final region = contract.regionsById[regionId]!;
-  final allowed = await _loadMask(contract.assets.allowedRegions);
-  final protected = await _loadMask(contract.assets.protectedRegions);
-  var painted = 0;
-  for (var y = 0; y < region.crop.height; y++) {
-    for (var x = 0; x < region.crop.width; x++) {
-      final sheetX = region.crop.x + x;
-      final sheetY = region.crop.y + y;
-      if (image.getRed(allowed.getPixel(sheetX, sheetY)) < 250) continue;
-      if (image.getRed(protected.getPixel(sheetX, sheetY)) >= 250) continue;
-      sheet.setPixelRgba(sheetX, sheetY, 180, 90, 90, 255);
-      painted++;
-    }
-  }
-  return painted;
-}
-
-Future<image.Image> _loadMask(String assetPath) async {
-  final data = await rootBundle.load(assetPath);
-  return image.decodeImage(
-    data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
-  )!;
+    expect(package.validation.geometryValid, isFalse);
+    expect(
+      package.validation.errors.join(' '),
+      contains('locked geometry'),
+    );
+  });
 }
