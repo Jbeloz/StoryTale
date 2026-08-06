@@ -641,16 +641,21 @@ class CharacterSheetProcessor {
           'The locked ${rigPart.id} runtime asset has no approved hash.',
         );
       }
-      final base = image.decodeImage(
+      final decoded = image.decodeImage(
         await _loadVerified(rigPart.asset, expectedHash),
       );
-      if (base == null ||
-          base.width != region.outputCanvas.width ||
-          base.height != region.outputCanvas.height) {
+      if (decoded == null) {
         throw CharacterSheetProcessingException(
           'The locked ${region.id} base asset has invalid geometry.',
         );
       }
+      // A locked asset is not required to already be cell-sized. The nine body
+      // parts are trimmed to their rig box, but the head is a large square
+      // canvas the rig fits into its box, exactly as the two hair parts are; see
+      // _scaledHairArtwork. Fitting it here reproduces what the runtime draws,
+      // so the head this pipeline validates and tints is the head Story Mode
+      // composes.
+      final base = _fittedToCanvas(decoded, region.outputCanvas);
       final composed = _tintSkin(base, request.skinTone);
       final overlayBytes = appearanceLayers[region.id];
       if (overlayBytes != null) {
@@ -779,6 +784,21 @@ class CharacterSheetProcessor {
       );
     }
     return proof;
+  }
+
+  image.Image _fittedToCanvas(
+    image.Image source,
+    CharacterSheetDimensions canvas,
+  ) {
+    if (source.width == canvas.width && source.height == canvas.height) {
+      return source;
+    }
+    return image.copyResize(
+      source,
+      width: canvas.width,
+      height: canvas.height,
+      interpolation: image.Interpolation.linear,
+    );
   }
 
   image.Image _scaledHairArtwork(

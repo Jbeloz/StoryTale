@@ -78,6 +78,25 @@ Every region publishes `referenceContent` in `crop_manifest.json` with the exact
 bounds and coverage its template artwork occupies, and the rear-hair variants
 publish `referenceContentByBackHairId`. Use those, not the cell bounds.
 
+## The head cell
+
+The `head` cell shows the exact head StoryTale composes at runtime: bald,
+faceless, with only an ear outline. That is not a placeholder to complete.
+
+Eyes, eyebrows, nose, and mouth are **not generated**. StoryTale draws them
+locally from its own modular face parts, once per expression, over whatever this
+cell returns. Anything drawn where a face belongs is either overwritten or
+rejected, and a face drawn outside the allowed window fails the request.
+
+What the allowed window is for is character-specific *detail* on the skin —
+freckles, a birthmark, a scar, blush, a face marking — that belongs to this
+character and stays valid across every expression.
+
+Every V4 cell now draws the same asset the rig composes, so what the guide shows
+and what the runtime assembles are the same artwork. The head content sits
+slightly inside its cell rather than filling it; `referenceContent` for `head`
+in `crop_manifest.json` gives the exact bounds.
+
 ## Hair rules
 
 - Draw one front-hair layer in `front_hair`.
@@ -106,6 +125,8 @@ publish `referenceContentByBackHairId`. Use those, not the cell bounds.
 - Keep one identity across the face details, hair, palette, and outfit.
 - In `head`, modify only the allowed facial-detail area. Do not redraw the
   locked head silhouette, ears, neck edge, or protected pixels.
+- **The head is bald and faceless on purpose, and must stay that way.** Do not
+  draw eyes, eyebrows, a nose, or a mouth. See "The head cell" below.
 - In body cells, draw only clothing fitted to that exact body part.
 - Right-side artwork stays in right-side cells and left-side artwork stays in
   left-side cells.

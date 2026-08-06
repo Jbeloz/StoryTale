@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as image;
 import 'package:storytale/src/features/animated_story/data/character_sheet_contract.dart';
 
 /// Offline regression guard for the versioned character-sheet contracts.
@@ -168,6 +169,44 @@ void main() {
             expect(
               const {'left', 'right', 'center'}.contains(region['side']),
               isTrue,
+            );
+          }
+        });
+
+        test('draws each cell from the asset the rig actually composes', () {
+          // A cell that shows anything other than its rig part shows the
+          // provider a character the runtime cannot reproduce. Rear-hair cells
+          // are the one legitimate exception: the request picks a length, so
+          // sheets that publish all three cannot match the single asset the rig
+          // carries. V4's single rear-hair cell is checked in its own group.
+          final rigAssets = _rigAssetsByPartId();
+          for (final region in _regions(manifest)) {
+            if (region['kind'] == 'backHair') continue;
+            final rigPartId = _rigPartIdOf(region);
+            final rigAsset = rigAssets[rigPartId];
+            expect(
+              rigAsset,
+              isNotNull,
+              reason: '${region['id']} claims missing rig part $rigPartId',
+            );
+            if (region['id'] == 'head' && !sheet.headDrawsRigAsset) {
+              // Recorded, not endorsed. V1 drew its head cell from
+              // base/head.png, which carries a drawn face and is not the asset
+              // the rig composes, and V2 and V3 inherited that. They stay
+              // untouched behind their approved hashes; V4 corrects it.
+              expect(
+                region['sourceAsset'],
+                isNot(rigAsset),
+                reason:
+                    '${sheet.id} head no longer carries its known V1 defect; '
+                    'flip headDrawsRigAsset instead of loosening this check',
+              );
+              continue;
+            }
+            expect(
+              region['sourceAsset'],
+              rigAsset,
+              reason: '${region['id']} does not draw its rig part',
             );
           }
         });
@@ -523,6 +562,105 @@ void main() {
       }
     });
 
+    test('keeps its one rear-hair cell on the length the rig carries', () {
+      final region = _regions(
+        manifest,
+      ).firstWhere((region) => region['kind'] == 'backHair');
+      final rigAsset = _rigAssetsByPartId()['back_hair'];
+      expect(region['sourceAsset'], rigAsset);
+      final byId =
+          (manifest['backHairSourceByIdForActor']
+                  as Map<String, dynamic>)['default']
+              as Map<String, dynamic>;
+      final canonical = manifest['selectionContract']['canonicalBackHairId'];
+      expect(
+        byId[canonical],
+        rigAsset,
+        reason: 'the canonical guide must show the rig rear-hair length',
+      );
+    });
+
+    group('head cell after the V1 source correction', () {
+      // The head is the one cell whose artwork changed size inside an unchanged
+      // cell, so its masks and anchors had to move with it. These assertions
+      // check the result against the runtime asset rather than against the
+      // guide, which ties the sheet to what Story Mode composes.
+      final region = _regions(
+        manifest,
+      ).firstWhere((region) => region['id'] == 'head');
+      final cell = _Rect.fromJson(region['crop'] as Map<String, dynamic>);
+      final head = _fittedRigArtwork(region['sourceAsset'] as String, cell);
+      final content = _opaqueBounds(head);
+
+      test('records the real content bounds of the fitted rig head', () {
+        final reference =
+            region['referenceContent'] as Map<String, dynamic>;
+        expect(reference['x'], content.x);
+        expect(reference['y'], content.y);
+        expect(reference['width'], content.width);
+        expect(reference['height'], content.height);
+        expect(
+          content.width < cell.width && content.height < cell.height,
+          isTrue,
+          reason: 'the runtime head sits inside its cell, it does not fill it',
+        );
+      });
+
+      test('keeps the writable window on the head and nowhere else', () {
+        final allowed = _cellMask(manifest, 'allowedRegions', cell);
+        final protected = _cellMask(manifest, 'protectedRegions', cell);
+        var writable = 0;
+        var writableOffHead = 0;
+        var both = 0;
+        var neither = 0;
+        for (var y = 0; y < cell.height; y++) {
+          for (var x = 0; x < cell.width; x++) {
+            final index = y * cell.width + x;
+            if (allowed[index] && protected[index]) both++;
+            if (!allowed[index] && !protected[index]) neither++;
+            if (!allowed[index] || protected[index]) continue;
+            writable++;
+            if (image.getAlpha(head.getPixel(x, y)) == 0) writableOffHead++;
+          }
+        }
+        expect(writable, greaterThan(0));
+        expect(
+          writableOffHead,
+          0,
+          reason: 'generated face detail must land on the locked head',
+        );
+        expect(both, 0, reason: 'allowed and protected must stay disjoint');
+        expect(neither, 0, reason: 'protected must cover the rest of the cell');
+      });
+
+      test('marks its neck seam where its own anchor says the neck is', () {
+        // Measured in V1: none of the head cell's 181 seam pixels fell within
+        // its recorded anchor, while all nine other body cells matched theirs
+        // exactly. V4 paints the head marker from the anchor.
+        final anchors = (region['seamAnchors'] as List<dynamic>)
+            .cast<Map<String, dynamic>>();
+        expect(anchors, hasLength(1));
+        final seam = _cellMask(manifest, 'seamAllowances', cell);
+        var marked = 0;
+        var offAnchor = 0;
+        for (var y = 0; y < cell.height; y++) {
+          for (var x = 0; x < cell.width; x++) {
+            if (!seam[y * cell.width + x]) continue;
+            marked++;
+            final inside = anchors.any((anchor) {
+              final dx = x + 0.5 - (anchor['x'] as num);
+              final dy = y + 0.5 - (anchor['y'] as num);
+              final radius = (anchor['radius'] as num) + 1;
+              return dx * dx + dy * dy <= radius * radius;
+            });
+            if (!inside) offAnchor++;
+          }
+        }
+        expect(marked, greaterThan(0));
+        expect(offAnchor, 0);
+      });
+    });
+
     test('dresses all nine body parts and keeps the head for face details', () {
       final regions = _regions(manifest);
       expect(
@@ -677,12 +815,19 @@ class _Sheet {
     required this.width,
     required this.height,
     required this.regionIds,
+    this.headDrawsRigAsset = false,
   });
 
   final String id;
   final int version;
   final int width;
   final int height;
+
+  /// Whether the `head` cell shows the asset the rig composes. V1 drew it from
+  /// the faced `base/head.png` instead, and V2 and V3 inherited that; only V4
+  /// was corrected, because the earlier three are locked behind approved
+  /// hashes.
+  final bool headDrawsRigAsset;
 
   /// V1 and V3 publish the full three-cell back-hair catalog; the V2
   /// checkpoint deliberately packs one selected back-hair slot instead.
@@ -734,6 +879,7 @@ const _v4 = _Sheet(
   width: 1024,
   height: 1024,
   regionIds: {'back_hair_selected', ..._sharedRegionIds},
+  headDrawsRigAsset: true,
 );
 
 const _sheets = [_v1, _v2, _v3, _v4];
@@ -752,6 +898,77 @@ List<Map<String, dynamic>> _regions(Map<String, dynamic> manifest) =>
     (manifest['regions'] as List<dynamic>).cast<Map<String, dynamic>>();
 
 String _sha256(File file) => sha256.convert(file.readAsBytesSync()).toString();
+
+Map<String, String> _rigAssetsByPartId() {
+  final rig =
+      jsonDecode(
+            _repoFile(
+              'assets/images/characters/rigs/humanoid_v1/rig.json',
+            ).readAsStringSync(),
+          )
+          as Map<String, dynamic>;
+  return <String, String>{
+    for (final raw in rig['parts'] as List<dynamic>)
+      (raw as Map<String, dynamic>)['id'] as String: raw['asset'] as String,
+  };
+}
+
+/// V1 predates the `rigPartId` field, so fall back to the region's own naming.
+/// Every body region is named after its rig part; only the two hair kinds are
+/// named after the slot they fill.
+String _rigPartIdOf(Map<String, dynamic> region) =>
+    region['rigPartId'] as String? ??
+    switch (region['kind']) {
+      'frontHair' => 'front_hair',
+      'backHair' => 'back_hair',
+      _ => region['id'] as String,
+    };
+
+/// A rig source drawn the way both the sheet builder and the rig renderer draw
+/// it: resized to the cell, without preserving the source aspect ratio.
+image.Image _fittedRigArtwork(String sourceAsset, _Rect cell) {
+  final decoded = image.decodeImage(_repoFile(sourceAsset).readAsBytesSync())!;
+  return image.copyResize(
+    decoded..channels = image.Channels.rgba,
+    width: cell.width,
+    height: cell.height,
+    interpolation: image.Interpolation.linear,
+  );
+}
+
+_Rect _opaqueBounds(image.Image value) {
+  var minX = value.width;
+  var minY = value.height;
+  var maxX = -1;
+  var maxY = -1;
+  for (var y = 0; y < value.height; y++) {
+    for (var x = 0; x < value.width; x++) {
+      if (image.getAlpha(value.getPixel(x, y)) == 0) continue;
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+    }
+  }
+  return _Rect(minX, minY, maxX - minX + 1, maxY - minY + 1);
+}
+
+/// One row-major white/not-white flag per pixel of [cell] in the named mask.
+List<bool> _cellMask(
+  Map<String, dynamic> manifest,
+  String assetKey,
+  _Rect cell,
+) {
+  final assets = manifest['assets'] as Map<String, dynamic>;
+  final mask = image.decodeImage(
+    _repoFile(assets[assetKey] as String).readAsBytesSync(),
+  )!;
+  return <bool>[
+    for (var y = 0; y < cell.height; y++)
+      for (var x = 0; x < cell.width; x++)
+        image.getRed(mask.getPixel(cell.x + x, cell.y + y)) >= 250,
+  ];
+}
 
 ({int width, int height}) _readPngSize(File file) {
   final handle = file.openSync();

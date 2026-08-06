@@ -687,23 +687,62 @@ provider request was made. It shares V3's migration surface.
 Owner decisions still open: review the V4 guide, and choose whether V4 replaces
 V3 as the migration target.
 
+### The head-source mismatch is fixed, 6 August 2026
+
+This was the item recorded below as "the sheet points at the wrong one". It was
+unblocked, free, and needed whichever way the faces question goes, so it was done
+while both owner gates stayed open. Measuring it turned up more than the note
+described.
+
+**The head was the only cell that had ever drifted.** Every other region's
+`sourceAsset` already equalled its `rig.json` part asset. `base/head.png` is
+`357 x 367`, trimmed to its own artwork, with a face drawn on it;
+`faces/head_base.png` is the `1254 x 1254` faceless locked part the rig fits into
+the same `357 x 367` box. Fitted, the runtime head's content is `325 x 344` at
+`(16, 6)` — strictly inside the old one and about 14% smaller by area. The
+shipped `assembled_reference.png` was already rendered from the faceless head, so
+one request showed the provider two different heads.
+
+**It was also a hard runtime bug, not only a cosmetic one.**
+`_buildProofArtwork` required each region's locked asset to already equal the
+region canvas, which is true for the nine trimmed body parts and false for the
+head, so packaging threw *"The locked head base asset has invalid geometry."*
+before reading a single generated pixel. Nothing caught it: **no test touched
+`CharacterSheetProcessor` at all**, and the one owner-controlled request returned
+a Worker 502 before reaching that code.
+
+What changed:
+
+- **The V4 generator takes every cell's artwork from the rig part**, so a cell
+  cannot drift from the runtime again. The build prints each correction it makes;
+  it printed exactly one.
+- **The head cell's metadata moved with its artwork** through one build-time
+  remap derived from the two content bounds: the allowed face-detail window, the
+  protected area rebuilt as *cell minus allowed* (V1's measured convention in
+  this cell), and the anchors, now `(179.3, 345.76)`.
+- **The head's seam marker is painted from its own anchor.** A second inherited
+  defect: nine of the ten body cells mark their seam exactly at their anchors,
+  and the head marked none of its `181` pixels there, leaving the marker on green
+  left of the neck. Fixed in V4 only.
+- **The processor fits a locked asset to its region canvas**, mirroring
+  `_scaledHairArtwork`, which already did this for the two hair parts.
+- **`test/character_sheet_processor_test.dart`** is the first test to exercise
+  that class. Both of its cases reproduce the exact throw when the fix is
+  reverted.
+
+V1, V2, and V3 are untouched behind their approved hashes — V3 is owner-approved
+artwork — and the contract test now records their head mismatch as an explicit
+expectation so it stays visible. V1's allowed window was measured to sit inside
+the smaller runtime head too, so the processor fix changes nothing about what V1
+*accepts*; it only stops the throw. All three V4 guides and all six V4 hashes
+changed, so any earlier review of the V4 head cell is superseded. `flutter test`
+is **199 passing, 0 failing** and `flutter analyze` reports no issues.
+
 ### Faces are an unsolved design question, 6 August 2026
 
 The owner raised this before clearing the chat and it is **not yet decided**. The
-findings below come from reading the code; do not re-derive them.
-
-**Two head assets exist and the sheet points at the wrong one.**
-
-- The rig renders
-  `assets/images/characters/rigs/humanoid_v1/faces/head_base.png`. It is
-  **faceless** — a bald head with only an ear outline, `1254 x 1254` — and it is
-  one of the ten hash-locked parts.
-- Every sheet's `head` region instead points at
-  `assets/images/characters/rigs/humanoid_v1/base/head.png`, which has a face
-  drawn on it. That is why the guide's head cell shows eyes and a mouth.
-- So the guide shows the provider a head that is **not** what the runtime
-  composes. This is inherited from V1, so V1, V2, V3, and V4 all share it. It
-  should be fixed whichever direction faces take.
+findings below come from reading the code; do not re-derive them. The head-source
+half of this question is now fixed, as recorded above.
 
 **Two face mechanisms exist, and the processor already combines them.**
 
@@ -728,18 +767,24 @@ a **face component sheet** generating per-character parts into a new
 `face_profiles/<characterId>/` directory, leaving `sets.json` and the six
 expressions intact.
 
+Nothing about the head-source fix decides this. The V4 prompt contract now states
+plainly what the pipeline does today — the head is faceless, the provider must
+not draw eyes, nose, or mouth, and the allowed window is for character-specific
+skin detail — which is the accurate description under either answer.
+
 The sizing problem that makes this non-trivial, recorded so it is not
 rediscovered: face parts are full-canvas `1254 x 1254` PNGs, so the roughly
 fourteen of them cannot be packed into a `1K` sheet without introducing per-part
 crop rectangles. Designing that is a planning task in its own right.
 
-**The next task is still to resume Phase 7.** Start with whichever the owner
-prefers:
+**The next task is still to resume Phase 7.** Both remaining starting points are
+the owner's:
 
 1. the pending manual Phase 7G.1A.1 actor/pose/reload verification, which has
    been open for a while and is the owner's to perform; or
-2. the V3 migration decision, whose Flutter-side surface is six known changes
-   plus five Worker constants that need a deployment.
+2. the V3-versus-V4 migration decision, whose Flutter-side surface is six known
+   changes plus five Worker constants that need a deployment. V4 is now the only
+   sheet whose head matches the runtime, which is one more reason to prefer it.
 
 Do not make a Gemini or other paid request, and do not deploy the Worker,
 without the owner's explicit approval for that exact action.
@@ -835,6 +880,10 @@ their roadmap gates unless a blocking defect requires a narrow fix.
 - The Phase 7G whole-character Little Prince result is a rejected structural
   prototype: Gemini redrew the skull/body, and splitting it could not recover
   exact StoryTale geometry.
+- V1, V2, and V3 still draw their `head` cell from the faced `base/head.png`
+  rather than the locked `faces/head_base.png` the rig composes. They are left
+  that way on purpose, behind their approved hashes; only V4 is corrected. Any
+  migration to V1/V2/V3 would carry the defect forward.
 - Phase 7G.1A.1 per-actor appearance persistence is implemented; the project
   owner still needs to perform the documented manual actor/pose/reload check.
 - Book-specific humans are not yet connected to every Story Mode chapter;
@@ -892,9 +941,9 @@ their roadmap gates unless a blocking defect requires a narrow fix.
 
 ### Known failing checks
 
-- **Fixed 5 August 2026.** `flutter test` now reports **150 passing, 0 failing**
-  and `flutter analyze` reports **no issues**. The former `sprite_rig_test.dart`
-  failure and the `unnecessary_import` info are both resolved; see section 11.
+- **None.** As of 6 August 2026 `flutter test` reports **199 passing, 0 failing**
+  and `flutter analyze` reports **no issues**. The `sprite_rig_test.dart` failure
+  and the `unnecessary_import` info were resolved on 5 August; see section 11.
 - `dart format --set-exit-if-changed lib test` **rewrites files instead of only
   reporting them**. It currently reformats three unrelated pre-existing files:
   `lib/src/generated/voice_manifest.g.dart`,

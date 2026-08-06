@@ -247,9 +247,55 @@ hair. Matching it would mean setting the `back_hair` `hairFit` scale in
 That is deliberately not done, because it would change what the owner sees during
 the pending Phase 7G.1A.1 verification.
 
-V1, V2, and V3 are untouched behind their recorded hashes. V4 is **not**
-registered with Flutter, the Worker, or the provider; it is a local candidate
-with the same migration surface as V3.
+### V4 head cell: the sheet now shows the head the rig composes
+
+Corrected on 2026-08-06. Every region's artwork is now taken from the `rig.json`
+part asset rather than inherited from V1's region record, so a cell cannot drift
+from the runtime again. Rebuilding proved the head was the **only** region that
+had drifted; the build prints the correction it makes.
+
+What was wrong:
+
+- The rig composes
+  `assets/images/characters/rigs/humanoid_v1/faces/head_base.png`, a `1254 x 1254`
+  canvas holding a bald, faceless head with an ear outline. It is one of the ten
+  hash-locked parts.
+- Every sheet's `head` cell instead drew
+  `assets/images/characters/rigs/humanoid_v1/base/head.png`, a `357 x 367` image
+  trimmed to its own artwork **with a face drawn on it**.
+- Fitted to the same `357 x 367` cell the two are not interchangeable. The
+  runtime head's content is `325 x 344` at offset `(16, 6)` and sits strictly
+  inside the old one, about 14% smaller by area (`92,043` px against `107,681`).
+- `assembled_reference.png`, shipped beside the guide in every version, is
+  rendered from the faceless runtime head, so one request showed the provider
+  two different heads.
+
+Because the artwork moved inside an unchanged cell, its metadata moved with it
+through one build-time `_ContentRemap` derived from the two content bounds
+(`scaleX 0.91`, `scaleY 0.94`):
+
+- the allowed face-detail window, so generated detail still lands on the head;
+- `protected`, rebuilt as *cell minus allowed*, which is V1's measured
+  convention in this cell rather than a new rule; and
+- `attachmentAnchor` and the seam anchor, now `(179.3, 345.76)`.
+
+One further inherited defect surfaced while measuring and was fixed in V4 only.
+Nine of the ten body cells paint their seam marker exactly at their own recorded
+anchors; the head painted none of its `181` seam pixels there, leaving the marker
+on green well left of the neck its anchor names. V4 paints the head marker from
+the anchor, like the other nine.
+
+The rig box, the cell rects, the ten locked parts, and `rig.json` are unchanged.
+All three V4 guides and all six V4 hashes changed, so any earlier review of the
+V4 head cell is superseded.
+
+V1, V2, and V3 keep this defect and are untouched behind their recorded hashes:
+V3 is owner-approved artwork and regenerating it would invalidate that review.
+`test/character_sheet_contract_test.dart` records the V1-V3 mismatch as an
+explicit expectation so it stays visible rather than silently passing.
+
+V4 is still **not** registered with Flutter, the Worker, or the provider; it is a
+local candidate with the same migration surface as V3.
 
 ## 3. V1 source layout retained for rollback
 
@@ -675,6 +721,30 @@ V3 migration is complete, it still requires one controlled request and a
 manual six-face/four-pose review pass. The sprite-limiter change is live in Worker
 version `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
 
+### Head base fitted to its cell in the processor — 2026-08-06
+
+Leaving that implementation untested hid a defect that would have failed the
+very first real packaging attempt. `_buildProofArtwork` loaded each region's
+locked runtime asset and required it to already equal the region's output
+canvas. Nine of the ten body parts are stored trimmed to their rig box, so they
+passed; the head is a `1254 x 1254` canvas the rig fits into a `357 x 367` box,
+so packaging threw *"The locked head base asset has invalid geometry."* before
+examining a single generated pixel. Nothing caught it: no test touched
+`CharacterSheetProcessor` at all, and the one owner-controlled request returned
+a Worker 502 before reaching this code.
+
+The locked asset is now fitted to the region canvas first, exactly as
+`_scaledHairArtwork` already does for the two hair parts, so the head this
+pipeline tints, alpha-checks, and composes is the head Story Mode draws. Hash
+verification is unchanged.
+
+`test/character_sheet_processor_test.dart` is the first test to exercise this
+class. It packages a green V1 sheet and a sheet whose head allowed window is
+filled, and both reproduce the exact throw when the fix is reverted. V1's
+allowed window was measured to sit inside the smaller runtime head as well, so
+this changes what the pipeline *accepts* for V1 in no way — it only stops the
+throw and corrects which head is used.
+
 ## 15. Acceptance gate
 
 - [x] The canonical guide is versioned at exactly `4096 x 4096`, with native
@@ -702,6 +772,12 @@ version `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
   to V1 or making an automatic paid retry.
 - [x] Every region has one reviewed crop, output canvas, anchor, role, and side.
 - [x] Allowed, protected, and seam masks are versioned and deterministic.
+- [x] In V4, every cell draws the asset the rig composes, and the head cell's
+  masks, seam marker, and anchors follow that artwork. V1, V2, and V3 keep the
+  inherited `base/head.png` mismatch behind their approved hashes, recorded as
+  an explicit test expectation.
+- [x] The processor fits a locked runtime asset to its region canvas, so
+  packaging no longer rejects the head the rig itself composes.
 - [ ] Gemini receives one coherent-character brief and returns only the
   separated sheet.
 - [ ] No returned sheet contains an assembled body, extra person, text, UI, or

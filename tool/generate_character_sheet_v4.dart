@@ -149,6 +149,7 @@ void main() {
   final rigManifest =
       jsonDecode(File(_rigManifestPath).readAsStringSync())
           as Map<String, dynamic>;
+  final rigAssetByPartId = _rigAssetsByPartId(rigManifest);
   _validateTargetSizesAgainstRig(rigManifest);
   _validateTargetLayout();
 
@@ -158,6 +159,28 @@ void main() {
   final v1Regions = <String, Map<String, dynamic>>{
     for (final raw in v1Manifest['regions'] as List<dynamic>)
       (raw as Map<String, dynamic>)['id'] as String: raw,
+  };
+
+  // V1 drew its `head` cell from `base/head.png`, which carries a face and is
+  // not the asset the rig composes. V4 takes every cell's artwork from the rig
+  // part instead, so the sheet cannot drift from the runtime again. The head
+  // then needs its masks and anchors moved with it, because the real head is
+  // smaller inside the same cell.
+  final headTarget = _targets.firstWhere((target) => target.id == 'head');
+  final headRemap = _ContentRemap.between(
+    previousAsset: v1Regions['head']!['sourceAsset'] as String,
+    currentAsset: rigAssetByPartId['head']!,
+    cell: headTarget.crop,
+  );
+  final correctedSources = <String, Map<String, String>>{
+    for (final target in _targets)
+      if (v1Regions[target.sourceRegionId]!['sourceAsset'] !=
+          rigAssetByPartId[target.rigPartId])
+        target.id: <String, String>{
+          'wasInV1':
+              v1Regions[target.sourceRegionId]!['sourceAsset'] as String,
+          'nowUsesRigPart': rigAssetByPartId[target.rigPartId]!,
+        },
   };
 
   final guide = _solidImage(0, 255, 0);
@@ -174,8 +197,12 @@ void main() {
   final referenceContent = <String, _Rect>{};
   for (final target in _targets) {
     final sourceRegion = v1Regions[target.sourceRegionId]!;
-    final sourceCanvas = sourceRegion['outputCanvas'] as Map<String, dynamic>;
-    final sourceAsset = sourceRegion['sourceAsset'] as String;
+    // V1 records its anchors in its own output-canvas space, and V4's cells are
+    // the same size, so this is the space the anchors are read from. It is not
+    // always the source PNG's canvas; `sourceCanvas` below records that.
+    final anchorSpace = sourceRegion['outputCanvas'] as Map<String, dynamic>;
+    final sourceAsset = rigAssetByPartId[target.rigPartId]!;
+    final remap = target.id == 'head' ? headRemap : _ContentRemap.identity;
     if (sourceRegion['kind'] == 'backHair') {
       // Drawn once per variant below, not into the shared base guide.
       backHairTarget = target;
@@ -186,44 +213,72 @@ void main() {
     final sourceCrop = _Rect.fromJson(
       sourceRegion['crop'] as Map<String, dynamic>,
     );
-    _copyMask(
+    final seamAnchors = _scaleSeamAnchors(
+      sourceRegion['seamAnchors'] as List<dynamic>? ?? const <dynamic>[],
+      anchorSpace,
+      target.crop,
+    ).map(remap.anchor).toList(growable: false);
+    final allowedCell = _cellMask(
       source: v1Allowed,
-      destinationImage: allowed,
       sourceCrop: sourceCrop,
-      destinationRect: target.crop,
+      cell: target.crop,
+      remap: remap,
     );
-    _copyMask(
-      source: v1Protected,
-      destinationImage: protected,
-      sourceCrop: sourceCrop,
-      destinationRect: target.crop,
+    _writeCellMask(allowed, allowedCell, target.crop);
+    _writeCellMask(
+      protected,
+      // V1's convention, measured rather than assumed: inside a cell the
+      // allowed window and the protected area are disjoint and together cover
+      // every pixel. Deriving the head's protected area from its own allowed
+      // window keeps that true after the artwork moves, which copying V1's
+      // protected mask through the same remap would not.
+      target.id == 'head'
+          ? _invertedMask(allowedCell)
+          : _cellMask(
+              source: v1Protected,
+              sourceCrop: sourceCrop,
+              cell: target.crop,
+              remap: remap,
+            ),
+      target.crop,
     );
-    _copyMask(
-      source: v1Seams,
-      destinationImage: seams,
-      sourceCrop: sourceCrop,
-      destinationRect: target.crop,
+    _writeCellMask(
+      seams,
+      // Nine of the ten body cells carry a seam marker painted exactly at their
+      // own recorded anchors. The head does not: measured against V1, none of
+      // its 181 seam pixels fall within its single anchor, and the blob sits on
+      // green well left of the neck the anchor names. Painting the head's
+      // marker from its anchor makes it agree with both its own metadata and
+      // the other nine cells.
+      target.id == 'head'
+          ? _seamMaskFromAnchors(seamAnchors, target.crop)
+          : _cellMask(
+              source: v1Seams,
+              sourceCrop: sourceCrop,
+              cell: target.crop,
+              remap: remap,
+            ),
+      target.crop,
     );
 
     final region = Map<String, dynamic>.from(sourceRegion)
       ..['id'] = target.id
       ..['rigPartId'] = target.rigPartId
       ..['crop'] = target.crop.toJson()
-      ..['sourceCanvas'] = Map<String, dynamic>.from(sourceCanvas)
+      ..['sourceAsset'] = sourceAsset
+      ..['sourceCanvas'] = _canvasOf(sourceAsset)
       ..['outputCanvas'] = <String, int>{
         'width': target.crop.width,
         'height': target.crop.height,
       }
-      ..['attachmentAnchor'] = _scalePoint(
-        sourceRegion['attachmentAnchor'] as Map<String, dynamic>,
-        sourceCanvas,
-        target.crop,
+      ..['attachmentAnchor'] = remap.point(
+        _scalePoint(
+          sourceRegion['attachmentAnchor'] as Map<String, dynamic>,
+          anchorSpace,
+          target.crop,
+        ),
       )
-      ..['seamAnchors'] = _scaleSeamAnchors(
-        sourceRegion['seamAnchors'] as List<dynamic>? ?? const <dynamic>[],
-        sourceCanvas,
-        target.crop,
-      )
+      ..['seamAnchors'] = seamAnchors
       ..['maskRegionId'] = target.id
       ..['transportContent'] = _Rect(
         0,
@@ -237,6 +292,20 @@ void main() {
 
   if (backHairTarget == null) {
     throw StateError('V4 must contain exactly one back-hair cell.');
+  }
+  // The rear-hair cell is the one place a variant legitimately replaces the rig
+  // asset, because the request picks a length. The canonical variant must still
+  // be the length the rig actually carries, or the sheet and the runtime would
+  // disagree again by a different route.
+  final rigBackHair = rigAssetByPartId[backHairTarget.rigPartId];
+  final canonicalBackHair = _backHairVariants
+      .firstWhere((variant) => variant.id == _canonicalBackHairId)
+      .sourceAsset;
+  if (rigBackHair != canonicalBackHair) {
+    throw StateError(
+      'The $_canonicalBackHairId rear-hair variant must be the rig asset '
+      '$rigBackHair, found $canonicalBackHair.',
+    );
   }
 
   final outputDirectory = Directory(_v4Root)..createSync(recursive: true);
@@ -356,6 +425,21 @@ void main() {
           'keep every crop, output canvas, mask, anchor, and seam unchanged; '
           'switch only the actor brief and actor-specific hair references',
     },
+    'sourceContract': <String, dynamic>{
+      'everyRegionDrawsItsRigPartAsset': true,
+      'rule':
+          'a cell shows the exact asset the rig composes at runtime, fitted to '
+          'the cell; anything else shows the provider a character the runtime '
+          'cannot reproduce',
+      'correctedFromV1': correctedSources,
+      'headContentRemap': headRemap.toJson(),
+      'headContentRemapReason':
+          'V1 drew the head cell from base/head.png, which carries a drawn face '
+          'and is trimmed to its own artwork. The rig composes '
+          'faces/head_base.png, whose head is smaller and inset once fitted to '
+          'the same cell, so the head allowed window, protected area, seam '
+          'allowance, and anchors were moved with it',
+    },
     'transport': <String, dynamic>{
       'purpose':
           'pack the exact Sprite Studio parts and one selected back-hair cell '
@@ -421,6 +505,12 @@ void main() {
     'Guides for $_guideActorId: '
     '${_backHairVariants.map((variant) => variant.id).join(', ')}',
   );
+  for (final entry in correctedSources.entries) {
+    stdout.writeln(
+      'Corrected ${entry.key}: ${entry.value['wasInV1']} -> '
+      '${entry.value['nowUsesRigPart']}',
+    );
+  }
   stdout.writeln('No network or provider request was used.');
 }
 
@@ -617,42 +707,111 @@ image.Image _decode(String path) {
   return decoded;
 }
 
-void _copyMask({
+/// Lifts one V1 mask region into a cell-sized black-and-white buffer, moving it
+/// through [remap] on the way so a mask still covers the artwork it describes
+/// after that artwork changes size inside an unchanged cell.
+///
+/// Sampling runs backwards, from each destination pixel to its source, so a
+/// shrinking remap cannot leave holes in the result.
+image.Image _cellMask({
   required image.Image source,
-  required image.Image destinationImage,
   required _Rect sourceCrop,
-  required _Rect destinationRect,
+  required _Rect cell,
+  _ContentRemap remap = _ContentRemap.identity,
 }) {
-  final crop = image.copyCrop(
-    source,
-    sourceCrop.x,
-    sourceCrop.y,
-    sourceCrop.width,
-    sourceCrop.height,
-  );
   final resized = image.copyResize(
-    crop,
-    width: destinationRect.width,
-    height: destinationRect.height,
+    image.copyCrop(
+      source,
+      sourceCrop.x,
+      sourceCrop.y,
+      sourceCrop.width,
+      sourceCrop.height,
+    ),
+    width: cell.width,
+    height: cell.height,
     interpolation: image.Interpolation.nearest,
   );
-  for (var y = 0; y < resized.height; y++) {
-    for (var x = 0; x < resized.width; x++) {
-      final pixel = resized.getPixel(x, y);
+  final result = image.Image(cell.width, cell.height)
+    ..channels = image.Channels.rgb;
+  image.fill(result, image.getColor(0, 0, 0));
+  for (var y = 0; y < cell.height; y++) {
+    for (var x = 0; x < cell.width; x++) {
+      final source = remap.inverse(x, y);
+      final sourceX = source.$1.round();
+      final sourceY = source.$2.round();
+      if (sourceX < 0 ||
+          sourceY < 0 ||
+          sourceX >= cell.width ||
+          sourceY >= cell.height) {
+        continue;
+      }
+      final pixel = resized.getPixel(sourceX, sourceY);
       if (image.getRed(pixel) >= 250 &&
           image.getGreen(pixel) >= 250 &&
           image.getBlue(pixel) >= 250) {
-        destinationImage.setPixelRgba(
-          destinationRect.x + x,
-          destinationRect.y + y,
-          255,
-          255,
-          255,
-          255,
-        );
+        result.setPixelRgba(x, y, 255, 255, 255, 255);
       }
     }
   }
+  return result;
+}
+
+/// One filled disc per seam anchor, the same shape the other nine body cells
+/// already carry, clipped to the cell.
+image.Image _seamMaskFromAnchors(
+  List<Map<String, double>> anchors,
+  _Rect cell,
+) {
+  final result = image.Image(cell.width, cell.height)
+    ..channels = image.Channels.rgb;
+  image.fill(result, image.getColor(0, 0, 0));
+  for (final anchor in anchors) {
+    final radius = anchor['radius']!;
+    for (var y = 0; y < cell.height; y++) {
+      for (var x = 0; x < cell.width; x++) {
+        final dx = x + 0.5 - anchor['x']!;
+        final dy = y + 0.5 - anchor['y']!;
+        if (dx * dx + dy * dy <= radius * radius) {
+          result.setPixelRgba(x, y, 255, 255, 255, 255);
+        }
+      }
+    }
+  }
+  return result;
+}
+
+/// Every pixel the mask does not mark. Used for the head, where V1 keeps the
+/// allowed window and the protected area exactly complementary.
+image.Image _invertedMask(image.Image mask) {
+  final result = image.Image(mask.width, mask.height)
+    ..channels = image.Channels.rgb;
+  for (var y = 0; y < mask.height; y++) {
+    for (var x = 0; x < mask.width; x++) {
+      final white = image.getRed(mask.getPixel(x, y)) >= 250;
+      result.setPixelRgba(x, y, white ? 0 : 255, white ? 0 : 255,
+          white ? 0 : 255, 255);
+    }
+  }
+  return result;
+}
+
+void _writeCellMask(image.Image destination, image.Image cellMask, _Rect cell) {
+  for (var y = 0; y < cellMask.height; y++) {
+    for (var x = 0; x < cellMask.width; x++) {
+      if (image.getRed(cellMask.getPixel(x, y)) < 250) continue;
+      destination.setPixelRgba(cell.x + x, cell.y + y, 255, 255, 255, 255);
+    }
+  }
+}
+
+Map<String, String> _rigAssetsByPartId(Map<String, dynamic> rigManifest) => {
+  for (final raw in rigManifest['parts'] as List<dynamic>)
+    (raw as Map<String, dynamic>)['id'] as String: raw['asset'] as String,
+};
+
+Map<String, int> _canvasOf(String sourceAsset) {
+  final decoded = _decode(sourceAsset);
+  return <String, int>{'width': decoded.width, 'height': decoded.height};
 }
 
 Map<String, double> _scalePoint(
@@ -705,6 +864,94 @@ class _BackHairVariant {
   final String sourceAsset;
 
   String guideFileName(String actorId) => 'guide_${actorId}_$id.png';
+}
+
+/// Moves cell-local geometry from where one source PNG's artwork sits in a cell
+/// to where another's sits in that same cell.
+///
+/// The head needs this. `base/head.png` is trimmed to its own artwork and fills
+/// nearly the whole cell, while the rig's `faces/head_base.png` is a large
+/// square canvas whose head, once fitted to the cell, is smaller and inset. The
+/// cell, the crop, and the rig box do not change; only the artwork inside them
+/// does, so every mask, anchor, and seam authored against the old artwork has
+/// to travel the same distance.
+class _ContentRemap {
+  const _ContentRemap({
+    required this.scaleX,
+    required this.scaleY,
+    required this.previous,
+    required this.current,
+  });
+
+  factory _ContentRemap.between({
+    required String previousAsset,
+    required String currentAsset,
+    required _Rect cell,
+  }) {
+    final previous = _opaqueBounds(_fittedArtwork(previousAsset, cell));
+    final current = _opaqueBounds(_fittedArtwork(currentAsset, cell));
+    return _ContentRemap(
+      scaleX: current.width / previous.width,
+      scaleY: current.height / previous.height,
+      previous: previous,
+      current: current,
+    );
+  }
+
+  static const identity = _ContentRemap(
+    scaleX: 1,
+    scaleY: 1,
+    previous: _Rect(0, 0, 1, 1),
+    current: _Rect(0, 0, 1, 1),
+  );
+
+  final double scaleX;
+  final double scaleY;
+  final _Rect previous;
+  final _Rect current;
+
+  bool get isIdentity => identical(this, identity);
+
+  double _mapX(double x) =>
+      isIdentity ? x : current.x + (x - previous.x) * scaleX;
+
+  double _mapY(double y) =>
+      isIdentity ? y : current.y + (y - previous.y) * scaleY;
+
+  /// Where a destination pixel reads from in the pre-remap cell.
+  (double, double) inverse(int x, int y) {
+    if (isIdentity) return (x.toDouble(), y.toDouble());
+    return (
+      previous.x + (x - current.x) / scaleX,
+      previous.y + (y - current.y) / scaleY,
+    );
+  }
+
+  /// Identity returns its input untouched rather than a rounded copy, so a cell
+  /// that did not move keeps the exact values it already published.
+  Map<String, double> point(Map<String, double> value) => isIdentity
+      ? value
+      : <String, double>{
+          'x': _round(_mapX(value['x']!)),
+          'y': _round(_mapY(value['y']!)),
+        };
+
+  Map<String, double> anchor(Map<String, double> value) => isIdentity
+      ? value
+      : <String, double>{
+          ...point(value),
+          'radius': _round(value['radius']! * (scaleX + scaleY) / 2),
+        };
+
+  static double _round(double value) =>
+      double.parse(value.toStringAsFixed(2));
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'previousContent': previous.toJson(),
+    'currentContent': current.toJson(),
+    'scaleX': _round(scaleX),
+    'scaleY': _round(scaleY),
+  };
 }
 
 class _TargetSpec {

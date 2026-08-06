@@ -18,12 +18,12 @@
     "promptContract": "assets/images/characters/generation_templates/humanoid_v1/character_sheet_v4/prompt_contract.md"
   },
   "assetSha256": {
-    "guide": "b230a82f466ed710538fb6804a062508605ac15a7a43347a3dc119dd27d3dd3e",
+    "guide": "32f922741c98dae4c25b1a93f4fa16b199f12471d7e2dd7ae598af2e6034e81c",
     "assembledReference": "0247225e7e8a9584961ce795c0f3e1e9bf0e61450e5cb151d0c02d042319fa50",
-    "allowedRegions": "71095d01b2f18ecc1cfed6fcfb41dbc70261579fdaa17f14f5a2cc2cdf26791b",
-    "protectedRegions": "86ca4572740d65d0858059130be88f0f04a97c24d2980f98e1d44b9332fd593e",
-    "seamAllowances": "c1924879c8365f2d691b5079f036a8b6a4cecdca46534317d714ac6e4ed5d2f0",
-    "promptContract": "5f38ce477d1c66a090c44d0eaa69c2b76d71280d6d6d66f207a14bcfa619d790"
+    "allowedRegions": "bb0313bcf674fff6a140f63efb96290a334c3383e0b637a5f84d9c2058c1a2b0",
+    "protectedRegions": "dee6725823447c6bd18ab93ffa1b09884e3adbb91a088ca23a7c95b56f318716",
+    "seamAllowances": "a727c769962c7c77c7ac7857b8bbb55c8a1e00668fbea90e5115db15fd6a048e",
+    "promptContract": "5ec524cb6bfa3bd4425d10814eb1554ce1be5ae8ca72de4dac25861c82afd2b5"
   },
   "maskEncoding": {
     "allowedRegions": "white pixels may contain generated appearance; black pixels are discarded",
@@ -71,6 +71,33 @@
       "heroine": "assets/images/characters/rigs/humanoid_v1/hair/back_heroine_long.png"
     },
     "heroineReuseRule": "keep every crop, output canvas, mask, anchor, and seam unchanged; switch only the actor brief and actor-specific hair references"
+  },
+  "sourceContract": {
+    "everyRegionDrawsItsRigPartAsset": true,
+    "rule": "a cell shows the exact asset the rig composes at runtime, fitted to the cell; anything else shows the provider a character the runtime cannot reproduce",
+    "correctedFromV1": {
+      "head": {
+        "wasInV1": "assets/images/characters/rigs/humanoid_v1/base/head.png",
+        "nowUsesRigPart": "assets/images/characters/rigs/humanoid_v1/faces/head_base.png"
+      }
+    },
+    "headContentRemap": {
+      "previousContent": {
+        "x": 1,
+        "y": 0,
+        "width": 356,
+        "height": 366
+      },
+      "currentContent": {
+        "x": 16,
+        "y": 6,
+        "width": 325,
+        "height": 343
+      },
+      "scaleX": 0.91,
+      "scaleY": 0.94
+    },
+    "headContentRemapReason": "V1 drew the head cell from base/head.png, which carries a drawn face and is trimmed to its own artwork. The rig composes faces/head_base.png, whose head is smaller and inset once fitted to the same cell, so the head allowed window, protected area, seam allowance, and anchors were moved with it"
   },
   "transport": {
     "purpose": "pack the exact Sprite Studio parts and one selected back-hair cell into the smallest supported square sheet",
@@ -121,9 +148,9 @@
     "rearHairReferenceScaleReason": "the rear-hair source carries more transparent padding than the front-hair source, so at equal cell width its visible art was narrower and the front hair overhung it; the artwork is enlarged inside the unchanged cell until the two widths match"
   },
   "guideVariantSha256": {
-    "short": "5c2ce717369fc8358b0d6664ae40dbbee02ec58810a9d4287559a24b892f4c22",
-    "medium": "b230a82f466ed710538fb6804a062508605ac15a7a43347a3dc119dd27d3dd3e",
-    "long": "10e796cd3d6e1a6f53ba3253981487b11f6c0e343c8dd1230ab7a8c07c646c48"
+    "short": "b63e5f721f6f48bfa501bc623f00db18b0b7aa60d34b729775b18bcf00fc4b79",
+    "medium": "32f922741c98dae4c25b1a93f4fa16b199f12471d7e2dd7ae598af2e6034e81c",
+    "long": "150ce5bcec68a68f09588c63da40fa0e6fc1d94bc4532ea21f464480dbe13816"
   },
   "backHairSourceByIdForActor": {
     "default": {
@@ -241,18 +268,18 @@
         "width": 357,
         "height": 367
       },
-      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/head.png",
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/faces/head_base.png",
       "parentPart": "head",
       "side": "center",
       "attachmentAnchor": {
-        "x": 179.88,
-        "y": 362.53999999999996
+        "x": 179.3,
+        "y": 345.76
       },
       "seamAnchors": [
         {
-          "x": 179.88,
-          "y": 362.54,
-          "radius": 9.0
+          "x": 179.3,
+          "y": 345.76,
+          "radius": 8.33
         }
       ],
       "defaultLayerOrder": 40,
@@ -260,8 +287,8 @@
       "requirement": "required",
       "rigPartId": "head",
       "sourceCanvas": {
-        "width": 357,
-        "height": 367
+        "width": 1254,
+        "height": 1254
       },
       "transportContent": {
         "x": 0,
@@ -271,11 +298,11 @@
       },
       "resampling": "none-after-provider",
       "referenceContent": {
-        "x": 1,
-        "y": 0,
-        "width": 356,
-        "height": 366,
-        "coverage": 0.9945
+        "x": 16,
+        "y": 6,
+        "width": 325,
+        "height": 343,
+        "coverage": 0.8508
       }
     },
     {

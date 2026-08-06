@@ -422,8 +422,16 @@ V3's `4096 x 1024` canvas may not be requestable at all. `character_sheet_v4`
 was built the same day as the `1:1` answer: `1024 x 1024` at the `1K` tier,
 one selected back-hair cell, native-size cells, an `18` pixel green gap, and
 sides grouped. It costs `$0.067` against V3's `$0.101`, and `0.5K` is impossible
-for any version because the back-hair cell is `800` pixels tall. Details and the
-corrected size table are in [Character Sheet Plan](CHARACTER_SHEET_PLAN.md).
+for any version because the back-hair cell is `800` pixels tall. **Corrected on
+2026-08-06:** every V4 cell now draws the exact asset the rig composes. Only the
+`head` cell had ever differed, showing the faced `base/head.png` instead of the
+faceless locked `faces/head_base.png` the runtime and the shipped assembled
+reference both use; its masks, seam marker, and anchors moved with the smaller
+artwork. The same defect existed at runtime and would have failed the first real
+packaging attempt, so the processor now fits a locked asset to its region canvas
+and `test/character_sheet_processor_test.dart` covers that class for the first
+time. Details and the corrected size table are in
+[Character Sheet Plan](CHARACTER_SHEET_PLAN.md).
 Phase 7G.1C is
 implemented locally: the processor
 hash-locks the ten runtime head/body assets, rejects face pixels outside the
@@ -563,14 +571,25 @@ Current Phase 7G.1 work:
   separated by a `42` pixel channel, and rear-hair artwork enlarged inside its
   unchanged cell until its width matches the front hair. Built by
   `tool/generate_character_sheet_v4.dart` with no provider request.
+- [x] **Head-source correction, 2026-08-06:** every V4 cell now draws the asset
+  `rig.json` composes, which measurement showed only the `head` cell had ever
+  broken. Its allowed window, protected area, seam marker, and anchors moved
+  with the artwork, and its seam marker is now painted at its own anchor like
+  the other nine body cells. The same session fixed the matching runtime defect:
+  the processor threw on the head before reading any generated pixel, because
+  the locked head is a `1254 x 1254` canvas and every region check assumed a
+  cell-sized asset. V1, V2, and V3 keep the mismatch behind their approved
+  hashes, recorded as an explicit test expectation.
 - [ ] **V4 owner gate:** review the V4 guide, then decide whether V4 replaces V3
-  as the migration target. V4 is the safer shape and the cheaper tier.
+  as the migration target. V4 is the safer shape, the cheaper tier, and now the
+  only sheet whose head matches the runtime.
 - [ ] **Faces direction, undecided:** eyes, nose, and mouth come from shared
   local parts under `assets/images/characters/face_profiles/`, so every character
   on a profile has the same face. Decide between keeping shared parts and
-  generating a per-character face component sheet, and fix the `base/head.png`
-  versus locked `faces/head_base.png` mismatch in every sheet's `head` region
-  either way. See [Project Handoff](PROJECT_HANDOFF.md) section 11.
+  generating a per-character face component sheet. The `base/head.png` versus
+  locked `faces/head_base.png` mismatch that sat beside this question is fixed
+  in V4 and no longer blocks either direction. See
+  [Project Handoff](PROJECT_HANDOFF.md) section 11.
 - [x] **Phase 7G.1B.2, local implementation:** connect one controlled fixed-sheet provider
   request and response to the versioned contract without automatic retry.
 - [x] **Phase 7G.1B.3, local implementation:** produce the fixed-manifest
