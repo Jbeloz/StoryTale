@@ -262,7 +262,11 @@ class CharacterSheetPackage {
       layerMetadata.values.where((layer) => !layer.empty).length;
 
   String get neutralPreviewAssetId => previewAssetIds['neutral']!;
-  Uint8List get neutralProofBytes => previewBytesByPose['neutral']!;
+  /// The neutral pose proof, falling back to the cleaned sheet when the proof
+  /// pass was skipped for testing. Callers use this as a safe preview, so it
+  /// must not throw just because there is nothing composed to show.
+  Uint8List get neutralProofBytes =>
+      previewBytesByPose['neutral'] ?? cleanBytes;
 
   Map<String, dynamic> appearanceJson() => {
     'packageId': packageId,

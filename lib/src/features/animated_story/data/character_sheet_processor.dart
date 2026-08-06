@@ -50,6 +50,7 @@ class CharacterSheetProcessor {
   Future<CharacterSheetPackage> process({
     required CharacterSheetGenerationRequest request,
     required CharacterSheetGenerationResult generation,
+    bool composeProofs = true,
   }) async {
     final contract = await _contracts.load();
     final expectedFingerprint = request.fingerprint(contract);
@@ -309,16 +310,30 @@ class CharacterSheetProcessor {
       );
     }
     final artworkByPart = proofArtwork.artworkByPart;
-    final faceArtwork = await _buildFaceArtwork(
-      request: request,
-      rig: rigData.rig,
-      artworkByPart: artworkByPart,
-    );
+    // Building the six expression heads resizes twenty-four 1254 x 1254 face
+    // parts, which with the ten rig compositions below is most of the cost of a
+    // run. Skipping it is what makes a sheet-only test pass fast.
+    final faceArtwork = composeProofs
+        ? await _buildFaceArtwork(
+            request: request,
+            rig: rigData.rig,
+            artworkByPart: artworkByPart,
+          )
+        : const _FaceArtwork(headsByExpression: {}, valid: false);
     var identityValid = cutoutValid && faceArtwork.valid;
     var faceProofValid = identityValid;
-    if (!faceArtwork.valid) {
+    if (composeProofs && !faceArtwork.valid) {
       errors.add(
         'The selected actor profile does not provide all six locked face sets.',
+      );
+    }
+    if (!composeProofs) {
+      // Stated rather than implied: without the proofs there is no four-pose or
+      // six-face evidence, so the package cannot be ready however good the
+      // sheet looks.
+      errors.add(
+        'Face and pose proofs were skipped for testing, so this package cannot '
+        'be accepted. Turn the testing switch off for an acceptance run.',
       );
     }
 
@@ -328,7 +343,9 @@ class CharacterSheetProcessor {
     final facePreviewBytesByExpression = <String, Uint8List>{};
     final faceProofMetadata = <String, CharacterSheetFaceProofMetadata>{};
     final faceProofHashes = <String>{};
-    for (final entry in _requiredFaceExpressions.entries) {
+    for (final entry in composeProofs
+        ? _requiredFaceExpressions.entries
+        : <MapEntry<String, String>>[]) {
       final expressionId = entry.key;
       final faceHead = faceArtwork.headsByExpression[expressionId];
       final expressionArtwork = Map<String, image.Image>.of(artworkByPart);
@@ -366,7 +383,8 @@ class CharacterSheetProcessor {
         valid: valid,
       );
     }
-    if (faceProofHashes.length != _requiredFaceExpressions.length) {
+    if (composeProofs &&
+        faceProofHashes.length != _requiredFaceExpressions.length) {
       identityValid = false;
       faceProofValid = false;
       errors.add('The six face proofs are not visually distinct.');
@@ -376,8 +394,11 @@ class CharacterSheetProcessor {
     final previewBytesByPose = <String, Uint8List>{};
     final proofMetadata = <String, CharacterSheetPoseProofMetadata>{};
     final proofHashes = <String>{};
-    var poseProofValid = cutoutValid;
-    for (final poseId in const ['neutral', 'talking', 'pointing', 'walking']) {
+    // False when nothing was composed: absent proofs are not passed proofs.
+    var poseProofValid = cutoutValid && composeProofs;
+    for (final poseId in composeProofs
+        ? const ['neutral', 'talking', 'pointing', 'walking']
+        : const <String>[]) {
       final pose = poses[poseId]!;
       final poseArtwork = Map<String, image.Image>.of(artworkByPart);
       poseArtwork['head'] =
@@ -416,7 +437,7 @@ class CharacterSheetProcessor {
         valid: valid,
       );
     }
-    if (cutoutValid && proofHashes.length != 4) {
+    if (composeProofs && cutoutValid && proofHashes.length != 4) {
       poseProofValid = false;
       errors.add('The four built-in pose proofs are not distinct.');
     }

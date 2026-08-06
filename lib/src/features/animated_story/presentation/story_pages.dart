@@ -768,11 +768,19 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
         'sky and room for two character sprites',
   );
   _ArtworkMode _mode = _ArtworkMode.sprite;
+
+  /// Skips the six face and four pose compositions while we are iterating on
+  /// what the provider draws.
+  ///
+  /// On by default because the proof pass is most of the cost of a run and
+  /// blocks this thread, and because it cannot hide a bad result: a package
+  /// without proofs can never be `ready`, and it says so in its own errors.
+  bool _skipSheetProofs = true;
   Uint8List? _generatedImage;
   CharacterSheetGenerationResult? _characterSheetResult;
   CharacterSheetPackage? _characterSheetPackage;
   _CharacterSheetReviewGroup _sheetReviewGroup =
-      _CharacterSheetReviewGroup.character;
+      _CharacterSheetReviewGroup.sheet;
   String _sheetFaceId = 'neutral';
   String _sheetPoseId = 'neutral';
   SpriteLayers? _spriteLayers;
@@ -793,7 +801,7 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
       _generatedImage = null;
       _characterSheetResult = null;
       _characterSheetPackage = null;
-      _sheetReviewGroup = _CharacterSheetReviewGroup.character;
+      _sheetReviewGroup = _CharacterSheetReviewGroup.sheet;
       _sheetFaceId = 'neutral';
       _sheetPoseId = 'neutral';
       _spriteLayers = null;
@@ -834,7 +842,7 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
             setState(() {
               _characterSheetResult = cached.generation;
               _characterSheetPackage = cached;
-              _sheetReviewGroup = _CharacterSheetReviewGroup.character;
+              _sheetReviewGroup = _CharacterSheetReviewGroup.sheet;
               _sheetFaceId = 'neutral';
               _sheetPoseId = 'neutral';
               _generatedImage = cached.neutralProofBytes;
@@ -844,20 +852,27 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
           return;
         }
         final result = await _service.generateCharacterSheet(request);
-        final package = await _sheetProcessor.process(
-          request: request,
-          generation: result,
-        );
+        // Show what came back before cutting and composing it. Processing runs
+        // on this thread and takes seconds, and the reason to look at a paid
+        // sheet is usually that something went wrong, so waiting for the whole
+        // proof pass hides the only image that explains why.
         if (mounted) {
           setState(() {
             _characterSheetResult = result;
+            _sheetReviewGroup = _CharacterSheetReviewGroup.sheet;
+            _generatedImage = result.bytes;
+          });
+        }
+        final package = await _sheetProcessor.process(
+          request: request,
+          generation: result,
+          composeProofs: !_skipSheetProofs,
+        );
+        if (mounted) {
+          setState(() {
             _characterSheetPackage = package;
-            _sheetReviewGroup = _CharacterSheetReviewGroup.character;
             _sheetFaceId = 'neutral';
             _sheetPoseId = 'neutral';
-            _generatedImage = package.validation.isValid
-                ? package.neutralProofBytes
-                : package.cleanBytes;
             _error = package.validation.isValid
                 ? null
                 : package.validation.errorMessage;
@@ -918,7 +933,7 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
               _generatedImage = null;
               _characterSheetResult = null;
               _characterSheetPackage = null;
-              _sheetReviewGroup = _CharacterSheetReviewGroup.character;
+              _sheetReviewGroup = _CharacterSheetReviewGroup.sheet;
               _sheetFaceId = 'neutral';
               _sheetPoseId = 'neutral';
               _spriteLayers = null;
@@ -959,6 +974,21 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
               'and selected Short, Medium, Long, or None back-hair slot. It '
               'sends the locked guide, neutral reference, and three masks in '
               'one paid request and never retries automatically.',
+            ),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              dense: true,
+              value: _skipSheetProofs,
+              onChanged: _generating
+                  ? null
+                  : (value) =>
+                        setState(() => _skipSheetProofs = value ?? false),
+              title: const Text('Testing: skip face and pose proofs'),
+              subtitle: const Text(
+                'Cuts the sheet and stops. Much faster, but the package can '
+                'never be accepted. Turn this off for an acceptance run.',
+              ),
             ),
           ],
           const SizedBox(height: 12),
@@ -1202,6 +1232,25 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
   ) {
     final theme = Theme.of(context);
     switch (_sheetReviewGroup) {
+      case _CharacterSheetReviewGroup.sheet:
+        final generation = package.generation;
+        final kilobytes = (package.sourceBytes.lengthInBytes / 1024).round();
+        // Per-region rejection counts, worst first. The headline error gives one
+        // sheet-wide percentage; this says which cells it came from, which is
+        // the difference between "the provider redrew the body" and "one mask is
+        // wrong".
+        final worst =
+            package.validation.rejectedPixelsByRegion.entries
+                .where((entry) => entry.value > 0)
+                .toList()
+              ..sort((left, right) => right.value.compareTo(left.value));
+        return Text(
+          'Exactly as returned, before cleaning • '
+          '${generation.width}x${generation.height} ${generation.mimeType} • '
+          '$kilobytes KB\n'
+          '${worst.isEmpty ? 'No pixels were rejected in any cell.' : 'Rejected by cell: ${worst.take(6).map((entry) => '${entry.key} ${entry.value}').join(', ')}'}',
+          style: theme.textTheme.bodySmall,
+        );
       case _CharacterSheetReviewGroup.character:
         return Text(
           package.validation.isValid
@@ -1225,14 +1274,16 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
           ],
         );
       case _CharacterSheetReviewGroup.faces:
-        final proof = package.validation.proofsByFace[_sheetFaceId]!;
+        final proof = package.validation.proofsByFace[_sheetFaceId];
+        if (proof == null) return const Text(_skippedProofsNotice);
         return Text(
           '${proof.label} • ${proof.width}x${proof.height} • '
           '${proof.visiblePixelCount} visible pixels • '
           '${proof.valid ? 'passed' : 'needs attention'}',
         );
       case _CharacterSheetReviewGroup.hair:
-        final front = package.layerMetadata['front_hair']!;
+        final front = package.layerMetadata['front_hair'];
+        if (front == null) return const Text('No front-hair layer was cut.');
         final back = package.selectedBackHairRegion == 'none'
             ? null
             : package.layerMetadata[package.selectedBackHairRegion];
@@ -1242,7 +1293,8 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
           'preserved',
         );
       case _CharacterSheetReviewGroup.poses:
-        final proof = package.validation.proofsByPose[_sheetPoseId]!;
+        final proof = package.validation.proofsByPose[_sheetPoseId];
+        if (proof == null) return const Text(_skippedProofsNotice);
         return Text(
           '${proof.label} • ${proof.width}x${proof.height} • '
           '${proof.visiblePixelCount} visible pixels • '
@@ -1291,6 +1343,7 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
       final package = _characterSheetPackage;
       if (package == null) return _generatedImage;
       return switch (_sheetReviewGroup) {
+        _CharacterSheetReviewGroup.sheet => package.sourceBytes,
         _CharacterSheetReviewGroup.character => package.neutralProofBytes,
         _CharacterSheetReviewGroup.layers => package.cleanBytes,
         _CharacterSheetReviewGroup.faces =>
@@ -1317,7 +1370,19 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
 
 enum _ArtworkMode { sprite, characterSheet, background }
 
+/// Shown wherever a proof would be, when the testing switch skipped the pass.
+const _skippedProofsNotice =
+    'Face and pose proofs were skipped for testing. Turn the switch off and '
+    'generate again to see them.';
+
 enum _CharacterSheetReviewGroup {
+  /// The exact bytes the provider returned, before any cleaning or composition.
+  ///
+  /// First because it is the only view that shows what the provider actually
+  /// did. Every other group shows something StoryTale derived, and on a failed
+  /// package the character view falls back to the safe locked template, which
+  /// looks identical no matter what came back.
+  sheet('Sheet'),
   character('Character'),
   layers('Layers'),
   faces('Faces'),

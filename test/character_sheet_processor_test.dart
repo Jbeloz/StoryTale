@@ -106,6 +106,47 @@ void main() {
     );
   });
 
+  test('skipping the proof pass cannot pass as an accepted package', () async {
+    // The testing switch trades the six face and four pose compositions for
+    // speed while we iterate on what the provider draws. It must be impossible
+    // for that to read as a good result: no proofs, not valid, and an error
+    // that says why rather than leaving someone to infer it.
+    final request = testRequest(backHairId: 'medium');
+    final sheet = fixture.preservedSheet();
+    fixture.paintAppearance(sheet, fixture.activeRegionIds(request));
+    final generation = fixture.resultFor(request, sheet);
+
+    final skipped = await CharacterSheetProcessor().process(
+      request: request,
+      generation: generation,
+      composeProofs: false,
+    );
+
+    expect(skipped.validation.proofsByFace, isEmpty);
+    expect(skipped.validation.proofsByPose, isEmpty);
+    expect(skipped.validation.faceProofValid, isFalse);
+    expect(skipped.validation.poseProofValid, isFalse);
+    expect(skipped.validation.isValid, isFalse);
+    expect(skipped.validation.errors.join(' '), contains('skipped for testing'));
+    // The sheet itself still comes back, which is the whole point of skipping.
+    expect(skipped.sourceBytes, generation.bytes);
+    expect(skipped.layerBytes, isNotEmpty);
+    expect(
+      skipped.neutralProofBytes,
+      isNotEmpty,
+      reason: 'the safe preview must not throw when no proof was composed',
+    );
+
+    // Same sheet with the switch off still reaches a full, valid package, so
+    // the option changes only how much work runs.
+    final full = await CharacterSheetProcessor().process(
+      request: request,
+      generation: generation,
+    );
+    expect(full.validation.isValid, isTrue);
+    expect(full.validation.proofsByPose, hasLength(4));
+  });
+
   test('rejects a sheet that wiped the locked geometry', () async {
     // A blank green sheet is not a neutral input. It is a provider that erased
     // everything it was told to preserve, and it must be caught rather than
