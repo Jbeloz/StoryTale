@@ -928,7 +928,7 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
           const SizedBox(height: 16),
           Text(switch (_mode) {
             _ArtworkMode.sprite => 'Legacy Gemini Sprite Test',
-            _ArtworkMode.characterSheet => 'Character Sheet V1 Request',
+            _ArtworkMode.characterSheet => 'Character Sheet V4 Request',
             _ArtworkMode.background => 'Cloudflare Background Test',
           }, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 4),
