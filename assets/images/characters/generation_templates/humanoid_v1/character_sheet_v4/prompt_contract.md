@@ -50,32 +50,46 @@ lower_arm_left      741,859     86x129
 
 The eight limb cells form two blocks: **legs on the left**, spanning `x` 18 to
 423, and **arms on the right**, spanning `x` 465 to 827, separated by a channel
-wider than the normal gap. Within each block the order is right limb first, then
-left, and hip or shoulder before knee or elbow. Match each shape to its cell by
-these coordinates, not by what the shape looks like.
+wider than the normal gap. Match each shape to its cell by these coordinates, not
+by what the shape looks like.
+
+## A limb shape is one segment, not a whole limb
+
+Reading left to right, the four leg shapes are **right thigh, right shin, left
+thigh, left shin**, and the four arm shapes are **right upper arm, right forearm,
+left upper arm, left forearm**.
+
+Each is **one segment of a limb**. A thigh fills its own shape. A shin fills its
+own shape. They are drawn apart because the character is assembled from separate
+pieces afterwards.
+
+**Nothing you paint may be larger than the shape you paint it on.** These shapes
+are only `118` to `156` pixels tall. A complete leg does not fit in one, so a
+complete leg must never be drawn in one, at any size.
+
+The failure this prevents, stated so it can be checked: **a trouser and a boot in
+the same shape means a whole leg was drawn where one segment belongs.** A thigh
+shape shows trouser only. A shin shape shows whatever covers the shin — the lower
+trouser, the boot, or both, because that is what a shin wears.
+
+Nothing may extend above, below, or beside its shape to make a limb look
+complete. The space around these shapes is background, not room to finish a leg.
 
 ## The green gap is untouchable
 
-Every pixel outside the twelve rectangles above is background: an `18` pixel gap
-around every cell and around the canvas edge. That is **256,187 pixels**, a
-quarter of the canvas.
-
-It must come back exactly flat `#00FF00`. **Any mark in the gap voids the
-result** - a stray line, a shadow, an overhanging sleeve, a garment placed
-between cells, or artwork nudged a few pixels outside its rectangle. Nothing
-legitimate is ever drawn there.
+Every pixel outside the twelve rectangles is background: an `18` pixel gap around
+every cell and around the canvas edge, **256,187 pixels**, a quarter of the
+canvas. It must come back exactly flat `#00FF00`. **Any mark there voids the
+result** - a stray line, a shadow, an overhanging sleeve, a garment placed between
+cells, or artwork nudged a few pixels outside its rectangle.
 
 ## Clothing is paint on a body part, never a separate object
 
-Each cell holds exactly one body part, and the clothing worn on that part is
-painted onto it, inside its silhouette.
-
-- A boot is **not** a boot-shaped object placed near a leg. It is paint on the
-  lower end of `lower_leg_right` and `lower_leg_left`, following the leg outline
-  already in that cell and stopping where that outline stops.
-- The same is true of sleeves, gloves, a coat, trousers, and a collar.
-- No garment is drawn on its own, floating free of a body part.
-- No garment spans two cells or bridges the gap between them.
+Each cell holds one body part, and the clothing worn on it is painted onto that
+part, inside its outline and stopping where the outline stops. A boot is not a
+boot-shaped object placed near a leg; it is paint on a shin shape. The same goes
+for sleeves, gloves, a coat, trousers, and a collar. No garment is drawn floating
+free of a body part, and none spans two cells or bridges the gap between them.
 
 ## Green inside a cell stays green
 
@@ -150,17 +164,15 @@ length described in the hair requirements onto the shape already in that cell, o
 ## The head cell
 
 `head` shows the exact head StoryTale composes at runtime: bald, faceless, with
-only an ear outline. **That is not a placeholder to complete.**
+only an ear outline. **That is not a placeholder to complete.** Eyes, eyebrows,
+nose, and mouth are **not generated** - StoryTale draws them locally from its own
+modular parts, once per expression, over whatever this cell returns, so anything
+drawn where a face belongs is overwritten or rejected.
 
-Eyes, eyebrows, nose, and mouth are **not generated**. StoryTale draws them
-locally from its own modular face parts, once per expression, over whatever this
-cell returns. Anything drawn where a face belongs is either overwritten or
-rejected, and a face drawn outside the allowed window fails the request.
-
-What the allowed window is for is character-specific *detail* on the skin -
-freckles, a birthmark, a scar, blush, a face marking - that belongs to this
-character and stays valid across every expression. The head content sits slightly
-inside its cell, occupying `325 x 343` of the `357 x 367` rectangle.
+The allowed window is for character-specific *detail* on the skin - freckles, a
+birthmark, a scar, blush, a marking - that belongs to this character and stays
+valid across every expression. The head content occupies `325 x 343` of the
+`357 x 367` rectangle.
 
 ## Hair and character rules
 
@@ -181,15 +193,14 @@ inside its cell, occupying `325 x 343` of the `357 x 367` rectangle.
 
 Garments are painted in separate cells but must read as one outfit once the parts
 are assembled. `torso` meets `head` at the neck, both upper arms at the
-shoulders, and both upper legs at the hips; each `upper_arm_*` meets its
-`lower_arm_*` at the elbow, and each `upper_leg_*` meets its `lower_leg_*` at the
-knee.
+shoulders, and both upper legs at the hips; each upper arm meets its forearm at
+the elbow, and each thigh meets its shin at the knee.
 
 Where a garment crosses one of those joints its edge colour, thickness, trim,
-fold direction, and shading must match on both sides, so the two cells line up
-when the rig is posed. A sleeve ending at the elbow in `upper_arm_right` must
-continue at the same width and colour where `lower_arm_right` begins. Matching
-across a seam never means drawing across the gap between the two cells.
+fold direction, and shading must match on both sides. A sleeve ending at the
+elbow in `upper_arm_right` must continue at the same width and colour where
+`lower_arm_right` begins. Matching across a seam never means drawing across the
+gap between the two cells.
 
 ## Check before returning
 
@@ -199,10 +210,11 @@ across a seam never means drawing across the gap between the two cells.
 4. Green left over inside a cell still green; nothing added to empty space.
 5. Exactly one shape per cell. No extra limbs, and nothing but hair in the two
    hair cells.
-6. Every outline unchanged in shape, thickness, and colour.
-7. No free-standing garment anywhere.
-8. The head still bald and faceless.
-9. Front and rear hair the same character.
+6. No whole limb in a single shape; no trouser and boot sharing one shape.
+7. Every outline unchanged in shape, thickness, and colour.
+8. No free-standing garment anywhere.
+9. The head still bald and faceless.
+10. Front and rear hair the same character.
 
 Reject the result if any of those fails, if the format or dimensions differ, if
 locked geometry changed, if clothing fails to match across a seam, or if the

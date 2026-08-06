@@ -157,8 +157,8 @@ class CharacterSheetProcessor {
       final percent = (deviation.overspill * 100).toStringAsFixed(2);
       errors.add(
         'The sheet drew ${deviation.overspillPixels} pixels outside the '
-        'permitted area of their own cells, $percent% of the paintable area. '
-        'They were removed from the layers.',
+        'permitted area of their own cells, $percent% of the paintable area'
+        '${deviation.misplacedBoundsLabel}. They were removed from the layers.',
       );
     }
     if (deviation.redrewLockedGeometry) {
@@ -179,6 +179,7 @@ class CharacterSheetProcessor {
     final layerMetadata = <String, CharacterSheetLayerMetadata>{};
     final visiblePixels = <String, int>{};
     final rejectedPixels = <String, int>{};
+    final overspillPixels = <String, int>{};
     final greenPixelsRemoved = <String, int>{};
     var totalRejectedPixels = 0;
     final packageId = _packageId(request);
@@ -257,6 +258,7 @@ class CharacterSheetProcessor {
 
       visiblePixels[region.id] = cleaned.visiblePixels;
       rejectedPixels[region.id] = cleaned.rejectedPixels;
+      overspillPixels[region.id] = cleaned.overspillPixels;
       greenPixelsRemoved[region.id] = cleaned.greenPixelsRemoved;
       final assetId = _layerAssetId(packageId, outfitId, region);
       Uint8List? bytes;
@@ -462,6 +464,7 @@ class CharacterSheetProcessor {
       errors: List.unmodifiable(errors),
       visiblePixelsByRegion: Map.unmodifiable(visiblePixels),
       rejectedPixelsByRegion: Map.unmodifiable(rejectedPixels),
+      overspillPixelsByRegion: Map.unmodifiable(overspillPixels),
       greenPixelsRemovedByRegion: Map.unmodifiable(greenPixelsRemoved),
       canvasValid: true,
       fingerprintValid: true,
@@ -605,6 +608,16 @@ class CharacterSheetProcessor {
     var allowedTotal = 0;
     var protectedTotal = 0;
     var protectedChanged = 0;
+    // Where the offending pixels are, which the per-cell counts cannot say.
+    // Content that misses its cell usually lands inside a *different* cell's
+    // rectangle, so naming the cell it fell into points at the wrong part: on
+    // the eighth sheet 47,708 px of trouser leg were reported against
+    // `back_hair_selected`. A bounding box says "(19,676) to (421,835)", which
+    // reads immediately as the strip between the hair and the leg cells.
+    var minX = source.width;
+    var minY = source.height;
+    var maxX = -1;
+    var maxY = -1;
     for (var y = 0; y < source.height; y++) {
       for (var x = 0; x < source.width; x++) {
         final protectedPixel = _isWhite(protected.getPixel(x, y));
@@ -627,6 +640,10 @@ class CharacterSheetProcessor {
         } else {
           stray++;
         }
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
+        if (x > maxX) maxX = x;
+        if (y > maxY) maxY = y;
       }
     }
     return _SheetDeviation(
@@ -635,6 +652,9 @@ class CharacterSheetProcessor {
       allowedTotalPixels: allowedTotal,
       protectedChangedPixels: protectedChanged,
       protectedTotalPixels: protectedTotal,
+      misplacedBounds: maxX < 0
+          ? null
+          : (left: minX, top: minY, right: maxX, bottom: maxY),
     );
   }
 
@@ -667,6 +687,7 @@ class CharacterSheetProcessor {
     var sourceArtworkPixels = 0;
     var visiblePixels = 0;
     var rejectedPixels = 0;
+    var overspillPixels = 0;
     var greenPixelsRemoved = 0;
     for (var y = 0; y < output.height; y++) {
       for (var x = 0; x < output.width; x++) {
@@ -692,7 +713,18 @@ class CharacterSheetProcessor {
           if (!preserved &&
               image.getAlpha(pixel) > 0 &&
               !_isBackground(pixel)) {
-            rejectedPixels++;
+            // Two different failures share this branch, and counting them
+            // together is what made the eighth sheet report 37.47% of the
+            // locked area drawn over when most of those pixels were nowhere
+            // near it. A protected pixel that changed is damage to locked
+            // geometry. A pixel outside the window in a cell holding no
+            // protected pixels at all — every one of the 47,708 in
+            // `back_hair_selected` — is overspill, judged on its own budget.
+            if (protectedPixel) {
+              rejectedPixels++;
+            } else {
+              overspillPixels++;
+            }
           }
           output.setPixelRgba(x, y, 0, 0, 0, 0);
           continue;
@@ -718,6 +750,7 @@ class CharacterSheetProcessor {
       sourceArtworkPixels: sourceArtworkPixels,
       visiblePixels: visiblePixels,
       rejectedPixels: rejectedPixels,
+      overspillPixels: overspillPixels,
       greenPixelsRemoved: greenPixelsRemoved,
     );
   }
@@ -1247,7 +1280,17 @@ class _SheetDeviation {
     required this.allowedTotalPixels,
     required this.protectedChangedPixels,
     required this.protectedTotalPixels,
+    required this.misplacedBounds,
   });
+
+  /// Canvas bounds enclosing every stray and overspill pixel, or null when
+  /// there are none. The one number that says *where* the sheet went wrong.
+  final ({int left, int top, int right, int bottom})? misplacedBounds;
+
+  String get misplacedBoundsLabel => misplacedBounds == null
+      ? ''
+      : ' between (${misplacedBounds!.left},${misplacedBounds!.top}) and '
+            '(${misplacedBounds!.right},${misplacedBounds!.bottom})';
 
   /// Content in the green padding, which belongs to no cell.
   final int strayPixels;
@@ -1323,12 +1366,20 @@ class _CleanedRegion {
     required this.sourceArtworkPixels,
     required this.visiblePixels,
     required this.rejectedPixels,
+    required this.overspillPixels,
     required this.greenPixelsRemoved,
   });
 
   final image.Image bitmap;
   final int sourceArtworkPixels;
   final int visiblePixels;
+
+  /// Protected pixels this cell changed. Damage to locked geometry.
   final int rejectedPixels;
+
+  /// Pixels this cell painted outside its own window, in an area holding no
+  /// locked geometry to damage. Dropped from the layer and judged on the
+  /// overspill budget, never on the drift budget.
+  final int overspillPixels;
   final int greenPixelsRemoved;
 }

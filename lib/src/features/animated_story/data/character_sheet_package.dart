@@ -129,6 +129,7 @@ class CharacterSheetPackageValidation {
     required this.errors,
     required this.visiblePixelsByRegion,
     required this.rejectedPixelsByRegion,
+    required this.overspillPixelsByRegion,
     required this.greenPixelsRemovedByRegion,
     required this.canvasValid,
     required this.fingerprintValid,
@@ -146,7 +147,14 @@ class CharacterSheetPackageValidation {
 
   final List<String> errors;
   final Map<String, int> visiblePixelsByRegion;
+  /// Protected pixels each cell changed: damage to locked geometry.
   final Map<String, int> rejectedPixelsByRegion;
+
+  /// Pixels each cell painted outside its own window, where there was no locked
+  /// geometry to damage. Kept apart from [rejectedPixelsByRegion] because
+  /// merging them made the eighth sheet report 37.47% of the locked area drawn
+  /// over when most of those pixels never touched it.
+  final Map<String, int> overspillPixelsByRegion;
   final Map<String, int> greenPixelsRemovedByRegion;
   final bool canvasValid;
   final bool fingerprintValid;
@@ -199,6 +207,7 @@ class CharacterSheetPackageValidation {
     'errors': errors,
     'visiblePixelsByRegion': visiblePixelsByRegion,
     'rejectedPixelsByRegion': rejectedPixelsByRegion,
+    'overspillPixelsByRegion': overspillPixelsByRegion,
     'greenPixelsRemovedByRegion': greenPixelsRemovedByRegion,
   };
 }

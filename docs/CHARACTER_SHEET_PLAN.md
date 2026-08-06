@@ -262,9 +262,39 @@ so the fix moved into the contract.
 regeneration: all three guides, both other masks, and the assembled reference are
 byte-identical, so only the allowed-mask hashes moved.
 
-**Still open:** an eighth paid request, drift at 2.71% against a 1% budget, an
-accepted paid V4 request with the proof pass enabled, and guides for actors other
-than `default`.
+### Eighth request: every leg layer is a boot, 2026-08-07
+
+Measured from the saved sheet, now kept as `test/fixtures/eighth_live_sheet.jpg`
+and replayed by `test/character_sheet_live_sheet_test.dart`.
+
+**Each of the four leg cells holds a complete leg — trouser and boot — drawn about
+`310` px tall in a cell `140-156` px tall, bottom-aligned.** The cell captures only
+the boot, so every leg layer is a boot. The `12,000`-odd px of trouser above each
+cell is the same content that looked like "spare arms" in the rear-hair cell on
+earlier sheets.
+
+The arms were measured before being touched and are **not** broken: upper arms are
+69-70% sleeve with no trim band and the sleeve continues across the elbow. It ends
+mid-forearm at a cuff, which the brief never forbade. An outfit-brief matter.
+
+Two contract corrections came with it:
+
+- **`rejectedPixels` no longer merges two failures.** Overspill in a cell with zero
+  protected pixels was being divided by the protected area and reported as damage
+  to locked geometry, counting the same 47,708 px twice. Split, that measure drops
+  from **37.47% to 5.38%** on this sheet. `overspillPixelsByRegion` now sits beside
+  `rejectedPixelsByRegion` in the package and the saved report.
+- **Misplaced pixels report a bounding box.** Naming the cell they landed in
+  pointed at the hair, because that is the rectangle the trouser legs fell inside.
+  `(26,675) to (418,845)` names the defect directly.
+
+The prompt gained "A limb shape is one segment, not a whole limb", naming the eight
+limb shapes left to right and forbidding anything painted larger than the shape it
+sits on.
+
+**Still open:** a ninth paid request for the legs, drift at 6.66% against a 1%
+budget, an accepted paid V4 request with the proof pass enabled, and guides for
+actors other than `default`.
 
 ### Output-size and usage decision
 

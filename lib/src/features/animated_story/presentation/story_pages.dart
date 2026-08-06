@@ -1299,16 +1299,33 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
         // sheet-wide percentage; this says which cells it came from, which is
         // the difference between "the provider redrew the body" and "one mask is
         // wrong".
-        final worst =
-            package.validation.rejectedPixelsByRegion.entries
-                .where((entry) => entry.value > 0)
-                .toList()
+        List<MapEntry<String, int>> worstOf(Map<String, int> counts) =>
+            counts.entries.where((entry) => entry.value > 0).toList()
               ..sort((left, right) => right.value.compareTo(left.value));
+        String line(String label, Map<String, int> counts) {
+          final worst = worstOf(counts);
+          if (worst.isEmpty) return '';
+          return '\n$label: '
+              '${worst.take(6).map((entry) => '${entry.key} ${entry.value}').join(', ')}';
+        }
+
+        // Two different failures, never merged into one list. "Repainted" is
+        // damage to locked geometry; "drawn outside its window" is a part drawn
+        // in the wrong place, which is what put a whole trouser leg above the
+        // leg cells.
+        final repainted = line(
+          'Locked geometry repainted by cell',
+          package.validation.rejectedPixelsByRegion,
+        );
+        final overspill = line(
+          'Drawn outside its window by cell',
+          package.validation.overspillPixelsByRegion,
+        );
         return Text(
           'Exactly as returned, before cleaning • '
           '${generation.width}x${generation.height} ${generation.mimeType} • '
-          '$kilobytes KB\n'
-          '${worst.isEmpty ? 'No pixels were rejected in any cell.' : 'Rejected by cell: ${worst.take(6).map((entry) => '${entry.key} ${entry.value}').join(', ')}'}',
+          '$kilobytes KB'
+          '${repainted.isEmpty && overspill.isEmpty ? '\nEvery cell stayed inside its window and left the locked geometry alone.' : '$repainted$overspill'}',
           style: theme.textTheme.bodySmall,
         );
       case _CharacterSheetReviewGroup.character:

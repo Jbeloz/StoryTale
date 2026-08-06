@@ -1160,6 +1160,67 @@ layer; the blob is `19,200` px and entirely outside the new window, where under
 the old whole-cell mask every one of those pixels would have been kept. A
 companion case proves a compliant sheet still passes the new rule. 218 tests pass.
 
+### Every leg layer is a boot — 7 August 2026
+
+**The diagnostics save paid for itself on its first run.** The eighth sheet is on
+disk, so this section is measured from pixels rather than read off a screenshot,
+and it is kept as `test/fixtures/eighth_live_sheet.jpg` so it can be re-measured
+for free forever.
+
+**Every one of the four leg cells holds a complete leg — trouser thigh *and*
+boot — drawn about `310` px tall and bottom-aligned in a cell only `140-156` px
+tall.**
+
+| Cell | Cell rows | Artwork starts | Above the cell | Inside the cell |
+| --- | --- | --- | --- | --- |
+| `upper_leg_right` | 836-986 | y 676 | 12,359 px | 85% boot-brown, 2% trouser-cream |
+| `lower_leg_right` | 836-992 | y 676 | 12,745 px | 82% boot-brown, 3% trouser-cream |
+| `upper_leg_left` | 836-977 | y 676 | 11,751 px | 82% boot-brown, 3% trouser-cream |
+| `lower_leg_left` | 836-976 | y 675 | 12,687 px | 83% boot-brown, 2% trouser-cream |
+
+The cell captures only the bottom of the drawn leg, which is the boot. **So every
+extracted leg layer is a boot and nothing else.** This also closes an older
+mystery: the "spare arms" seen in the rear-hair cell across three sheets were
+never limbs, they were the **trouser thighs** floating above the leg cells.
+
+**The arms are not doing what they appear to.** Measured before changing
+anything, because a paid request should not be spent on a misdiagnosis: the upper
+arms are 69-70% sleeve blue with **no** trim band, and the sleeve colour continues
+across the elbow. There is no break at the joint. The sleeve simply ends
+mid-forearm at a gold cuff, at 47-51% of the lower-arm cell height, leaving
+forearm and hand bare — a fair reading of a brief that says "a long blue coat" and
+never states sleeve length. **That is an outfit-brief matter, not a contract
+defect**; say "sleeves to the wrist" in the request. No code changed for the arms.
+
+**A metric bug from the previous change, now fixed.** `_cleanRegion` counted a
+pixel as `rejectedPixels` whenever it failed `(allowed && !protected) || seam`.
+Once the hair windows were narrowed that included overspill in cells holding
+**zero** protected pixels, and the total was still divided by
+`protectedTotalPixels` and reported as damage to locked geometry. The same 47,708
+pixels were counted twice. Separating them moves that measure from **37.47% to
+5.38%** on this sheet, which is the real figure for pixels that touched protected
+geometry. `rejectedPixelsByRegion` is now protected damage only, and
+`overspillPixelsByRegion` sits beside it.
+
+**Misplaced pixels now report where they are, not which cell they fell into.**
+The plan called for attributing overspill to the nearest cell; that turned out to
+be a no-op, because the trouser legs land *inside* `back_hair_selected`'s
+rectangle, so its distance is zero and it stays the answer. The errors now carry a
+bounding box instead. On this sheet it reads `(26,675) to (418,845)` — the strip
+between the hair and the leg cells, which names the defect directly.
+
+The contract gained a **"A limb shape is one segment, not a whole limb"** section:
+the eight limb shapes named left to right, the rule that nothing painted may be
+larger than the shape it sits on, the `118-156` px heights, and the self-check
+"a trouser and a boot in the same shape means a whole leg was drawn". `10,513`
+characters against the `12,000` cap, paid for by trimming the head, seam, and gap
+sections.
+
+`test/character_sheet_live_sheet_test.dart` replays the real sheet through the
+real processor. Every other character-sheet test builds its own input, which
+proves the rules but not that they describe what the provider does. 221 tests pass
+and no PNG changed, so the masks and guides are untouched.
+
 ### Faces are an unsolved design question, 6 August 2026
 
 The owner raised this before clearing the chat and it is **not yet decided**. The
@@ -1231,28 +1292,38 @@ had been failing since before this thread. It was fixed on 5 August 2026; see
 
 ### Exact current and next work
 
-**The next task is an eighth request, and it is the first one that cannot teach
-the same lesson twice.** The hair-cell hole is closed in the mask rather than the
-prompt, so a hood or a spare limb is now removed from the layer and reported
-instead of silently shipped, and the returned sheet is saved to disk so the next
-failure can be measured offline for free. See "The seventh sheet, and why the fix
-moved from the prompt to the mask" above.
+**The next task is a ninth request, aimed squarely at the legs.** The eighth is
+fully measured and kept as a fixture, so the only open question is whether the new
+"a limb shape is one segment" wording stops the provider drawing a whole leg into
+a `140-156` px cell. See "Every leg layer is a boot" above.
 
-Watch four numbers now, all of which must reach their gate together:
+Watch four numbers, all of which must reach their gate together, plus the one
+that actually matters:
 
-| Measure | Last seen | Gate |
+| Measure | Eighth sheet | Gate |
 | --- | --- | --- |
-| Stray pixels in the padding | `129` | `0` |
-| Overspill outside a cell's window | not yet measured | under 0.5% |
-| Locked geometry repainted | `2.71%` | under 1% |
-| Locked area drawn over inside cells | `1.74%` | under 1% |
+| Stray pixels in the padding | `6,059` | `0` |
+| Overspill outside a cell's window | `10.77%` | under 0.5% |
+| Locked geometry repainted | `6.66%` | under 1% |
+| Locked area drawn over inside cells | `5.38%` | under 1% |
 
-**Drift is the one still unaddressed by anything structural.** It is the provider
-re-inking limb outlines while dressing them. The wording rule added in `d04e28c`
-targets it and is untested. Once a sheet is on disk, measure how much of that
-drift is paint legitimately abutting the locked outline versus real redrawing
-before touching the budget — the same class of question as the validator bug
-already found and fixed. Do not loosen a gate to make a sheet pass.
+**The one that matters: does a leg layer contain a trouser leg, or only a boot?**
+Every gate can improve while the layers stay useless, so look at the Layers tab,
+not only the numbers.
+
+**Two things remain structurally unaddressed.** Drift, the provider re-inking limb
+outlines while dressing them; and the legs, if wording fails again. For drift,
+measure how much is paint legitimately abutting the locked outline versus real
+redrawing before touching the budget — the same class of question as the validator
+bug already found and fixed. Do not loosen a gate to make a sheet pass.
+
+**The fallback for the legs, if the wording fails a third time**, is to replace
+`assembled_reference.png` with an exploded diagram showing each cell's silhouette
+joined by a leader line to its place on the assembled body. The provider currently
+has to infer which of four near-identical rounded rectangles is a thigh and which
+is a shin. That image is **free to change** — the Worker hash-checks only the
+guide, and it is not part of the request fingerprint. Do not do it in the same
+request as a wording change; a sheet that moved two variables cannot be read.
 
 **Restart the app, do not just reload the tab.** Prompt and mask edits change
 assets, and a running `flutter run -d web-server` keeps serving the bundle it
