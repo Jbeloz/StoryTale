@@ -27,15 +27,13 @@ class CharacterSheetGenerationRequest {
   final String ageAndRole;
   final List<String> approvedAccessories;
 
-  String selectedBackHairRegion() {
-    return switch (backHairId) {
-      'short' => 'back_hair_short',
-      'medium' => 'back_hair_medium',
-      'long' => 'back_hair_long',
-      'none' => 'none',
-      _ => throw FormatException('Unsupported back-hair ID: $backHairId.'),
-    };
-  }
+  /// The region the chosen rear-hair length activates on [contract].
+  ///
+  /// A sheet with one cell per length names a different region for each; V4's
+  /// single `back_hair_selected` cell serves them all, so the answer belongs to
+  /// the contract rather than to this class.
+  String selectedBackHairRegion(CharacterSheetContract contract) =>
+      contract.selection.regionFor(backHairId);
 
   String fingerprint(CharacterSheetContract contract) {
     final source = jsonEncode({
@@ -59,8 +57,15 @@ class CharacterSheetGenerationRequest {
     return sha256.convert(utf8.encode(source)).toString();
   }
 
-  String buildPrompt(String template) {
-    final replacements = {
+  /// Every value this class substitutes into a prompt contract, keyed by the
+  /// token that carries it.
+  ///
+  /// A prompt contract that omits one of these tokens silently ships a request
+  /// missing that field, which is a paid mistake rather than a failed one, so
+  /// `test/character_sheet_prompt_test.dart` asserts the active contract carries
+  /// them all.
+  Map<String, String> promptFields(CharacterSheetContract contract) {
+    return {
       '{{character_name}}': brief.canonicalName.trim(),
       '{{character_design_brief}}': brief.generationPrompt,
       '{{age_and_role}}': ageAndRole.trim(),
@@ -68,15 +73,22 @@ class CharacterSheetGenerationRequest {
       '{{hair_requirements}}':
           'Front hair $frontHairId with $backHairId back hair. Preserve one '
           'identity, color, and line style.',
+      // V1 names the three rear-hair cells in its token; V4 has one cell and
+      // uses the neutral name. Both resolve to the same value, so either
+      // contract can be the active one.
       '{{back_hair_short|back_hair_medium|back_hair_long|none}}':
-          selectedBackHairRegion(),
+          selectedBackHairRegion(contract),
+      '{{selected_back_hair_region}}': selectedBackHairRegion(contract),
       '{{outfit_requirements}}': outfitRequirements.trim(),
       '{{approved_accessories_or_none}}': approvedAccessories.isEmpty
           ? 'none'
           : approvedAccessories.join(', '),
     };
+  }
+
+  String buildPrompt(String template, CharacterSheetContract contract) {
     var result = template;
-    for (final entry in replacements.entries) {
+    for (final entry in promptFields(contract).entries) {
       result = result.replaceAll(entry.key, entry.value);
     }
     return result;

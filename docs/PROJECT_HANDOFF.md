@@ -736,7 +736,65 @@ expectation so it stays visible. V1's allowed window was measured to sit inside
 the smaller runtime head too, so the processor fix changes nothing about what V1
 *accepts*; it only stops the throw. All three V4 guides and all six V4 hashes
 changed, so any earlier review of the V4 head cell is superseded. `flutter test`
-is **199 passing, 0 failing** and `flutter analyze` reports no issues.
+was **199 passing, 0 failing** at that point and `flutter analyze` reported
+no issues.
+
+### V4 is the active contract, 6 August 2026
+
+The owner asked what the `1K` sheet actually changes and whether Sprite Studio
+has to start using V4's images, then approved the migration. Two clarifications
+worth keeping, because the question will recur:
+
+- **`1K` did not shrink the parts.** V4's canvas is `1024²` instead of `4096²`,
+  but the cells inside it are the same size — head `357 x 367`, torso
+  `165 x 234`, every limb — in V1, V2, V3, and V4 alike. The canvas shrank by
+  deleting green. The only cells that ever shrank are the two hair cells, and
+  that happened at **V2**: front hair `1254²` to `429 x 438`. That was
+  deliberate, because the rig draws hair into exactly a `429 x 438` box, so the
+  extra source pixels were discarded at render time anyway.
+- **Sprite Studio does not switch to V4 images.** The locked template — the rig,
+  the ten hash-locked parts, the local hair catalog, the modular faces, and
+  `appearance.json` — is what Sprite Studio shows, and V4 does not touch it. V4
+  changes only which sheet the provider is asked to fill and how the result is
+  cut up. Making a generated character appear in Sprite Studio and across
+  chapters is Phase 7H, and the wiring already exists:
+  `StoryHumanAssetData.partBytesById` feeds `SpriteRigView(partBytes:)`.
+
+Eleven changes landed. The recorded checklist had six; tracing the code found
+five more, and three of those would have wasted a paid request rather than
+failed cleanly:
+
+1. **The Worker still asked Gemini for `4K`.** That line, not the manifest, is
+   the cost lever. Left alone V4 would have cost `$0.151` *and* returned a
+   canvas the contract rejects.
+2. **V4's prompt contract had no `{{...}}` tokens at all**, so `buildPrompt`
+   would have sent the specification verbatim — no name, brief, skin tone,
+   outfit, or rear-hair selection. A paid request for a generic character.
+3. **`selectedBackHairRegion()` returned V1's region IDs**, so V4's single
+   `back_hair_selected` cell would never have been extracted.
+4. **V4 has three guides and both sides assumed one.** Flutter now sends the
+   variant matching the requested length with that variant's hash, and the
+   Worker checks the upload against both the declared hash and its approved set.
+5. **Guides exist for actor `default` only.** Each actor has its own front hair,
+   so each needs generated, checked-in, hashed guides. Free and offline; not
+   done because no other actor is requested yet.
+
+The full table is in [Character Sheet Plan](CHARACTER_SHEET_PLAN.md), "Migration
+to V4". `flutter test` is **204 passing, 0 failing**; `flutter analyze` and the
+Worker's `tsc --noEmit` are clean.
+
+**Two things are deliberately not done, and they matter in this order:**
+
+1. **The Worker is not deployed.** Flutter is on V4 and the live Worker is still
+   on V1, so any character-sheet request right now returns 409. Deploying is an
+   external action and needs the owner's explicit approval.
+2. **No provider request has been made.** After the deployment, one controlled
+   request costs roughly `$0.067` and is the owner's to trigger.
+
+A test now parses `cloudflare/image-worker/src/index.ts` and compares its
+contract ID, version, geometry hash, canvas, requested tier, and three guide
+hashes against the manifest, so a hand-copied constant cannot drift into a 409
+after the money is committed.
 
 ### Faces are an unsolved design question, 6 August 2026
 
@@ -777,14 +835,14 @@ rediscovered: face parts are full-canvas `1254 x 1254` PNGs, so the roughly
 fourteen of them cannot be packed into a `1K` sheet without introducing per-part
 crop rectangles. Designing that is a planning task in its own right.
 
-**The next task is still to resume Phase 7.** Both remaining starting points are
-the owner's:
+**The next task is to deploy the Worker.** Flutter is on V4 and the live Worker
+is on V1, so character-sheet generation returns 409 until that happens. It is an
+external action and needs the owner's explicit approval. After it, one controlled
+`$0.067` request is the owner's to trigger.
 
-1. the pending manual Phase 7G.1A.1 actor/pose/reload verification, which has
-   been open for a while and is the owner's to perform; or
-2. the V3-versus-V4 migration decision, whose Flutter-side surface is six known
-   changes plus five Worker constants that need a deployment. V4 is now the only
-   sheet whose head matches the runtime, which is one more reason to prefer it.
+The pending manual Phase 7G.1A.1 actor/pose/reload verification is still open
+and still the owner's to perform. It is independent of the deployment; nothing
+in the V4 migration touched the local appearance path it exercises.
 
 Do not make a Gemini or other paid request, and do not deploy the Worker,
 without the owner's explicit approval for that exact action.
@@ -941,7 +999,7 @@ their roadmap gates unless a blocking defect requires a narrow fix.
 
 ### Known failing checks
 
-- **None.** As of 6 August 2026 `flutter test` reports **199 passing, 0 failing**
+- **None.** As of 6 August 2026 `flutter test` reports **204 passing, 0 failing**
   and `flutter analyze` reports **no issues**. The `sprite_rig_test.dart` failure
   and the `unnecessary_import` info were resolved on 5 August; see section 11.
 - `dart format --set-exit-if-changed lib test` **rewrites files instead of only

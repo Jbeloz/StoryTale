@@ -8,7 +8,7 @@ class CharacterSheetContractRepository {
 
   static const assetPath =
       'assets/images/characters/generation_templates/humanoid_v1/'
-      'character_sheet_v1/crop_manifest.json';
+      'character_sheet_v4/crop_manifest.json';
 
   final AssetBundle _bundle;
 
@@ -32,14 +32,17 @@ class CharacterSheetContract {
     required this.lockedRig,
     required this.rules,
     required this.regions,
+    required this.selection,
   }) : regionsById = {for (final region in regions) region.id: region};
 
-  static const supportedContractId = 'character_sheet_v1';
-  static const supportedContractVersion = 1;
+  static const supportedContractId = 'character_sheet_v4';
+  static const supportedContractVersion = 4;
+
+  /// V4's twelve cells. The three V1/V3 rear-hair alternatives collapse into one
+  /// `back_hair_selected` cell, because a request only ever activates one
+  /// length and the other two were green waste rather than extra capability.
   static const expectedRegionIds = {
-    'back_hair_short',
-    'back_hair_medium',
-    'back_hair_long',
+    'back_hair_selected',
     'front_hair',
     'head',
     'torso',
@@ -53,6 +56,10 @@ class CharacterSheetContract {
     'lower_leg_left',
   };
 
+  /// The `1:1` tiers the provider documents. The active canvas must be one of
+  /// them, so a repack cannot quietly request a shape the provider may reject.
+  static const supportedCanvasSizes = {1024, 2048, 4096};
+
   final String contractId;
   final int contractVersion;
   final CharacterSheetCanvas canvas;
@@ -62,6 +69,7 @@ class CharacterSheetContract {
   final CharacterSheetRules rules;
   final List<CharacterSheetRegion> regions;
   final Map<String, CharacterSheetRegion> regionsById;
+  final CharacterSheetSelection selection;
 
   static const requiredHashIds = {
     'guide',
@@ -110,6 +118,14 @@ class CharacterSheetContract {
                 CharacterSheetRegion.fromJson(value as Map<String, dynamic>),
           )
           .toList(growable: false),
+      selection: CharacterSheetSelection.fromJson(
+        json['selectionContract'] as Map<String, dynamic>?,
+        guideVariantSha256: json['guideVariantSha256'] as Map<String, dynamic>?,
+        fallbackGuide: (json['assets'] as Map<String, dynamic>)['guide']
+            as String,
+        fallbackGuideSha256:
+            (json['assetSha256'] as Map<String, dynamic>)['guide'] as String,
+      ),
     );
   }
 
@@ -130,12 +146,19 @@ class CharacterSheetContract {
     if (contractVersion != supportedContractVersion) {
       errors.add('Unsupported contract version $contractVersion.');
     }
-    if (canvas.width != 4096 || canvas.height != 4096) {
-      errors.add('The V1 canvas must be 4096 x 4096.');
+    // Square, and one of the provider's documented `1:1` tiers. V4 is the `1K`
+    // tier; the rule stays general so a later repack is checked rather than
+    // trusted.
+    if (canvas.width != canvas.height ||
+        !supportedCanvasSizes.contains(canvas.width)) {
+      errors.add(
+        'The canvas must be a square 1:1 provider tier, not '
+        '${canvas.width} x ${canvas.height}.',
+      );
     }
     if (canvas.mimeType != 'image/png' ||
         canvas.backgroundColor.toUpperCase() != '#00FF00') {
-      errors.add('The V1 output must be a PNG with #00FF00 background.');
+      errors.add('The sheet output must be a PNG with #00FF00 background.');
     }
     if (lockedRig.id != 'humanoid_v1' || !_isSha256(lockedRig.geometryHash)) {
       errors.add('The locked humanoid_v1 geometry hash is missing.');
@@ -205,7 +228,22 @@ class CharacterSheetContract {
     }
     if (seen.length != expectedRegionIds.length ||
         !seen.containsAll(expectedRegionIds)) {
-      errors.add('The V1 contract must contain all 14 fixed regions once.');
+      errors.add(
+        'The contract must contain all ${expectedRegionIds.length} fixed '
+        'regions once.',
+      );
+    }
+    if (selection.backHairRegionId != null &&
+        !seen.contains(selection.backHairRegionId)) {
+      errors.add(
+        'The selection contract names missing region '
+        '${selection.backHairRegionId}.',
+      );
+    }
+    for (final entry in selection.guideByBackHairId.entries) {
+      if (!selection.guideSha256ByBackHairId.containsKey(entry.key)) {
+        errors.add('The ${entry.key} guide variant has no recorded hash.');
+      }
     }
     return errors;
   }
@@ -274,6 +312,95 @@ class CharacterSheetAssets {
       promptContract: json['promptContract'] as String,
     );
   }
+}
+
+/// How a request turns its chosen rear-hair length into a region and a guide.
+///
+/// V1 published one cell per length and one guide. V4 publishes one
+/// `back_hair_selected` cell and one guide per length, because the single cell
+/// has to show the silhouette the request is actually asking for. Reading both
+/// shapes from the manifest keeps that difference out of the calling code, and
+/// keeps V1 loadable for rollback.
+class CharacterSheetSelection {
+  const CharacterSheetSelection({
+    required this.backHairRegionId,
+    required this.acceptedValues,
+    required this.guideByBackHairId,
+    required this.guideSha256ByBackHairId,
+    required this.canonicalBackHairId,
+    required this.fallbackGuide,
+    required this.fallbackGuideSha256,
+  });
+
+  /// The single cell every length shares, or `null` on a sheet that publishes
+  /// one cell per length.
+  final String? backHairRegionId;
+  final Set<String> acceptedValues;
+  final Map<String, String> guideByBackHairId;
+  final Map<String, String> guideSha256ByBackHairId;
+  final String? canonicalBackHairId;
+  final String fallbackGuide;
+  final String fallbackGuideSha256;
+
+  factory CharacterSheetSelection.fromJson(
+    Map<String, dynamic>? json, {
+    required Map<String, dynamic>? guideVariantSha256,
+    required String fallbackGuide,
+    required String fallbackGuideSha256,
+  }) {
+    Map<String, String> stringMap(Object? value) => switch (value) {
+      final Map<String, dynamic> map => map.map(
+        (key, value) => MapEntry(key, value as String),
+      ),
+      _ => const {},
+    };
+    return CharacterSheetSelection(
+      backHairRegionId: json?['backHairRegionId'] as String?,
+      acceptedValues:
+          (json?['acceptedValues'] as List<dynamic>?)
+              ?.map((value) => value as String)
+              .toSet() ??
+          const {'short', 'medium', 'long', 'none'},
+      guideByBackHairId: stringMap(json?['guideByBackHairId']),
+      guideSha256ByBackHairId: stringMap(guideVariantSha256),
+      canonicalBackHairId: json?['canonicalBackHairId'] as String?,
+      fallbackGuide: fallbackGuide,
+      fallbackGuideSha256: fallbackGuideSha256,
+    );
+  }
+
+  /// The region a chosen length activates. `none` activates nothing.
+  ///
+  /// On a one-cell-per-length sheet the length names its own region; on a
+  /// single-cell sheet every length maps to the same one.
+  String regionFor(String backHairId) {
+    if (backHairId == 'none') return 'none';
+    if (!acceptedValues.contains(backHairId)) {
+      throw FormatException('Unsupported back-hair ID: $backHairId.');
+    }
+    return backHairRegionId ?? 'back_hair_$backHairId';
+  }
+
+  /// The guide whose rear-hair silhouette matches the chosen length, with its
+  /// hash. `none` uses the canonical variant and leaves the cell green.
+  ({String path, String sha256}) guideFor(String backHairId) {
+    final variantId = backHairId == 'none'
+        ? (canonicalBackHairId ?? backHairId)
+        : backHairId;
+    final path = guideByBackHairId[variantId];
+    final hash = guideSha256ByBackHairId[variantId];
+    if (path == null || hash == null) {
+      return (path: fallbackGuide, sha256: fallbackGuideSha256);
+    }
+    return (path: path, sha256: hash);
+  }
+
+  /// Every guide the provider may legitimately be sent, so a verifier can
+  /// accept a variant without loosening to "any file".
+  Set<String> get acceptedGuideSha256 => {
+    fallbackGuideSha256,
+    ...guideSha256ByBackHairId.values,
+  };
 }
 
 class CharacterSheetLockedRig {

@@ -36,17 +36,23 @@ Endpoint: `https://storytale-image-worker.jbalejoshift0928.workers.dev`
   and returns a schema-validated `ChapterStoryData` plan.
 - `POST /generate?kind=background` accepts multipart form data.
 - `POST /generate?kind=sprite&mode=character-sheet` accepts the locked
-  `character_sheet_v1` prompt plus exactly five references: guide, assembled
-  reference, allowed mask, protected mask, and seam mask.
+  `character_sheet_v4` prompt plus exactly five references: guide, assembled
+  reference, allowed mask, protected mask, and seam mask. V4 publishes one guide
+  per rear-hair length, so the first reference is the variant matching the
+  requested length; every variant shares identical cells, masks, and anchors.
 - The character-sheet request accepts up to 12,000 prompt characters and 8 MB
   of reference images; other modes retain the smaller 2,500-character,
   four-reference contract.
-- Flutter sends contract/version, guide hash, geometry hash, selected back-hair
-  cell, and a stable request fingerprint. The Worker rejects mismatches.
-- Gemini 3.1 Flash Image is asked for one square 4K image without forcing the
+- Flutter sends contract/version, the hash of the guide variant it is actually
+  uploading, geometry hash, selected back-hair cell, and a stable request
+  fingerprint. The Worker rejects mismatches, and checks the uploaded guide
+  against both the declared hash and its set of approved variants, so a caller
+  cannot name one length and send another.
+- Gemini 3.1 Flash Image is asked for one square **1K** image without forcing the
   Interactions API MIME override; the provider's default lossless PNG is
-  required. The Worker rejects any response that is not exactly `4096 x 4096`
-  PNG.
+  required. The Worker rejects any response that is not exactly `1024 x 1024`
+  PNG. That requested tier, not the manifest, is what StoryTale is billed for:
+  `$0.067` at `1K` against `$0.151` at `4K`.
 - Successful generation returns raw image bytes plus provider, model, request
   ID, fingerprint, contract, width, and height response headers.
 - The Worker keeps both `APP_TOKEN` and `GEMINI_API_KEY` as secrets.
@@ -87,6 +93,14 @@ made; the controlled rerun remains owner-approved work.
 Deployment note (2026-08-03): Phase 7G.1C removes the shared limiter from
 sprite requests in Worker version `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
 No Gemini request or automated test was run during this deployment.
+
+Pending deployment (2026-08-06): the Worker source moved to `character_sheet_v4`
+— contract ID and version, geometry hash, a `1024` canvas check, the `1K`
+requested tier, the `back_hair_selected` region set, and three accepted guide
+hashes. **It is not deployed.** Flutter is already on V4, so a character-sheet
+request returns 409 until it is. `test/character_sheet_contract_test.dart`
+compares these constants against the manifest so a hand-copied value cannot
+drift.
 
 For fitted clothing, the Worker forwards the exact versioned guide and semantic
 outfit brief. Flutter owns the crop manifest and local masks; neither the Worker

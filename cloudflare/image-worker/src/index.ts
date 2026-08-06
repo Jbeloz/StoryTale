@@ -1,8 +1,19 @@
 const BACKGROUND_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0" as const;
-const CHARACTER_SHEET_CONTRACT_ID = "character_sheet_v1";
-const CHARACTER_SHEET_CONTRACT_VERSION = "1";
-const CHARACTER_SHEET_GUIDE_SHA256 =
-  "bd6731d1136df05fc4de44292aa2c6cbd131dc44fb5601b7ea66f45f6b803645";
+const CHARACTER_SHEET_CONTRACT_ID = "character_sheet_v4";
+const CHARACTER_SHEET_CONTRACT_VERSION = "4";
+const CHARACTER_SHEET_CANVAS = 1024;
+// V4 carries one rear-hair cell, so the guide has to show the length the
+// request is asking for. Every variant shares identical cells, masks, anchors,
+// and seams; only that one silhouette differs, so any of them is canonical.
+// Keys are the rear-hair IDs in the manifest's guideVariantSha256.
+const CHARACTER_SHEET_GUIDE_SHA256_BY_LENGTH = {
+  short: "b63e5f721f6f48bfa501bc623f00db18b0b7aa60d34b729775b18bcf00fc4b79",
+  medium: "32f922741c98dae4c25b1a93f4fa16b199f12471d7e2dd7ae598af2e6034e81c",
+  long: "150ce5bcec68a68f09588c63da40fa0e6fc1d94bc4532ea21f464480dbe13816",
+} as const;
+const CHARACTER_SHEET_GUIDE_SHA256 = new Set<string>(
+  Object.values(CHARACTER_SHEET_GUIDE_SHA256_BY_LENGTH),
+);
 const CHARACTER_SHEET_GEOMETRY_HASH =
   "0df67ec660c1aa5616f9a12d205111f8591dc24f123316f9f87b0f8239e57648";
 const CORS_HEADERS = {
@@ -1366,8 +1377,11 @@ async function generateSprite(
         aspect_ratio: mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "front-hair" || mode === "foreground" || mode === "master" || mode === "character-sheet"
           ? "1:1"
           : mode === "body-pose" ? "9:16" : "3:4",
+        // character_sheet_v4 is 1024 x 1024. This line, not the manifest, is
+        // what StoryTale is billed for: 1K is $0.067 against 4K's $0.151, and
+        // asking for 4K here would also return a canvas the contract rejects.
         image_size: mode === "character-sheet"
-          ? "4K"
+          ? "1K"
           : mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "front-hair" || mode === "foreground" || mode === "master" ? "1K" : "512",
       },
       store: false,
@@ -1405,10 +1419,12 @@ async function generateSprite(
   }
   if (
     mode === "character-sheet" &&
-    (details.mimeType !== "image/png" || details.width !== 4096 || details.height !== 4096)
+    (details.mimeType !== "image/png" ||
+      details.width !== CHARACTER_SHEET_CANVAS ||
+      details.height !== CHARACTER_SHEET_CANVAS)
   ) {
     throw new PublicWorkerError(
-      `Gemini returned ${details.width}x${details.height} ${details.mimeType}; StoryTale requires one 4096x4096 PNG.`,
+      `Gemini returned ${details.width}x${details.height} ${details.mimeType}; StoryTale requires one ${CHARACTER_SHEET_CANVAS}x${CHARACTER_SHEET_CANVAS} PNG.`,
       502,
     );
   }
@@ -1448,7 +1464,7 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
   if (!body) {
     return json({
       error: isCharacterSheet
-        ? "Use the character_sheet_v1 prompt and exactly five locked references"
+        ? `Use the ${CHARACTER_SHEET_CONTRACT_ID} prompt and exactly five locked references`
         : "Use a 3-2500 character prompt and up to four small image references",
     }, 400);
   }
@@ -1514,21 +1530,23 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
       if (
         body.fields.contract_id !== CHARACTER_SHEET_CONTRACT_ID ||
         body.fields.contract_version !== CHARACTER_SHEET_CONTRACT_VERSION ||
-        body.fields.guide_sha256 !== CHARACTER_SHEET_GUIDE_SHA256 ||
+        !CHARACTER_SHEET_GUIDE_SHA256.has(body.fields.guide_sha256 ?? "") ||
         body.fields.geometry_hash !== CHARACTER_SHEET_GEOMETRY_HASH
       ) {
         return json({ error: "The character-sheet contract does not match the deployed Worker" }, 409);
       }
-      if (await fileSha256(body.references[0]) !== CHARACTER_SHEET_GUIDE_SHA256) {
+      // The uploaded guide must be one of the approved variants *and* the one
+      // the request declared, so a caller cannot name one length and send
+      // another.
+      if (await fileSha256(body.references[0]) !== body.fields.guide_sha256) {
         return json({ error: "The uploaded character-sheet guide is not canonical" }, 409);
       }
       if (!/^[a-f0-9]{64}$/.test(body.fields.request_fingerprint ?? "")) {
         return json({ error: "The character-sheet request fingerprint is invalid" }, 400);
       }
+      // V4 collapses the three V1 rear-hair cells into one.
       if (!new Set([
-        "back_hair_short",
-        "back_hair_medium",
-        "back_hair_long",
+        "back_hair_selected",
         "none",
       ]).has(body.fields.selected_back_hair ?? "")) {
         return json({ error: "The selected back-hair region is invalid" }, 400);

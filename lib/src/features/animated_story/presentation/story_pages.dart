@@ -1270,8 +1270,11 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
           'moonlit-rose-garden.jpg';
     }
     if (_mode == _ArtworkMode.characterSheet) {
+      // The canonical guide of the active contract, so the placeholder shows
+      // the layout a request would actually send. Follow
+      // CharacterSheetContractRepository.assetPath when that changes.
       return 'assets/images/characters/generation_templates/humanoid_v1/'
-          'character_sheet_v1/guide.png';
+          'character_sheet_v4/guide_default_medium.png';
     }
     return 'assets/images/characters/references/full-proportion.png';
   }

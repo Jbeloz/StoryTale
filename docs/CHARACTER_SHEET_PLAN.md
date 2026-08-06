@@ -92,33 +92,50 @@ without a network request. V2 remains versioned as the exact-part checkpoint;
 V3 is the owner-selected contract for the next migration, but is not yet the
 active Flutter, Worker, or provider contract.
 
-### Migration surface, shared by V3 and V4
+### Migration to V4 — implemented locally on 2026-08-06
 
-`test/character_sheet_contract_test.dart` confirmed that
-`CharacterSheetContract.fromJson` already parses both the V3 and V4 manifests
-unchanged: it ignores the added `transport`, `actorContract`,
-`selectionContract`, `maskEncoding`, and `layout` keys and reads all regions
-(14 for V3, 12 for V4). Only these deliberate assertions and registrations still
-separate an approved sheet from the runtime pipeline:
+V4 is the active contract in Flutter and in the Worker source. The Worker is
+**not deployed**, and no provider request has been made.
 
-1. `CharacterSheetContract.supportedContractId` and `supportedContractVersion`;
-2. the hard `4096 x 4096` canvas assertion in `validationErrors()`;
-3. `CharacterSheetContractRepository.assetPath`;
-4. the `character_sheet_v1/` folder registered in `pubspec.yaml`, which is why
-   Flutter cannot currently load a V3 or V4 asset at all;
-5. the canvas checks in `character_sheet_processor.dart` and the hardcoded
-   `4096x4096` message in `story_artwork_service.dart`; and
-6. `CHARACTER_SHEET_CONTRACT_ID`, `CHARACTER_SHEET_CONTRACT_VERSION`,
-   `CHARACTER_SHEET_GUIDE_SHA256`, `CHARACTER_SHEET_GEOMETRY_HASH`, and the
-   `4096` validation in `cloudflare/image-worker/src/index.ts`.
+The checklist recorded before this work had six items. Tracing the code found
+five more, and three of those would have wasted a paid request rather than
+failed cleanly. All eleven are done:
 
-The Worker half of that list cannot take effect without a deployment. Record
-this list as the migration checklist when the owner resumes; do not act on it
-before then.
+| # | Change | Where |
+| --- | --- | --- |
+| 1 | `supportedContractId`/`Version` to V4 | `character_sheet_contract.dart` |
+| 2 | Hard `4096 x 4096` rule replaced by "square, and a documented `1:1` tier" | `character_sheet_contract.dart` |
+| 3 | `expectedRegionIds` from 14 to V4's 12 | `character_sheet_contract.dart` |
+| 4 | `CharacterSheetContractRepository.assetPath` to the V4 manifest | `character_sheet_contract.dart` |
+| 5 | `character_sheet_v4/` registered; V1 stays registered as rollback | `pubspec.yaml` |
+| 6 | Hardcoded `4096x4096` message reads the contract canvas | `story_artwork_service.dart` |
+| 7 | **The Worker asked Gemini for `4K`.** This line, not the manifest, is what StoryTale is billed for; `4K` would also have returned a canvas V4 rejects | `image-worker/src/index.ts` |
+| 8 | **V4's prompt contract had no `{{...}}` tokens**, so `buildPrompt` would have sent the spec verbatim — a paid request describing no character | `character_sheet_v4/prompt_contract.md` |
+| 9 | **`selectedBackHairRegion()` returned V1 region IDs**, so V4's rear-hair layer would never have been extracted | `character_sheet_generation.dart` |
+| 10 | **One guide per length against a single-guide sender and verifier** | `story_artwork_service.dart`, Worker |
+| 11 | Worker contract ID, version, geometry hash, canvas, and rear-hair region set | `image-worker/src/index.ts` |
 
-**Prefer V4 over V3 when migrating.** V4 is `1:1`, which the provider documents;
-V3 is `4:1`, which it does not. Migrating to V4 also costs `$0.067` per request
-instead of `$0.101`.
+Three design notes worth keeping:
+
+- **`CharacterSheetSelection`** reads `selectionContract` from the manifest, so
+  "which region does this length activate" and "which guide shows it" belong to
+  the contract rather than to the caller. V1's one-cell-per-length shape still
+  resolves through the same API, which is what keeps the rollback real.
+- **`buildPrompt` accepts both rear-hair tokens.** V1 names its three cells in
+  the token; V4 uses `{{selected_back_hair_region}}`. Only one contract is ever
+  active, so both resolve to the same value and either can be loaded.
+- **The Worker sends `guide_sha256` for the variant actually uploaded**, and the
+  Worker checks the upload against that declared hash *and* against its set of
+  approved variants. A caller cannot name one length and send another.
+
+`test/character_sheet_contract_test.dart` now parses
+`cloudflare/image-worker/src/index.ts` and compares its contract ID, version,
+geometry hash, canvas, requested tier, and three guide hashes against the
+manifest. Those constants are hand-copied and only take effect on deploy, so a
+stale copy would otherwise surface as a 409 after the money was committed.
+
+**Still open, and deliberately so:** the Worker deployment, the first paid V4
+request, and guides for actors other than `default`.
 
 ### Output-size and usage decision
 
@@ -294,8 +311,9 @@ V3 is owner-approved artwork and regenerating it would invalidate that review.
 `test/character_sheet_contract_test.dart` records the V1-V3 mismatch as an
 explicit expectation so it stays visible rather than silently passing.
 
-V4 is still **not** registered with Flutter, the Worker, or the provider; it is a
-local candidate with the same migration surface as V3.
+V4 became the active contract on 2026-08-06; see "Migration to V4" above. The
+Worker source is updated but **not deployed**, and no provider request has been
+made.
 
 ## 3. V1 source layout retained for rollback
 
@@ -768,8 +786,15 @@ throw and corrects which head is used.
 - [x] One offline test hash-guards the V1, V2, and V3 guides, masks, prompts,
   manifests, and the locked rig against silent edits, and records the exact
   remaining V3 migration surface.
-- [ ] Flutter and the private Worker consume V3 without silently falling back
-  to V1 or making an automatic paid retry.
+- [x] Flutter consumes V4 without silently falling back to V1 or making an
+  automatic paid retry. V4 replaced V3 as the migration target: it is `1:1`,
+  which the provider documents, and `$0.067` against V3's `$0.101`.
+- [x] The prompt the provider is paid to answer carries every request field, and
+  a test fails if the active contract drops one.
+- [x] The Worker source matches the active manifest, proven by a test that reads
+  the Worker rather than by a manual diff.
+- [ ] **The Worker is deployed.** Flutter is on V4 and the live Worker is still
+  on V1, so a request made before that deployment returns 409.
 - [x] Every region has one reviewed crop, output canvas, anchor, role, and side.
 - [x] Allowed, protected, and seam masks are versioned and deterministic.
 - [x] In V4, every cell draws the asset the rig composes, and the head cell's

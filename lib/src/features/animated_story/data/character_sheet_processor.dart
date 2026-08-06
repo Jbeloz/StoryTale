@@ -134,7 +134,7 @@ class CharacterSheetProcessor {
       );
     }
 
-    final selectedBackHair = request.selectedBackHairRegion();
+    final selectedBackHair = request.selectedBackHairRegion(contract);
     final cleanSheet = image.Image(
       contract.canvas.width,
       contract.canvas.height,

@@ -9,18 +9,33 @@ instead of `4096 x 1024` at `4:1`, and there is one selected rear-hair cell
 instead of three alternatives. Every cell keeps its native size, so each
 extracted part has the same pixels it would have in V2 or V3.
 
-## Request fields
+## This request
 
-- `ACTOR_ROLE`: `default` for the checked-in guide; the same geometry may later
-  be used for `heroine` with the heroine brief and actor-specific references.
-- `CHARACTER_NAME`: approved Story Bible display name.
-- `CHARACTER_BRIEF`: source-backed appearance description only.
-- `OUTFIT_BRIEF`: one coherent outfit fitted across all body-piece cells.
-- `HAIR_BRIEF`: one coherent front hairstyle plus the single rear length named
-  by `BACK_HAIR_SELECTION`.
-- `BACK_HAIR_SELECTION`: one of `short`, `medium`, `long`, or `none`.
+Values written in double braces are replaced by StoryTale before the request is
+sent. They are data fields, not permission to change the geometry contract. If
+any of them still reads as a brace placeholder when you receive this, reject the
+request rather than inventing a character.
 
-They are data fields, not permission to change the geometry contract.
+Create the separated appearance sheet for one coherent StoryTale character.
+First reason about the character as one complete front-facing person, then draw
+only the permitted separated appearance artwork into the supplied guide cells.
+
+Character identity: `{{character_name}}`  
+Source-backed design brief: `{{character_design_brief}}`  
+Age and role: `{{age_and_role}}`  
+Skin tone: `{{skin_tone}}`  
+Hair requirements: `{{hair_requirements}}`  
+Selected rear-hair cell: `{{selected_back_hair_region}}`  
+Outfit requirements: `{{outfit_requirements}}`  
+Approved accessories for this request: `{{approved_accessories_or_none}}`
+
+The rear-hair value is either `back_hair_selected`, meaning draw the one rear
+length described in the hair requirements, or `none`, meaning leave that cell
+flat green. V4 carries a single rear-hair cell, so there is no other valid value.
+
+The checked-in guide depicts the `default` actor. The same geometry may later be
+used for other actors with their own brief and actor-specific hair references,
+without changing any crop, mask, anchor, seam, or output size.
 
 ## Required provider inputs
 

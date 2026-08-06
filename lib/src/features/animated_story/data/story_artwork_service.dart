@@ -132,26 +132,42 @@ class StoryArtworkService {
       contract.assets.promptContract,
       contract.assetSha256['promptContract']!,
     );
-    final prompt = request.buildPrompt(utf8.decode(promptBytes));
-    final references = <MapEntry<String, String>>[
-      MapEntry('guide', contract.assets.guide),
-      MapEntry('assembledReference', contract.assets.assembledReference),
-      MapEntry('allowedRegions', contract.assets.allowedRegions),
-      MapEntry('protectedRegions', contract.assets.protectedRegions),
-      MapEntry('seamAllowances', contract.assets.seamAllowances),
+    final prompt = request.buildPrompt(utf8.decode(promptBytes), contract);
+    // The guide must show the rear-hair silhouette this request is asking for.
+    // V4 publishes one variant per length behind a single set of cells, masks,
+    // and anchors, so only the first reference and its hash change.
+    final guide = contract.selection.guideFor(request.backHairId);
+    final references = <({String path, String sha256})>[
+      guide,
+      (
+        path: contract.assets.assembledReference,
+        sha256: contract.assetSha256['assembledReference']!,
+      ),
+      (
+        path: contract.assets.allowedRegions,
+        sha256: contract.assetSha256['allowedRegions']!,
+      ),
+      (
+        path: contract.assets.protectedRegions,
+        sha256: contract.assetSha256['protectedRegions']!,
+      ),
+      (
+        path: contract.assets.seamAllowances,
+        sha256: contract.assetSha256['seamAllowances']!,
+      ),
     ];
     final files = <http.MultipartFile>[];
     for (var index = 0; index < references.length; index++) {
       final reference = references[index];
       final bytes = await _verifiedAssetBytes(
-        reference.value,
-        contract.assetSha256[reference.key]!,
+        reference.path,
+        reference.sha256,
       );
       files.add(
         http.MultipartFile.fromBytes(
           'input_image_$index',
           bytes,
-          filename: reference.value.split('/').last,
+          filename: reference.path.split('/').last,
         ),
       );
     }
@@ -163,10 +179,12 @@ class StoryArtworkService {
       fields: {
         'contract_id': contract.contractId,
         'contract_version': '${contract.contractVersion}',
-        'guide_sha256': contract.assetSha256['guide']!,
+        // The hash of the variant actually being sent, not the canonical one,
+        // so the Worker can verify the uploaded file against the declared hash.
+        'guide_sha256': guide.sha256,
         'geometry_hash': contract.lockedRig.geometryHash,
         'request_fingerprint': fingerprint,
-        'selected_back_hair': request.selectedBackHairRegion(),
+        'selected_back_hair': request.selectedBackHairRegion(contract),
       },
       files: files,
     );
@@ -181,7 +199,9 @@ class StoryArtworkService {
         decoded.height != contract.canvas.height) {
       throw ArtworkGenerationException(
         'Gemini returned ${decoded.width}x${decoded.height} '
-        '${worker.mimeType}; StoryTale requires one 4096x4096 PNG.',
+        '${worker.mimeType}; StoryTale requires one '
+        '${contract.canvas.width}x${contract.canvas.height} '
+        '${contract.canvas.mimeType}.',
       );
     }
     if (worker.requestFingerprint != fingerprint) {

@@ -769,41 +769,124 @@ void main() {
   });
 
   group('runtime contract support', () {
-    test('accepts the active V1 manifest without a validation error', () {
-      final contract = CharacterSheetContract.fromJson(_readManifest(_v1));
+    test('accepts the active V4 manifest without a validation error', () {
+      final contract = CharacterSheetContract.fromJson(_readManifest(_v4));
       expect(contract.validationErrors(), isEmpty);
+      expect(contract.regions, hasLength(12));
       expect(
         CharacterSheetContractRepository.assetPath,
-        _v1.manifestPath,
-        reason: 'V1 is still the registered runtime contract',
+        _v4.manifestPath,
+        reason: 'V4 is the registered runtime contract',
       );
     });
 
-    test('parses V4 but rejects it until the migration lands', () {
-      // Same migration surface as V3: the parser already understands the shape,
-      // so only the supported ID, version, and canvas assertions stand between
-      // this sheet and the runtime pipeline.
+    test('resolves one rear-hair region and one guide per length', () {
       final contract = CharacterSheetContract.fromJson(_readManifest(_v4));
-      expect(contract.contractId, 'character_sheet_v4');
-      expect(contract.regions, hasLength(12));
+      final selection = contract.selection;
+      final manifest = _readManifest(_v4);
+      final variants =
+          (manifest['guideVariantSha256'] as Map<String, dynamic>)
+              .cast<String, String>();
 
-      final errors = contract.validationErrors();
-      expect(errors, isNotEmpty);
-      expect(errors.join(' '), contains('character_sheet_v4'));
+      for (final length in const ['short', 'medium', 'long']) {
+        expect(
+          selection.regionFor(length),
+          'back_hair_selected',
+          reason: 'V4 activates one cell whatever the length',
+        );
+        final guide = selection.guideFor(length);
+        expect(guide.sha256, variants[length]);
+        expect(
+          _sha256(_repoFile(guide.path)),
+          guide.sha256,
+          reason: '$length must send the guide its hash names',
+        );
+        expect(guide.path, contains(length));
+      }
+
+      expect(selection.regionFor('none'), 'none');
+      expect(
+        selection.guideFor('none').sha256,
+        variants[selection.canonicalBackHairId],
+        reason: 'none still needs a guide; it just leaves the cell green',
+      );
+      expect(() => selection.regionFor('beehive'), throwsFormatException);
+      expect(selection.acceptedGuideSha256, containsAll(variants.values));
     });
 
-    test('parses V3 but rejects it until the migration lands', () {
-      // Documents the exact migration surface: the parser already understands
-      // the V3 shape, so only the supported ID, version, and canvas assertions
-      // stand between the approved sheet and the runtime pipeline.
+    test('still parses V1 so the rollback target stays loadable', () {
+      // V1 remains registered in pubspec.yaml. It no longer validates, because
+      // validation now describes V4: 14 regions instead of 12, and a 4096
+      // canvas. Parsing is what a rollback would need first.
+      final contract = CharacterSheetContract.fromJson(_readManifest(_v1));
+      expect(contract.contractId, 'character_sheet_v1');
+      expect(contract.regions, hasLength(14));
+      expect(
+        contract.selection.backHairRegionId,
+        isNull,
+        reason: 'V1 names one region per length rather than a shared cell',
+      );
+      expect(contract.selection.regionFor('medium'), 'back_hair_medium');
+      expect(contract.validationErrors(), isNotEmpty);
+    });
+
+    test('the Worker source agrees with the active manifest', () {
+      // The Worker cannot import Dart, so its contract constants are copied by
+      // hand and only take effect on deploy. A stale copy fails a paid request
+      // with a 409 after the money is committed, so compare the two here
+      // instead of trusting a manual diff.
+      final contract = CharacterSheetContract.fromJson(_readManifest(_v4));
+      final worker = _repoFile(
+        'cloudflare/image-worker/src/index.ts',
+      ).readAsStringSync();
+
+      String constant(String name) {
+        final match = RegExp(
+          '$name\\s*=\\s*\\n?\\s*"([^"]+)"',
+        ).firstMatch(worker);
+        expect(match, isNotNull, reason: '$name is missing from the Worker');
+        return match!.group(1)!;
+      }
+
+      expect(constant('CHARACTER_SHEET_CONTRACT_ID'), contract.contractId);
+      expect(
+        constant('CHARACTER_SHEET_CONTRACT_VERSION'),
+        '${contract.contractVersion}',
+      );
+      expect(
+        constant('CHARACTER_SHEET_GEOMETRY_HASH'),
+        contract.lockedRig.geometryHash,
+      );
+      expect(
+        RegExp(r'CHARACTER_SHEET_CANVAS\s*=\s*(\d+)').firstMatch(worker)?.
+            group(1),
+        '${contract.canvas.width}',
+        reason: 'the Worker must validate the canvas the contract declares',
+      );
+      expect(
+        RegExp(r'image_size:\s*mode === "character-sheet"\s*\n?\s*\?\s*"(\w+)"')
+            .firstMatch(worker)
+            ?.group(1),
+        '1K',
+        reason: 'the requested tier is what StoryTale is billed for',
+      );
+
+      final workerGuides = RegExp(r'^\s+(short|medium|long): "([a-f0-9]{64})"',
+        multiLine: true,
+      ).allMatches(worker);
+      expect(
+        {for (final match in workerGuides) match.group(1)!: match.group(2)!},
+        contract.selection.guideSha256ByBackHairId,
+        reason: 'every published guide variant must be accepted on deploy',
+      );
+    });
+
+    test('rejects V3, whose 4:1 canvas the provider does not document', () {
       final contract = CharacterSheetContract.fromJson(_readManifest(_v3));
       expect(contract.contractId, 'character_sheet_v3');
-      expect(contract.regions, hasLength(14));
-
       final errors = contract.validationErrors();
-      expect(errors, isNotEmpty);
       expect(errors.join(' '), contains('character_sheet_v3'));
-      expect(errors.join(' '), contains('4096 x 4096'));
+      expect(errors.join(' '), contains('4096 x 1024'));
     });
   });
 }
@@ -838,6 +921,16 @@ class _Sheet {
       '$id/crop_manifest.json';
 }
 
+/// V1 and V3 publish one cell per rear-hair length. This used to borrow
+/// `CharacterSheetContract.expectedRegionIds`, which now describes V4's twelve,
+/// so the older shape is spelled out here instead of tracking the active one.
+const _perLengthRegionIds = {
+  'back_hair_short',
+  'back_hair_medium',
+  'back_hair_long',
+  ..._sharedRegionIds,
+};
+
 const _sharedRegionIds = {
   'front_hair',
   'head',
@@ -857,7 +950,7 @@ const _v1 = _Sheet(
   version: 1,
   width: 4096,
   height: 4096,
-  regionIds: CharacterSheetContract.expectedRegionIds,
+  regionIds: _perLengthRegionIds,
 );
 const _v2 = _Sheet(
   id: 'character_sheet_v2',
@@ -871,7 +964,7 @@ const _v3 = _Sheet(
   version: 3,
   width: 4096,
   height: 1024,
-  regionIds: CharacterSheetContract.expectedRegionIds,
+  regionIds: _perLengthRegionIds,
 );
 const _v4 = _Sheet(
   id: 'character_sheet_v4',

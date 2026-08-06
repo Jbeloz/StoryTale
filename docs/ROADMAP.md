@@ -410,9 +410,10 @@ options into one `4096 x 1024` (`4:1`, `2K`) landscape sheet. The checked-in
 guide/reference use actor `default`; the manifest retains identical geometry
 and actor-specific source mapping for future heroine use. V1, V2, and every
 rig/hair source remain unchanged behind their checkpoints. On 2026-08-04 the
-owner selected V3 as the future active contract. Flutter, the Worker, and the
-provider still use V1 because V3 migration and provider work are paused until
-the owner explicitly asks to continue. One offline test,
+owner selected V3 as the future active contract; on 2026-08-06 they replaced
+that choice with V4 and approved the migration, because `4:1` is undocumented
+and `1:1` `1K` is both safe and cheaper. V3 is kept on disk behind its hashes.
+One offline test,
 `test/character_sheet_contract_test.dart`, now hash-guards the V1, V2, and V3
 guides, masks, prompts, manifests, and locked rig assets against silent edits
 and records the exact remaining V3 migration surface. It registers no asset,
@@ -430,8 +431,11 @@ reference both use; its masks, seam marker, and anchors moved with the smaller
 artwork. The same defect existed at runtime and would have failed the first real
 packaging attempt, so the processor now fits a locked asset to its region canvas
 and `test/character_sheet_processor_test.dart` covers that class for the first
-time. Details and the corrected size table are in
-[Character Sheet Plan](CHARACTER_SHEET_PLAN.md).
+time. **V4 became the active contract the same day.** Flutter loads it, the
+Worker source targets it, and the requested provider tier dropped from `4K` to
+`1K` — that Worker line, not the manifest, is what StoryTale is billed for. The
+Worker is not deployed and no provider request has been made. Details and the
+corrected size table are in [Character Sheet Plan](CHARACTER_SHEET_PLAN.md).
 Phase 7G.1C is
 implemented locally: the processor
 hash-locks the ten runtime head/body assets, rejects face pixels outside the
@@ -580,9 +584,20 @@ Current Phase 7G.1 work:
   the locked head is a `1254 x 1254` canvas and every region check assumed a
   cell-sized asset. V1, V2, and V3 keep the mismatch behind their approved
   hashes, recorded as an explicit test expectation.
-- [ ] **V4 owner gate:** review the V4 guide, then decide whether V4 replaces V3
-  as the migration target. V4 is the safer shape, the cheaper tier, and now the
-  only sheet whose head matches the runtime.
+- [x] **V4 selected and migrated, 2026-08-06.** V4 replaced V3 as the migration
+  target and is now the active contract in Flutter and in the Worker source: it
+  is `1:1`, which the provider documents, `$0.067` against V3's `$0.101`, and
+  the only sheet whose head matches the runtime. Eleven changes landed, five of
+  which were missing from the recorded checklist; three of those five would have
+  spent a paid request rather than failed. See
+  [Character Sheet Plan](CHARACTER_SHEET_PLAN.md), "Migration to V4".
+- [ ] **Deploy the Worker.** Flutter is on V4 and the live Worker is still on V1,
+  so any request before that deployment returns 409. Needs owner approval.
+- [ ] **One controlled V4 request**, then the existing package, six-face, and
+  four-pose gates. Owner-triggered; roughly `$0.067`.
+- [ ] **Guides for actors other than `default`.** Each actor has its own front
+  hair, so each needs generated, checked-in, hashed guides before it can be
+  requested. Free and offline; defer until an actor is actually needed.
 - [ ] **Faces direction, undecided:** eyes, nose, and mouth come from shared
   local parts under `assets/images/characters/face_profiles/`, so every character
   on a profile has the same face. Decide between keeping shared parts and
