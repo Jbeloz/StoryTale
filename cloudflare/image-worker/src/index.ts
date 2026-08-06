@@ -2,6 +2,9 @@ const BACKGROUND_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0" as const
 const CHARACTER_SHEET_CONTRACT_ID = "character_sheet_v4";
 const CHARACTER_SHEET_CONTRACT_VERSION = "4";
 const CHARACTER_SHEET_CANVAS = 1024;
+// The provider only emits JPEG from this endpoint; see the response_format note
+// in generateSprite. Keep this in step with the manifest's canvas.mimeType.
+const CHARACTER_SHEET_MIME = "image/jpeg";
 // V4 carries one rear-hair cell, so the guide has to show the length the
 // request is asking for. Every variant shares identical cells, masks, anchors,
 // and seams; only that one silhouette differs, so any of them is canonical.
@@ -1339,6 +1342,20 @@ function imageDetails(
   return null;
 }
 
+/// Pulls the human-readable reason out of a Google error body, falling back to
+/// a trimmed snippet. Google returns `{"error":{"message":"..."}}`, and its
+/// validation messages name the field they rejected.
+function geminiErrorMessage(details: string): string {
+  try {
+    const parsed = JSON.parse(details) as { error?: { message?: string } };
+    const message = parsed.error?.message;
+    if (message) return message.slice(0, 300);
+  } catch {
+    // Not JSON; fall through to the raw snippet.
+  }
+  return details.slice(0, 300) || "no detail returned";
+}
+
 async function generateSprite(
   prompt: string,
   references: File[],
@@ -1369,18 +1386,18 @@ async function generateSprite(
       input,
       response_format: {
         type: "image",
-        // Ask for PNG explicitly. This previously left mime_type unset for the
-        // character sheet, on the belief that Gemini defaults to PNG and that
-        // the schema only enumerates JPEG. The first live V4 request disproved
-        // both: it returned a 1024x1024 image/jpeg, and the documentation lists
-        // image/png as an accepted value.
+        // JPEG is the only output this endpoint supports. Measured on
+        // 2026-08-06: omitting mime_type returned image/jpeg, and asking for
+        // image/png returned HTTP 400 "The value 'image/png' is not supported
+        // for 'response_format.mime_type'. Supported values: 'image/jpeg'."
         //
-        // Lossless is not a preference here. The processor keys on exact
-        // #00FF00 to find the background and validates every cut cell against
-        // per-pixel masks, so JPEG chroma subsampling would smear cell edges
-        // and make green detection unreliable. Converting a returned JPEG to
-        // PNG would preserve those artifacts, not remove them.
-        mime_type: mode === "character-sheet" ? "image/png" : "image/jpeg",
+        // That is tolerable because the processor finds the background with a
+        // tolerant test (green >= 160 && green >= red+40 && green >= blue+40)
+        // rather than an exact match. Re-encoding the V4 guide as JPEG moved
+        // the "pixels outside the masks" count by about 90 out of 1,048,576.
+        // What does collapse is the exact #00FF00 count, which only drives a
+        // secondary removal path and a metric.
+        mime_type: "image/jpeg",
         aspect_ratio: mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "front-hair" || mode === "foreground" || mode === "master" || mode === "character-sheet"
           ? "1:1"
           : mode === "body-pose" ? "9:16" : "3:4",
@@ -1395,10 +1412,15 @@ async function generateSprite(
     }),
   });
   if (!response.ok) {
+    // Every other Gemini path already logs the body. This one did not, so a 400
+    // arrived as a bare status with no way to tell which field was rejected.
+    const details = (await response.text()).slice(0, 1_000);
     console.error(JSON.stringify({
       message: "gemini_request_failed",
       status: response.status,
       model: env.GEMINI_IMAGE_MODEL,
+      mode,
+      details,
     }));
     if (response.status === 429) {
       throw new PublicWorkerError(
@@ -1408,6 +1430,15 @@ async function generateSprite(
     }
     if (response.status === 401 || response.status === 403) {
       throw new PublicWorkerError("The Gemini API key was rejected by Google.", 503);
+    }
+    if (response.status === 400) {
+      // A 400 is a rejected request, not a generation, so it is the cheap
+      // failure to diagnose. Surface Google's own wording: it names the
+      // offending field, which a bare status does not.
+      throw new PublicWorkerError(
+        `Gemini rejected the ${mode} request (HTTP 400): ${geminiErrorMessage(details)}`,
+        502,
+      );
     }
     throw new PublicWorkerError(
       `Gemini rejected the character-sheet request (HTTP ${response.status}).`,
@@ -1426,12 +1457,12 @@ async function generateSprite(
   }
   if (
     mode === "character-sheet" &&
-    (details.mimeType !== "image/png" ||
+    (details.mimeType !== CHARACTER_SHEET_MIME ||
       details.width !== CHARACTER_SHEET_CANVAS ||
       details.height !== CHARACTER_SHEET_CANVAS)
   ) {
     throw new PublicWorkerError(
-      `Gemini returned ${details.width}x${details.height} ${details.mimeType}; StoryTale requires one ${CHARACTER_SHEET_CANVAS}x${CHARACTER_SHEET_CANVAS} PNG.`,
+      `Gemini returned ${details.width}x${details.height} ${details.mimeType}; StoryTale requires one ${CHARACTER_SHEET_CANVAS}x${CHARACTER_SHEET_CANVAS} ${CHARACTER_SHEET_MIME}.`,
       502,
     );
   }

@@ -29,9 +29,11 @@ void main() {
     CharacterSheetGenerationRequest request,
     image.Image sheet,
   ) {
+    // Encoded the way the provider actually answers. The Interactions API only
+    // emits JPEG, so a PNG fixture would exercise a path production never sees.
     return CharacterSheetGenerationResult(
-      bytes: Uint8List.fromList(image.encodePng(sheet)),
-      mimeType: 'image/png',
+      bytes: Uint8List.fromList(image.encodeJpg(sheet, quality: 95)),
+      mimeType: contract.canvas.mimeType,
       width: sheet.width,
       height: sheet.height,
       provider: 'test',

@@ -156,9 +156,16 @@ class CharacterSheetContract {
         '${canvas.width} x ${canvas.height}.',
       );
     }
-    if (canvas.mimeType != 'image/png' ||
+    // The provider decides the output format; the contract only has to name one
+    // this pipeline can decode. Measured on 2026-08-06: the Interactions API
+    // rejects `image/png` for `response_format.mime_type` and supports only
+    // `image/jpeg`. The green background is what actually matters, and its
+    // detection is tolerant rather than an exact match, so JPEG is workable.
+    if (!const {'image/png', 'image/jpeg'}.contains(canvas.mimeType) ||
         canvas.backgroundColor.toUpperCase() != '#00FF00') {
-      errors.add('The sheet output must be a PNG with #00FF00 background.');
+      errors.add(
+        'The sheet output must be a PNG or JPEG with #00FF00 background.',
+      );
     }
     if (lockedRig.id != 'humanoid_v1' || !_isSha256(lockedRig.geometryHash)) {
       errors.add('The locked humanoid_v1 geometry hash is missing.');

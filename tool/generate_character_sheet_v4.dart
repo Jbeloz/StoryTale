@@ -389,7 +389,13 @@ void main() {
       'height': _canvasHeight,
       'providerAspectRatio': '1:1',
       'providerImageSize': '1K',
-      'mimeType': 'image/png',
+      // The provider's output format, not the guide's. The guide and masks on
+      // disk stay PNG; this is what a returned sheet must be. Measured on
+      // 2026-08-06: the Interactions API rejects `image/png` for
+      // `response_format.mime_type` and supports only `image/jpeg`, and JPEG
+      // moves the mask-validation count by about 90 pixels in 1,048,576
+      // because the background test is tolerant rather than exact.
+      'mimeType': 'image/jpeg',
       'backgroundColor': '#00FF00',
     },
     'assets': assetPaths,

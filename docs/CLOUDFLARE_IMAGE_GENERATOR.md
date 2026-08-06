@@ -94,21 +94,38 @@ Deployment note (2026-08-03): Phase 7G.1C removes the shared limiter from
 sprite requests in Worker version `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
 No Gemini request or automated test was run during this deployment.
 
-Deployment note (2026-08-06, second): the first live V4 request returned a
-`1024 x 1024` **image/jpeg** and the Worker rejected it with a 502 before any
-packaging. The character-sheet `response_format` had deliberately left
-`mime_type` unset, on the belief that Gemini defaults to PNG and that the
-Interactions API schema only enumerates JPEG. Both beliefs were wrong: the
-documentation lists `image/png` as an accepted value, and the omitted field
-yielded JPEG. The Worker now asks for `image/png` explicitly, deployed as
-version `d0311926-e0f8-403c-9251-7b3a99b3d75d`.
+Format decision (2026-08-06): **the character sheet is JPEG, because the
+provider offers nothing else.** Two live requests settled it:
 
-Lossless is a hard requirement, not a preference: the processor keys on exact
-`#00FF00` to find the background and validates each cut cell against per-pixel
-masks, so JPEG chroma subsampling would smear cell edges. Converting a returned
-JPEG to PNG would preserve those artifacts rather than remove them.
+1. With `mime_type` unset the provider returned `1024 x 1024` **image/jpeg**,
+   which the Worker rejected with a 502. The recorded belief that Gemini
+   defaults to PNG was wrong.
+2. With `mime_type: "image/png"` the provider returned **HTTP 400**: *"The value
+   'image/png' is not supported for 'response_format.mime_type'. Supported
+   values: 'image/jpeg'."* The recorded belief that the schema only enumerates
+   JPEG was right; the published documentation, which shows `image/png` in some
+   examples, is wrong for this endpoint.
 
-The `1K` tier itself is proven — the provider returned exactly `1024 x 1024`.
+A 400 is rejected before generation, so only the first of those was billed.
+
+JPEG is workable, and this was measured rather than assumed. Re-encoding the V4
+guide and re-running the mask validation offline moved the "pixels outside the
+approved masks" count by about **90 out of 1,048,576**, because the background
+test is tolerant (`green >= 160 && green >= red+40 && green >= blue+40`) rather
+than an exact match. What does collapse is the exact `#00FF00` count, from
+625,270 to roughly 10,000-20,000; that only drives a secondary removal path and
+a metric, since the primary removal is a connected-background flood fill using
+the same tolerant test.
+
+The contract's `canvas.mimeType` is now `image/jpeg`, and one test asserts the
+format the Worker asks for, the format it accepts, and the format the manifest
+declares are the same value. The `1K` tier is proven — the provider returned
+exactly `1024 x 1024`. Deployed as version
+`1e29b40a-8a56-45b8-8d73-caed666ddf41`.
+
+The Worker's sprite path now also logs the provider's error body, as the entity
+and analysis paths already did. Without it the 400 arrived as a bare status with
+no way to tell which field was rejected.
 
 Deployment note (2026-08-06): the Worker moved to `character_sheet_v4` —
 contract ID and version, geometry hash, a `1024` canvas check, the `1K`

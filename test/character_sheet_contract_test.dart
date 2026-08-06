@@ -29,7 +29,10 @@ void main() {
           final height = canvas['height'] as int;
           expect(width, sheet.width);
           expect(height, sheet.height);
-          expect(canvas['mimeType'], 'image/png');
+          // The provider's output format. V1-V3 were authored expecting PNG;
+          // V4 records image/jpeg because the Interactions API rejects
+          // image/png for response_format.mime_type.
+          expect(canvas['mimeType'], sheet.outputMimeType);
           expect(
             (canvas['backgroundColor'] as String).toUpperCase(),
             '#00FF00',
@@ -871,15 +874,25 @@ void main() {
         reason: 'the requested tier is what StoryTale is billed for',
       );
 
+      // Scoped to generateSprite: other Gemini paths declare their own
+      // response_format, and the analysis one asks for application/json.
+      final spriteSource = worker.substring(
+        worker.indexOf('async function generateSprite('),
+      );
       expect(
-        RegExp(
-          r'mime_type:\s*mode === "character-sheet"\s*\?\s*"([\w/]+)"',
-        ).firstMatch(worker)?.group(1),
+        RegExp(r'mime_type:\s*"([\w/]+)"').firstMatch(spriteSource)?.group(1),
         contract.canvas.mimeType,
         reason:
-            'the first live V4 request came back image/jpeg because this was '
-            'left unset; the processor needs lossless pixels to find exact '
-            '#00FF00 and to cut cells against per-pixel masks',
+            'the format asked for and the format accepted must be the same. '
+            'Measured on 2026-08-06: this endpoint rejects image/png with '
+            'HTTP 400 and supports only image/jpeg',
+      );
+      expect(
+        RegExp(
+          r'CHARACTER_SHEET_MIME\s*=\s*"([\w/]+)"',
+        ).firstMatch(worker)?.group(1),
+        contract.canvas.mimeType,
+        reason: 'the Worker must accept the format the contract declares',
       );
 
       final workerGuides = RegExp(r'^\s+(short|medium|long): "([a-f0-9]{64})"',
@@ -910,6 +923,7 @@ class _Sheet {
     required this.height,
     required this.regionIds,
     this.headDrawsRigAsset = false,
+    this.outputMimeType = 'image/png',
   });
 
   final String id;
@@ -922,6 +936,9 @@ class _Sheet {
   /// was corrected, because the earlier three are locked behind approved
   /// hashes.
   final bool headDrawsRigAsset;
+
+  /// What a returned sheet must be, not what the guide on disk is.
+  final String outputMimeType;
 
   /// V1 and V3 publish the full three-cell back-hair catalog; the V2
   /// checkpoint deliberately packs one selected back-hair slot instead.
@@ -984,6 +1001,7 @@ const _v4 = _Sheet(
   height: 1024,
   regionIds: {'back_hair_selected', ..._sharedRegionIds},
   headDrawsRigAsset: true,
+  outputMimeType: 'image/jpeg',
 );
 
 const _sheets = [_v1, _v2, _v3, _v4];

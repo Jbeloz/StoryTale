@@ -793,16 +793,27 @@ Gemini returned a `1024 x 1024` **image/jpeg**; the Worker rejected it with a 50
 before packaging, so the request was billed and produced nothing usable. It was
 not retried.
 
-The cause was a wrong assumption recorded in the Worker: the character-sheet
-`response_format` left `mime_type` unset, believing Gemini defaults to PNG and
-that the schema only enumerates JPEG. The documentation lists `image/png` as
-accepted, and the omitted field yielded JPEG. Fixed and deployed as version
-`d0311926-e0f8-403c-9251-7b3a99b3d75d`, with a test asserting the Worker asks
-for the contract's MIME type.
+**The sheet is JPEG now, because the provider offers nothing else.** Two live
+requests settled it. With `mime_type` unset the provider returned JPEG, so the
+recorded belief that Gemini defaults to PNG was wrong. Asking for `image/png`
+then returned HTTP 400: *"The value 'image/png' is not supported for
+'response_format.mime_type'. Supported values: 'image/jpeg'."* So the other half
+of that belief — that the schema only enumerates JPEG — was right, and the
+published documentation showing `image/png` is wrong for this endpoint. A 400 is
+rejected before generation, so only the first request was billed.
 
-Do not "fix" a future JPEG by converting it. The processor keys on exact
-`#00FF00` and validates each cut cell against per-pixel masks, so JPEG chroma
-subsampling smears cell edges; converting preserves those artifacts.
+JPEG was then measured rather than feared. Re-encoding the V4 guide and
+re-running the mask validation offline moved the "pixels outside the approved
+masks" count by about **90 out of 1,048,576**, because the background test is
+tolerant (`green >= 160 && green >= red+40 && green >= blue+40`) rather than
+exact. The exact `#00FF00` count does collapse, from 625,270 to roughly 10,000,
+but that only drives a secondary removal path and a metric; the primary removal
+is a connected-background flood fill on the same tolerant test. The processor
+tests now use a JPEG fixture and their exact pixel-count assertions still hold.
+
+`canvas.mimeType` is `image/jpeg`, and one test asserts the format asked for,
+accepted, and declared are the same value. Deployed as
+`1e29b40a-8a56-45b8-8d73-caed666ddf41`.
 
 **What the failure did prove:** the whole chain runs — Flutter picks the guide
 variant, the Worker accepts the V4 contract and the guide hash, Gemini answers,
