@@ -4,13 +4,15 @@
   "private": true,
   "scripts": {
     "cf:types": "wrangler types",
-    "check": "wrangler types --check && tsc --noEmit",
+    "test": "vitest run",
+    "check": "wrangler types --check && tsc --noEmit && vitest run",
     "deploy:dry": "wrangler deploy --dry-run",
     "deploy": "wrangler deploy --minify"
   },
   "devDependencies": {
     "@types/node": "latest",
     "typescript": "latest",
+    "vitest": "^4.1.10",
     "wrangler": "latest"
   }
 }

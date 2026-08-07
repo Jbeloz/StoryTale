@@ -37,8 +37,18 @@ must remain owned by the roadmap.
 
 - StoryTale is a local-first Flutter application and the MVP is EPUB-only.
 - Do not introduce Supabase or another remote persistence service into the MVP.
-- DeepL owns translation. Gemini owns semantic analysis and approved sprite
-  components. Cloudflare Workers AI owns generated backgrounds.
+- DeepL owns translation. Gemini owns semantic analysis. Cloudflare Workers AI
+  owns generated backgrounds.
+- **Image generation is provider-neutral by owner decision, 2026-08-07.** Sprite
+  and character images go through the seam in
+  `cloudflare/image-worker/src/providers/`, and the active provider is set by the
+  `IMAGE_PROVIDER` var, not by code. Gemini is the current default. Adding
+  another image provider is an adapter behind that interface, not a violation of
+  this boundary. The Flutter app must stay unaware of which provider answered:
+  it reads the `X-Image-Provider` header and never names one.
+- Provider selection is configuration only. A client must never be able to
+  choose the provider it is billed against, and a missing key or unknown
+  provider name must fail loudly rather than fall back to a paid alternative.
 - The versioned `humanoid_v1` head and nine body pieces are immutable runtime
   geometry. AI output must never replace or redraw that locked geometry.
 - Do not add behavior specific to The Little Prince or any other fixture. All

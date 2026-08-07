@@ -1,3 +1,12 @@
+import { imageDetails, isRecord, PublicWorkerError } from "./shared";
+import { resolveImageProvider } from "./providers/registry";
+import {
+  SPRITE_REQUEST_SPEC_BY_MODE,
+  type ProviderImageRequest,
+  type ReferenceImage,
+  type SpriteMode,
+} from "./providers/types";
+
 const BACKGROUND_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0" as const;
 const CHARACTER_SHEET_CONTRACT_ID = "character_sheet_v4";
 const CHARACTER_SHEET_CONTRACT_VERSION = "4";
@@ -32,24 +41,15 @@ type StoryTaleEnv = Env & {
   GEMINI_API_KEY?: string;
 };
 type ImageKind = "background" | "sprite";
-type SpriteMode =
-  | "master"
-  | "head-design"
-  | "head-expression"
-  | "face-layer"
-  | "front-hair"
-  | "body-pose"
-  | "foreground"
-  | "character-sheet";
+// `SpriteMode` moved to `providers/types.ts`: the per-mode size spec lives
+// beside it, so a new provider never has to re-derive what each mode asks for.
 type TimingSafeSubtleCrypto = SubtleCrypto & {
   timingSafeEqual(left: ArrayBuffer, right: ArrayBuffer): boolean;
 };
 
-class PublicWorkerError extends Error {
-  constructor(message: string, readonly status: number) {
-    super(message);
-  }
-}
+// `PublicWorkerError`, `isRecord`, the base64 helpers, and `imageDetails` now
+// live in `shared.ts` so the provider adapters can use them without importing
+// this request handler.
 
 type AnalysisCharacter = {
   id: string;
@@ -221,54 +221,11 @@ async function parseBody(
   return { prompt, references, fields };
 }
 
-function bytesToBase64(bytes: Uint8Array): string {
-  let binary = "";
-  for (let offset = 0; offset < bytes.length; offset += 32_768) {
-    binary += String.fromCharCode(...bytes.subarray(offset, offset + 32_768));
-  }
-  return btoa(binary);
-}
-
-function base64ToBytes(data: string): Uint8Array {
-  const binary = atob(data);
-  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
-}
-
 async function fileSha256(file: File): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
   return [...new Uint8Array(digest)]
     .map((value) => value.toString(16).padStart(2, "0"))
     .join("");
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function findGeminiImage(value: unknown): { data: string; mimeType: string } | null {
-  if (!isRecord(value) || !Array.isArray(value.steps)) return null;
-  for (let stepIndex = value.steps.length - 1; stepIndex >= 0; stepIndex--) {
-    const step = value.steps[stepIndex];
-    if (
-      !isRecord(step) ||
-      step.type !== "model_output" ||
-      !Array.isArray(step.content)
-    ) continue;
-    for (let partIndex = step.content.length - 1; partIndex >= 0; partIndex--) {
-      const part = step.content[partIndex];
-      if (
-        isRecord(part) &&
-        part.type === "image" &&
-        typeof part.data === "string"
-      ) {
-        return {
-          data: part.data,
-          mimeType: typeof part.mime_type === "string" ? part.mime_type : "image/jpeg",
-        };
-      }
-    }
-  }
-  return null;
 }
 
 function findGeminiText(value: unknown): string | null {
@@ -1299,175 +1256,9 @@ async function generateBackground(
   return { bytes, ...image };
 }
 
-function imageDetails(
-  bytes: Uint8Array,
-): { mimeType: string; width: number; height: number } | null {
-  if (
-    bytes.length > 24 &&
-    bytes[0] === 0x89 &&
-    bytes[1] === 0x50 &&
-    bytes[2] === 0x4e &&
-    bytes[3] === 0x47
-  ) {
-    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-    return {
-      mimeType: "image/png",
-      width: view.getUint32(16),
-      height: view.getUint32(20),
-    };
-  }
-  if (bytes.length > 4 && bytes[0] === 0xff && bytes[1] === 0xd8) {
-    let offset = 2;
-    while (offset + 8 < bytes.length) {
-      if (bytes[offset] !== 0xff) {
-        offset++;
-        continue;
-      }
-      const marker = bytes[offset + 1];
-      const length = (bytes[offset + 2] << 8) | bytes[offset + 3];
-      if (length < 2) break;
-      if (
-        marker >= 0xc0 &&
-        marker <= 0xc3
-      ) {
-        return {
-          mimeType: "image/jpeg",
-          height: (bytes[offset + 5] << 8) | bytes[offset + 6],
-          width: (bytes[offset + 7] << 8) | bytes[offset + 8],
-        };
-      }
-      offset += length + 2;
-    }
-  }
-  return null;
-}
-
-/// Pulls the human-readable reason out of a Google error body, falling back to
-/// a trimmed snippet. Google returns `{"error":{"message":"..."}}`, and its
-/// validation messages name the field they rejected.
-function geminiErrorMessage(details: string): string {
-  try {
-    const parsed = JSON.parse(details) as { error?: { message?: string } };
-    const message = parsed.error?.message;
-    if (message) return message.slice(0, 300);
-  } catch {
-    // Not JSON; fall through to the raw snippet.
-  }
-  return details.slice(0, 300) || "no detail returned";
-}
-
-async function generateSprite(
-  prompt: string,
-  references: File[],
-  mode: SpriteMode,
-  env: StoryTaleEnv,
-): Promise<{ bytes: Uint8Array; mimeType: string; width: number; height: number }> {
-  if (!env.GEMINI_API_KEY) throw new Error("Gemini is not configured");
-
-  const input: Array<Record<string, string>> = [
-    { type: "text", text: spritePrompt(prompt, mode) },
-  ];
-  for (const reference of references) {
-    input.push({
-      type: "image",
-      mime_type: reference.type.startsWith("image/") ? reference.type : "image/png",
-      data: bytesToBase64(new Uint8Array(await reference.arrayBuffer())),
-    });
-  }
-
-  const response = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": env.GEMINI_API_KEY,
-    },
-    body: JSON.stringify({
-      model: env.GEMINI_IMAGE_MODEL,
-      input,
-      response_format: {
-        type: "image",
-        // JPEG is the only output this endpoint supports. Measured on
-        // 2026-08-06: omitting mime_type returned image/jpeg, and asking for
-        // image/png returned HTTP 400 "The value 'image/png' is not supported
-        // for 'response_format.mime_type'. Supported values: 'image/jpeg'."
-        //
-        // That is tolerable because the processor finds the background with a
-        // tolerant test (green >= 160 && green >= red+40 && green >= blue+40)
-        // rather than an exact match. Re-encoding the V4 guide as JPEG moved
-        // the "pixels outside the masks" count by about 90 out of 1,048,576.
-        // What does collapse is the exact #00FF00 count, which only drives a
-        // secondary removal path and a metric.
-        mime_type: "image/jpeg",
-        aspect_ratio: mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "front-hair" || mode === "foreground" || mode === "master" || mode === "character-sheet"
-          ? "1:1"
-          : mode === "body-pose" ? "9:16" : "3:4",
-        // character_sheet_v4 is 1024 x 1024. This line, not the manifest, is
-        // what StoryTale is billed for: 1K is $0.067 against 4K's $0.151, and
-        // asking for 4K here would also return a canvas the contract rejects.
-        image_size: mode === "character-sheet"
-          ? "1K"
-          : mode === "head-design" || mode === "head-expression" || mode === "face-layer" || mode === "front-hair" || mode === "foreground" || mode === "master" ? "1K" : "512",
-      },
-      store: false,
-    }),
-  });
-  if (!response.ok) {
-    // Every other Gemini path already logs the body. This one did not, so a 400
-    // arrived as a bare status with no way to tell which field was rejected.
-    const details = (await response.text()).slice(0, 1_000);
-    console.error(JSON.stringify({
-      message: "gemini_request_failed",
-      status: response.status,
-      model: env.GEMINI_IMAGE_MODEL,
-      mode,
-      details,
-    }));
-    if (response.status === 429) {
-      throw new PublicWorkerError(
-        "Gemini image quota is unavailable. Enable Gemini API billing or try again after the quota resets.",
-        429,
-      );
-    }
-    if (response.status === 401 || response.status === 403) {
-      throw new PublicWorkerError("The Gemini API key was rejected by Google.", 503);
-    }
-    if (response.status === 400) {
-      // A 400 is a rejected request, not a generation, so it is the cheap
-      // failure to diagnose. Surface Google's own wording: it names the
-      // offending field, which a bare status does not.
-      throw new PublicWorkerError(
-        `Gemini rejected the ${mode} request (HTTP 400): ${geminiErrorMessage(details)}`,
-        502,
-      );
-    }
-    throw new PublicWorkerError(
-      `Gemini rejected the character-sheet request (HTTP ${response.status}).`,
-      502,
-    );
-  }
-
-  const image = findGeminiImage(await response.json<unknown>());
-  if (!image) {
-    throw new PublicWorkerError("Gemini completed without returning an image.", 502);
-  }
-  const bytes = base64ToBytes(image.data);
-  const details = imageDetails(bytes);
-  if (!details) {
-    throw new PublicWorkerError("Gemini returned an unsupported image format.", 502);
-  }
-  if (
-    mode === "character-sheet" &&
-    (details.mimeType !== CHARACTER_SHEET_MIME ||
-      details.width !== CHARACTER_SHEET_CANVAS ||
-      details.height !== CHARACTER_SHEET_CANVAS)
-  ) {
-    throw new PublicWorkerError(
-      `Gemini returned ${details.width}x${details.height} ${details.mimeType}; StoryTale requires one ${CHARACTER_SHEET_CANVAS}x${CHARACTER_SHEET_CANVAS} ${CHARACTER_SHEET_MIME}.`,
-      502,
-    );
-  }
-  return { bytes, ...details };
-}
+// `imageDetails` moved to `shared.ts`. `generateSprite` and its Gemini error
+// parsing moved to `providers/gemini.ts`; this handler now dispatches through
+// `providers/registry.ts` so the provider is a configuration choice.
 
 async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Response> {
   if (!env.APP_TOKEN) return json({ error: "Image service is not configured" }, 503);
@@ -1590,9 +1381,46 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
         return json({ error: "The selected back-hair region is invalid" }, 400);
       }
     }
-    model = env.GEMINI_IMAGE_MODEL;
-    provider = "google-gemini";
-    result = await generateSprite(body.prompt, body.references, modeValue, env);
+    // Which API answers is a configuration choice, resolved here rather than
+    // hardcoded, so switching providers is a var change and a redeploy instead
+    // of an app release. An unknown name or a missing key throws rather than
+    // falling through to a different paid provider.
+    const imageProvider = resolveImageProvider(modeValue, env);
+    model = imageProvider.modelFor(env);
+    provider = imageProvider.name;
+
+    const references: ReferenceImage[] = [];
+    for (const reference of body.references) {
+      references.push({
+        mimeType: reference.type.startsWith("image/")
+          ? reference.type
+          : "image/png",
+        bytes: new Uint8Array(await reference.arrayBuffer()),
+      });
+    }
+    const providerRequest: ProviderImageRequest = {
+      // The mode wrapper is StoryTale's prompt policy, not an API detail, so it
+      // is applied before the provider sees it. Adapters send the text as given.
+      prompt: spritePrompt(body.prompt, modeValue),
+      references,
+      spec: SPRITE_REQUEST_SPEC_BY_MODE[modeValue],
+      mode: modeValue,
+    };
+    result = await imageProvider.generate(providerRequest, env);
+
+    // Contract validation is StoryTale's rule, not the provider's, so it stays
+    // out of the adapter: every provider must satisfy it equally.
+    if (
+      modeValue === "character-sheet" &&
+      (result.mimeType !== CHARACTER_SHEET_MIME ||
+        result.width !== CHARACTER_SHEET_CANVAS ||
+        result.height !== CHARACTER_SHEET_CANVAS)
+    ) {
+      throw new PublicWorkerError(
+        `${provider} returned ${result.width}x${result.height} ${result.mimeType}; StoryTale requires one ${CHARACTER_SHEET_CANVAS}x${CHARACTER_SHEET_CANVAS} ${CHARACTER_SHEET_MIME}.`,
+        502,
+      );
+    }
   }
 
   const requestId = crypto.randomUUID();

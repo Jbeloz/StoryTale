@@ -7,7 +7,15 @@
   "workers_dev": true,
   "vars": {
     "GEMINI_MODEL": "gemini-3.5-flash",
-    "GEMINI_IMAGE_MODEL": "gemini-3.1-flash-image"
+    "GEMINI_IMAGE_MODEL": "gemini-3.1-flash-image",
+    // Which image API answers sprite requests. Switching provider or model is
+    // this file plus a redeploy: the Flutter app never names a provider, it
+    // only reads the X-Image-Provider header off the response.
+    //
+    // Add "IMAGE_PROVIDER_BY_MODE" as a JSON string to route one mode
+    // elsewhere, e.g. {"body-pose":"openai"}, which is the cheap way to compare
+    // providers on one part group without moving the rest.
+    "IMAGE_PROVIDER": "gemini"
   },
   "ai": {
     "binding": "AI",

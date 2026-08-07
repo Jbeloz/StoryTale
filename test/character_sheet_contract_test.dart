@@ -916,21 +916,29 @@ void main() {
         '${contract.canvas.width}',
         reason: 'the Worker must validate the canvas the contract declares',
       );
+      // The size and format the Worker asks for moved out of `index.ts` when
+      // image generation went provider-neutral: the per-mode size lives in the
+      // shared spec table and the output format belongs to the adapter. Both
+      // still have to agree with this manifest, so follow them rather than drop
+      // the check.
+      final providerSpec = _repoFile(
+        'cloudflare/image-worker/src/providers/types.ts',
+      ).readAsStringSync();
       expect(
-        RegExp(r'image_size:\s*mode === "character-sheet"\s*\n?\s*\?\s*"(\w+)"')
-            .firstMatch(worker)
-            ?.group(1),
+        RegExp(
+          r'"character-sheet":\s*\{[^}]*imageSize:\s*"(\w+)"',
+        ).firstMatch(providerSpec)?.group(1),
         '1K',
         reason: 'the requested tier is what StoryTale is billed for',
       );
 
-      // Scoped to generateSprite: other Gemini paths declare their own
-      // response_format, and the analysis one asks for application/json.
-      final spriteSource = worker.substring(
-        worker.indexOf('async function generateSprite('),
-      );
+      final geminiAdapter = _repoFile(
+        'cloudflare/image-worker/src/providers/gemini.ts',
+      ).readAsStringSync();
       expect(
-        RegExp(r'mime_type:\s*"([\w/]+)"').firstMatch(spriteSource)?.group(1),
+        RegExp(
+          r'GEMINI_OUTPUT_MIME\s*=\s*"([\w/]+)"',
+        ).firstMatch(geminiAdapter)?.group(1),
         contract.canvas.mimeType,
         reason:
             'the format asked for and the format accepted must be the same. '
