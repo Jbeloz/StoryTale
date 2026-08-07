@@ -352,6 +352,14 @@ garments, are not registered in Flutter, and no provider request has been made.
 The remaining gate is the offline reply-to-separator-to-garment test, followed
 by one explicit owner-approved legs request if the test passes.
 
+The local legs review fixture is saved under
+`assets/images/characters/garment_fixtures/v5/legs/`. It contains a
+`1024 x 1024` green-screen sheet plus four transparent overlays: navy leggings
+for the upper legs and navy leggings with brown shoes for the lower legs. Every
+overlay is clipped to its corresponding immutable leg alpha mask, so it cannot
+overlap the original silhouette. It is a fixture for owner review, not a
+provider result or a Flutter registration.
+
 <!-- Historical V1-V4 sheet notes follow; V5 above is current.
 The current implemented provider path still uses fixed `character_sheet_v1`.
 V2 established the exact Sprite Studio output-canvas mapping. Corrective Phase

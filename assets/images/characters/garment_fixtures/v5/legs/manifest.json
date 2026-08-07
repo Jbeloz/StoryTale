@@ -1,0 +1,88 @@
+{
+  "version": "v5-legs-clothing-fixture-1",
+  "canvas": {
+    "width": 1024,
+    "height": 1024,
+    "format": "PNG",
+    "background": "#00FF00",
+    "purpose": "local clothing-only shape review"
+  },
+  "design": {
+    "name": "navy leggings with brown shoes",
+    "clothingOnly": true,
+    "shapeSource": "immutable humanoid_v1 alpha mask",
+    "outsideSourceMask": "transparent",
+    "providerRequest": false
+  },
+  "parts": {
+    "upper_leg_left": {
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/upper_leg_left.png",
+      "sourceSha256": "fcad2a93472ce7f36c6bbdf1124b8d1cb236872f06f74de5e5b587d33cdd2c7d",
+      "overlayAsset": "assets/images/characters/garment_fixtures/v5/legs/upper_leg_left_clothing.png",
+      "overlaySha256": "33cea1ac92b872f4834ddde202da46033bf6d8575ffcefffd530d1c8e0dffd35",
+      "nativeSize": {
+        "width": 85,
+        "height": 141
+      },
+      "reviewSheetPosition": {
+        "x": 170,
+        "y": 160
+      },
+      "clippedToSourceMask": true,
+      "nonTransparentOutsideSource": false
+    },
+    "lower_leg_left": {
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/lower_leg_left.png",
+      "sourceSha256": "324bc0b881d50651f968191244f58d2b079e11691d69e95f1dc27188eaad2c90",
+      "overlayAsset": "assets/images/characters/garment_fixtures/v5/legs/lower_leg_left_clothing.png",
+      "overlaySha256": "fd046b975008d34e800a04328170be64655ad9f24b5103c193d47a0721c1a3b2",
+      "nativeSize": {
+        "width": 88,
+        "height": 140
+      },
+      "reviewSheetPosition": {
+        "x": 170,
+        "y": 650
+      },
+      "clippedToSourceMask": true,
+      "nonTransparentOutsideSource": false
+    },
+    "upper_leg_right": {
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/upper_leg_right.png",
+      "sourceSha256": "1c4d288daf0464405cd0bdd074960857fc310b8eafdf393a12c1ac2a0d532558",
+      "overlayAsset": "assets/images/characters/garment_fixtures/v5/legs/upper_leg_right_clothing.png",
+      "overlaySha256": "e76ac46454b70b445612c3685a32c02f65aeee4eba186db17579711f5e0d55b1",
+      "nativeSize": {
+        "width": 94,
+        "height": 150
+      },
+      "reviewSheetPosition": {
+        "x": 760,
+        "y": 160
+      },
+      "clippedToSourceMask": true,
+      "nonTransparentOutsideSource": false
+    },
+    "lower_leg_right": {
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/lower_leg_right.png",
+      "sourceSha256": "64c2ed9f3f827424885e1a30db853be1ac9657ce6a3bd323089a0c8136c87fe0",
+      "overlayAsset": "assets/images/characters/garment_fixtures/v5/legs/lower_leg_right_clothing.png",
+      "overlaySha256": "2656cfb24bca09002735a9d046a27b786fc6ca98240cafa3b5856ca510abc670",
+      "nativeSize": {
+        "width": 84,
+        "height": 156
+      },
+      "reviewSheetPosition": {
+        "x": 760,
+        "y": 650
+      },
+      "clippedToSourceMask": true,
+      "nonTransparentOutsideSource": false
+    }
+  },
+  "reviewSheet": {
+    "asset": "assets/images/characters/garment_fixtures/v5/legs/legs_clothing_fixture_1k.png",
+    "sha256": "760de8a8cb9f003024f100027e90ff36e636db5548833ef509f778dc5c8c913b",
+    "partsRemainSeparated": true
+  }
+}

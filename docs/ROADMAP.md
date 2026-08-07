@@ -459,7 +459,9 @@ whole character. [Character V5 Plan](CHARACTER_V5_PLAN.md) is the authority for
 its phases, checklists, and the exact delete/keep lists. V5-0 through V5-2 are
 implemented locally; V5-3 now has deterministic 1K reference sheets for the
 legs, arms, and torso groups, but its offline end-to-end and owner-approved
-provider gates are still pending.
+provider gates are still pending. A local navy-leggings-and-shoes fixture is
+also present for shape review; it is clipped to the locked leg masks and is not
+a generated or runtime asset.
 
 Phase 7H Story Mode binding waits for the complete Phase 7G gate, which is now
 the V5 gate.

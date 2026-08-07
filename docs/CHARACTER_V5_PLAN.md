@@ -285,6 +285,9 @@ measurement above. No provider involved.
 - [x] Prepare deterministic 1024x1024 reference sheets for the legs, arms,
       and torso groups. Each locked `humanoid_v1` source part remains at its
       native size; the sheets are green-screen guides only, not garments.
+- [x] Build a local legs clothing fixture with navy leggings and brown shoes,
+      clipped strictly to each locked leg alpha mask. It is review-only and
+      uses no provider request.
 - [ ] `PartGroupRequest` for `legs`, `arms`, `torso`, `hair`
 - [ ] Use the Worker's existing per-part sprite mode; add a `part-group` mode
       only if none fits
