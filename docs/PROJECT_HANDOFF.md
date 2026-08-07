@@ -1363,10 +1363,26 @@ Things not to rediscover:
 - `SpriteHairFit` is now a typedef for `SpritePartFit` — hair and clothing need
   the same three numbers. No call site or persisted key changed.
 
-**The next task is V5-2, the separator**, and it also costs nothing: green to
-transparent through the existing `removeGreenBackground`, then connected
-components cropped to one PNG per piece. See
-[Character V5 Plan](CHARACTER_V5_PLAN.md).
+**V5-2 is done: a generated sheet can be cut up and worn.**
+`data/sprite_garment_separator.dart` turns green to transparent through the
+existing `removeGreenBackground`, finds eight-connected components, drops
+specks, crops each to its own bounds, and returns them in reading order.
+Sprite Studio's Clothing section has **Load garment image**, which runs a picked
+file through it and shows every piece to choose from. `flutter test` is **145
+passing**.
+
+**This is the change that retires V4's hardest requirement.** V4 demanded
+pixel-exact cells and the provider would not hold them. The separator finds
+pieces by connectedness, so a sheet only has to keep them **apart** — prompts
+should ask for separation and never for coordinates.
+
+Measured on the real eighth V4 sheet rather than assumed: a twelve-cell sheet
+yields **18** pieces at the default threshold. The extras are the floating
+trouser thighs the handoff used to call "spare arms", plus the hair's detached
+ahoge strands. **Connected components find topological pieces, not semantic
+ones** — a detached strand is its own piece, and that is correct behaviour, so
+prompts must ask for connected shapes. A test pins it so nobody converts it into
+a merge later.
 
 **Check port `52827` before launching a preview.** A stale `flutter run` from an
 earlier session was still serving there on 2026-08-07 and would have shown the

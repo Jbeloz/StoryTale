@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -7,6 +8,7 @@ import 'package:http/http.dart' as http;
 import '../../../shared/widgets/storytale_components.dart';
 import '../data/pose_repository.dart';
 import '../data/sprite_appearance.dart';
+import '../data/sprite_garment_separator.dart';
 import '../data/sprite_face_catalog.dart';
 import '../data/sprite_rig.dart';
 import 'widgets/sprite_face_editor.dart';
@@ -1872,6 +1874,150 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
   static const _fixtureGarmentAsset =
       'assets/images/characters/garment_fixtures/tunic_fixture.png';
 
+  /// Separating runs on this thread and a full sheet takes a moment, so the
+  /// button has to say it is working rather than look dead.
+  bool _separating = false;
+
+  /// Picks a generated sheet, cuts it into pieces, and dresses [selected] in
+  /// whichever piece the owner chooses.
+  ///
+  /// The provider is never asked to place pieces at exact coordinates — V4
+  /// proved that does not hold. The sheet only has to keep them apart, and
+  /// [SpriteGarmentSeparator] finds them by connected components.
+  Future<void> _loadGarmentImage(SpriteRigPart selected) async {
+    final result = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['png', 'jpg', 'jpeg', 'webp'],
+      withData: true,
+    );
+    if (result == null || !mounted) return;
+    final bytes = result.files.single.bytes;
+    if (bytes == null) {
+      _message('That image could not be loaded.');
+      return;
+    }
+
+    setState(() => _separating = true);
+    List<SpriteGarmentPiece> pieces;
+    try {
+      pieces = const SpriteGarmentSeparator().separate(bytes);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _separating = false);
+        _message('That file is not an image StoryTale can read.');
+      }
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _separating = false);
+
+    if (pieces.isEmpty) {
+      _message(
+        'No separate pieces were found. The sheet needs artwork on a flat '
+        'green background, with a gap around every piece.',
+      );
+      return;
+    }
+
+    final chosen = await _chooseGarmentPiece(selected, pieces);
+    if (chosen == null || !mounted) return;
+
+    setState(() {
+      _appearance = _appearance.withGarmentForPart(
+        selected.id,
+        SpriteGarmentLayer(
+          partId: selected.id,
+          bytes: chosen.bytes,
+          sourceRequestId: result.files.single.name,
+        ),
+      );
+    });
+    _persistAppearance();
+  }
+
+  /// Shows what the separator found so the owner picks by eye.
+  ///
+  /// A separated blob has no identity beyond where it sat on the sheet, so the
+  /// pieces are shown in reading order and labelled by position. Nothing here
+  /// guesses which piece is a sleeve.
+  Future<SpriteGarmentPiece?> _chooseGarmentPiece(
+    SpriteRigPart selected,
+    List<SpriteGarmentPiece> pieces,
+  ) {
+    return showDialog<SpriteGarmentPiece>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('${pieces.length} pieces found'),
+        content: SizedBox(
+          width: 420,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Choose the piece ${selected.label} should wear.'),
+              const SizedBox(height: 12),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (var index = 0; index < pieces.length; index++)
+                        InkWell(
+                          key: Key('garmentPiece$index'),
+                          onTap: () => Navigator.pop(context, pieces[index]),
+                          child: Container(
+                            width: 84,
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.outlineVariant,
+                              ),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  height: 64,
+                                  child: Image.memory(
+                                    pieces[index].bytes,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${index + 1}',
+                                  style: Theme.of(context).textTheme.labelSmall,
+                                ),
+                                Text(
+                                  '${pieces[index].width}x'
+                                  '${pieces[index].height}',
+                                  style: Theme.of(context).textTheme.labelSmall,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _garmentEditor(SpriteRigPart selected) {
     final garment = _appearance.garmentForPart(selected.id);
     if (garment == null) {
@@ -1879,6 +2025,21 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text('${selected.label} has no clothing layer.'),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            key: const Key('loadGarmentImageButton'),
+            onPressed: _separating ? null : () => _loadGarmentImage(selected),
+            icon: const Icon(Icons.image_outlined),
+            label: Text(
+              _separating ? 'Separating…' : 'Load garment image',
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Takes a generated sheet of separate pieces on green, cuts it into '
+            'one image per piece, and lets you choose which piece this part '
+            'wears.',
+          ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
             key: const Key('addFixtureGarmentButton'),

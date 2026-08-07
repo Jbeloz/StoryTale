@@ -230,19 +230,53 @@ later phase is written against a neutral interface.
 renders on the character over the tinted skin, moves and resizes with the
 sliders, and is still there after a reload.
 
-### V5-2 — The separator *(no provider, no cost)*
+### V5-2 — The separator *(done, 2026-08-07 — no provider, no cost)*
 
 The chopper: one generated image in, one PNG per piece out.
+`data/sprite_garment_separator.dart`.
 
-- [ ] Green → transparent using the existing `removeGreenBackground`
-- [ ] Find connected components of visible pixels
-- [ ] Drop specks below a size threshold
-- [ ] Crop each component to its own bounds, one PNG each
-- [ ] Map pieces to the slots of the group being processed
-- [ ] Tests: a two-piece image splits into exactly two; a four-piece into four;
-      a speckled image gives the right count with noise dropped
+- [x] Green → transparent through the existing `removeGreenBackground`
+- [x] Eight-connected components of visible pixels
+- [x] Specks below `minimumVisiblePixels` dropped
+- [x] Each component cropped to its own bounds, one PNG each
+- [x] Ordered **top row first, then left to right**, matching how the prompt
+      asks for the pieces to be drawn
+- [x] **Load garment image** in Sprite Studio's Clothing section, with a picker
+      showing every piece found
+- [x] 8 tests; suite now **145 passing**
 
-**Gate:** unit tests over hand-built fixtures. No provider involved.
+**Why this removes V4's hardest requirement.** V4 demanded pixel-exact cells and
+the provider would not hold them — most of eight wasted sheets. The separator
+finds pieces by connectedness, so the sheet only has to keep them **apart**.
+Prompts should ask for separation, never for coordinates.
+
+**Measured on the real eighth V4 sheet** (a JPEG, all its artifacts intact) —
+this is the useful part, and it is why the tests look the way they do:
+
+| Threshold | Pieces found |
+| --- | --- |
+| 64 (default) | 18 |
+| 2,000 | 16 |
+
+The twelve-cell sheet gives **18** pieces, and the extras are informative:
+
+- the two `190x198` blobs at `y 612` are the **floating trouser thighs** the
+  handoff called "spare arms" — the separator finds them cleanly, so a
+  mislaid piece becomes something the owner can pick up rather than lose
+- two ~`420 px` specks near the top are the hair's **ahoge strands**, which are
+  detached from the main mass
+
+**The limitation, stated plainly: connected components find *topological*
+pieces, not *semantic* ones.** A detached strand is its own piece. That is the
+separator working correctly — quietly merging nearby blobs would just as easily
+glue two garments together — so **the prompt must ask for connected shapes**.
+A test pins this behaviour so nobody later "fixes" it into a merge.
+
+Threshold guidance: the default `64` keeps everything real on that sheet.
+Raising it to `2,000` drops the ahoge. Tune per source rather than globally.
+
+**Gate met:** tests over programmatically built fixtures, plus the real-sheet
+measurement above. No provider involved.
 
 ### V5-3 — One group, end to end
 
