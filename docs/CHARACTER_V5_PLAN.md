@@ -297,6 +297,9 @@ measurement above. No provider involved.
 - [x] Build a filled-shoe revision where the dark shoe body dominates and the
       lace/strap accents stay small, matching the supplied shoe reference.
       Preserve the original outline and keep the first three versions.
+- [x] Preserve the owner-authored filled-shoe sheet and create a line-only
+      polish that keeps its canvas, fills, positions, shoes, and internal
+      details unchanged.
 - [ ] `PartGroupRequest` for `legs`, `arms`, `torso`, `hair`
 - [ ] Use the Worker's existing per-part sprite mode; add a `part-group` mode
       only if none fits

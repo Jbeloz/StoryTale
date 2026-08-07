@@ -379,6 +379,13 @@ and a solid light sole to match the supplied shoe reference more closely. The
 original outer outline is reapplied and the earlier three revisions remain
 available for comparison.
 
+The owner-authored filled-shoe sheet is preserved under
+`assets/images/characters/garment_fixtures/v5/user_refined_source/`. A
+line-only polish is saved under
+`assets/images/characters/garment_fixtures/v5/user_refined_linework/`; it
+changes only existing outer contour pixels and keeps the source canvas,
+positions, colors, fills, shoe design, and internal details unchanged.
+
 <!-- Historical V1-V4 sheet notes follow; V5 above is current.
 The current implemented provider path still uses fixed `character_sheet_v1`.
 V2 established the exact Sprite Studio output-canvas mapping. Corrective Phase

@@ -1,0 +1,19 @@
+{
+  "version": "user-legs-linework-polish-1",
+  "source": "assets/images/characters/garment_fixtures/v5/user_refined_source/legs_clothing_user_source.png",
+  "output": "assets/images/characters/garment_fixtures/v5/user_refined_linework/legs_clothing_polished_1k.png",
+  "canvas": {
+    "width": 1024,
+    "height": 1024,
+    "background": "#00FF00",
+    "format": "PNG"
+  },
+  "sourceSha256": "4d2594f24a1fb885540814699139245ce9148cc02af7499c6d9c2deb4c3a415a",
+  "outputSha256": "92aa606a96320328f1ef58d04fd813aff2cbb929db65fc428e4d3401949b4470",
+  "lineOnlyEdit": true,
+  "changedPixelCount": 1894,
+  "backgroundPreserved": true,
+  "positionsAndFillsPreserved": true,
+  "shoeDesignPreserved": true,
+  "outlineColor": "#120F1A"
+}
