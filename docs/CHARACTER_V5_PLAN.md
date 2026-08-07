@@ -291,6 +291,9 @@ measurement above. No provider involved.
 - [x] Build a second flat-color Gacha-style legs fixture with purple leggings
       and pink shoes, with no shadows, highlights, gradients, or added
       outlines. The first fixture remains preserved for comparison.
+- [x] Build a quality Gacha-style shoe revision with a dark shoe body, flat
+      straps, toe panel, sole, and the original outer outline reapplied. It
+      remains clipped to the locked masks and uses no provider request.
 - [ ] `PartGroupRequest` for `legs`, `arms`, `torso`, `hair`
 - [ ] Use the Worker's existing per-part sprite mode; add a `part-group` mode
       only if none fits

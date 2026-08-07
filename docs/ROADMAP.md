@@ -464,6 +464,9 @@ also present for shape review; it is clipped to the locked leg masks and is not
 a generated or runtime asset. A second flat-color Gacha-style revision is also
 saved for owner comparison, using solid purple leggings and pink shoes with no
 shading or added outlines.
+A quality shoe revision is also saved for comparison with a dark flat shoe
+body, straps, toe panel, sole, and the original outer outline reapplied; all
+details remain clipped to the locked leg masks.
 
 Phase 7H Story Mode binding waits for the complete Phase 7G gate, which is now
 the V5 gate.
