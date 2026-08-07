@@ -461,7 +461,9 @@ implemented locally; V5-3 now has deterministic 1K reference sheets for the
 legs, arms, and torso groups, but its offline end-to-end and owner-approved
 provider gates are still pending. A local navy-leggings-and-shoes fixture is
 also present for shape review; it is clipped to the locked leg masks and is not
-a generated or runtime asset.
+a generated or runtime asset. A second flat-color Gacha-style revision is also
+saved for owner comparison, using solid purple leggings and pink shoes with no
+shading or added outlines.
 
 Phase 7H Story Mode binding waits for the complete Phase 7G gate, which is now
 the V5 gate.

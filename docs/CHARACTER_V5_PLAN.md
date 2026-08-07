@@ -288,6 +288,9 @@ measurement above. No provider involved.
 - [x] Build a local legs clothing fixture with navy leggings and brown shoes,
       clipped strictly to each locked leg alpha mask. It is review-only and
       uses no provider request.
+- [x] Build a second flat-color Gacha-style legs fixture with purple leggings
+      and pink shoes, with no shadows, highlights, gradients, or added
+      outlines. The first fixture remains preserved for comparison.
 - [ ] `PartGroupRequest` for `legs`, `arms`, `torso`, `hair`
 - [ ] Use the Worker's existing per-part sprite mode; add a `part-group` mode
       only if none fits

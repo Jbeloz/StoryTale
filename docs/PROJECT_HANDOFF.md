@@ -360,6 +360,12 @@ overlay is clipped to its corresponding immutable leg alpha mask, so it cannot
 overlap the original silhouette. It is a fixture for owner review, not a
 provider result or a Flutter registration.
 
+A second flat-color Gacha-style revision is saved under
+`assets/images/characters/garment_fixtures/v5/legs_gacha_v2/`. It uses solid
+purple leggings and solid pink shoes with no shadows, highlights, gradients,
+or added outlines. The original navy-and-brown fixture remains unchanged for
+comparison; both versions are clipped to the same locked leg masks.
+
 <!-- Historical V1-V4 sheet notes follow; V5 above is current.
 The current implemented provider path still uses fixed `character_sheet_v1`.
 V2 established the exact Sprite Studio output-canvas mapping. Corrective Phase
