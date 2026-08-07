@@ -300,6 +300,10 @@ measurement above. No provider involved.
 - [x] Preserve the owner-authored filled-shoe sheet and create a line-only
       polish that keeps its canvas, fills, positions, shoes, and internal
       details unchanged.
+- [x] Preserve the three owner-supplied clothing sheets as 1K review assets
+      under `garment_fixtures/v5/user_supplied_part_sheets_1k/`; normalize the
+      1022x1022 torso with a one-pixel edge border and keep the arms/legs
+      copies byte-exact.
 - [ ] `PartGroupRequest` for `legs`, `arms`, `torso`, `hair`
 - [ ] Use the Worker's existing per-part sprite mode; add a `part-group` mode
       only if none fits

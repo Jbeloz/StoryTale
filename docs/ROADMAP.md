@@ -470,7 +470,9 @@ details remain clipped to the locked leg masks.
 A filled-shoe revision now makes the dark shoe body dominate, with only small
 flat accents and a light sole, while preserving the original outline.
 The owner-authored sheet also has a conservative line-only polish preserving
-all non-line content and layout.
+all non-line content and layout. Three owner-supplied torso, arms, and legs
+clothing sheets are also preserved as 1024x1024 review assets; they are not
+registered or provider-generated.
 
 Phase 7H Story Mode binding waits for the complete Phase 7G gate, which is now
 the V5 gate.

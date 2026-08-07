@@ -1,0 +1,37 @@
+{
+  "version": "user-supplied-part-sheets-1k-1",
+  "purpose": "Owner-supplied clothing review sheets for V5-3.",
+  "canvas": {
+    "width": 1024,
+    "height": 1024,
+    "format": "PNG"
+  },
+  "sheets": {
+    "arms_clothing_1k.png": {
+      "source": "assets/images/characters/garment_fixtures/v5/user_supplied_part_sheets_1k/source/arms_clothing_source_1k.png",
+      "sourceSha256": "c2fefbf8254ed7d3a087fe7c824ea46d853f01d7c68757c568e4696250d19168",
+      "outputSha256": "c2fefbf8254ed7d3a087fe7c824ea46d853f01d7c68757c568e4696250d19168",
+      "width": 1024,
+      "height": 1024,
+      "normalization": "byte-exact copy"
+    },
+    "legs_clothing_1k.png": {
+      "source": "assets/images/characters/garment_fixtures/v5/user_supplied_part_sheets_1k/source/legs_clothing_source_1k.png",
+      "sourceSha256": "4d2594f24a1fb885540814699139245ce9148cc02af7499c6d9c2deb4c3a415a",
+      "outputSha256": "4d2594f24a1fb885540814699139245ce9148cc02af7499c6d9c2deb4c3a415a",
+      "width": 1024,
+      "height": 1024,
+      "normalization": "byte-exact copy"
+    },
+    "torso_clothing_1k.png": {
+      "source": "assets/images/characters/garment_fixtures/v5/user_supplied_part_sheets_1k/source/torso_clothing_source_1022.png",
+      "sourceSha256": "e2dc72f78de3d750e99c324fa276c1dfa8b1f16451375793f62ea61bfc338211",
+      "outputSha256": "5ca56c16b91e2db37c81f8daae00066751dd5d89a4a80bc54b9349b6bdbff9f5",
+      "width": 1024,
+      "height": 1024,
+      "normalization": "one-pixel replicated edge border; artwork not rescaled"
+    }
+  },
+  "flutterRegistered": false,
+  "providerGenerated": false
+}

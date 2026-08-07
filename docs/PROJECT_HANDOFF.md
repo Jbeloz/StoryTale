@@ -386,6 +386,15 @@ line-only polish is saved under
 changes only existing outer contour pixels and keeps the source canvas,
 positions, colors, fills, shoe design, and internal details unchanged.
 
+The three owner-supplied clothing sheets are saved as 1K review copies under
+`assets/images/characters/garment_fixtures/v5/user_supplied_part_sheets_1k/`:
+`torso_clothing_1k.png`, `arms_clothing_1k.png`, and `legs_clothing_1k.png`.
+The pasted originals remain in that folder's `source/` directory. The torso
+arrived at 1022x1022 and is normalized to 1024x1024 with a one-pixel replicated
+edge border; the arms and legs outputs are byte-exact copies. These sheets are
+not registered in Flutter, are not runtime garments, and have not been sent to
+a provider.
+
 <!-- Historical V1-V4 sheet notes follow; V5 above is current.
 The current implemented provider path still uses fixed `character_sheet_v1`.
 V2 established the exact Sprite Studio output-canvas mapping. Corrective Phase
