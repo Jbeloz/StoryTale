@@ -1343,11 +1343,34 @@ Two things not to rediscover:
   as the documented rollback until V5-3 proves the new path. It is the last V4-era
   thing left and it goes in the commit that proves V5 works.
 
-**The next task is V5-1, the garment layer.** The authority is
-[Character V5 Plan](CHARACTER_V5_PLAN.md), which owns the phases and checklists.
-It needs no provider and costs nothing: a garment renders as an overlay above the
-part in `_partArtwork`, never as a `partBytes` replacement, because a replacement
-would lose the local skin tint underneath.
+**V5-1 is done: clothing renders on the character.** A `SpriteGarmentLayer` per
+rig part carries bytes, a fit, and the request that produced it; Sprite Studio
+has a Clothing section on the selected part with across / up-and-down / size
+controls and a clear; and a checked-in fixture tunic proves the whole path with
+no provider and no cost. `flutter test` is **137 passing**.
+
+Things not to rediscover:
+
+- **The overlay-not-replacement rule is load-bearing, and now tested for real.**
+  `_canTint` refuses to tint a part whose pixels came from `partBytes`, so
+  putting clothing there would silently kill the skin-tone picker. The test
+  counts images and requires that dressing a part *adds* a memory-backed image
+  while the asset-backed count holds — a replacement keeps the total the same
+  and would slip past a naive check. It was proven by breaking it on purpose.
+- **Garment bytes live as base64 inside the appearance record.** That is why
+  they survive a reload with no admin server. Revisit it if a character ever
+  wears many large layers; it is fine at part scale.
+- `SpriteHairFit` is now a typedef for `SpritePartFit` — hair and clothing need
+  the same three numbers. No call site or persisted key changed.
+
+**The next task is V5-2, the separator**, and it also costs nothing: green to
+transparent through the existing `removeGreenBackground`, then connected
+components cropped to one PNG per piece. See
+[Character V5 Plan](CHARACTER_V5_PLAN.md).
+
+**Check port `52827` before launching a preview.** A stale `flutter run` from an
+earlier session was still serving there on 2026-08-07 and would have shown the
+old bundle after a reload. Replace it rather than adding a second one.
 
 What V5 changes, so the shape is clear without reopening the plan:
 

@@ -53,6 +53,9 @@ flutter:
     # V4 was retired on 2026-08-07; V5 generates by part group instead. V1 stays
     # registered until V5-3 proves the new path, as the documented rollback.
     - assets/images/characters/generation_templates/humanoid_v1/character_sheet_v1/
+    # Local stand-in for a generated garment, so the V5 clothing layer can be
+    # built and reviewed without a paid request. Not character art.
+    - assets/images/characters/garment_fixtures/
     - assets/images/characters/face_profiles/
     - assets/images/characters/face_profiles/default/
     - assets/images/characters/face_profiles/default/reference/

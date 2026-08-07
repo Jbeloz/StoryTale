@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../data/sprite_appearance.dart';
 import '../../data/sprite_face_catalog.dart';
 import '../../data/sprite_rig.dart';
 import 'sprite_face_view.dart';
@@ -17,6 +18,7 @@ class SpriteRigView extends StatelessWidget {
     required this.pose,
     this.skinTone,
     this.partBytes,
+    this.garments,
     this.faceCatalog,
     this.faceOverlay,
     this.showAnchors = false,
@@ -34,6 +36,14 @@ class SpriteRigView extends StatelessWidget {
   final SpriteRigPose pose;
   final Color? skinTone;
   final Map<String, Uint8List>? partBytes;
+
+  /// Clothing drawn over each part, keyed by rig part id.
+  ///
+  /// Deliberately separate from [partBytes]: a garment sits *above* its part
+  /// rather than replacing it, so the local skin tint underneath survives.
+  /// `_canTint` refuses to tint a part whose pixels came from [partBytes], so
+  /// putting clothing there would silently disable the skin-tone picker.
+  final Map<String, SpriteGarmentLayer>? garments;
   final SpriteFaceCatalog? faceCatalog;
   final SpriteFaceOverlayData? faceOverlay;
   final bool showAnchors;
@@ -164,10 +174,12 @@ class SpriteRigView extends StatelessWidget {
 
   Widget _partArtwork(BuildContext context, SpriteRigPart part, bool selected) {
     final catalog = faceCatalog;
+    final garment = garments?[part.id];
     return Stack(
       fit: StackFit.expand,
       children: [
         _partImage(context, part, selected),
+        if (garment != null) _garmentImage(garment),
         if (catalog != null && part.id == catalog.headPartId)
           if (faceOverlay != null)
             SpriteFaceOverlayView(data: faceOverlay!)
@@ -178,6 +190,28 @@ class SpriteRigView extends StatelessWidget {
               filterQuality: FilterQuality.high,
             ),
       ],
+    );
+  }
+
+  /// Clothing, drawn over the body part at its own offset and scale.
+  ///
+  /// It shares the part's box, so it follows every pose, rotation, and pivot
+  /// the rig applies without knowing anything about them. The fit is only the
+  /// nudge needed to sit the garment correctly on the silhouette.
+  Widget _garmentImage(SpriteGarmentLayer garment) {
+    return Transform.translate(
+      offset: Offset(garment.fit.offsetX, garment.fit.offsetY),
+      child: Transform.scale(
+        scale: garment.fit.scale,
+        child: Image.memory(
+          garment.bytes,
+          fit: BoxFit.fill,
+          filterQuality: FilterQuality.high,
+          // A garment that fails to decode must not take the character down
+          // with it; the body part underneath is still correct.
+          errorBuilder: (context, error, stack) => const SizedBox.shrink(),
+        ),
+      ),
     );
   }
 

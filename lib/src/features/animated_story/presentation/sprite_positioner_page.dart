@@ -423,6 +423,7 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
                                 pose: pose,
                                 skinTone: _colorFromHex(_appearance.skinTone),
                                 partBytes: widget.initialPartBytes,
+                                garments: _appearance.actorGarments,
                                 faceCatalog: _faceCatalog,
                                 faceOverlay: _faceOverlay,
                                 showAnchors: _showAnchors,
@@ -585,6 +586,8 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
               'Each actor and hair style keeps its own saved position and size.',
             ),
           ]),
+        if (!_usesInjectedSource && !_isHairSlot(selected.id))
+          _section('Clothing', [_garmentEditor(selected)]),
         if (_faceCatalog != null)
           Visibility(
             visible: !_isHairSlot(selected.id),
@@ -1859,6 +1862,172 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
 
   bool _isHairSlot(String partId) {
     return partId == 'front_hair' || partId == 'back_hair';
+  }
+
+  /// The local stand-in for a generated garment.
+  ///
+  /// V5 buys clothing per part group, but none of that has to exist for the
+  /// layer itself to be built and reviewed, so this phase uses a checked-in PNG
+  /// and costs nothing.
+  static const _fixtureGarmentAsset =
+      'assets/images/characters/garment_fixtures/tunic_fixture.png';
+
+  Widget _garmentEditor(SpriteRigPart selected) {
+    final garment = _appearance.garmentForPart(selected.id);
+    if (garment == null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('${selected.label} has no clothing layer.'),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            key: const Key('addFixtureGarmentButton'),
+            onPressed: () => _addFixtureGarment(selected.id),
+            icon: const Icon(Icons.checkroom_outlined),
+            label: const Text('Add fixture garment'),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Clothing is painted over the body part, never in place of it, so '
+            'the skin tone underneath still applies.',
+          ),
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            SizedBox(
+              width: 44,
+              height: 44,
+              child: Image.memory(garment.bytes, fit: BoxFit.contain),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                garment.sourceRequestId.isEmpty
+                    ? 'Local fixture garment'
+                    : 'From request ${garment.sourceRequestId}',
+              ),
+            ),
+            IconButton(
+              key: const Key('clearGarmentButton'),
+              tooltip: 'Remove this clothing layer',
+              onPressed: () => _clearGarment(selected.id),
+              icon: const Icon(Icons.delete_outline),
+            ),
+          ],
+        ),
+        _garmentSlider(
+          key: const Key('garmentOffsetXSlider'),
+          label: 'Across',
+          value: garment.fit.offsetX,
+          min: -80,
+          max: 80,
+          onChanged: (value) => _updateGarmentFit(
+            selected.id,
+            garment.fit.copyWith(offsetX: value),
+          ),
+        ),
+        _garmentSlider(
+          key: const Key('garmentOffsetYSlider'),
+          label: 'Up and down',
+          value: garment.fit.offsetY,
+          min: -80,
+          max: 80,
+          onChanged: (value) => _updateGarmentFit(
+            selected.id,
+            garment.fit.copyWith(offsetY: value),
+          ),
+        ),
+        _garmentSlider(
+          key: const Key('garmentScaleSlider'),
+          label: 'Size',
+          value: garment.fit.scale * 100,
+          min: 50,
+          max: 180,
+          suffix: '%',
+          onChanged: (value) => _updateGarmentFit(
+            selected.id,
+            garment.fit.copyWith(scale: value / 100),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Saved for ${SpriteAppearanceCatalog.actor(_appearance.actorId).label} '
+          'across every pose.',
+        ),
+      ],
+    );
+  }
+
+  Widget _garmentSlider({
+    required Key key,
+    required String label,
+    required double value,
+    required double min,
+    required double max,
+    required ValueChanged<double> onChanged,
+    String suffix = '',
+  }) {
+    return Row(
+      children: [
+        SizedBox(width: 96, child: Text(label)),
+        Expanded(
+          child: Slider(
+            key: key,
+            value: value.clamp(min, max),
+            min: min,
+            max: max,
+            onChanged: onChanged,
+          ),
+        ),
+        SizedBox(
+          width: 52,
+          child: Text('${value.round()}$suffix', textAlign: TextAlign.end),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _addFixtureGarment(String partId) async {
+    try {
+      final data = await rootBundle.load(_fixtureGarmentAsset);
+      if (!mounted) return;
+      setState(() {
+        _appearance = _appearance.withGarmentForPart(
+          partId,
+          SpriteGarmentLayer(
+            partId: partId,
+            bytes: data.buffer.asUint8List(),
+          ),
+        );
+      });
+      _persistAppearance();
+    } catch (_) {
+      if (mounted) _message('The fixture garment could not be loaded.');
+    }
+  }
+
+  void _updateGarmentFit(String partId, SpritePartFit fit) {
+    final garment = _appearance.garmentForPart(partId);
+    if (garment == null) return;
+    setState(() {
+      _appearance = _appearance.withGarmentForPart(
+        partId,
+        garment.copyWith(fit: fit),
+      );
+    });
+    _persistAppearance();
+  }
+
+  void _clearGarment(String partId) {
+    setState(() {
+      _appearance = _appearance.withoutGarmentForPart(partId);
+    });
+    _persistAppearance();
   }
 
   void _captureHairFit(String partId, SpritePartTransform transform) {

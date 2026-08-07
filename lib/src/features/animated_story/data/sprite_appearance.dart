@@ -3,18 +3,31 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class SpriteHairFit {
-  const SpriteHairFit({this.offsetX = 0, this.offsetY = 0, this.scale = 1});
+/// How a layer sits on the part it belongs to.
+///
+/// Hair used this first and gave it its old name. Garments need exactly the
+/// same three numbers, so the type is shared rather than duplicated; the
+/// persisted keys are unchanged either way.
+class SpritePartFit {
+  const SpritePartFit({this.offsetX = 0, this.offsetY = 0, this.scale = 1});
 
   final double offsetX;
   final double offsetY;
   final double scale;
 
-  factory SpriteHairFit.fromJson(Map<String, dynamic> json) {
-    return SpriteHairFit(
+  factory SpritePartFit.fromJson(Map<String, dynamic> json) {
+    return SpritePartFit(
       offsetX: (json['offsetX'] as num?)?.toDouble() ?? 0,
       offsetY: (json['offsetY'] as num?)?.toDouble() ?? 0,
       scale: (json['scale'] as num?)?.toDouble() ?? 1,
+    );
+  }
+
+  SpritePartFit copyWith({double? offsetX, double? offsetY, double? scale}) {
+    return SpritePartFit(
+      offsetX: offsetX ?? this.offsetX,
+      offsetY: offsetY ?? this.offsetY,
+      scale: scale ?? this.scale,
     );
   }
 
@@ -22,6 +35,74 @@ class SpriteHairFit {
     'offsetX': offsetX,
     'offsetY': offsetY,
     'scale': scale,
+  };
+}
+
+/// The name every existing hair call site uses. Same type.
+typedef SpriteHairFit = SpritePartFit;
+
+/// One piece of clothing painted over one rig part.
+///
+/// A garment is drawn **above** its body part, never in place of it. That is
+/// what keeps the local skin tint working underneath: `SpriteRigView` refuses to
+/// tint a part whose pixels were replaced, so a replacement would silently cost
+/// the skin-tone picker. It is also the rule the generated artwork follows —
+/// clothing only, no skin baked in.
+class SpriteGarmentLayer {
+  const SpriteGarmentLayer({
+    required this.partId,
+    required this.bytes,
+    this.fit = const SpritePartFit(),
+    this.sourceRequestId = '',
+  });
+
+  final String partId;
+  final Uint8List bytes;
+  final SpritePartFit fit;
+
+  /// Which generation request produced this, or empty for a local fixture.
+  ///
+  /// Kept so a garment that looks wrong can be traced back to the request that
+  /// was paid for without guessing.
+  final String sourceRequestId;
+
+  SpriteGarmentLayer copyWith({SpritePartFit? fit}) {
+    return SpriteGarmentLayer(
+      partId: partId,
+      bytes: bytes,
+      fit: fit ?? this.fit,
+      sourceRequestId: sourceRequestId,
+    );
+  }
+
+  /// Returns null rather than throwing on malformed stored data.
+  ///
+  /// A corrupt garment must not cost the whole appearance: the rest of the
+  /// selection still loads and the character still renders.
+  static SpriteGarmentLayer? fromJson(String partId, Map<String, dynamic> json) {
+    final encoded = json['bytes'];
+    if (encoded is! String || encoded.isEmpty) return null;
+    final Uint8List bytes;
+    try {
+      bytes = base64Decode(encoded);
+    } catch (_) {
+      return null;
+    }
+    if (bytes.isEmpty) return null;
+    return SpriteGarmentLayer(
+      partId: partId,
+      bytes: bytes,
+      fit: json['fit'] is Map
+          ? SpritePartFit.fromJson(Map<String, dynamic>.from(json['fit'] as Map))
+          : const SpritePartFit(),
+      sourceRequestId: json['sourceRequestId'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'bytes': base64Encode(bytes),
+    'fit': fit.toJson(),
+    if (sourceRequestId.isNotEmpty) 'sourceRequestId': sourceRequestId,
   };
 }
 
@@ -60,11 +141,16 @@ class SpriteAppearanceSelection {
     this.actorId = 'default',
     this.actorAppearances = const {},
     this.hairFits = const {},
+    this.garments = const {},
   });
 
   final String actorId;
   final Map<String, SpriteActorAppearanceSelection> actorAppearances;
   final Map<String, Map<String, SpriteHairFit>> hairFits;
+
+  /// Clothing per actor, then per rig part. Same shape as [hairFits] because it
+  /// is the same problem: a per-actor choice that every pose shares.
+  final Map<String, Map<String, SpriteGarmentLayer>> garments;
 
   SpriteActorAppearanceSelection actorAppearance([String? requestedActorId]) {
     final actor = SpriteAppearanceCatalog.actor(requestedActorId ?? actorId);
@@ -100,6 +186,7 @@ class SpriteAppearanceSelection {
     String? skinTone,
     Map<String, SpriteActorAppearanceSelection>? actorAppearances,
     Map<String, Map<String, SpriteHairFit>>? hairFits,
+    Map<String, Map<String, SpriteGarmentLayer>>? garments,
   }) {
     final nextActorId = SpriteAppearanceCatalog.actor(
       actorId ?? this.actorId,
@@ -123,7 +210,32 @@ class SpriteAppearanceSelection {
       actorId: nextActorId,
       actorAppearances: nextActorAppearances,
       hairFits: hairFits ?? this.hairFits,
+      garments: garments ?? this.garments,
     );
+  }
+
+  /// Every garment the active actor wears, keyed by rig part.
+  Map<String, SpriteGarmentLayer> get actorGarments =>
+      garments[actorId] ?? const {};
+
+  SpriteGarmentLayer? garmentForPart(String partId) => actorGarments[partId];
+
+  SpriteAppearanceSelection withGarmentForPart(
+    String partId,
+    SpriteGarmentLayer garment,
+  ) {
+    return copyWith(
+      garments: {
+        ...garments,
+        actorId: {...actorGarments, partId: garment},
+      },
+    );
+  }
+
+  SpriteAppearanceSelection withoutGarmentForPart(String partId) {
+    if (!actorGarments.containsKey(partId)) return this;
+    final remaining = {...actorGarments}..remove(partId);
+    return copyWith(garments: {...garments, actorId: remaining});
   }
 
   String hairFitKey(String partId) {
@@ -201,10 +313,30 @@ class SpriteAppearanceSelection {
         };
       }
     }
+    final garments = <String, Map<String, SpriteGarmentLayer>>{};
+    final garmentSource = json['garments'];
+    if (garmentSource is Map) {
+      for (final actorEntry in garmentSource.entries) {
+        final actorSource = actorEntry.value;
+        if (actorSource is! Map) continue;
+        final forActor = <String, SpriteGarmentLayer>{};
+        for (final partEntry in actorSource.entries) {
+          if (partEntry.value is! Map) continue;
+          final partId = partEntry.key.toString();
+          final garment = SpriteGarmentLayer.fromJson(
+            partId,
+            Map<String, dynamic>.from(partEntry.value as Map),
+          );
+          if (garment != null) forActor[partId] = garment;
+        }
+        if (forActor.isNotEmpty) garments[actorEntry.key.toString()] = forActor;
+      }
+    }
     return SpriteAppearanceSelection(
       actorId: activeActor.id,
       actorAppearances: actorAppearances,
       hairFits: hairFits,
+      garments: garments,
     );
   }
 
@@ -229,6 +361,15 @@ class SpriteAppearanceSelection {
               fitEntry.key: fitEntry.value.toJson(),
           },
       },
+      if (garments.values.any((forActor) => forActor.isNotEmpty))
+        'garments': {
+          for (final actorEntry in garments.entries)
+            if (actorEntry.value.isNotEmpty)
+              actorEntry.key: {
+                for (final partEntry in actorEntry.value.entries)
+                  partEntry.key: partEntry.value.toJson(),
+              },
+        },
     };
   }
 

@@ -191,20 +191,44 @@ later phase is written against a neutral interface.
   paid provider.
 - Adding a provider is now one file plus a secret plus a var.
 
-### V5-1 — The garment layer *(no provider, no cost)*
+### V5-1 — The garment layer *(done, 2026-08-07 — no provider, no cost)*
 
-- [ ] `SpriteGarmentLayer`: part id, bytes, fit, source request id
-- [ ] Per-actor garment map on `SpriteAppearanceSelection`, reusing the existing
-      `hairFits` shape and repository
-- [ ] Render the garment as an **overlay above the part** in `_partArtwork`
-- [ ] **Do not** use `partBytes` replacement — it would lose the skin tint
-      underneath and break "clothes on top, no skin"
-- [ ] "Clothing" section in Sprite Studio beside "Fitted hair", with the same
-      offset/scale controls and a per-part clear
-- [ ] Tests over a fixture garment PNG
+- [x] `SpriteGarmentLayer`: part id, bytes, fit, source request id
+- [x] Per-actor garment map on `SpriteAppearanceSelection`, same shape as
+      `hairFits`, through the same repository
+- [x] Rendered as an **overlay above the part** in `_partArtwork`
+- [x] **Not** a `partBytes` replacement — see the guard below
+- [x] "Clothing" section in Sprite Studio, on the selected body part, with
+      across / up-and-down / size controls and a per-part clear
+- [x] `assets/images/characters/garment_fixtures/tunic_fixture.png`, built by
+      `tool/generate_garment_fixture.dart`
+- [x] 7 tests in `test/sprite_garment_test.dart`; suite now **137 passing**
 
-**Gate:** put a fixture garment on the torso in Sprite Studio, see it on the
-character, move it, save the session, reload, find it still there.
+**Facts worth keeping:**
+
+- **The overlay-not-replacement rule now has a test that actually catches a
+  breach.** Counting images is not enough on its own: dressing the torso must
+  *add* one memory-backed image while the asset-backed count stays the same. A
+  replacement keeps the total identical and would pass a naive check. Proven by
+  temporarily making it a replacement — the test failed with `Expected: <12>,
+  Actual: <11>` — then restored.
+- **Why it matters beyond tidiness:** `_canTint` in `sprite_rig_view.dart`
+  refuses to tint a part whose pixels came from `partBytes`. Putting clothing
+  there would silently disable the skin-tone picker, which is the thing V5
+  promised stays local and free.
+- **Garment bytes persist as base64 inside the appearance record**, so they
+  survive a reload without the admin server running. Fine at this size — a part
+  garment is a few KB — but it is the thing to revisit if a character ever wears
+  twelve large layers.
+- A corrupt stored garment is **dropped, not thrown**: the rest of the
+  appearance still loads and the character still renders.
+- `SpriteHairFit` is now a typedef for `SpritePartFit`. Same three numbers,
+  shared by hair and clothing; every existing call site is untouched and the
+  persisted keys did not change.
+
+**Gate met:** a fixture garment goes on the selected part in Sprite Studio,
+renders on the character over the tinted skin, moves and resizes with the
+sliders, and is still there after a reload.
 
 ### V5-2 — The separator *(no provider, no cost)*
 
