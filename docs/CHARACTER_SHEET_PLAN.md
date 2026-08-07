@@ -1,10 +1,32 @@
 # StoryTale Character Sheet V1, V2, and V3 Implementation Plan
 
-Status: **Authoritative Phase 7G.1 plan. The V1 Flutter/Worker pipeline and the Phase 7G.1C enforcement are implemented locally, but no generated package has been accepted. V2 established exact Sprite Studio raster cells. Corrective Phase 7G.1B.R2 versions `character_sheet_v3`, which packs front hair plus separate Short, Medium, and Long back-hair cells into an efficient `4096 x 1024` landscape sheet. The checked-in guide uses the default actor and keeps heroine-compatible geometry. On 2026-08-04 the owner selected V3 as the future active contract. All three contracts are now hash-guarded by one offline test, and the exact remaining V3 migration surface is recorded below. Migration, Worker changes, and a V3 provider request remain paused until the owner explicitly asks to continue.**
+Status: **SUPERSEDED on 2026-08-07 by [Character V5 Plan](CHARACTER_V5_PLAN.md).
+Do not implement from this file.**
 
-This document owns the exact character-sheet contract, implementation order,
-validation gate, and handoff rules for Phase 7G.1B. The Master Roadmap still
-owns global phase order.
+**Why it is kept.** The one-sheet approach was retired after eight billed sheets,
+and this document holds the measured evidence for that decision — the per-sheet
+numbers, the validator defects found and fixed, the exact cell geometry, and the
+three delivery defects in the request path. V5 reuses several findings recorded
+here. Deleting it would mean re-buying the knowledge.
+
+**What is still true and still useful:**
+
+- the `humanoid_v1` cell geometry and native part sizes
+- the measured results of every V4 sheet, and what each prompt fix did and broke
+- the validator lessons: stray pixels, protected drift, and overspill are three
+  different failures and must never share a counter
+- the request-path facts: five images are uploaded, `crop_manifest.json` is not
+  one of them, and filenames never reach the provider
+
+**What is dead:** the V1-V4 contracts themselves, the one-sheet prompt strategy,
+and the migration surface described below. See section 6 of the V5 plan for the
+exact delete and keep lists.
+
+The original status line, for the record: authoritative Phase 7G.1 plan; V1
+pipeline and 7G.1C enforcement implemented locally with no accepted package; V2
+established exact Sprite Studio raster cells; V3 packed front hair plus Short,
+Medium, and Long back-hair cells into a `4096 x 1024` landscape sheet and was
+owner-selected on 2026-08-04; all contracts hash-guarded by one offline test.
 
 ## 1. Goal
 

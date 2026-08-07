@@ -61,7 +61,7 @@ animation limits, validation, storage, and safe fallbacks.
 | 4. Story Bible and location requirements | **Done** | Entity extraction, review, automatic approval, specific locations, required background pairs, and the local background catalog work |
 | 5. Final visual-novel backgrounds | **Done** | Generate, validate, register, resolve, refresh, and render exact location/state backgrounds with a read-only result catalog |
 | 6. Volume analysis and foreground inventory | **Done** | Analyze all chapters through one resumable job, prepare reusable non-human assets, connect them to stories, and show read-only results while management stays developer-only |
-| 7. Generated book-specific humans | **Current** | Phase 7G proved the package structure but failed exact visual fidelity; Phase 7G.1 now builds actor hair catalogs, local skin-tone tinting, and generated face, clothing, and accessory layers on locked base geometry |
+| 7. Generated book-specific humans | **Current** | Phase 7G proved the package structure but failed exact visual fidelity. The V4 one-sheet contract was **retired on 2026-08-07** after eight billed sheets; Phase 7G.2 replaces it with V5 per-part generation, local skin and faces, and a reusable hair catalog — see [Character V5 Plan](CHARACTER_V5_PLAN.md) |
 | 8. Persistent books and volumes | **Planned** | Save EPUBs, books, progress, story bibles, assets, jobs, and `Book -> Volume -> Chapter` data across restarts after the generated-character gate passes |
 | 9. Complete ChapterStory builder | **Planned** | Assemble approved assets, exact text coverage, subtitles, moral, movement, and manifests for any imported chapter |
 | 10. DeepL and offline audio | **Planned** | Real DeepL caching, Tagalog ONNX TTS, five tested voice packs, prepared line audio, and playback synchronization |
@@ -446,7 +446,21 @@ no longer applies the shared app limiter to sprite requests. No paid rerun or
 test run was performed for this implementation, so owner acceptance remains
 pending. The sprite-limiter change is deployed as Worker version
 `ed567efb-c4a9-4e76-ad32-f55a2e83d65a`.
-Phase 7H Story Mode binding waits for the complete Phase 7G.1 gate.
+**Phase 7G.2 supersedes the one-sheet approach, from 2026-08-07.** The owner
+retired `character_sheet_v4` after eight billed sheets produced no usable
+character: each prompt fix corrected its target and exposed a new failure, ending
+with every leg cell holding a whole leg so every extracted leg layer was a boot.
+The defect is structural — one request drawing twelve interdependent cells has
+twelve ways to fail, and one bad cell wastes the sheet.
+
+V5 splits generation by part group, keeps skin and faces local, and generates
+hair once into a reusable catalog, so a failure costs one group instead of the
+whole character. [Character V5 Plan](CHARACTER_V5_PLAN.md) is the authority for
+its phases, checklists, and the exact delete/keep lists. Nothing in V5 is built
+yet.
+
+Phase 7H Story Mode binding waits for the complete Phase 7G gate, which is now
+the V5 gate.
 
 Implementation order:
 

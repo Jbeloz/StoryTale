@@ -1292,38 +1292,66 @@ had been failing since before this thread. It was fixed on 5 August 2026; see
 
 ### Exact current and next work
 
-**The next task is a ninth request, aimed squarely at the legs.** The eighth is
-fully measured and kept as a fixture, so the only open question is whether the new
-"a limb shape is one segment" wording stops the provider drawing a whole leg into
-a `140-156` px cell. See "Every leg layer is a boot" above.
+**V4 is retired. The ninth request was never made.** On 2026-08-07 the owner
+stopped the one-sheet approach after eight billed sheets produced no usable
+character. Do not resume it, and do not spend a request testing the "a limb shape
+is one segment" wording — that edit is now dead code awaiting deletion.
 
-Watch four numbers, all of which must reach their gate together, plus the one
-that actually matters:
+**Why, in one line:** every prompt fix corrected the defect it targeted and
+exposed a new one — re-layout, then a hood on the hair and spare limbs in empty
+cell space, then every leg cell holding a whole leg so every extracted leg layer
+was a boot. One request drawing twelve interdependent cells has twelve ways to
+fail, and one bad cell wastes the sheet. That is structural, not verbal.
 
-| Measure | Eighth sheet | Gate |
-| --- | --- | --- |
-| Stray pixels in the padding | `6,059` | `0` |
-| Overspill outside a cell's window | `10.77%` | under 0.5% |
-| Locked geometry repainted | `6.66%` | under 1% |
-| Locked area drawn over inside cells | `5.38%` | under 1% |
+**Phase V5-0.5 is done: image generation is provider-neutral.** Sprite requests
+now resolve a provider from the `IMAGE_PROVIDER` var through
+`cloudflare/image-worker/src/providers/registry.ts`, so moving between Gemini,
+OpenAI, or anything else is a var change and a redeploy. Three things about it
+are worth not rediscovering:
 
-**The one that matters: does a leg layer contain a trouser leg, or only a boot?**
-Every gate can improve while the layers stay useless, so look at the Layers tab,
-not only the numbers.
+- **Flutter needed no change.** `_generate` already read the provider from the
+  `X-Image-Provider` header and already accepted PNG, JPEG, and WebP, so the app
+  never learns who answered and a provider switch never needs an app release.
+- **The Worker has tests now** — its first, 14 of them, including one that
+  reproduces the old per-mode size ternaries verbatim and compares them to the
+  new table. That guard was proven to fail before it was trusted: changing the
+  `body-pose` tier from `512` to `1K` breaks two tests. Run them with
+  `npm test` in `cloudflare/image-worker`.
+- **The `1K` tier assertion moved.** `character_sheet_contract_test.dart` used to
+  regex the ternary in `index.ts`; it now reads
+  `providers/types.ts` and `providers/gemini.ts`. It still compares the billed
+  tier and the requested format against the manifest.
 
-**Two things remain structurally unaddressed.** Drift, the provider re-inking limb
-outlines while dressing them; and the legs, if wording fails again. For drift,
-measure how much is paint legitimately abutting the locked outline versus real
-redrawing before touching the budget — the same class of question as the validator
-bug already found and fixed. Do not loosen a gate to make a sheet pass.
+One intentional wording change: the character-sheet canvas rejection now says
+`google-gemini returned ...` rather than `Gemini returned ...`, because that
+check is StoryTale's rule and applies to every provider.
 
-**The fallback for the legs, if the wording fails a third time**, is to replace
-`assembled_reference.png` with an exploded diagram showing each cell's silhouette
-joined by a leader line to its place on the assembled body. The provider currently
-has to infer which of four near-identical rounded rectangles is a thigh and which
-is a shin. That image is **free to change** — the Worker hash-checks only the
-guide, and it is not part of the request fingerprint. Do not do it in the same
-request as a wording change; a sheet that moved two variables cannot be read.
+**The next task is Phase 7G.2 / V5-0**, the retirement commit itself. The
+authority is [Character V5 Plan](CHARACTER_V5_PLAN.md), which owns the phases,
+the checklists, and the exact delete and keep lists. Read it before touching the
+character path.
+
+What V5 changes, so the shape is clear without reopening the plan:
+
+- **Skin and faces stop being generated.** Skin is the existing local tint, faces
+  are the five existing profiles. Free.
+- **Hair becomes a catalog** generated once and reused by every character, in one
+  format shared with Sprite Studio.
+- **Clothing is generated per character in small groups** — legs, arms, torso —
+  so a failure costs one group at `$0.0336` rather than the whole sheet.
+- **Nothing generated contains skin or replaces a body part.** Garments render as
+  an overlay above the part, which is what keeps the local skin tint working.
+
+**Most of V5 already exists**; section 4 of the plan lists it against file and
+line. In particular `SpriteRigView` already takes a per-part `partBytes` override
+and already overlays the face on the head, `SpriteLayerProcessor` already turns
+green into transparency and crops to bounds, and the Worker already carries
+per-part sprite modes that only dev tools call. V5 is a regrouping, not a
+rewrite.
+
+**The V4 measurements are not lost.** The eighth sheet stays in
+`diagnostics/character_sheets/`, and `CHARACTER_SHEET_PLAN.md` keeps the measured
+findings that justify the retirement. Both are evidence, not dead weight.
 
 **Restart the app, do not just reload the tab.** Prompt and mask edits change
 assets, and a running `flutter run -d web-server` keeps serving the bundle it
