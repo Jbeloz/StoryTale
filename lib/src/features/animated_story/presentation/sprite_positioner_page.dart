@@ -1866,13 +1866,25 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     return partId == 'front_hair' || partId == 'back_hair';
   }
 
-  /// The local stand-in for a generated garment.
+  /// Owner-drawn clothing, one wearable PNG per rig part.
   ///
-  /// V5 buys clothing per part group, but none of that has to exist for the
-  /// layer itself to be built and reviewed, so this phase uses a checked-in PNG
-  /// and costs nothing.
-  static const _fixtureGarmentAsset =
-      'assets/images/characters/garment_fixtures/tunic_fixture.png';
+  /// Cut from the 1K sheets by `tool/generate_garment_examples.dart` using the
+  /// real separator, so what ships is what the app would produce from the same
+  /// sheet. Only parts with a piece appear; the head and hair have none.
+  static String _exampleGarmentAsset(String partId) =>
+      'assets/images/characters/garment_fixtures/v5/pieces/$partId.png';
+
+  static const _partsWithExampleGarment = {
+    'torso',
+    'upper_arm_right',
+    'upper_arm_left',
+    'lower_arm_right',
+    'lower_arm_left',
+    'upper_leg_right',
+    'upper_leg_left',
+    'lower_leg_right',
+    'lower_leg_left',
+  };
 
   /// Separating runs on this thread and a full sheet takes a moment, so the
   /// button has to say it is working rather than look dead.
@@ -2040,13 +2052,15 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
             'one image per piece, and lets you choose which piece this part '
             'wears.',
           ),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            key: const Key('addFixtureGarmentButton'),
-            onPressed: () => _addFixtureGarment(selected.id),
-            icon: const Icon(Icons.checkroom_outlined),
-            label: const Text('Add fixture garment'),
-          ),
+          if (_partsWithExampleGarment.contains(selected.id)) ...[
+            const SizedBox(height: 8),
+            FilledButton.icon(
+              key: const Key('addExampleGarmentButton'),
+              onPressed: () => _addExampleGarment(selected.id),
+              icon: const Icon(Icons.checkroom_outlined),
+              label: const Text('Wear the example garment'),
+            ),
+          ],
           const SizedBox(height: 8),
           const Text(
             'Clothing is painted over the body part, never in place of it, so '
@@ -2153,9 +2167,9 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
     );
   }
 
-  Future<void> _addFixtureGarment(String partId) async {
+  Future<void> _addExampleGarment(String partId) async {
     try {
-      final data = await rootBundle.load(_fixtureGarmentAsset);
+      final data = await rootBundle.load(_exampleGarmentAsset(partId));
       if (!mounted) return;
       setState(() {
         _appearance = _appearance.withGarmentForPart(
@@ -2163,12 +2177,13 @@ class _SpritePositionerPageState extends State<SpritePositionerPage> {
           SpriteGarmentLayer(
             partId: partId,
             bytes: data.buffer.asUint8List(),
+            sourceRequestId: 'owner-drawn example',
           ),
         );
       });
       _persistAppearance();
     } catch (_) {
-      if (mounted) _message('The fixture garment could not be loaded.');
+      if (mounted) _message('The example garment could not be loaded.');
     }
   }
 

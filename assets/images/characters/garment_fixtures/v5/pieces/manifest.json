@@ -1,0 +1,151 @@
+{
+  "version": "garment-examples-1",
+  "purpose": "Owner-drawn clothing, cut from the 1K part sheets by the real separator. Wearable examples, not provider output.",
+  "generator": "tool/generate_garment_examples.dart",
+  "pieces": {
+    "lower_arm_left": {
+      "sourceSheet": "arms_clothing_1k.png",
+      "sourceBounds": {
+        "x": 171,
+        "y": 642,
+        "width": 84,
+        "height": 125
+      },
+      "rigPartSize": {
+        "width": 86,
+        "height": 129
+      },
+      "sizeDifference": 6,
+      "visiblePixels": 5723,
+      "greenPixelsRemaining": 0
+    },
+    "lower_arm_right": {
+      "sourceSheet": "arms_clothing_1k.png",
+      "sourceBounds": {
+        "x": 763,
+        "y": 627,
+        "width": 73,
+        "height": 135
+      },
+      "rigPartSize": {
+        "width": 77,
+        "height": 145
+      },
+      "sizeDifference": 14,
+      "visiblePixels": 6292,
+      "greenPixelsRemaining": 0
+    },
+    "lower_leg_left": {
+      "sourceSheet": "legs_clothing_1k.png",
+      "sourceBounds": {
+        "x": 171,
+        "y": 650,
+        "width": 89,
+        "height": 138
+      },
+      "rigPartSize": {
+        "width": 88,
+        "height": 140
+      },
+      "sizeDifference": 3,
+      "visiblePixels": 9310,
+      "greenPixelsRemaining": 0
+    },
+    "lower_leg_right": {
+      "sourceSheet": "legs_clothing_1k.png",
+      "sourceBounds": {
+        "x": 761,
+        "y": 650,
+        "width": 81,
+        "height": 154
+      },
+      "rigPartSize": {
+        "width": 84,
+        "height": 156
+      },
+      "sizeDifference": 5,
+      "visiblePixels": 10556,
+      "greenPixelsRemaining": 0
+    },
+    "torso": {
+      "sourceSheet": "torso_clothing_1k.png",
+      "sourceBounds": {
+        "x": 432,
+        "y": 397,
+        "width": 162,
+        "height": 231
+      },
+      "rigPartSize": {
+        "width": 165,
+        "height": 234
+      },
+      "sizeDifference": 6,
+      "visiblePixels": 30527,
+      "greenPixelsRemaining": 0
+    },
+    "upper_arm_left": {
+      "sourceSheet": "arms_clothing_1k.png",
+      "sourceBounds": {
+        "x": 172,
+        "y": 147,
+        "width": 73,
+        "height": 116
+      },
+      "rigPartSize": {
+        "width": 78,
+        "height": 128
+      },
+      "sizeDifference": 17,
+      "visiblePixels": 5474,
+      "greenPixelsRemaining": 0
+    },
+    "upper_arm_right": {
+      "sourceSheet": "arms_clothing_1k.png",
+      "sourceBounds": {
+        "x": 761,
+        "y": 147,
+        "width": 65,
+        "height": 107
+      },
+      "rigPartSize": {
+        "width": 67,
+        "height": 118
+      },
+      "sizeDifference": 13,
+      "visiblePixels": 4373,
+      "greenPixelsRemaining": 0
+    },
+    "upper_leg_left": {
+      "sourceSheet": "legs_clothing_1k.png",
+      "sourceBounds": {
+        "x": 171,
+        "y": 160,
+        "width": 83,
+        "height": 142
+      },
+      "rigPartSize": {
+        "width": 85,
+        "height": 141
+      },
+      "sizeDifference": 3,
+      "visiblePixels": 10479,
+      "greenPixelsRemaining": 0
+    },
+    "upper_leg_right": {
+      "sourceSheet": "legs_clothing_1k.png",
+      "sourceBounds": {
+        "x": 761,
+        "y": 160,
+        "width": 91,
+        "height": 148
+      },
+      "rigPartSize": {
+        "width": 94,
+        "height": 150
+      },
+      "sizeDifference": 5,
+      "visiblePixels": 11716,
+      "greenPixelsRemaining": 0
+    }
+  }
+}

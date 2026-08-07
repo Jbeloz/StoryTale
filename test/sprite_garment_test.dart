@@ -205,8 +205,10 @@ void main() {
 }
 
 Future<Uint8List> _fixtureBytes() async {
+  // A real owner-drawn example rather than a placeholder, so this test exercises
+  // the artwork the app actually ships.
   final data = await rootBundle.load(
-    'assets/images/characters/garment_fixtures/tunic_fixture.png',
+    'assets/images/characters/garment_fixtures/v5/pieces/torso.png',
   );
   return data.buffer.asUint8List();
 }

@@ -278,6 +278,52 @@ Raising it to `2,000` drops the ahoge. Tune per source rather than globally.
 **Gate met:** tests over programmatically built fixtures, plus the real-sheet
 measurement above. No provider involved.
 
+### V5-2a — Owner-drawn example garments *(done, 2026-08-08 — no cost)*
+
+The owner drew real clothing and it is now wearable in Sprite Studio.
+
+- [x] Three `1024 x 1024` sheets copied from the `codex/v5-part-group-guides`
+      worktree (commit `ff9199a`), hashes verified against their manifest
+- [x] `tool/generate_garment_examples.dart` cuts them with the **real
+      separator**, so what ships is what the app would produce
+- [x] Nine pieces in `garment_fixtures/v5/pieces/`, one per rig part
+- [x] **Wear the example garment** in the Clothing section; the tunic fixture
+      and its generator are retired
+- [x] `data/chroma_key.dart` — the green predicate, now pure Dart
+- [x] 4 tests; suite **149 passing**; a re-run is byte-identical
+
+**The defect this caught, which nothing would have shown until it was on the
+rig.** StoryTale's chroma key is *edge-seeded*, so green sealed inside artwork
+is never reached:
+
+| Sheet | Green the fill could not reach |
+| --- | --- |
+| torso | **697** — the collar opening |
+| legs | 213 — shoe eyelets and lace gaps |
+| arms | 48 — gaps between the fingers |
+
+The torso would have worn a bright green collar. The separator now clears green
+**everywhere**, because a garment may never contain green, so green inside a
+piece is a hole. `SpriteLayerProcessor` keeps the edge-seeded behaviour for the
+whole-character path — the two callers genuinely want different things, which is
+why `ChromaKey` exposes both and the predicate is written once.
+
+**Mapping pieces to parts needs position *and* size.** Size alone cross-matched
+the arms on the first run — a white hand landed on `upper_arm_left`, a sleeve on
+`lower_arm_right` at a size difference of 50 — because a sleeve and a hand have
+similar bounding boxes. The generator now takes **upper against lower from the
+row** and **right against left from size**, and refuses any match worse than 40
+rather than writing a wrong piece. Every real match is 3-17.
+
+**The artwork is drawn at rig scale**, so it wears at `scale: 1`: the torso
+piece is `162x231` against the rig's `165x234`, the right thigh `91x148` against
+`94x150`, and so on for all nine.
+
+**Open question for the owner: the lower-arm pieces are white hands.** Worn as
+garments they cover the tinted skin hand and do **not** take the skin tone, so a
+dark-skinned character gets white hands. They read as mittens, which may be the
+intent. Shipped as-is rather than quietly dropped or recoloured.
+
 ### V5-3 — One group, end to end
 
 - [ ] `PartGroupRequest` for `legs`, `arms`, `torso`, `hair`

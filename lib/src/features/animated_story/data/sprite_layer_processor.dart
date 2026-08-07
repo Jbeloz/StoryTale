@@ -3,6 +3,7 @@ import 'dart:ui' show Offset, Size;
 
 import 'package:image/image.dart' as image;
 
+import 'chroma_key.dart';
 import 'sprite_rig.dart';
 
 class SpriteLayers {
@@ -682,43 +683,12 @@ class SpriteLayerProcessor {
     return transparent;
   }
 
-  void _removeGreenBackground(image.Image sprite) {
-    final queue = <int>[];
-    final visited = Uint8List(sprite.width * sprite.height);
-
-    void add(int x, int y) {
-      if (x < 0 || y < 0 || x >= sprite.width || y >= sprite.height) return;
-      final index = y * sprite.width + x;
-      if (visited[index] != 0) return;
-      visited[index] = 1;
-      final pixel = sprite.getPixel(x, y);
-      final red = image.getRed(pixel);
-      final green = image.getGreen(pixel);
-      final blue = image.getBlue(pixel);
-      if (green > 20 && green > red + 5 && green > blue + 5) {
-        queue.add(index);
-      }
-    }
-
-    for (var x = 0; x < sprite.width; x++) {
-      add(x, 0);
-      add(x, sprite.height - 1);
-    }
-    for (var y = 0; y < sprite.height; y++) {
-      add(0, y);
-      add(sprite.width - 1, y);
-    }
-    for (var cursor = 0; cursor < queue.length; cursor++) {
-      final index = queue[cursor];
-      final x = index % sprite.width;
-      final y = index ~/ sprite.width;
-      sprite.setPixelRgba(x, y, 0, 0, 0, 0);
-      add(x - 1, y);
-      add(x + 1, y);
-      add(x, y - 1);
-      add(x, y + 1);
-    }
-  }
+  /// Edge-seeded, so green sealed inside the artwork is left alone.
+  ///
+  /// Moved to `chroma_key.dart` unchanged, so the same predicate serves this
+  /// path and the garment separator instead of being written twice.
+  void _removeGreenBackground(image.Image sprite) =>
+      ChromaKey.removeConnectedToEdges(sprite);
 
   int _visiblePixelCount(image.Image source) {
     var count = 0;

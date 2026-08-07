@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:image/image.dart' as image;
 
-import 'sprite_layer_processor.dart';
+import 'chroma_key.dart';
 
 /// One piece found in a generated sheet, cropped to its own artwork.
 class SpriteGarmentPiece {
@@ -64,15 +64,24 @@ class SpriteGarmentSeparator {
   List<SpriteGarmentPiece> separate(Uint8List source, {int? minimumPixels}) {
     final threshold = minimumPixels ?? minimumVisiblePixels;
 
-    // Reuse the one chroma key this project already trusts. It is seeded from
-    // the border, so green sealed inside a garment stays put instead of
-    // punching a hole through it.
-    final transparent = image.decodeImage(
-      const SpriteLayerProcessor().removeGreenBackground(source),
-    );
-    if (transparent == null) {
+    final decoded = image.decodeImage(source);
+    if (decoded == null) {
       throw const FormatException('Invalid garment sheet.');
     }
+    final transparent = image.Image.from(decoded)
+      ..channels = image.Channels.rgba;
+
+    // Every green pixel goes, not only the ones reachable from the border.
+    //
+    // For a garment, green sealed inside the artwork is a hole rather than
+    // paint: a collar opening, a shoe eyelet, the gap between two fingers. The
+    // clothing contract forbids green in a garment, so nothing legitimate is
+    // lost — and measured on the owner's first real sheets, the torso alone had
+    // 697 such pixels, which would have rendered as a bright green collar.
+    //
+    // The whole-character master path keeps the edge-seeded behaviour; see
+    // ChromaKey.removeConnectedToEdges.
+    ChromaKey.removeEverywhere(transparent);
 
     final width = transparent.width;
     final height = transparent.height;

@@ -1376,6 +1376,29 @@ pixel-exact cells and the provider would not hold them. The separator finds
 pieces by connectedness, so a sheet only has to keep them **apart** — prompts
 should ask for separation and never for coordinates.
 
+**V5-2a is done: the owner's own clothing is wearable.** Three `1024 x 1024`
+sheets came from the `codex/v5-part-group-guides` worktree (commit `ff9199a`)
+and `tool/generate_garment_examples.dart` cuts them into nine pieces with the
+real separator. Sprite Studio has **Wear the example garment**; the tunic
+fixture is retired. Suite is **149 passing**.
+
+Two findings not to rediscover:
+
+- **Green sealed inside artwork survived the old key**, because it is
+  edge-seeded — 697 pixels in the torso collar alone, which would have rendered
+  as a bright green patch on the character. The separator now clears green
+  everywhere; the whole-character path in `SpriteLayerProcessor` keeps the
+  edge-seeded behaviour, and `data/chroma_key.dart` holds the single predicate
+  both use. It is also pure Dart now, which is what lets `tool/` run the
+  separator at all.
+- **Mapping pieces to parts needs position and size together.** Size alone put a
+  white hand on `upper_arm_left` and a sleeve on `lower_arm_right`, because a
+  sleeve and a hand have similar bounding boxes. Row decides upper against
+  lower, size decides right against left, and a match worse than 40 is refused.
+
+**Open question for the owner:** the lower-arm pieces are white hands, so they
+cover the tinted skin hand and will not take the skin tone. Shipped as-is.
+
 Measured on the real eighth V4 sheet rather than assumed: a twelve-cell sheet
 yields **18** pieces at the default threshold. The extras are the floating
 trouser thighs the handoff used to call "spare arms", plus the hair's detached
