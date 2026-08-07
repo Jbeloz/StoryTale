@@ -1,0 +1,99 @@
+{
+  "version": "v5-legs-clothing-fixture-shoe-fill-4",
+  "canvas": {
+    "width": 1024,
+    "height": 1024,
+    "format": "PNG",
+    "background": "#00FF00"
+  },
+  "design": {
+    "style": "filled Gacha-style shoe with small flat details",
+    "pantsColor": "#6852BE",
+    "shoeBodyColor": "#23233C",
+    "shoePanelColor": "#4E4E70",
+    "accentColor": "#F2E2F5",
+    "soleColor": "#CDCFE0",
+    "shoeBodyDominates": true,
+    "originalOutlinePreserved": true,
+    "noGradients": true,
+    "clothingOnly": true,
+    "shapeSource": "immutable humanoid_v1 alpha mask",
+    "outsideSourceMask": "transparent",
+    "providerRequest": false
+  },
+  "parts": {
+    "upper_leg_left": {
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/upper_leg_left.png",
+      "sourceSha256": "fcad2a93472ce7f36c6bbdf1124b8d1cb236872f06f74de5e5b587d33cdd2c7d",
+      "overlayAsset": "assets/images/characters/garment_fixtures/v5/legs_gacha_v4_shoe_fill/upper_leg_left_clothing.png",
+      "overlaySha256": "111db52831078c9298452cf01fdc6779e1a9a935f6a25053ce37daad9f2a07e5",
+      "nativeSize": {
+        "width": 85,
+        "height": 141
+      },
+      "reviewSheetPosition": {
+        "x": 170,
+        "y": 160
+      },
+      "clippedToSourceMask": true,
+      "originalOutlineReapplied": true,
+      "nonTransparentOutsideSource": false
+    },
+    "lower_leg_left": {
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/lower_leg_left.png",
+      "sourceSha256": "324bc0b881d50651f968191244f58d2b079e11691d69e95f1dc27188eaad2c90",
+      "overlayAsset": "assets/images/characters/garment_fixtures/v5/legs_gacha_v4_shoe_fill/lower_leg_left_clothing.png",
+      "overlaySha256": "2b6c8b5fc9f58c79d105c34118aeae329162abf3d192722f481af1706b842257",
+      "nativeSize": {
+        "width": 88,
+        "height": 140
+      },
+      "reviewSheetPosition": {
+        "x": 170,
+        "y": 650
+      },
+      "clippedToSourceMask": true,
+      "originalOutlineReapplied": true,
+      "nonTransparentOutsideSource": false
+    },
+    "upper_leg_right": {
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/upper_leg_right.png",
+      "sourceSha256": "1c4d288daf0464405cd0bdd074960857fc310b8eafdf393a12c1ac2a0d532558",
+      "overlayAsset": "assets/images/characters/garment_fixtures/v5/legs_gacha_v4_shoe_fill/upper_leg_right_clothing.png",
+      "overlaySha256": "974eec8db7770148c6353761037d9c7d9c255679b734e3af44f06e5ea3ad8bc0",
+      "nativeSize": {
+        "width": 94,
+        "height": 150
+      },
+      "reviewSheetPosition": {
+        "x": 760,
+        "y": 160
+      },
+      "clippedToSourceMask": true,
+      "originalOutlineReapplied": true,
+      "nonTransparentOutsideSource": false
+    },
+    "lower_leg_right": {
+      "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/lower_leg_right.png",
+      "sourceSha256": "64c2ed9f3f827424885e1a30db853be1ac9657ce6a3bd323089a0c8136c87fe0",
+      "overlayAsset": "assets/images/characters/garment_fixtures/v5/legs_gacha_v4_shoe_fill/lower_leg_right_clothing.png",
+      "overlaySha256": "5ba47f686a2e7683dd1c7d79e83e3b4198aaa15a084bb97f33cd2d12ecbf0cc2",
+      "nativeSize": {
+        "width": 84,
+        "height": 156
+      },
+      "reviewSheetPosition": {
+        "x": 760,
+        "y": 650
+      },
+      "clippedToSourceMask": true,
+      "originalOutlineReapplied": true,
+      "nonTransparentOutsideSource": false
+    }
+  },
+  "reviewSheet": {
+    "asset": "assets/images/characters/garment_fixtures/v5/legs_gacha_v4_shoe_fill/legs_clothing_fixture_1k.png",
+    "sha256": "d75fd120f21e5507da58dff5ad790a5daf2d3fd466a048ee21b0cd87953ea553",
+    "partsRemainSeparated": true
+  }
+}

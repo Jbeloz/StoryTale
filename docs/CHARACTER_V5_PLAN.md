@@ -294,6 +294,9 @@ measurement above. No provider involved.
 - [x] Build a quality Gacha-style shoe revision with a dark shoe body, flat
       straps, toe panel, sole, and the original outer outline reapplied. It
       remains clipped to the locked masks and uses no provider request.
+- [x] Build a filled-shoe revision where the dark shoe body dominates and the
+      lace/strap accents stay small, matching the supplied shoe reference.
+      Preserve the original outline and keep the first three versions.
 - [ ] `PartGroupRequest` for `legs`, `arms`, `torso`, `hair`
 - [ ] Use the Worker's existing per-part sprite mode; add a `part-group` mode
       only if none fits

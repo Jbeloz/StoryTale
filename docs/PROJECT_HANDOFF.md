@@ -372,6 +372,13 @@ the purple leggings, adds a dark flat shoe body, two pink straps, a purple toe
 panel, and a light sole, then reapplies the original outer outline pixels. It
 has no gradients and remains clipped to the original leg alpha masks.
 
+The filled-shoe revision is saved under
+`assets/images/characters/garment_fixtures/v5/legs_gacha_v4_shoe_fill/`. It
+uses a mostly filled dark shoe body with small light accents, a flat toe panel,
+and a solid light sole to match the supplied shoe reference more closely. The
+original outer outline is reapplied and the earlier three revisions remain
+available for comparison.
+
 <!-- Historical V1-V4 sheet notes follow; V5 above is current.
 The current implemented provider path still uses fixed `character_sheet_v1`.
 V2 established the exact Sprite Studio output-canvas mapping. Corrective Phase
