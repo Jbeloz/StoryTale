@@ -1,18 +1,10 @@
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 import '../../../core/state/storytale_scope.dart';
 import '../../../shared/models/storytale_models.dart';
 import '../../../shared/widgets/storytale_components.dart';
-import '../data/character_design_brief.dart';
-import '../data/character_sheet_contract.dart';
-import '../data/character_sheet_generation.dart';
-import '../data/character_sheet_package.dart';
-import '../data/character_sheet_processor.dart';
-import '../data/sprite_appearance.dart';
 import '../data/sprite_layer_processor.dart';
 import '../data/story_bible_repository.dart';
 import '../data/story_artwork_service.dart';
@@ -758,7 +750,6 @@ class SpriteReviewPage extends StatefulWidget {
 class _SpriteReviewPageState extends State<SpriteReviewPage> {
   final _service = StoryArtworkService();
   final _processor = const SpriteLayerProcessor();
-  final _sheetProcessor = CharacterSheetProcessor();
   final _spriteDetails = TextEditingController(
     text:
         'a kind young prince with short golden hair, a long blue coat, '
@@ -769,30 +760,12 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
         'a moonlit rose garden on a tiny asteroid with a gentle purple-blue '
         'sky and room for two character sprites',
   );
-  // Character Sheet is the live contract. Sprite is the Phase 7G whole-character
-  // master, which was rejected because splitting it cannot recover the exact
-  // StoryTale geometry, and both cost the same paid request. Landing on the
-  // rejected one is how a restart turns a Character Sheet run into a legacy one.
-  _ArtworkMode _mode = _ArtworkMode.characterSheet;
+  // The V4 character-sheet mode was retired on 2026-08-07; V5 generates by part
+  // group instead. Sprite is the Phase 7G whole-character master, kept for
+  // comparison only, and it still costs a paid request.
+  _ArtworkMode _mode = _ArtworkMode.sprite;
 
-  /// Skips the six face and four pose compositions while we are iterating on
-  /// what the provider draws.
-  ///
-  /// On by default because the proof pass is most of the cost of a run and
-  /// blocks this thread, and because it cannot hide a bad result: a package
-  /// without proofs can never be `ready`, and it says so in its own errors.
-  bool _skipSheetProofs = true;
-
-  /// The local admin server `tool/run_storytale.ps1` starts beside the app, the
-  /// same one Sprite Studio saves poses and appearance through.
-  static const _adminUrl = 'http://127.0.0.1:52828';
   Uint8List? _generatedImage;
-  CharacterSheetGenerationResult? _characterSheetResult;
-  CharacterSheetPackage? _characterSheetPackage;
-  _CharacterSheetReviewGroup _sheetReviewGroup =
-      _CharacterSheetReviewGroup.sheet;
-  String _sheetFaceId = 'neutral';
-  String _sheetPoseId = 'neutral';
   SpriteLayers? _spriteLayers;
   _SpritePreview _spritePreview = _SpritePreview.rejoined;
   String? _error;
@@ -809,11 +782,6 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
     setState(() {
       _generating = true;
       _generatedImage = null;
-      _characterSheetResult = null;
-      _characterSheetPackage = null;
-      _sheetReviewGroup = _CharacterSheetReviewGroup.sheet;
-      _sheetFaceId = 'neutral';
-      _sheetPoseId = 'neutral';
       _spriteLayers = null;
       _error = null;
     });
@@ -825,68 +793,6 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
           setState(() {
             _spriteLayers = layers;
             _spritePreview = _SpritePreview.rejoined;
-          });
-        }
-      } else if (_mode == _ArtworkMode.characterSheet) {
-        final appearance = await const SpriteAppearanceRepository().load();
-        final actor = SpriteAppearanceCatalog.actor(appearance.actorId);
-        final request = CharacterSheetGenerationRequest(
-          brief: CharacterDesignBrief(
-            bookId: 'developer-preview',
-            characterId: 'manual-character-sheet',
-            canonicalName: 'Preview character',
-            actorProfileId: actor.id,
-            sourceDescription: _spriteDetails.text,
-          ),
-          skinTone: appearance.skinTone,
-          frontHairId: appearance.frontHairId,
-          backHairId: appearance.hairStyleId,
-          outfitRequirements: _spriteDetails.text,
-        );
-        final contract = await CharacterSheetContractRepository().load();
-        final cached = CharacterSheetPackageStore.read(
-          request.fingerprint(contract),
-        );
-        if (cached != null && cached.validation.isValid) {
-          if (mounted) {
-            setState(() {
-              _characterSheetResult = cached.generation;
-              _characterSheetPackage = cached;
-              _sheetReviewGroup = _CharacterSheetReviewGroup.sheet;
-              _sheetFaceId = 'neutral';
-              _sheetPoseId = 'neutral';
-              _generatedImage = cached.neutralProofBytes;
-              _error = null;
-            });
-          }
-          return;
-        }
-        final result = await _service.generateCharacterSheet(request);
-        // Show what came back before cutting and composing it. Processing runs
-        // on this thread and takes seconds, and the reason to look at a paid
-        // sheet is usually that something went wrong, so waiting for the whole
-        // proof pass hides the only image that explains why.
-        if (mounted) {
-          setState(() {
-            _characterSheetResult = result;
-            _sheetReviewGroup = _CharacterSheetReviewGroup.sheet;
-            _generatedImage = result.bytes;
-          });
-        }
-        final package = await _sheetProcessor.process(
-          request: request,
-          generation: result,
-          composeProofs: !_skipSheetProofs,
-        );
-        await _saveSheetDiagnostics(result, package.validation.toJson());
-        if (mounted) {
-          setState(() {
-            _characterSheetPackage = package;
-            _sheetFaceId = 'neutral';
-            _sheetPoseId = 'neutral';
-            _error = package.validation.isValid
-                ? null
-                : package.validation.errorMessage;
           });
         }
       } else {
@@ -902,61 +808,12 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
       }
     } on ArtworkGenerationException catch (error) {
       if (mounted) setState(() => _error = error.message);
-    } on CharacterSheetProcessingException catch (error) {
-      // The sheet was still paid for, so keep it even though it never reached a
-      // package. A sheet that breaks the processor is the most useful one to
-      // have on disk, not the least.
-      final result = _characterSheetResult;
-      if (result != null) {
-        await _saveSheetDiagnostics(result, {'processingError': error.message});
-      }
-      if (mounted) setState(() => _error = error.message);
     } catch (_) {
       if (mounted) {
         setState(() => _error = 'The story artwork could not be generated.');
       }
     } finally {
       if (mounted) setState(() => _generating = false);
-    }
-  }
-
-  /// Writes the paid sheet, the prompt that bought it, and its validation report
-  /// to disk through the local admin server.
-  ///
-  /// Every character-sheet request costs money, and until this the result lived
-  /// only in the browser tab that made it: a defect could be diagnosed from a
-  /// screenshot or not at all, and re-measuring one meant paying again.
-  ///
-  /// Never fails the run. The sheet is already on screen and already paid for,
-  /// so a missing admin server must not turn a usable result into an error —
-  /// the same rule the pose and appearance saves follow.
-  Future<void> _saveSheetDiagnostics(
-    CharacterSheetGenerationResult result,
-    Map<String, dynamic> report,
-  ) async {
-    try {
-      await http.post(
-        Uri.parse('$_adminUrl/character-sheet-diagnostics'),
-        headers: const {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'requestId': result.requestId.isEmpty
-              ? result.requestFingerprint
-              : result.requestId,
-          'requestFingerprint': result.requestFingerprint,
-          'contract': '${result.contractId}@${result.contractVersion}',
-          'provider': result.provider,
-          'model': result.model,
-          'generatedAt': result.generatedAt,
-          'mimeType': result.mimeType,
-          'width': result.width,
-          'height': result.height,
-          'prompt': result.prompt,
-          'sheetBase64': base64Encode(result.bytes),
-          'report': report,
-        }),
-      );
-    } catch (_) {
-      // Local admin offline. The result stays on screen either way.
     }
   }
 
@@ -975,11 +832,6 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
                 label: Text('Sprite'),
               ),
               ButtonSegment(
-                value: _ArtworkMode.characterSheet,
-                icon: Icon(Icons.grid_view_outlined),
-                label: Text('Sheet'),
-              ),
-              ButtonSegment(
                 value: _ArtworkMode.background,
                 icon: Icon(Icons.landscape_outlined),
                 label: Text('Background'),
@@ -989,11 +841,6 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
             onSelectionChanged: (selection) => setState(() {
               _mode = selection.first;
               _generatedImage = null;
-              _characterSheetResult = null;
-              _characterSheetPackage = null;
-              _sheetReviewGroup = _CharacterSheetReviewGroup.sheet;
-              _sheetFaceId = 'neutral';
-              _sheetPoseId = 'neutral';
               _spriteLayers = null;
               _error = null;
             }),
@@ -1001,7 +848,6 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
           const SizedBox(height: 16),
           Text(switch (_mode) {
             _ArtworkMode.sprite => 'Legacy Gemini Sprite Test',
-            _ArtworkMode.characterSheet => 'Character Sheet V4 Request',
             _ArtworkMode.background => 'Cloudflare Background Test',
           }, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 4),
@@ -1025,30 +871,6 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
               'and body are generated rather than the locked rig parts. It was '
               'rejected for exactly that reason, and it still costs a paid '
               'request. Use Character Sheet for real work.',
-            ),
-          ],
-          if (_mode == _ArtworkMode.characterSheet) ...[
-            const SizedBox(height: 8),
-            const Text(
-              'Uses the current Sprite Studio actor, skin tone, front hair, '
-              'and selected Short, Medium, Long, or None back-hair slot. It '
-              'sends the locked guide, neutral reference, and three masks in '
-              'one paid request and never retries automatically.',
-            ),
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              dense: true,
-              value: _skipSheetProofs,
-              onChanged: _generating
-                  ? null
-                  : (value) =>
-                        setState(() => _skipSheetProofs = value ?? false),
-              title: const Text('Testing: skip face and pose proofs'),
-              subtitle: const Text(
-                'Cuts the sheet and stops. Much faster, but the package can '
-                'never be accepted. Turn this off for an acceptance run.',
-              ),
             ),
           ],
           const SizedBox(height: 12),
@@ -1081,10 +903,6 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
                 ? Image.memory(_previewImage!, fit: BoxFit.contain)
                 : Image.asset(_placeholderAsset, fit: BoxFit.contain),
           ),
-          if (_mode == _ArtworkMode.characterSheet) ...[
-            const SizedBox(height: 12),
-            _characterSheetReviewPanel(context, _characterSheetPackage),
-          ],
           if (_mode == _ArtworkMode.sprite && _spriteLayers != null) ...[
             const SizedBox(height: 12),
             Wrap(
@@ -1103,32 +921,6 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
                   .toList(),
             ),
           ],
-          if (_mode == _ArtworkMode.characterSheet &&
-              _characterSheetResult != null) ...[
-            const SizedBox(height: 12),
-            Text(
-              '${_characterSheetResult!.contractId}@'
-              '${_characterSheetResult!.contractVersion} • '
-              '${_characterSheetResult!.provider} • '
-              '${_characterSheetResult!.model}\n'
-              'Request ${_characterSheetResult!.requestId} • '
-              'Fingerprint '
-              '${_characterSheetResult!.requestFingerprint.substring(0, 12)}…',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            if (_characterSheetPackage != null) ...[
-              const SizedBox(height: 6),
-              Text(
-                _characterSheetPackage!.validation.isValid
-                    ? '${_characterSheetPackage!.nonEmptyLayerCount} '
-                          'transparent layers packaged • four pose proofs '
-                          'assembled locally'
-                    : 'Package needs attention • the safe locked-template '
-                          'proof is shown',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
-          ],
           if (_error != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -1142,23 +934,12 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
             runSpacing: 8,
             children: [
               FilledButton.icon(
-                onPressed:
-                    _generating ||
-                        (_mode == _ArtworkMode.characterSheet &&
-                            (_characterSheetPackage?.validation.isValid ??
-                                false))
-                    ? null
-                    : _generate,
+                onPressed: _generating ? null : _generate,
                 icon: const Icon(Icons.auto_awesome),
                 label: Text(
-                  _mode == _ArtworkMode.characterSheet &&
-                          (_characterSheetPackage?.validation.isValid ?? false)
-                      ? 'Ready Package Reused'
-                      : !_hasGeneratedArtwork
+                  !_hasGeneratedArtwork
                       ? switch (_mode) {
                           _ArtworkMode.sprite => 'Generate Legacy Master',
-                          _ArtworkMode.characterSheet =>
-                            'Generate Character Sheet',
                           _ArtworkMode.background => 'Generate Background',
                         }
                       : 'Regenerate',
@@ -1171,7 +952,6 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
                 icon: const Icon(Icons.check),
                 label: Text(switch (_mode) {
                   _ArtworkMode.sprite => 'Accept Sprite',
-                  _ArtworkMode.characterSheet => 'Keep Sheet Preview',
                   _ArtworkMode.background => 'Accept Background',
                 }),
               ),
@@ -1188,251 +968,20 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
     );
   }
 
-  Widget _characterSheetReviewPanel(
-    BuildContext context,
-    CharacterSheetPackage? package,
-  ) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Package proof', style: theme.textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final group in _CharacterSheetReviewGroup.values)
-                ChoiceChip(
-                  label: Text(group.label),
-                  selected: _sheetReviewGroup == group,
-                  onSelected: (_) => setState(() {
-                    _sheetReviewGroup = group;
-                  }),
-                ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          if (package == null)
-            const Text(
-              'No accepted package yet. These read-only groups populate after '
-              'one sheet is generated and processed. Viewing them never sends '
-              'a provider request.',
-            )
-          else ...[
-            if (_sheetReviewGroup == _CharacterSheetReviewGroup.faces) ...[
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final faceId in const [
-                    'neutral',
-                    'talking',
-                    'happy',
-                    'sad',
-                    'angry',
-                    'surprised',
-                  ])
-                    ChoiceChip(
-                      label: Text(
-                        package.validation.proofsByFace[faceId]?.label ??
-                            faceId,
-                      ),
-                      selected: _sheetFaceId == faceId,
-                      onSelected: (_) => setState(() {
-                        _sheetFaceId = faceId;
-                      }),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 10),
-            ],
-            if (_sheetReviewGroup == _CharacterSheetReviewGroup.poses) ...[
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final poseId in const [
-                    'neutral',
-                    'talking',
-                    'pointing',
-                    'walking',
-                  ])
-                    ChoiceChip(
-                      label: Text(
-                        package.validation.proofsByPose[poseId]?.label ??
-                            poseId,
-                      ),
-                      selected: _sheetPoseId == poseId,
-                      onSelected: (_) => setState(() {
-                        _sheetPoseId = poseId;
-                      }),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 10),
-            ],
-            _characterSheetGroupDetails(context, package),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _characterSheetGroupDetails(
-    BuildContext context,
-    CharacterSheetPackage package,
-  ) {
-    final theme = Theme.of(context);
-    switch (_sheetReviewGroup) {
-      case _CharacterSheetReviewGroup.sheet:
-        final generation = package.generation;
-        final kilobytes = (package.sourceBytes.lengthInBytes / 1024).round();
-        // Per-region rejection counts, worst first. The headline error gives one
-        // sheet-wide percentage; this says which cells it came from, which is
-        // the difference between "the provider redrew the body" and "one mask is
-        // wrong".
-        List<MapEntry<String, int>> worstOf(Map<String, int> counts) =>
-            counts.entries.where((entry) => entry.value > 0).toList()
-              ..sort((left, right) => right.value.compareTo(left.value));
-        String line(String label, Map<String, int> counts) {
-          final worst = worstOf(counts);
-          if (worst.isEmpty) return '';
-          return '\n$label: '
-              '${worst.take(6).map((entry) => '${entry.key} ${entry.value}').join(', ')}';
-        }
-
-        // Two different failures, never merged into one list. "Repainted" is
-        // damage to locked geometry; "drawn outside its window" is a part drawn
-        // in the wrong place, which is what put a whole trouser leg above the
-        // leg cells.
-        final repainted = line(
-          'Locked geometry repainted by cell',
-          package.validation.rejectedPixelsByRegion,
-        );
-        final overspill = line(
-          'Drawn outside its window by cell',
-          package.validation.overspillPixelsByRegion,
-        );
-        return Text(
-          'Exactly as returned, before cleaning • '
-          '${generation.width}x${generation.height} ${generation.mimeType} • '
-          '$kilobytes KB'
-          '${repainted.isEmpty && overspill.isEmpty ? '\nEvery cell stayed inside its window and left the locked geometry alone.' : '$repainted$overspill'}',
-          style: theme.textTheme.bodySmall,
-        );
-      case _CharacterSheetReviewGroup.character:
-        return Text(
-          package.validation.isValid
-              ? '${package.characterName} • package ready • all six faces and '
-                    'four poses passed'
-              : '${package.characterName} • needs attention • safe locked '
-                    'template shown',
-        );
-      case _CharacterSheetReviewGroup.layers:
-        return Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            for (final layer in package.layerMetadata.values)
-              Chip(
-                label: Text(
-                  '${layer.regionId}: '
-                  '${layer.empty ? 'Empty' : '${layer.visiblePixelCount} px'}',
-                ),
-              ),
-          ],
-        );
-      case _CharacterSheetReviewGroup.faces:
-        final proof = package.validation.proofsByFace[_sheetFaceId];
-        if (proof == null) return const Text(_skippedProofsNotice);
-        return Text(
-          '${proof.label} • ${proof.width}x${proof.height} • '
-          '${proof.visiblePixelCount} visible pixels • '
-          '${proof.valid ? 'passed' : 'needs attention'}',
-        );
-      case _CharacterSheetReviewGroup.hair:
-        final front = package.layerMetadata['front_hair'];
-        if (front == null) return const Text('No front-hair layer was cut.');
-        final back = package.selectedBackHairRegion == 'none'
-            ? null
-            : package.layerMetadata[package.selectedBackHairRegion];
-        return Text(
-          'Front: ${front.empty ? 'missing' : package.frontHairId} • '
-          'Back: ${back == null ? 'None' : back.regionId} • native canvases '
-          'preserved',
-        );
-      case _CharacterSheetReviewGroup.poses:
-        final proof = package.validation.proofsByPose[_sheetPoseId];
-        if (proof == null) return const Text(_skippedProofsNotice);
-        return Text(
-          '${proof.label} • ${proof.width}x${proof.height} • '
-          '${proof.visiblePixelCount} visible pixels • '
-          '${proof.valid ? 'passed' : 'needs attention'}',
-        );
-      case _CharacterSheetReviewGroup.details:
-        return Text(
-          '${package.contract.contractId}@${package.contract.contractVersion} • '
-          '${package.generation.provider} • ${package.generation.model}\n'
-          'Design ${package.generation.requestFingerprint.substring(0, 12)}… • '
-          'geometry ${package.contract.lockedRig.geometryHash.substring(0, 12)}…\n'
-          'Locked assets ${package.validation.lockedAssetsValid ? 'passed' : 'failed'} • '
-          'identity ${package.validation.identityValid ? 'passed' : 'failed'} • '
-          'faces ${package.validation.faceProofValid ? 'passed' : 'failed'} • '
-          'poses ${package.validation.poseProofValid ? 'passed' : 'failed'}\n'
-          '${package.validation.errors.isEmpty ? 'No validation errors.' : package.validation.errorMessage}',
-          style: theme.textTheme.bodySmall,
-        );
-    }
-  }
-
   String get _placeholderAsset {
     if (_mode == _ArtworkMode.background) {
       return 'assets/images/backgrounds/cloudflare_examples/'
           'moonlit-rose-garden.jpg';
-    }
-    if (_mode == _ArtworkMode.characterSheet) {
-      // The canonical guide of the active contract, so the placeholder shows
-      // the layout a request would actually send. Follow
-      // CharacterSheetContractRepository.assetPath when that changes.
-      return 'assets/images/characters/generation_templates/humanoid_v1/'
-          'character_sheet_v4/guide_default_medium.png';
     }
     return 'assets/images/characters/references/full-proportion.png';
   }
 
   bool get _hasGeneratedArtwork => switch (_mode) {
     _ArtworkMode.sprite => _spriteLayers != null,
-    _ArtworkMode.characterSheet =>
-      _characterSheetPackage?.validation.isValid ?? false,
     _ArtworkMode.background => _generatedImage != null,
   };
 
   Uint8List? get _previewImage {
-    if (_mode == _ArtworkMode.characterSheet) {
-      final package = _characterSheetPackage;
-      if (package == null) return _generatedImage;
-      return switch (_sheetReviewGroup) {
-        _CharacterSheetReviewGroup.sheet => package.sourceBytes,
-        _CharacterSheetReviewGroup.character => package.neutralProofBytes,
-        _CharacterSheetReviewGroup.layers => package.cleanBytes,
-        _CharacterSheetReviewGroup.faces =>
-          package.facePreviewBytesByExpression[_sheetFaceId] ??
-              package.neutralProofBytes,
-        _CharacterSheetReviewGroup.hair =>
-          package.layerBytes['front_hair'] ?? package.neutralProofBytes,
-        _CharacterSheetReviewGroup.poses =>
-          package.previewBytesByPose[_sheetPoseId] ?? package.neutralProofBytes,
-        _CharacterSheetReviewGroup.details => package.neutralProofBytes,
-      };
-    }
     if (_mode != _ArtworkMode.sprite) return _generatedImage;
     final layers = _spriteLayers;
     if (layers == null) return null;
@@ -1445,32 +994,7 @@ class _SpriteReviewPageState extends State<SpriteReviewPage> {
   }
 }
 
-enum _ArtworkMode { sprite, characterSheet, background }
-
-/// Shown wherever a proof would be, when the testing switch skipped the pass.
-const _skippedProofsNotice =
-    'Face and pose proofs were skipped for testing. Turn the switch off and '
-    'generate again to see them.';
-
-enum _CharacterSheetReviewGroup {
-  /// The exact bytes the provider returned, before any cleaning or composition.
-  ///
-  /// First because it is the only view that shows what the provider actually
-  /// did. Every other group shows something StoryTale derived, and on a failed
-  /// package the character view falls back to the safe locked template, which
-  /// looks identical no matter what came back.
-  sheet('Sheet'),
-  character('Character'),
-  layers('Layers'),
-  faces('Faces'),
-  hair('Hair'),
-  poses('Poses'),
-  details('Details');
-
-  const _CharacterSheetReviewGroup(this.label);
-
-  final String label;
-}
+enum _ArtworkMode { sprite, background }
 
 enum _SpritePreview {
   source('Gemini source'),

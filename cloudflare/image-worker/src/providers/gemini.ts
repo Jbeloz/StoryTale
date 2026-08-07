@@ -179,7 +179,7 @@ export const geminiImageProvider: ImageProvider = {
         );
       }
       throw new PublicWorkerError(
-        `Gemini rejected the character-sheet request (HTTP ${response.status}).`,
+        `Gemini rejected the ${request.mode} request (HTTP ${response.status}).`,
         502,
       );
     }

@@ -13,8 +13,7 @@ export type SpriteMode =
   | "face-layer"
   | "front-hair"
   | "body-pose"
-  | "foreground"
-  | "character-sheet";
+  | "foreground";
 
 /// What the caller wants back, in neutral terms.
 ///
@@ -43,7 +42,6 @@ export const SPRITE_REQUEST_SPEC_BY_MODE: Record<SpriteMode, ImageRequestSpec> =
   "front-hair": { aspectRatio: "1:1", imageSize: "1K" },
   "body-pose": { aspectRatio: "9:16", imageSize: "512" },
   "foreground": { aspectRatio: "1:1", imageSize: "1K" },
-  "character-sheet": { aspectRatio: "1:1", imageSize: "1K" },
 };
 
 export type ReferenceImage = {

@@ -1,12 +1,9 @@
 import 'dart:convert';
 
-import 'package:crypto/crypto.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as image;
 
-import 'character_sheet_contract.dart';
-import 'character_sheet_generation.dart';
 import 'sprite_references.dart';
 import 'sprite_layer_processor.dart';
 import 'story_foreground_repository.dart';
@@ -16,14 +13,10 @@ class StoryArtworkService {
   StoryArtworkService({
     http.Client? client,
     AssetBundle? bundle,
-    CharacterSheetContractRepository? characterSheetContracts,
     String? endpoint,
     String? token,
   }) : _client = client ?? http.Client(),
        _bundle = bundle ?? rootBundle,
-       _characterSheetContracts =
-           characterSheetContracts ??
-           CharacterSheetContractRepository(bundle: bundle ?? rootBundle),
        endpoint = endpoint ?? _endpoint,
        token = token ?? _token;
 
@@ -35,13 +28,16 @@ class StoryArtworkService {
 
   final http.Client _client;
   final AssetBundle _bundle;
-  final CharacterSheetContractRepository _characterSheetContracts;
   final String endpoint;
   final String token;
-  final Map<String, CharacterSheetGenerationResult> _characterSheetCache = {};
-  Future<CharacterSheetGenerationResult>? _characterSheetInFlight;
 
   bool get isConfigured => token.trim().isNotEmpty;
+
+  /// Reported for display only.
+  ///
+  /// The Worker owns which provider actually answers, chosen by its
+  /// `IMAGE_PROVIDER` var, and reports it back on `X-Image-Provider`. Read that
+  /// header rather than these when the answer has to be correct.
   String get spriteProvider => 'Google Gemini';
   String get spriteModel => 'gemini-3.1-flash-image';
 
@@ -92,153 +88,6 @@ class StoryArtworkService {
       prompt: description,
       files: files,
     )).bytes;
-  }
-
-  Future<CharacterSheetGenerationResult> generateCharacterSheet(
-    CharacterSheetGenerationRequest request,
-  ) async {
-    final contract = await _characterSheetContracts.load();
-    final fingerprint = request.fingerprint(contract);
-    final cached = _characterSheetCache[fingerprint];
-    if (cached != null) return cached;
-    if (_characterSheetInFlight != null) {
-      throw const ArtworkGenerationException(
-        'Another character-sheet request is already active. Wait for it to '
-        'finish before starting a paid request.',
-      );
-    }
-
-    final generation = _generateCharacterSheet(
-      request: request,
-      contract: contract,
-      fingerprint: fingerprint,
-    );
-    _characterSheetInFlight = generation;
-    try {
-      final result = await generation;
-      _characterSheetCache[fingerprint] = result;
-      return result;
-    } finally {
-      _characterSheetInFlight = null;
-    }
-  }
-
-  Future<CharacterSheetGenerationResult> _generateCharacterSheet({
-    required CharacterSheetGenerationRequest request,
-    required CharacterSheetContract contract,
-    required String fingerprint,
-  }) async {
-    final promptBytes = await _verifiedAssetBytes(
-      contract.assets.promptContract,
-      contract.assetSha256['promptContract']!,
-    );
-    final prompt = request.buildPrompt(utf8.decode(promptBytes), contract);
-    // The guide must show the rear-hair silhouette this request is asking for.
-    // V4 publishes one variant per length behind a single set of cells, masks,
-    // and anchors, so only the first reference and its hash change.
-    final guide = contract.selection.guideFor(request.backHairId);
-    final references = <({String path, String sha256})>[
-      guide,
-      (
-        path: contract.assets.assembledReference,
-        sha256: contract.assetSha256['assembledReference']!,
-      ),
-      // The allowed window is the hair silhouette, which differs per length, so
-      // this tracks the guide variant rather than staying on the canonical file.
-      contract.selection.allowedRegionsFor(request.backHairId),
-      (
-        path: contract.assets.protectedRegions,
-        sha256: contract.assetSha256['protectedRegions']!,
-      ),
-      (
-        path: contract.assets.seamAllowances,
-        sha256: contract.assetSha256['seamAllowances']!,
-      ),
-    ];
-    final files = <http.MultipartFile>[];
-    for (var index = 0; index < references.length; index++) {
-      final reference = references[index];
-      final bytes = await _verifiedAssetBytes(
-        reference.path,
-        reference.sha256,
-      );
-      files.add(
-        http.MultipartFile.fromBytes(
-          'input_image_$index',
-          bytes,
-          filename: reference.path.split('/').last,
-        ),
-      );
-    }
-
-    final worker = await _generate(
-      kind: 'sprite',
-      mode: 'character-sheet',
-      prompt: prompt,
-      fields: {
-        'contract_id': contract.contractId,
-        'contract_version': '${contract.contractVersion}',
-        // The hash of the variant actually being sent, not the canonical one,
-        // so the Worker can verify the uploaded file against the declared hash.
-        'guide_sha256': guide.sha256,
-        'geometry_hash': contract.lockedRig.geometryHash,
-        'request_fingerprint': fingerprint,
-        'selected_back_hair': request.selectedBackHairRegion(contract),
-      },
-      files: files,
-    );
-    final decoded = image.decodeImage(worker.bytes);
-    if (decoded == null) {
-      throw const ArtworkGenerationException(
-        'Gemini returned a corrupt character sheet.',
-      );
-    }
-    if (worker.mimeType != contract.canvas.mimeType ||
-        decoded.width != contract.canvas.width ||
-        decoded.height != contract.canvas.height) {
-      throw ArtworkGenerationException(
-        'Gemini returned ${decoded.width}x${decoded.height} '
-        '${worker.mimeType}; StoryTale requires one '
-        '${contract.canvas.width}x${contract.canvas.height} '
-        '${contract.canvas.mimeType}.',
-      );
-    }
-    if (worker.requestFingerprint != fingerprint) {
-      throw const ArtworkGenerationException(
-        'The Worker returned mismatched character-sheet request metadata.',
-      );
-    }
-    return CharacterSheetGenerationResult(
-      bytes: worker.bytes,
-      mimeType: worker.mimeType,
-      width: decoded.width,
-      height: decoded.height,
-      provider: worker.provider,
-      model: worker.model,
-      requestId: worker.requestId,
-      requestFingerprint: fingerprint,
-      contractId: contract.contractId,
-      contractVersion: contract.contractVersion,
-      prompt: prompt,
-      generatedAt: DateTime.now().toUtc().toIso8601String(),
-    );
-  }
-
-  Future<Uint8List> _verifiedAssetBytes(
-    String assetPath,
-    String expectedSha256,
-  ) async {
-    final data = await _bundle.load(assetPath);
-    final bytes = data.buffer.asUint8List(
-      data.offsetInBytes,
-      data.lengthInBytes,
-    );
-    if (sha256.convert(bytes).toString() != expectedSha256) {
-      throw ArtworkGenerationException(
-        'Character-sheet contract asset drifted: $assetPath.',
-      );
-    }
-    return bytes;
   }
 
   Future<GeneratedForegroundData> generateForeground(

@@ -8,32 +8,12 @@ import {
 } from "./providers/types";
 
 const BACKGROUND_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0" as const;
-const CHARACTER_SHEET_CONTRACT_ID = "character_sheet_v4";
-const CHARACTER_SHEET_CONTRACT_VERSION = "4";
-const CHARACTER_SHEET_CANVAS = 1024;
-// The provider only emits JPEG from this endpoint; see the response_format note
-// in generateSprite. Keep this in step with the manifest's canvas.mimeType.
-const CHARACTER_SHEET_MIME = "image/jpeg";
-// V4 carries one rear-hair cell, so the guide has to show the length the
-// request is asking for. Every variant shares identical cells, masks, anchors,
-// and seams; only that one silhouette differs, so any of them is canonical.
-// Keys are the rear-hair IDs in the manifest's guideVariantSha256.
-const CHARACTER_SHEET_GUIDE_SHA256_BY_LENGTH = {
-  short: "b63e5f721f6f48bfa501bc623f00db18b0b7aa60d34b729775b18bcf00fc4b79",
-  medium: "32f922741c98dae4c25b1a93f4fa16b199f12471d7e2dd7ae598af2e6034e81c",
-  long: "150ce5bcec68a68f09588c63da40fa0e6fc1d94bc4532ea21f464480dbe13816",
-} as const;
-const CHARACTER_SHEET_GUIDE_SHA256 = new Set<string>(
-  Object.values(CHARACTER_SHEET_GUIDE_SHA256_BY_LENGTH),
-);
-const CHARACTER_SHEET_GEOMETRY_HASH =
-  "0df67ec660c1aa5616f9a12d205111f8591dc24f123316f9f87b0f8239e57648";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Authorization, Content-Type",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Expose-Headers":
-    "X-Image-Model, X-Image-Provider, X-Image-Width, X-Image-Height, X-Analysis-Model, X-Request-Id, X-Request-Fingerprint, X-Character-Sheet-Contract",
+    "X-Image-Model, X-Image-Provider, X-Image-Width, X-Image-Height, X-Analysis-Model, X-Request-Id, X-Request-Fingerprint",
 };
 
 type StoryTaleEnv = Env & {
@@ -207,14 +187,10 @@ async function parseBody(
   }
   if (referenceBytes > (limits.maxReferenceBytes ?? 1536 * 1024)) return null;
   const fields: Record<string, string> = {};
-  for (const name of [
-    "contract_id",
-    "contract_version",
-    "guide_sha256",
-    "geometry_hash",
-    "request_fingerprint",
-    "selected_back_hair",
-  ]) {
+  // The V4 contract fields were removed with the character-sheet mode on
+  // 2026-08-07. The fingerprint stays: it is how a caller correlates a reply
+  // with the request it paid for, and V5 needs the same thing per part group.
+  for (const name of ["request_fingerprint"]) {
     const value = form.get(name);
     if (typeof value === "string") fields[name] = value.trim();
   }
@@ -1175,9 +1151,6 @@ async function generateStoryAnalysis(
 }
 
 function spritePrompt(details: string, mode: SpriteMode): string {
-  if (mode === "character-sheet") {
-    return details;
-  }
   if (mode === "foreground") {
     return `${details} ` +
       "Create one reusable 2D visual-novel foreground asset in a clean, cute storybook style. " +
@@ -1273,9 +1246,8 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
   }
   const kind: ImageKind = kindValue;
   const requestedMode = url.searchParams.get("mode") ?? "master";
-  const isCharacterSheet = kind === "sprite" && requestedMode === "character-sheet";
   const contentLength = Number(request.headers.get("Content-Length") ?? 0);
-  const maxContentLength = isCharacterSheet ? 10 * 1024 * 1024 : 2 * 1024 * 1024;
+  const maxContentLength = 2 * 1024 * 1024;
   if (contentLength > maxContentLength) {
     return json({ error: "Request is too large" }, 413);
   }
@@ -1283,18 +1255,10 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
     return json({ error: "Content-Type must be multipart/form-data" }, 415);
   }
 
-  const body = await parseBody(request, isCharacterSheet
-    ? {
-      maxPromptLength: 12_000,
-      maxReferences: 5,
-      maxReferenceBytes: 8 * 1024 * 1024,
-    }
-    : {});
+  const body = await parseBody(request);
   if (!body) {
     return json({
-      error: isCharacterSheet
-        ? `Use the ${CHARACTER_SHEET_CONTRACT_ID} prompt and exactly five locked references`
-        : "Use a 3-2500 character prompt and up to four small image references",
+      error: "Use a 3-2500 character prompt and up to four small image references",
     }, 400);
   }
 
@@ -1330,11 +1294,10 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
       modeValue !== "face-layer" &&
       modeValue !== "front-hair" &&
       modeValue !== "body-pose" &&
-      modeValue !== "foreground" &&
-      modeValue !== "character-sheet"
+      modeValue !== "foreground"
     ) {
       return json({
-        error: "mode must be master, head-design, head-expression, face-layer, front-hair, body-pose, foreground, or character-sheet",
+        error: "mode must be master, head-design, head-expression, face-layer, front-hair, body-pose, or foreground",
       }, 400);
     }
     if (modeValue === "front-hair" && body.references.length !== 2) {
@@ -1344,42 +1307,12 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
       modeValue !== "master" &&
       modeValue !== "foreground" &&
       modeValue !== "front-hair" &&
-      modeValue !== "character-sheet" &&
       body.references.length !== 1
     ) {
       return json({ error: `${modeValue} requires exactly one image reference` }, 400);
     }
     if (modeValue === "foreground" && body.references.length !== 0) {
       return json({ error: "foreground does not accept image references" }, 400);
-    }
-    if (modeValue === "character-sheet") {
-      if (body.references.length !== 5) {
-        return json({ error: "character-sheet requires guide, assembled reference, allowed mask, protected mask, and seam mask" }, 400);
-      }
-      if (
-        body.fields.contract_id !== CHARACTER_SHEET_CONTRACT_ID ||
-        body.fields.contract_version !== CHARACTER_SHEET_CONTRACT_VERSION ||
-        !CHARACTER_SHEET_GUIDE_SHA256.has(body.fields.guide_sha256 ?? "") ||
-        body.fields.geometry_hash !== CHARACTER_SHEET_GEOMETRY_HASH
-      ) {
-        return json({ error: "The character-sheet contract does not match the deployed Worker" }, 409);
-      }
-      // The uploaded guide must be one of the approved variants *and* the one
-      // the request declared, so a caller cannot name one length and send
-      // another.
-      if (await fileSha256(body.references[0]) !== body.fields.guide_sha256) {
-        return json({ error: "The uploaded character-sheet guide is not canonical" }, 409);
-      }
-      if (!/^[a-f0-9]{64}$/.test(body.fields.request_fingerprint ?? "")) {
-        return json({ error: "The character-sheet request fingerprint is invalid" }, 400);
-      }
-      // V4 collapses the three V1 rear-hair cells into one.
-      if (!new Set([
-        "back_hair_selected",
-        "none",
-      ]).has(body.fields.selected_back_hair ?? "")) {
-        return json({ error: "The selected back-hair region is invalid" }, 400);
-      }
     }
     // Which API answers is a configuration choice, resolved here rather than
     // hardcoded, so switching providers is a var change and a redeploy instead
@@ -1408,19 +1341,6 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
     };
     result = await imageProvider.generate(providerRequest, env);
 
-    // Contract validation is StoryTale's rule, not the provider's, so it stays
-    // out of the adapter: every provider must satisfy it equally.
-    if (
-      modeValue === "character-sheet" &&
-      (result.mimeType !== CHARACTER_SHEET_MIME ||
-        result.width !== CHARACTER_SHEET_CANVAS ||
-        result.height !== CHARACTER_SHEET_CANVAS)
-    ) {
-      throw new PublicWorkerError(
-        `${provider} returned ${result.width}x${result.height} ${result.mimeType}; StoryTale requires one ${CHARACTER_SHEET_CANVAS}x${CHARACTER_SHEET_CANVAS} ${CHARACTER_SHEET_MIME}.`,
-        502,
-      );
-    }
   }
 
   const requestId = crypto.randomUUID();
@@ -1450,9 +1370,6 @@ async function handleGenerate(request: Request, env: StoryTaleEnv): Promise<Resp
       "X-Request-Id": requestId,
       ...(body.fields.request_fingerprint
         ? { "X-Request-Fingerprint": body.fields.request_fingerprint }
-        : {}),
-      ...(isCharacterSheet
-        ? { "X-Character-Sheet-Contract": `${CHARACTER_SHEET_CONTRACT_ID}@${CHARACTER_SHEET_CONTRACT_VERSION}` }
         : {}),
     },
   });

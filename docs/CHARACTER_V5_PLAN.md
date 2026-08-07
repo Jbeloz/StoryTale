@@ -137,13 +137,34 @@ upper_arm_left  78x128   lower_arm_left  86x129
 Every phase ends with **something visible in Sprite Studio** on port `52827`.
 No phase before V5-3 costs any money.
 
-### V5-0 — Retire V4, keep what V5 needs
+### V5-0 — Retire V4, keep what V5 needs *(done, 2026-08-07)*
 
-- [ ] Delete everything in the "Delete" list in section 6
-- [ ] Confirm nothing in the "Keep" list was touched
-- [ ] `flutter test` passes; record the new test count here: `___` (was 218)
-- [ ] App still builds and Sprite Studio still opens on `52827`
-- [ ] Commit as one phase-scoped commit
+- [x] Deleted everything in the "Delete" list in section 6
+- [x] Confirmed nothing in the "Keep" list was touched
+- [x] `flutter analyze` — **no issues**
+- [x] `flutter test` — **130 passing, down from 221**. The drop is the five
+      character-sheet test files, ~91 tests that existed only to guard the
+      retired contract. Nothing else lost coverage.
+- [x] Worker: 14 tests still passing, `tsc` clean, `deploy:dry` **61.83 KiB**,
+      down from 65.13
+- [x] Only three mentions of the old name survive, all deliberate: two comments
+      recording the retirement, and the V1 rollback registration in `pubspec.yaml`
+
+**Facts worth keeping:**
+
+- **Sprite Review now opens on the legacy Sprite mode.** The Sheet segment is
+  gone, so the mode selector has two options rather than three. That page has no
+  V5 path yet — V5-1 gives it one.
+- **The diagnostics endpoint survived**, as planned. `tool/pose_admin_server.dart`
+  still serves `/character-sheet-diagnostics` and still writes to
+  `diagnostics/character_sheets/`. What was deleted is only the *Flutter caller*,
+  which was typed against the V4 result. **V5-3 must add a new caller** — the
+  server half is already there, and saving the reply before validating is what
+  makes a bad group free to study.
+- `test/fixtures/eighth_live_sheet.jpg` went with its test. The eighth sheet is
+  still in `diagnostics/character_sheets/` if it is ever needed again.
+- The `character-sheet` mode is gone from the Worker's `SpriteMode` union, so the
+  per-mode spec table and its tests cover seven modes now, not eight.
 
 ### V5-0.5 — The provider seam *(done, 2026-08-07)*
 

@@ -29,7 +29,6 @@ const allModes: SpriteMode[] = [
   "front-hair",
   "body-pose",
   "foreground",
-  "character-sheet",
 ];
 
 /// The exact expressions that lived inside the Gemini request body before the
@@ -39,7 +38,7 @@ const allModes: SpriteMode[] = [
 function legacyAspectRatio(mode: SpriteMode): string {
   return mode === "head-design" || mode === "head-expression" ||
       mode === "face-layer" || mode === "front-hair" ||
-      mode === "foreground" || mode === "master" || mode === "character-sheet"
+      mode === "foreground" || mode === "master"
     ? "1:1"
     : mode === "body-pose"
     ? "9:16"
@@ -47,11 +46,9 @@ function legacyAspectRatio(mode: SpriteMode): string {
 }
 
 function legacyImageSize(mode: SpriteMode): string {
-  return mode === "character-sheet"
-    ? "1K"
-    : mode === "head-design" || mode === "head-expression" ||
+  return mode === "head-design" || mode === "head-expression" ||
         mode === "face-layer" || mode === "front-hair" ||
-        mode === "foreground" || mode === "master"
+      mode === "foreground" || mode === "master"
     ? "1K"
     : "512";
 }
@@ -95,7 +92,7 @@ describe("the per-mode request spec", () => {
 
 describe("the Gemini request body", () => {
   it("keeps the field order the endpoint was called with", () => {
-    const body = buildGeminiImageBody(requestFor("character-sheet"), "m");
+    const body = buildGeminiImageBody(requestFor("master"), "m");
     expect(Object.keys(body)).toEqual(["model", "input", "response_format", "store"]);
     expect(Object.keys(body.response_format as object))
       .toEqual(["type", "mime_type", "aspect_ratio", "image_size"]);
@@ -118,8 +115,8 @@ describe("the Gemini request body", () => {
         { mimeType: "image/png", bytes: new Uint8Array([0]) },
         { mimeType: "image/jpeg", bytes: new Uint8Array([1]) },
       ],
-      spec: SPRITE_REQUEST_SPEC_BY_MODE["character-sheet"],
-      mode: "character-sheet",
+      spec: SPRITE_REQUEST_SPEC_BY_MODE["master"],
+      mode: "master",
     }, "m");
 
     const input = body.input as Array<Record<string, string>>;

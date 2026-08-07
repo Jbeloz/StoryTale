@@ -1326,10 +1326,28 @@ One intentional wording change: the character-sheet canvas rejection now says
 `google-gemini returned ...` rather than `Gemini returned ...`, because that
 check is StoryTale's rule and applies to every provider.
 
-**The next task is Phase 7G.2 / V5-0**, the retirement commit itself. The
-authority is [Character V5 Plan](CHARACTER_V5_PLAN.md), which owns the phases,
-the checklists, and the exact delete and keep lists. Read it before touching the
-character path.
+**V5-0 is done: the one-sheet path is gone.** The contract, generation request,
+processor, package, three build tools, five test files, the V4 assets, the
+Worker's `character-sheet` mode and its constants, and the Sheet mode in Sprite
+Review were all removed on 2026-08-07. `flutter analyze` is clean, `flutter test`
+is **130 passing, down from 221** — the drop is the character-sheet tests, which
+existed only to guard the retired contract.
+
+Two things not to rediscover:
+
+- **The diagnostics endpoint survived on purpose.** `tool/pose_admin_server.dart`
+  still serves `/character-sheet-diagnostics` and writes to
+  `diagnostics/character_sheets/`. Only the Flutter caller went, because it was
+  typed against the V4 result. V5-3 adds a new caller rather than a new server.
+- **`character_sheet_v1/` is still registered in `pubspec.yaml`**, deliberately,
+  as the documented rollback until V5-3 proves the new path. It is the last V4-era
+  thing left and it goes in the commit that proves V5 works.
+
+**The next task is V5-1, the garment layer.** The authority is
+[Character V5 Plan](CHARACTER_V5_PLAN.md), which owns the phases and checklists.
+It needs no provider and costs nothing: a garment renders as an overlay above the
+part in `_partArtwork`, never as a `partBytes` replacement, because a replacement
+would lose the local skin tint underneath.
 
 What V5 changes, so the shape is clear without reopening the plan:
 
