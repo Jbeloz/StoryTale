@@ -1,6 +1,6 @@
 # StoryTale Complete Project Handoff
 
-Last verified: **5 August 2026**
+Last verified: **7 August 2026**
 
 This document is the starting point for a new StoryTale chat. It summarizes
 the product, implementation, data contracts, decisions, feedback, rejected
@@ -331,6 +331,28 @@ single-active-actor JSON shape migrates into the new manifest safely.
 
 ### Canonical character-sheet plan
 
+The V4 one-sheet contract is retired. The authoritative current plan is
+`docs/CHARACTER_V5_PLAN.md`: V5 keeps the immutable `humanoid_v1` head and nine
+body pieces, applies skin and faces locally, and generates only reusable hair
+or clothing overlays. V5-0 through V5-2 are implemented locally.
+
+The current V5-3 work unit adds three deterministic 1K green-screen reference
+sheets under
+`assets/images/characters/garment_guides/humanoid_v1/v5_groups/`:
+
+1. `legs_1k_reference.png` — left column is left upper/lower leg; right column
+   is right upper/lower leg.
+2. `arms_1k_reference.png` — left column is left upper/lower arm; right column
+   is right upper/lower arm.
+3. `torso_1k_reference.png` — one centered torso reference.
+
+Each canvas is `1024 x 1024`, and every source part is copied at its exact
+native runtime size. These are reference guides only; they are not generated
+garments, are not registered in Flutter, and no provider request has been made.
+The remaining gate is the offline reply-to-separator-to-garment test, followed
+by one explicit owner-approved legs request if the test passes.
+
+<!-- Historical V1-V4 sheet notes follow; V5 above is current.
 The current implemented provider path still uses fixed `character_sheet_v1`.
 V2 established the exact Sprite Studio output-canvas mapping. Corrective Phase
 7G.1B.R2 has versioned `character_sheet_v3`; on 2026-08-04 the owner selected
@@ -368,6 +390,7 @@ future official Gemini option both reduces billed usage and preserves every
 exact V3 cell without resizing. Re-check official generation dimensions and
 pricing before the one controlled request; do not spend a request merely to
 compare sizes.
+-->
 
 Accessories use named anchors and relative layer modes such as behind arm,
 behind hand, or front of hand. A held sword may be partly behind the arm and

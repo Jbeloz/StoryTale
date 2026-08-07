@@ -456,8 +456,10 @@ twelve ways to fail, and one bad cell wastes the sheet.
 V5 splits generation by part group, keeps skin and faces local, and generates
 hair once into a reusable catalog, so a failure costs one group instead of the
 whole character. [Character V5 Plan](CHARACTER_V5_PLAN.md) is the authority for
-its phases, checklists, and the exact delete/keep lists. Nothing in V5 is built
-yet.
+its phases, checklists, and the exact delete/keep lists. V5-0 through V5-2 are
+implemented locally; V5-3 now has deterministic 1K reference sheets for the
+legs, arms, and torso groups, but its offline end-to-end and owner-approved
+provider gates are still pending.
 
 Phase 7H Story Mode binding waits for the complete Phase 7G gate, which is now
 the V5 gate.

@@ -1,0 +1,160 @@
+{
+  "version": "v5-part-group-guide-1",
+  "canvas": {
+    "width": 1024,
+    "height": 1024,
+    "format": "PNG",
+    "background": "#00FF00",
+    "purpose": "geometry reference for separated clothing generation"
+  },
+  "rules": [
+    "Every source part is copied at its immutable humanoid_v1 native size.",
+    "The green background is removable chroma key; it is not clothing.",
+    "The guide parts are geometry references, not generated garment output.",
+    "Generated output must contain clothing overlays only, never skin or rig replacement.",
+    "Left/right identity is represented by the sheet column and the manifest part id."
+  ],
+  "groups": {
+    "legs": {
+      "file": "assets/images/characters/garment_guides/humanoid_v1/v5_groups/legs_1k_reference.png",
+      "parts": [
+        {
+          "partId": "upper_leg_left",
+          "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/upper_leg_left.png",
+          "sourceSha256": "fcad2a93472ce7f36c6bbdf1124b8d1cb236872f06f74de5e5b587d33cdd2c7d",
+          "nativeSize": {
+            "width": 85,
+            "height": 141
+          },
+          "canvasPosition": {
+            "x": 170,
+            "y": 160
+          },
+          "column": "left"
+        },
+        {
+          "partId": "lower_leg_left",
+          "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/lower_leg_left.png",
+          "sourceSha256": "324bc0b881d50651f968191244f58d2b079e11691d69e95f1dc27188eaad2c90",
+          "nativeSize": {
+            "width": 88,
+            "height": 140
+          },
+          "canvasPosition": {
+            "x": 170,
+            "y": 650
+          },
+          "column": "left"
+        },
+        {
+          "partId": "upper_leg_right",
+          "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/upper_leg_right.png",
+          "sourceSha256": "1c4d288daf0464405cd0bdd074960857fc310b8eafdf393a12c1ac2a0d532558",
+          "nativeSize": {
+            "width": 94,
+            "height": 150
+          },
+          "canvasPosition": {
+            "x": 760,
+            "y": 160
+          },
+          "column": "right"
+        },
+        {
+          "partId": "lower_leg_right",
+          "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/lower_leg_right.png",
+          "sourceSha256": "64c2ed9f3f827424885e1a30db853be1ac9657ce6a3bd323089a0c8136c87fe0",
+          "nativeSize": {
+            "width": 84,
+            "height": 156
+          },
+          "canvasPosition": {
+            "x": 760,
+            "y": 650
+          },
+          "column": "right"
+        }
+      ]
+    },
+    "arms": {
+      "file": "assets/images/characters/garment_guides/humanoid_v1/v5_groups/arms_1k_reference.png",
+      "parts": [
+        {
+          "partId": "upper_arm_left",
+          "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/upper_arm_left.png",
+          "sourceSha256": "ccbf23be92b071f809b401b6061f3d8b1af2aee94579d92c223059d800887cc9",
+          "nativeSize": {
+            "width": 78,
+            "height": 128
+          },
+          "canvasPosition": {
+            "x": 170,
+            "y": 145
+          },
+          "column": "left"
+        },
+        {
+          "partId": "lower_arm_left",
+          "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/lower_arm_left.png",
+          "sourceSha256": "b15a3eddfd33583a35a935815799242df12a780dd34cf0db012db1a29dfb1cce",
+          "nativeSize": {
+            "width": 86,
+            "height": 129
+          },
+          "canvasPosition": {
+            "x": 170,
+            "y": 640
+          },
+          "column": "left"
+        },
+        {
+          "partId": "upper_arm_right",
+          "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/upper_arm_right.png",
+          "sourceSha256": "c1c5910a22eb0d3353e1a3f91b3f8dff960a2c9e904a7cbb2333b436b5c43ad4",
+          "nativeSize": {
+            "width": 67,
+            "height": 118
+          },
+          "canvasPosition": {
+            "x": 760,
+            "y": 145
+          },
+          "column": "right"
+        },
+        {
+          "partId": "lower_arm_right",
+          "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/lower_arm_right.png",
+          "sourceSha256": "146652dbcc5e36ce4018a47b3e2ef7c0f9e3699e1a80bc4f5fc0fb0be14e82d5",
+          "nativeSize": {
+            "width": 77,
+            "height": 145
+          },
+          "canvasPosition": {
+            "x": 760,
+            "y": 620
+          },
+          "column": "right"
+        }
+      ]
+    },
+    "torso": {
+      "file": "assets/images/characters/garment_guides/humanoid_v1/v5_groups/torso_1k_reference.png",
+      "parts": [
+        {
+          "partId": "torso",
+          "sourceAsset": "assets/images/characters/rigs/humanoid_v1/base/torso.png",
+          "sourceSha256": "ce377230f7b2e358c58486dcf3c633b3b2cfb7c37ab32ab4859c5b1bb9e8fa2c",
+          "nativeSize": {
+            "width": 165,
+            "height": 234
+          },
+          "canvasPosition": {
+            "x": 430,
+            "y": 395
+          },
+          "column": "center"
+        }
+      ]
+    }
+  }
+}

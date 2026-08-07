@@ -1,7 +1,9 @@
 # Character V5 Plan — separate parts, local skin, reusable hair
 
 Status: **Current. This file replaces `CHARACTER_SHEET_PLAN.md` as the active
-plan.** Approved by the owner on 2026-08-07. Nothing in V5 has been built yet.
+plan.** Approved by the owner on 2026-08-07. V5-0 through V5-2 are complete;
+V5-3 now has deterministic 1K legs, arms, and torso reference sheets, while
+the end-to-end clothing-generation gate remains open.
 
 This is the one document to read before working on generated characters. It
 carries the phases, the checklists, what to delete, and what must not be deleted.
@@ -280,6 +282,9 @@ measurement above. No provider involved.
 
 ### V5-3 — One group, end to end
 
+- [x] Prepare deterministic 1024x1024 reference sheets for the legs, arms,
+      and torso groups. Each locked `humanoid_v1` source part remains at its
+      native size; the sheets are green-screen guides only, not garments.
 - [ ] `PartGroupRequest` for `legs`, `arms`, `torso`, `hair`
 - [ ] Use the Worker's existing per-part sprite mode; add a `part-group` mode
       only if none fits
