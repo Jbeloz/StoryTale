@@ -1,12 +1,66 @@
 # StoryTale Complete Project Handoff
 
-Last verified: **5 August 2026**
+Last verified: **8 August 2026**
 
 This document is the starting point for a new StoryTale chat. It summarizes
 the product, implementation, data contracts, decisions, feedback, rejected
 ideas, current limitations, and working method. It does not replace the
 [Master Roadmap](ROADMAP.md): the roadmap remains the authority for phase
 status and development order.
+
+---
+
+## Resume here — checkpoint, 8 August 2026
+
+**Branch `master`, commit `9c0004b`, clean apart from `.claude/settings.json`,
+which is intentionally uncommitted. `flutter analyze` clean, `flutter test`
+149 passing, Worker 14 passing. Nine commits ahead of `origin/master`.**
+
+### Where the character system actually is
+
+The V4 one-sheet contract was **retired** on 7 August after eight billed sheets
+produced no usable character. V5 replaces it: clothing is generated per part
+group, skin and faces stay local and free, hair becomes a reusable catalog. See
+§8 and [Character V5 Plan](CHARACTER_V5_PLAN.md).
+
+| Phase | State |
+| --- | --- |
+| V5-0.5 provider seam | done — `IMAGE_PROVIDER` picks the API, Flutter unchanged |
+| V5-0 retire V4 | done — 8,592 lines removed |
+| V5-1 garment layer | done — clothing renders over the part, skin tint intact |
+| V5-2 separator | done — a sheet is cut into pieces by connected components |
+| V5-2a owner artwork | done — the owner's drawn clothing is wearable |
+| **V5-3 first paid group request** | **not started, and the next money spent** |
+| V5-4 remaining groups, V5-5 hair catalog, V5-6 analysis, V5-7 OpenAI | not started |
+
+### What you can see right now
+
+Sprite Studio on `52827`: select the torso or any limb, Clothing → **Wear the
+example garment**. That is owner-drawn artwork, cut locally, worn over the
+tinted skin. **Load garment image** imports any new sheet.
+
+### Nothing has been deployed or paid for since V4
+
+The live Worker still runs pre-seam code and still accepts the retired
+`character-sheet` mode; it simply has no caller. No V5 request has been made.
+
+### Two traps that have already cost time
+
+- **Restart the preview, do not just reload.** `flutter run -d web-server`
+  keeps serving the bundle it started with, and a stale server has twice shown
+  old code that looked like a broken change. Check port `52827` for an existing
+  listener and replace it.
+- **`storytale-v5-part-group-guides` and `storytale-v4-1k` are sibling git
+  worktrees** on `codex/*` branches, not stray folders. Codex works there. Copy
+  files across deliberately; do not merge a branch without being asked.
+
+### Owner decision still open
+
+The example lower-arm garments are **white hands**. Worn as garments they cover
+the tinted skin hand and will not take the skin tone. They read as mittens,
+which may be intended. They ship as drawn.
+
+---
 
 ## 1. Project identity
 
@@ -329,45 +383,48 @@ per-style X/Y/scale fits. Switching actor templates restores the saved actor
 appearance instead of resetting it to the catalog defaults. The previous
 single-active-actor JSON shape migrates into the new manifest safely.
 
-### Canonical character-sheet plan
+### Canonical character plan — V5, from 2026-08-07
 
-The current implemented provider path still uses fixed `character_sheet_v1`.
-V2 established the exact Sprite Studio output-canvas mapping. Corrective Phase
-7G.1B.R2 has versioned `character_sheet_v3`; on 2026-08-04 the owner selected
-V3 as the future active contract. V3 keeps the same coherent-character method
-while using an efficient landscape hair catalog:
+**The one-sheet character-sheet approach is retired.** V1 through V4 asked one
+image request to draw every cell of a fixed layout. Eight billed V4 sheets never
+produced a usable character: each prompt fix corrected its target and exposed a
+new failure. The defect is structural, not verbal — one request drawing twelve
+interdependent cells has twelve ways to fail, and one bad cell wastes the sheet.
 
-1. StoryTale will supply one locked `4096 x 1024` (`4:1`, `2K`) guide with one
-   `429 x 438` front-hair cell; separate Short, Medium, and Long `429 x 800`
-   back-hair cells; and exact native Sprite Studio head/body cells.
-2. The checked-in guide and assembled reference use actor `default`. The same
-   immutable geometry and manifest support a future heroine brief with the
-   recorded heroine-specific hair sources.
-3. Gemini returns only separated masked face details, the coherent hair
-   catalog, and nine fitted clothing regions; it does not return another
-   assembled body.
-4. StoryTale removes the flat green locally.
-5. StoryTale cuts fixed, versioned rectangles using a crop/anchor manifest; it
-   does not ask AI to detect part boundaries.
-6. Each region is hard-masked against allowed, protected, and seam masks.
-7. Face, hair, and clothing layers are composed locally over the unchanged
-   head and nine body pieces.
-8. One outfit is reused for every pose by following the same bones.
+[Character V5 Plan](CHARACTER_V5_PLAN.md) is the authority.
+[CHARACTER_SHEET_PLAN.md](CHARACTER_SHEET_PLAN.md) is **superseded** and kept
+only for the measured evidence behind that decision.
 
-V1, V2, and all original hair/rig assets remain unchanged behind their
-checkpoints. The V3 guide, masks, manifest, prompt, hashes, and offline builder
-are versioned in GitHub, but Flutter and the Worker have not been migrated and
-no V3 Gemini request has been made. The guide/layout selection gate is approved;
-migration and provider work are paused until the owner explicitly asks to
-continue.
+V5 changes the unit of work, and most of the character stops being generated:
 
-The preferred provider output remains `4096 x 1024` (`4:1`, `2K`). The current
-supported smaller `4:1` tier is `2048 x 512` (`1K`), which cannot contain V3's
-`429 x 800` Long back-hair cell at native size. Use a smaller output only if a
-future official Gemini option both reduces billed usage and preserves every
-exact V3 cell without resizing. Re-check official generation dimensions and
-pricing before the one controlled request; do not spend a request merely to
-compare sizes.
+| Part | Source in V5 | Cost |
+| --- | --- | --- |
+| Skin | local tint in Sprite Studio | free |
+| Face | the five existing local profiles | free |
+| Hair | a catalog generated once, reused by every character | one-time |
+| Clothing | generated per character in small part groups | ~3 requests |
+
+Three rules follow, and they are load-bearing:
+
+1. **Generated output never contains skin.** A garment is clothing only.
+2. **Generated output never replaces a body part.** A garment renders as an
+   overlay *above* its part. `_canTint` refuses to tint a part whose pixels were
+   overridden, so a replacement would silently disable the skin-tone picker.
+3. **Hair is a catalog, not per-character output**, in one format shared with
+   Sprite Studio.
+
+**Layout is no longer demanded of the provider.** V4's hardest requirement was
+pixel-exact cells, which no provider held. `sprite_garment_separator.dart` finds
+pieces by connected components, so a sheet only has to keep them **apart**.
+Prompts ask for separation and never for coordinates.
+
+Green handling has two modes on purpose, both in `data/chroma_key.dart`:
+edge-seeded for the whole-character master path, and *everywhere* for garments,
+because green sealed inside a garment is a hole rather than paint.
+
+Provider choice is configuration, not code: `IMAGE_PROVIDER` in
+`cloudflare/image-worker/wrangler.jsonc` plus a redeploy. The Flutter app never
+learns which provider answered; it reads `X-Image-Provider` off the response.
 
 Accessories use named anchors and relative layer modes such as behind arm,
 behind hand, or front of hand. A held sword may be partly behind the arm and
@@ -1527,16 +1584,28 @@ their roadmap gates unless a blocking defect requires a narrow fix.
 - The Phase 7G whole-character Little Prince result is a rejected structural
   prototype: Gemini redrew the skull/body, and splitting it could not recover
   exact StoryTale geometry.
-- V1, V2, and V3 still draw their `head` cell from the faced `base/head.png`
-  rather than the locked `faces/head_base.png` the rig composes. They are left
-  that way on purpose, behind their approved hashes; only V4 is corrected. Any
-  migration to V1/V2/V3 would carry the defect forward.
+- **No character has been generated by a provider under V5.** Everything worn
+  today is owner-drawn artwork imported locally. The first paid V5 request is
+  V5-3 and has not been made.
+- `character_sheet_v1` is still registered in `pubspec.yaml` as the documented
+  rollback. It carries the old defect of drawing its `head` cell from the faced
+  `base/head.png` rather than the `faces/head_base.png` the rig composes, so it
+  is a rollback of last resort. Delete it in the commit that proves V5 works.
+- **The example lower-arm garments are white hands.** They cover the tinted skin
+  hand and do not take the skin tone, so a dark-skinned character gets white
+  hands. Shipped as the owner drew them; the owner has not yet said whether they
+  should become gloves in the outfit colour or be dropped.
+- Hair is still local-only. The V5 hair catalog and the single shared hair
+  format are designed but not built (V5-5).
+- Story analysis does not yet choose skin tone or write per-group outfit briefs
+  (V5-6).
 - Phase 7G.1A.1 per-actor appearance persistence is implemented; the project
   owner still needs to perform the documented manual actor/pose/reload check.
 - Book-specific humans are not yet connected to every Story Mode chapter;
   Phase 7H is intentionally blocked.
-- The clothing/accessory component-sheet pipeline is documented but not
-  implemented.
+- Garment bytes persist as base64 inside the appearance record. Comfortable at
+  part scale, but the thing to revisit if a character ever wears many large
+  layers.
 
 ### Persistence and reading
 
@@ -1748,7 +1817,14 @@ Academic schedule (not the same as live engineering status):
 | `docs/MODULAR_FACE_SYSTEM_PLAN.md` | face parts and set behavior |
 | `docs/FIXED_HAIR_SLOT_PLAN.md` | front/back hair fitting and `None` |
 | `docs/GENERATED_CHARACTER_PIPELINE_PLAN.md` | exact-template layered human pipeline |
-| `docs/CHARACTER_SHEET_PLAN.md` | authoritative Phase 7G.1B character-sheet, local composition, crop/mask, and acceptance contract |
+| `docs/CHARACTER_V5_PLAN.md` | **authoritative character plan**: phases, checklists, and the delete/keep lists |
+| `docs/CHARACTER_SHEET_PLAN.md` | superseded 2026-08-07; kept for the measured evidence that retired the one-sheet approach |
+| `lib/…/data/chroma_key.dart` | the single green predicate, pure Dart, in both edge-seeded and everywhere modes |
+| `lib/…/data/sprite_garment_separator.dart` | cuts a sheet into one PNG per piece by connected components |
+| `lib/…/data/sprite_appearance.dart` | actor, hair fits, skin tone, and the per-part garment layers |
+| `cloudflare/image-worker/src/providers/` | the provider seam; `IMAGE_PROVIDER` chooses which API answers |
+| `assets/images/characters/garment_fixtures/v5/pieces/` | owner-drawn clothing, one wearable PNG per rig part |
+| `tool/generate_garment_examples.dart` | cuts those pieces from the 1K sheets with the real separator |
 | `assets/images/characters/rigs/humanoid_v1/` | canonical rig, poses, faces, hair, appearance |
 | `assets/images/characters/face_profiles/` | Default/Hero/Heroine/Elder/Adult modular faces |
 | `models/voices/raw/` | development RVC `.pth` and index/model pairs |
@@ -1860,16 +1936,20 @@ Recommended prompt for a new chat:
 
 Short resume prompt after clearing a chat:
 
-> Read `docs/PROJECT_HANDOFF.md`, section 11 "Current thread" first, then the
-> current section of `docs/ROADMAP.md`. Continue from there as usual.
+> Read `docs/PROJECT_HANDOFF.md`, the "Resume here" checkpoint at the top
+> first, then [Character V5 Plan](CHARACTER_V5_PLAN.md) if the work touches
+> characters. Continue from there as usual.
 
-As of 6 August 2026 the next work unit is the **free `character_sheet_v4`
-round-trip**: feed `guide_default_medium.png` back through
-`character_sheet_processor.dart` as if it were the provider's reply and confirm
-it cuts, masks, validates, and composes four poses. That proves the whole
-pipeline for `$0.00` and leaves provider art quality as the only unknown. After
-it, decide the faces direction recorded in section 11. Do not make a paid
-request before both are done.
+As of 8 August 2026 the next work unit is **V5-3**, the first per-group
+clothing request, and it is the next money spent. Everything before it is done
+and was proved offline. Build and pass the faked-Worker test before asking for
+approval, save the reply to `diagnostics/` before validating it, and request one
+group only.
+
+Two instructions that outlived the code they were written for, recorded so they
+are not followed by mistake: there is no longer a `character_sheet_processor`
+round-trip to run, and section 11 has no "Current thread" heading — its V4
+entries are history, not instructions.
 
 Clearing a chat is safe **because these documents are the memory**. Keep them
 current at the end of every work unit and no context is lost when a session
