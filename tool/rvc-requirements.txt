@@ -1,0 +1,117 @@
+﻿# StoryTale RVC voice environment — dependency lock
+#
+# This records the Python environment that GENERATED the narration in
+# assets/audio/narration/. It is a PC-side development tool only: it never
+# runs in the Flutter app, on the web, or on a phone. The app plays the
+# finished .wav files, and the planned mobile path is offline ONNX through
+# sherpa-onnx, not this environment.
+#
+# Written on 2026-08-13, before the 6.2 GB venv was deleted to reclaim disk.
+#
+# WHAT IT IS FOR
+#   tool/sync_voice_audio.py turns .tools/voice-work/*.mp3 plus the .pth
+#   models in models/voices/raw/ into fingerprinted chapter audio.
+#   You need this environment again only to (a) generate new narration, or
+#   (b) export .pth models to ONNX for Phase 10.
+#
+# HOW TO REBUILD
+#   The venv was created with uv (not pip); it has no pip inside it.
+#
+#     uv venv --python 3.10 .tools/rvc-venv
+#     uv pip install --python .tools/rvc-venv/Scripts/python.exe `
+#         --index-strategy unsafe-best-match `
+#         --extra-index-url https://download.pytorch.org/whl/cu118 `
+#         -r tool/rvc-requirements.txt
+#
+# THE TRAP
+#   torch and torchaudio below are +cu118 CUDA builds. They do NOT exist on
+#   the default PyPI index. Without the --extra-index-url above the install
+#   fails, or silently resolves to a CPU-only build that does not match.
+#   Original interpreter: Python 3.10.20 (cpython-3.10-windows-x86_64, via uv).
+#
+# Source audio is NOT in git. It is backed up at:
+#   Desktop/IT Elect 4/storytale-voice-source-backup/
+#aiohappyeyeballs==2.7.1
+aiohttp==3.14.1
+aiosignal==1.4.0
+annotated-doc==0.0.4
+annotated-types==0.7.0
+antlr4-python3-runtime==4.8
+anyio==4.14.2
+async-timeout==5.0.1
+attrs==26.1.0
+audioread==3.1.0
+av==17.1.0
+bitarray==3.9.0
+certifi==2026.6.17
+cffi==2.1.0
+charset-normalizer==3.4.9
+click==8.4.2
+colorama==0.4.6
+cython==3.2.8
+decorator==5.3.1
+edge-tts==7.2.8
+exceptiongroup==1.3.1
+fairseq==0.12.2
+faiss-cpu==1.7.3
+fastapi==0.139.1
+ffmpeg-python==0.2.0
+filelock==3.29.0
+frozenlist==1.8.0
+fsspec==2026.4.0
+future==1.0.0
+h11==0.16.0
+hydra-core==1.0.7
+idna==3.18
+jinja2==3.1.6
+joblib==1.5.3
+lazy-loader==0.5
+librosa==0.11.0
+llvmlite==0.48.0
+loguru==0.7.3
+lxml==6.1.1
+markupsafe==3.0.3
+mpmath==1.3.0
+msgpack==1.2.1
+multidict==6.7.1
+networkx==3.4.2
+numba==0.66.0
+numpy==1.23.5
+omegaconf==2.0.6
+packaging==26.2
+platformdirs==4.10.0
+pooch==1.9.0
+portalocker==3.2.0
+praat-parselmouth==0.4.7
+propcache==0.5.2
+pycparser==3.0
+pydantic==2.13.4
+pydantic-core==2.46.4
+python-multipart==0.0.32
+pywin32==312
+pyworld==0.3.5
+pyyaml==6.0.3
+regex==2026.7.10
+requests==2.34.2
+resampy==0.4.3
+rvc-python==0.1.5
+sacrebleu==2.6.0
+scikit-learn==1.7.2
+scipy==1.15.3
+soundfile==0.14.0
+soxr==1.1.0
+starlette==1.3.1
+sympy==1.14.0
+tabulate==0.10.0
+threadpoolctl==3.6.0
+torch==2.1.1+cu118
+torchaudio==2.1.1+cu118
+torchcrepe==0.0.24
+tqdm==4.68.4
+typing-extensions==4.15.0
+typing-inspection==0.4.2
+urllib3==2.7.0
+uvicorn==0.51.0
+win32-setctime==1.2.0
+yarl==1.24.2
+
